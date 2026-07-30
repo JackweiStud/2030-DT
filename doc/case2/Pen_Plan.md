@@ -2,10 +2,16 @@
 
 ## Target
 
-- Output `.pen`：建议 `03-design/case2/case2-dt-calibration.pen`，待用户确认。
+- Output `.pen`：`03-design/case2/case2-dt-calibration.pen`，已冻结。
 - Canvas size：1920×1080。
 - Quality bar：标准重建；结构可评审、可迭代、可冻结，并为 Gate 1.5 前端静态验收提供目标。
 - Existing `.pen` handling：新建；未发现可覆盖的既有 `.pen`。
+
+## Approval Record
+
+- 目标文件已创建：`03-design/case2/case2-dt-calibration.pen`。
+- 用户于 2026-07-30 审阅四个 frame 并确认符合预期。
+- 状态：`APPROVED / frozen`。后续修改需要重新审阅；下一阶段为 Gate 1.5。
 
 ## 修改基线与变更集
 
@@ -104,11 +110,11 @@ Case2Frame
 | failed | 演示不能只覆盖成功路径 | Initial 保留、错误说明、重试动作 | 是 |
 | execute-success-waiting | `execute success` 不等于完成 | 可并入 calibrating，文字区分等待结果 | 是 |
 
-## User Approval Needed
+## Approval Decisions
 
-| Question | Recommended answer | Risk if wrong |
+| 项目 | 决议 | 约束 |
 |---|---|---|
-| `.pen` 输出路径 | 使用 `03-design/case2/case2-dt-calibration.pen` | Pencil Phase 3 无安全目标 |
-| 设计状态 frame | initial / calibrating / failed / completed | 缺少异常态，Gate 1 不能冻结 |
-| Header 标题是否保留“测试” | 作为待确认文案，不冻结为最终名称 | 演示标题显得临时或不符合业务口径 |
-| 未提供状态的视觉方向 | 沿用完成态结构，以状态徽章/空态/失败反馈最小变更补齐 | 需要后续返工 |
+| `.pen` 输出路径 | 已使用 `03-design/case2/case2-dt-calibration.pen` | 后续修改不得覆盖冻结基线而不重新审阅 |
+| 设计状态 frame | initial / calibrating / failed / completed 已冻结 | 新增/删除状态需重新冻结 |
+| Header 标题 | 当前设计源文案已获接受 | 改名属于视觉变更，需重新冻结 |
+| 未提供状态的视觉方向 | 已按完成态结构，以状态徽章/空态/失败反馈补建 | 后续真实 UX 输入可触发重新评审 |

@@ -5,7 +5,7 @@
 - 项目是面向内部团队的 PC Web 演示平台：同一入口下有四个 case Tab。
 - 当前唯一活跃交付为 `case2`（`DT Calibration`）；其他 Tab 只显示“建设中”，不加载业务状态或数据。
 - 基准画布为 Chrome 1920×1080，使用固定画布等比缩放；窗口变化时整体缩放、居中，不以业务页面自行重排替代 Shell 缩放。
-- 当前阶段为 Gate 1（UX/设计冻结）；未经用户批准，不创建 React、Node、Pencil 或业务实现代码。
+- case2 Gate 1 已于 2026-07-30 经用户视觉审阅冻结；当前阶段为 Gate 1.5 静态 HTML 验收准备。未经新的用户批准，不创建 React、Node 或业务实现代码。
 
 ## 共享与隔离
 
@@ -41,6 +41,6 @@
 
 ## 当前验收与禁止事项
 
-- Gate 1 必须补齐 case2 的初始态、校准中态、失败态和完成态；现有整体 UX 只证明完成态。
+- Gate 1 已冻结四个 case2 frame：initial、calibrating、failed、completed。冻结设计源为 `03-design/case2/case2-dt-calibration.pen`；视觉差异与前端规格在同目录。
 - Gate 1.5 前不接共享目录、不做真实状态机、不把调试模拟逻辑带入正式运行路径。
 - 不继承旧项目的 Socket 字段、指标含义、T-MIMO 业务语义、视频热点或模拟数值。

@@ -6,17 +6,18 @@
 - 当前模式：标准重建。目标是设计评审与后续前端交接，不是一次性 PNG 像素描摹。
 - 现有 PNG UX 是视觉输入；它们不构成最终视觉契约。
 
-## 现状
+## 冻结结果
 
-- 未发现已有 `.pen` 文件。
-- 已有 case2 完成态整体 UX、左/右面板拆图、导航/品牌/背景/热力底图等输入资产。
-- 初始、校准中、失败态没有完整 UX 图，必须在 Pencil 中补建并经人工确认。
+- 设计源：`03-design/case2/case2-dt-calibration.pen`。
+- 画布：1920×1080；四个 frame：initial、calibrating、failed、completed。
+- 结构/视觉证据：`03-design/case2/Visual_Diff.md`、`Frontend_Spec.md`。
+- 用户已于 2026-07-30 审阅并确认设计效果符合预期；冻结状态为 `APPROVED`。
+- initial、calibrating、failed 是基于完成态结构补建的状态；该取舍已获批准。
 
-## 计划
+## 后续规则
 
-- 建议目标：`03-design/case2/case2-dt-calibration.pen`。
-- 目标画布：1920×1080；一个业务状态对应一个独立 frame。
-- 进入 Pencil Phase 3 前，必须由用户确认 `doc/case2/Pen_Plan.md` 和上述目标路径；不覆盖任何已有 `.pen`。
+- 任何修改 `.pen` 的状态、布局、品牌/标题文案、资产或动态层语义，均需新的用户视觉确认后重新冻结。
+- 下一阶段只能是 Gate 1.5 静态 HTML 验收；不得由设计冻结直接跳到接口或实现。
 
 ## 不做
 

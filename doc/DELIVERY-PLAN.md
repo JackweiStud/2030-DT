@@ -12,10 +12,9 @@ case3 与 case4 的先后顺序、业务主线和复用判断尚未提供；不�
 
 ## case2 Gate 1 节奏
 
-1. 审阅 `doc/case2/Design_Analysis.md`：确认 UX 事实、动态/静态分层和缺失状态。
-2. 审阅 `doc/case2/Pen_Plan.md`：确认目标 `.pen` 路径、四个状态 frame、组件树和资产策略。
-3. 用户确认计划后，才创建 Pencil 设计源并做结构/视觉差异验证。
-4. 用户确认设计冻结后，进入 Gate 1.5 静态 HTML 验收；不连接共享目录或实际状态机。
+1. Gate 1 已完成：用户确认 `03-design/case2/case2-dt-calibration.pen` 的四个 frame 符合预期，冻结证据见 `Freeze_Note.md`。
+2. 下一步经授权进入 Gate 1.5：按冻结设计源制作静态 HTML 原型并逐状态截图验收。
+3. Gate 1.5 不连接共享目录、不运行真实状态机、不实现 Node 适配服务。
 
 ## 项目级停止规则
 

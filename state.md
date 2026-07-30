@@ -3,8 +3,9 @@
 ## 当前阶段
 
 - 项目 Gate 0：已于 2026-07-29 获用户批准。
-- 当前焦点：case2 Gate 1，完成 UX 状态映射、设计工具决策、设计分析与 Pencil 计划评审。
-- 未创建任何 React、Node、Pencil 或业务实现代码。
+- case2 Gate 1：已于 2026-07-30 经用户视觉审阅冻结（`APPROVED`）。
+- 当前焦点：Gate 1.5 静态 HTML 验收准备；设计源为 `03-design/case2/case2-dt-calibration.pen`，证据见同目录 `Visual_Diff.md`、`Frontend_Spec.md` 与 `Freeze_Note.md`。
+- 未创建任何 React、Node 或业务实现代码；未获下一步授权前不开始 Gate 1.5 静态原型。
 
 ## 一句话演示承诺
 
@@ -32,9 +33,9 @@
 
 - `case complete` 与“六份 case2 UI 结果文件已原子发布”的锁/发布规则尚未冻结。
 - 共享目录的挂载路径、跨 PC 文件锁、截图 `out` 路径和 Node 适配服务的 REST 路由尚未确定。
-- 现有 UX 只提供完成态；初始、校准中、失败态缺少设计源。
+- 初始、校准中、失败态为基于完成态结构补建的设计源；用户已审阅并批准，后续变更须重新冻结。
 - 当前参考 Calibrated 文件已存在，不能作为本次任务完成证据。
-- 右侧 UX 的固定“↓50%”与参考样本均值不一致；必须在 Gate 1 修正为运行时计算。
+- Gate 1 设计源中降幅已改为 `{reductionPct}%` 运行时占位；前端实现不得写死 50%。
 
 ## 关键文档
 
@@ -45,9 +46,10 @@
 - [交付计划](doc/DELIVERY-PLAN.md)
 - [case2 主线](doc/case2/MAINLINE.md)
 - [case2 UX 状态映射](doc/case2/UX-STATE-MAP.md)
+- [case2 Gate 1 冻结](doc/case2/GATE1-FREEZE.md)
 
 ## 最小下一步与停止条件
 
-下一步：审阅 `doc/case2/Pen_Plan.md`，确认目标 `.pen` 路径、四个 frame 与未冻结的视觉取舍；确认后才调用 Pencil 创建设计源。
+下一步：经用户授权后，为冻结设计源建立 Gate 1.5 静态 HTML 原型与逐状态截图验收；不接共享目录、真实状态机或 Node 适配服务。
 
-停止条件：未获用户确认设计冻结前，不进入 Gate 1.5、API 契约或任何实现。
+停止条件：Gate 1.5 的关键状态与冻结 `.pen` 对齐并由用户接受前，不进入 Gate 2、文件契约或任何实现。
