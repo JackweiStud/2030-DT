@@ -1,0 +1,50 @@
+# 项目状态
+
+## 当前阶段
+
+- 项目 Gate 0：已于 2026-07-29 获用户批准。
+- 当前焦点：case2 Gate 1，完成 UX 状态映射、设计工具决策与设计冻结。
+- 未创建任何 React、Node、Pencil 或业务实现代码。
+
+## 一句话演示承诺
+
+内部团队在 `DT Calibration` 中先看到 Initial DT 的三项误差基线；启动 `with dt` 校准后，只有当后端发布完整结果并标记 `case complete`，才展示 Calibrated DT 的热力图、CDF 与均值对比，以证明校准降低误差；清除后回到 Initial DT。
+
+## 当前事实
+
+- 四个 case 通过同一 Web 入口的顶部 Tab 切换；case2 当前优先，其他 case 显示“建设中”。
+- case2 控制参考文件为 `01-参考资料/case_control.json`；参考数据在 `01-参考资料/case2/前后端数据接口文件/`。
+- `command`、`case`、`dt_type` 由前端侧发起；`status` 由后端写入；截图成功后前端侧适配服务将 `save_picture_flag` 从 `1` 清回 `0`。
+- 前后端 PC 使用同一已挂载共享目录；前端 PC 的 Node.js 本地适配服务是浏览器唯一文件/截图所有者。
+
+## case2 状态机（Gate 0 语义）
+
+| UI 状态 | 外部条件 | 用户看到什么 | 归属 |
+|---|---|---|---|
+| 初始就绪 | `command=init`，`status=""` | Initial DT；Calibrated 区不显示结果 | 前端展示 + 后端控制状态 |
+| 提交/校准中 | 前端写入 `start + with dt`，尚未 `case complete` | 校准中；旧 Calibrated 结果不可复用 | 前端本地状态 |
+| 命令成功待结果 | `status="execute success"` | 仍为校准中，不显示完成对比 | 后端状态 + 前端展示 |
+| 校准完成 | `status="case complete"` 且结果批次完整 | Calibrated 热力图、CDF、均值和降幅 | 后端结果 + 前端派生 |
+| 校准失败 | `status="execute fail"` | 失败提示与 Initial DT；不显示 Calibrated 结果 | 后端状态 + 前端展示 |
+| 清除中/回初始 | 前端写入 `reinit` | 清空本地 Calibrated 结果，等待后端回到初始语义 | 前端本地状态 + 后端控制状态 |
+
+## 主要风险与证据缺口
+
+- `case complete` 与“六份 case2 UI 结果文件已原子发布”的锁/发布规则尚未冻结。
+- 共享目录的挂载路径、跨 PC 文件锁、截图 `out` 路径和 Node 适配服务的 REST 路由尚未确定。
+- 现有 UX 只提供完成态；初始、校准中、失败态缺少设计源。
+- 当前参考 Calibrated 文件已存在，不能作为本次任务完成证据。
+- 右侧 UX 的固定“↓50%”与参考样本均值不一致；必须在 Gate 1 修正为运行时计算。
+
+## 关键文档
+
+- [Phase 0 范围](doc/PHASE0-SCOPE.md)
+- [共享架构草案](doc/ARCHITECTURE-DRAFT.md)
+- [Case 故事矩阵](doc/CASE-STORY-MATRIX.md)
+- [文档分层](doc/DOC-STRUCTURE.md)
+
+## 最小下一步与停止条件
+
+下一步：只进入 case2 Gate 1，先决定设计源，并把初始、校准中、失败、完成四个状态映射到可编辑设计源。
+
+停止条件：未获用户确认设计冻结前，不进入 Gate 1.5、API 契约或任何实现。
