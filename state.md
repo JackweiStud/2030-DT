@@ -3,7 +3,7 @@
 ## 当前阶段
 
 - 项目 Gate 0：已于 2026-07-29 获用户批准。
-- 当前焦点：case2 Gate 1，完成 UX 状态映射、设计工具决策与设计冻结。
+- 当前焦点：case2 Gate 1，完成 UX 状态映射、设计工具决策、设计分析与 Pencil 计划评审。
 - 未创建任何 React、Node、Pencil 或业务实现代码。
 
 ## 一句话演示承诺
@@ -42,9 +42,12 @@
 - [共享架构草案](doc/ARCHITECTURE-DRAFT.md)
 - [Case 故事矩阵](doc/CASE-STORY-MATRIX.md)
 - [文档分层](doc/DOC-STRUCTURE.md)
+- [交付计划](doc/DELIVERY-PLAN.md)
+- [case2 主线](doc/case2/MAINLINE.md)
+- [case2 UX 状态映射](doc/case2/UX-STATE-MAP.md)
 
 ## 最小下一步与停止条件
 
-下一步：只进入 case2 Gate 1，先决定设计源，并把初始、校准中、失败、完成四个状态映射到可编辑设计源。
+下一步：审阅 `doc/case2/Pen_Plan.md`，确认目标 `.pen` 路径、四个 frame 与未冻结的视觉取舍；确认后才调用 Pencil 创建设计源。
 
 停止条件：未获用户确认设计冻结前，不进入 Gate 1.5、API 契约或任何实现。
