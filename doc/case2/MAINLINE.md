@@ -10,6 +10,7 @@
 - Initial 数据：三项 Initial 热力图和 KPI 样本。
 - 控制请求：前端侧适配服务写入 `case=case2`、`command=start`、`dt_type=with dt`。
 - 启动状态链路：后端 `status=execute success` 后继续执行系统测试，最终以 `status=case complete` 表示测试完成；若 `status=execute fail`，前端显示执行命令失败，后端不再写 `case complete`。
+- 结果发布规则：后端先完整写完并关闭六个 Calibrated 文件，最后才写 `status=case complete`；前端只在本轮启动后的 `execute success -> case complete` 链路上读取六文件。
 - 重置状态链路：后端 `status=execute success` 后继续执行系统重置，最终以 `status=reinit complete` 表示重置完成；若 `status=execute fail`，前端显示执行命令失败，后端不再写 `reinit complete`。
 
 ## 主线状态
