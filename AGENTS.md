@@ -21,16 +21,17 @@
 - 命令枚举：`init` 为初始化/idle，`start` 为开始测试，`reinit` 为重置（旧称“清除”）。
 - 后端侧写 `status`：`""`（初始化）、`execute success`（命令执行成功）、`execute fail`（命令执行失败）、`case complete`（后端系统测试完成）、`reinit complete`（后端系统重置完成）。启动路径为 `execute success -> case complete`；重置路径为 `execute success -> reinit complete`。若出现 `execute fail`，前端显示执行命令失败，后端本轮不再写完成终态。只有 `case complete` 能触发前端读取 Calibrated 结果；`reinit complete` 只表示重置完成，前端据此移除 Calibrated 显示并恢复登录时按钮状态。
 - P0-1 已确认：真实后端先完整写完并关闭六个 Calibrated 文件，最后写 `status=case complete`；前端只在本轮启动后的 `execute success -> case complete` 链路上读取结果。Gate 3 打桩可用临时目录写入 + 原子目录/指针切换 + 最后写状态的更强实现，但不得反向要求真实后端必须提供 manifest、batch_id 或原子目录切换。
-- `save_picture_flag` 初始为 `0`；后端置为 `1` 后，前端侧 Node 适配服务负责在截图成功落盘后、持锁写回 `0`。这是受控的双向字段，不是浏览器直接写文件。
+- P0-2/P0-3/P0-4 已确认：启动和重置互斥；不做取消、命令队列、自动超时或自动重试；刷新后一切回 Initial。Node 适配服务采用最小 REST，控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。
+- `save_picture_flag` 初始为 `0`；后端置为 `1` 后，Web 不额外判断 `status`，直接生成 Base64 PNG 交给前端侧 Node 适配服务；适配服务确认 `{CASE2_SHARED_DIR}/out/case2/calibrated-latest.png` 落盘后，持锁写回 `0`。这是受控的双向字段，不是浏览器直接写文件。
 - 当前 UX 的三项对比语义是误差：RSS 误差、有效路径数误差、首径时延误差。CDF 左移和平均误差下降才表示校准有效。
 
 ## 文件与适配边界
 
 - 参考控制文件：`01-参考资料/case_control.json`。
 - 参考 case2 数据目录：`01-参考资料/case2/前后端数据接口文件/`。
-- 前后端 PC 将通过同一已挂载共享目录交换文件；具体挂载路径、锁实现、原子发布机制和截图 `out` 路径尚未冻结。
+- 前后端 PC 将通过同一已挂载共享目录交换文件；具体挂载路径、锁实现和 Node 适配服务端口留到 Gate 3 SPEC。
 - 前端 PC 将部署一个 Node.js 本地适配服务，作为浏览器唯一的文件读写、文件锁和截图落盘所有者；Chrome 只调用该服务的本机 REST 接口。
-- 适配服务不是新的业务后端。REST 路由、轮询周期和截图编码策略属于 Gate 2/3，未冻结前不得自行发明为事实。
+- 适配服务不是新的业务后端。Gate 2 已冻结最小 REST 语义；端口、轮询频率、锁算法和部署路径属于 Gate 3 SPEC，未冻结前不得自行发明为事实。
 
 ## 数据真实性与文档纪律
 
