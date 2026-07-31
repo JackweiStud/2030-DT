@@ -41,7 +41,7 @@ Gate 2 冻结最小 REST 语义：不用 WebSocket，不做命令队列，不做
 | GET 控制文件      | `GET /api/case2/control-file`      | Web → 适配服务 → 控制文件          | 页面进入、运行期间、截图请求检测                    | 返回当前 `case_control` 字段及可用性                        | Web 不直接读文件。                         |
 | POST 控制文件     | `POST /api/case2/control-file`     | Web → 适配服务 → 控制文件          | 用户点击“启动”或“重置”；适配服务截图成功后清零           | 启动写 `case=case2,command=start,dt_type=with dt`；重置写 `command=reinit`；截图成功写 `save_picture_flag=0` | 只改本操作负责字段，保留后端字段。                   |
 | 读取数据文件        | `GET /api/case2/data-files`        | Web → 适配服务 → Initial/Calibrated 文件 | Initial 首屏；本轮启动观察到 `execute success -> case complete` | 返回三项热力矩阵与 KPI 样本；Calibrated 必须为完整六文件批次             | 文件存在、`execute success` 或旧缓存均不能替代完成门槛。 |
-| 提交截图          | `POST /api/case2/screenshot`       | Web → 适配服务 → 输出目录          | Web 发现 `save_picture_flag` 从 `0` 变为 `1` | Web 传 Base64 PNG；适配服务落盘后通过 POST 控制文件清零              | 浏览器不得写共享目录；失败不得提前清零。                |
+| 提交截图          | `POST /api/case2/screenshot`       | Web → 适配服务 → 输出目录          | Web 发现 `save_picture_flag` 从 `0` 变为 `1` | Web 传 Base64 PNG；适配服务按递增序号落盘后通过 POST 控制文件清零              | 浏览器不得写共享目录；失败不得提前清零；不得覆盖旧截图。                |
 
 `data-files` 的 `phase` 参数只允许 `initial` / `calibrated`；端口和共享目录实际路径不得写死在 Web 代码中。
 
@@ -121,8 +121,9 @@ sequenceDiagram
   Node-->>Web: 返回 save_picture_flag=1
   Web->>Web: 不判断 status，直接截取当前 case2 画面
   Web->>Node: POST screenshot：Base64 PNG
+  Node->>Out: 扫描现有截图，选择下一个 seq
   Node->>Out: 写临时 PNG
-  Node->>Out: rename 为 calibrated-latest.png
+  Node->>Out: rename 为 calibrated-{seq}.png
   Node->>Shared: POST 控制文件：save_picture_flag=0
   Node-->>Web: 返回截图保存成功
 ```
@@ -287,10 +288,11 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 1. 触发：Web 通过 GET 控制文件发现 `save_picture_flag` 从 `0` 变为 `1`，即触发截图；Web 不再额外判断 `status`。
 2. 后端责任：后端负责在它认为需要截图时把 `save_picture_flag` 置 `1`；不要依赖 Web 通过 `status` 二次判断截图时机。
 3. 传输：Web 生成 PNG 截图后，通过 `POST /api/case2/screenshot` 以 Base64 传给适配服务。
-4. 输出：适配服务写入 `{CASE2_SHARED_DIR}/out/case2/calibrated-latest.png`；先写临时文件，成功后 rename 覆盖 latest。
+4. 输出：适配服务写入 `{CASE2_SHARED_DIR}/out/case2/calibrated-{seq}.png`；`seq` 从 `000` 开始递增，例如 `calibrated-000.png`、`calibrated-001.png`、`calibrated-002.png`。
 5. 所有权：Web 只生成 Base64 截图并交给适配服务；适配服务是截图文件、目录、写入结果与标志回写的唯一所有者。
 6. 回写：仅在适配服务确认 PNG 已完整落盘后，才可通过 POST 控制文件把 `save_picture_flag` 写回 `0`。
-7. 失败与去重：截图生成、Base64 传输或落盘失败时不得清零；适配服务进程重启后若仍读到 `save_picture_flag=1`，重新触发截图并覆盖同一个 `calibrated-latest.png`，不生成历史队列。
+7. 序号生成：适配服务不维护 manifest 或数据库；每次保存前扫描 `{CASE2_SHARED_DIR}/out/case2/` 下已完成的 `calibrated-*.png`，取最大序号加一；无历史文件时从 `000` 开始。序号超过三位时自然扩展。
+8. 失败与重试：截图生成、Base64 传输或落盘失败时不得清零；未完成的临时文件不计入序号。后端再次把 `save_picture_flag` 从 `0` 写为 `1` 时，前端再保存下一张新序号截图。
 
 ## 7. 异常合同
 
@@ -302,7 +304,7 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 | `case complete` 但六文件不完整/格式错误   | 拒绝整批，显示结果发布异常                                       | 部分图表完成、复用旧数据或静态代表图。          |
 | `execute fail`                 | 显示执行命令失败；本轮不再等待 `case complete` 或 `reinit complete` | 继续假装等待完成，或把失败解释为后端系统测试完成。    |
 | `reinit` 提交后刷新                 | 一切回 Initial，Calibrated 为空，按钮恢复初始可点击状态                    | 由浏览器缓存恢复旧完成态。                |
-| `save_picture_flag=1` 但截图失败      | 保留请求，不清零；下次继续尝试或进程重启后覆盖 latest                       | 未保存成功即清零。                     |
+| `save_picture_flag=1` 但截图失败      | 保留请求，不清零；下次继续尝试，成功后保存为递增序号 PNG                       | 未保存成功即清零，或覆盖旧截图。                     |
 
 
 
@@ -320,7 +322,7 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 - P0-1 已确认：真实后端先完整写完并关闭六个 Calibrated 文件，最后写 `status=case complete`；前端只在本轮启动后的 `execute success -> case complete` 链路上读取结果。
 - P0-2 已确认：启动和重置互斥；不做取消、队列、自动超时或自动重试；刷新后一切回 Initial。
 - P0-3 已确认：Node 适配服务采用最小 REST，控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。
-- P0-4 已确认：Web 发现 `save_picture_flag` 从 `0` 变为 `1` 即截图；截图以 Base64 传给适配服务；适配服务保存 latest PNG 后才清零。
+- P0-4 已确认：Web 发现 `save_picture_flag` 从 `0` 变为 `1` 即截图；截图以 Base64 传给适配服务；适配服务保存递增序号 PNG 后才清零，不覆盖旧截图。
 - 当前 UI 只消费 RSS、有效路径数、首径时延三项；每项包括动态解析得到的热力矩阵与 KPI 样本集合，不能硬编码为 20×20 或 20 个样本。
 - CDF、均值、降幅都是前端派生，降幅按当前样本计算；浏览器不能直接读写共享目录或截图文件。
 
@@ -334,7 +336,7 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 | P0-1 | 六文件完整发布与本轮读取门槛 | 已确认并回填。 |
 | P0-2 | 命令互斥、失败解除、刷新回 Initial，不考虑自动超时 | 已确认并回填。 |
 | P0-3 | Node 适配服务最小 REST 与 GET/POST 控制文件口径 | 已确认并回填。 |
-| P0-4 | `save_picture_flag` 触发截图、Base64 传输、latest PNG 落盘后清零 | 已确认并回填。 |
+| P0-4 | `save_picture_flag` 触发截图、Base64 传输、递增序号 PNG 落盘后清零 | 已确认并回填。 |
 
 
 **停止条件：** 用户批准本文为 API 契约 v1 后，才进入 Gate 3；此前不写 Node、React、共享目录连接或真实状态机。

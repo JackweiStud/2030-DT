@@ -20,7 +20,7 @@
 - P0-1 已确认：后端每轮启动后，先完整写完并关闭六个 Calibrated 文件，最后才写 `status=case complete`；前端只在本轮启动后的 `execute success -> case complete` 链路上读取这六个文件。
 - P0-2 已确认：启动和重置互斥；不做取消、队列、自动超时或自动重试；`execute fail` 解除按钮并允许手动重试；刷新页面后一切回 Initial。
 - P0-3 已确认：Node 适配服务采用最小 REST；控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。
-- P0-4 已确认：Web 发现 `save_picture_flag` 从 `0` 变为 `1` 即截图，Base64 传给适配服务；适配服务保存 `{CASE2_SHARED_DIR}/out/case2/calibrated-latest.png` 后才清零。
+- P0-4 已确认：Web 发现 `save_picture_flag` 从 `0` 变为 `1` 即截图，Base64 传给适配服务；适配服务保存 `{CASE2_SHARED_DIR}/out/case2/calibrated-{seq}.png` 后才清零，`seq` 从 `000` 递增。
 - 前后端 PC 使用同一已挂载共享目录；前端 PC 的 Node.js 本地适配服务是浏览器唯一文件/截图所有者。
 
 ## case2 状态机（Gate 0 语义）

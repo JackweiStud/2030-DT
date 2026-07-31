@@ -17,7 +17,7 @@
 | 三张 Initial CDF、均值柱 | 是 | Initial 三组动态 `N` 个 KPI 样本 + 前端派生 | Initial KPI 输入通过校验 | CDF 为经验 CDF，均值为算术平均；不得硬编码 20 条。 |
 | 三张 Calibrated CDF、均值柱、降幅徽章 | 是 | Calibrated 三组动态 `N` 个 KPI 样本 + 前端派生 | 本轮启动后观察到 `execute success -> case complete`，且六文件批次有效 | 降幅运行时计算，不能沿用 40%/50% 视觉样例；读到 `reinit complete` 后移除；刷新后不自动恢复。 |
 | 完成/校准中/失败/结果发布异常反馈 | 是 | 状态机、适配服务可用性、批次校验 | 对应条件 | 业务失败、服务错误、发布错误必须分开。 |
-| 截图保存反馈 | 是 | `save_picture_flag` 消费进度 | `save_picture_flag` 从 `0` 变为 `1` | Web 不额外判断 `status`；Web 生成 Base64 PNG，适配服务落盘后清零。 |
+| 截图保存反馈 | 是 | `save_picture_flag` 消费进度 | `save_picture_flag` 从 `0` 变为 `1` | Web 不额外判断 `status`；Web 生成 Base64 PNG，适配服务按递增序号落盘后清零，不覆盖旧截图。 |
 | 其他 case Tab 的建设中页 | 否（Shell） | Shell 占位 | 切入其他 Tab | 不启动 case2 轮询、读文件或截图。 |
 
 ## 2. 指标到文件与派生结果
