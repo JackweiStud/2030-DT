@@ -1,0 +1,876 @@
+/* case2 Gate 1.5 static prototype — scoped under .case2-page / stage shell.
+   Colors, spacing, radii MUST come from 04-runtime-assets/case2/tokens.css */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: var(--case2-font-ui);
+}
+
+.stage-viewport {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.stage {
+  width: var(--case2-stage-width);
+  height: var(--case2-stage-height);
+  position: relative;
+  flex-shrink: 0;
+  transform-origin: center center;
+  background: var(--case2-color-page);
+  overflow: hidden;
+  color: var(--case2-color-text);
+}
+
+/* -------- Shell -------- */
+.shell-header {
+  position: relative;
+  width: 1920px;
+  height: var(--case2-shell-header-height);
+  overflow: hidden;
+  background: var(--case2-color-page);
+}
+
+.nav-bg {
+  position: absolute;
+  left: -382px;
+  top: -26px;
+  width: 2328px;
+  height: 111px;
+  background: url("../../04-runtime-assets/case2/chrome/shell-nav-background.png") center / cover no-repeat;
+  pointer-events: none;
+}
+
+.brand-area {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--case2-brand-area-width);
+  height: 78px;
+}
+
+.brand-logo {
+  position: absolute;
+  left: 8px;
+  top: 19px;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.brand-sub {
+  position: absolute;
+  left: 48px;
+  top: 28px;
+  font-size: var(--case2-font-size-brand-sub);
+  color: var(--case2-color-muted);
+}
+
+.brand-title {
+  position: absolute;
+  left: 234px;
+  top: 16px;
+  font-size: var(--case2-font-size-brand-title);
+  color: var(--case2-color-text);
+  line-height: 46px;
+  white-space: nowrap;
+}
+
+.case-nav {
+  position: absolute;
+  left: var(--case2-nav-tabs-left);
+  top: 0;
+  width: var(--case2-nav-tabs-width);
+  height: 78px;
+  display: flex;
+  gap: var(--case2-tab-gap);
+  padding-top: 22px;
+  align-items: flex-start;
+}
+
+.case-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.case-tab[data-tab="case1"],
+.case-tab[data-tab="case2"] {
+  width: 150px;
+}
+
+.case-tab[data-tab="case3"] {
+  width: 130px;
+}
+
+.case-tab[data-tab="case4"] {
+  width: 177px;
+}
+
+.case-tab__label {
+  display: block;
+  height: 32px;
+  line-height: 32px;
+  color: var(--case2-color-muted);
+  font: 500 var(--case2-font-size-tab) / 32px var(--case2-font-ui);
+  white-space: nowrap;
+}
+
+.case-tab.is-active .case-tab__label {
+  color: var(--case2-color-primary-text);
+  font-weight: 600;
+}
+
+.tab-underline {
+  display: none;
+  width: 90%;
+  height: 4px;
+  align-self: center;
+  border-radius: var(--case2-radius-tab-underline);
+  background: var(--case2-color-tab-active-underline);
+}
+
+.case-tab.is-active .tab-underline {
+  display: block;
+}
+
+.placeholder-page {
+  position: absolute;
+  left: 0;
+  top: 78px;
+  width: 1920px;
+  height: 1002px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Match Pencil frame / ShellHeader page fill #191a1a */
+  background: var(--case2-color-page);
+  color: var(--case2-color-muted);
+  font-size: 28px;
+}
+
+.placeholder-page[hidden] {
+  display: none !important;
+}
+
+/* -------- case2 page -------- */
+.case2-page {
+  position: absolute;
+  left: 0;
+  top: 78px;
+  width: 1920px;
+  height: 1002px;
+  overflow: hidden;
+  background: var(--case2-color-page);
+}
+
+.case2-page[hidden] {
+  display: none !important;
+}
+
+.case2-page .main-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--case2-space-gap-row);
+  padding: var(--case2-space-pad-main);
+  overflow: hidden;
+}
+
+.case2-page .main-row {
+  width: var(--case2-main-row-width);
+  height: var(--case2-main-row-height);
+  display: flex;
+  flex-direction: row;
+  gap: var(--case2-space-gap-main-row);
+  padding: var(--case2-space-pad-main-row-y) var(--case2-space-pad-main-row-x);
+}
+
+/* Panels */
+.case2-page .calibration-panel,
+.case2-page .kpi-panel {
+  height: var(--case2-panel-height);
+  border-radius: var(--case2-radius-panel);
+  padding: var(--case2-space-pad-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  background-color: var(--case2-color-panel);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.case2-page .calibration-panel {
+  width: var(--case2-left-panel-width);
+  background-image: url("../../04-runtime-assets/case2/chrome/panel-left-background.png");
+}
+
+.case2-page .kpi-panel {
+  width: var(--case2-right-panel-width);
+  background-image: url("../../04-runtime-assets/case2/chrome/panel-right-background.png");
+}
+
+.case2-page .panel-title-row,
+.case2-page .kpi-title-row {
+  display: flex;
+  align-items: center;
+  height: 26px;
+}
+
+.case2-page .panel-title-row {
+  justify-content: space-between;
+}
+
+.case2-page .title-group,
+.case2-page .kpi-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--case2-space-gap-title);
+}
+
+.case2-page .title-accent {
+  width: 3px;
+  height: 18px;
+  object-fit: fill;
+  border-radius: 2px;
+}
+
+.case2-page .panel-title {
+  margin: 0;
+  font-size: var(--case2-font-size-panel-title);
+  font-weight: 600;
+  color: var(--case2-color-text);
+}
+
+.case2-page .env-link {
+  color: var(--case2-color-calibrated);
+  font-size: var(--case2-font-size-link);
+  text-decoration: none;
+  pointer-events: none;
+}
+
+/* Column headers */
+.case2-page .column-header-row {
+  display: flex;
+  align-items: center;
+  gap: var(--case2-space-gap-row);
+  padding: 0 5px;
+  height: 29px;
+}
+
+.case2-page .initial-column-head,
+.case2-page .calibrated-column-head {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.case2-page .initial-column-head {
+  gap: 6px;
+  font-size: var(--case2-font-size-column);
+}
+
+.case2-page .calibrated-column-head {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.case2-page .calibrated-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.case2-page .calibrated-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--case2-font-size-column);
+}
+
+.case2-page .status-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 25px;
+  padding: 4px 12px;
+  border-radius: var(--case2-radius-badge);
+  background: #1e293b;
+  font-size: var(--case2-font-size-status);
+  color: var(--case2-color-muted);
+}
+
+.case2-page .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--case2-color-muted);
+}
+
+.case2-page .calibration-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.case2-page .ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: var(--case2-radius-button);
+  border: 0;
+  background: transparent;
+  color: var(--case2-color-text);
+  font-size: var(--case2-font-size-button);
+  cursor: pointer;
+}
+
+.case2-page .ctrl-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.case2-page .ctrl-btn img {
+  display: block;
+}
+
+.case2-page .ctrl-btn--start img,
+.case2-page .ctrl-btn--clear img {
+  width: 16px;
+  height: 16px;
+}
+
+/* Start: show only one badge icon at a time */
+.case2-page .ctrl-btn--start .ctrl-icon--play {
+  display: block;
+}
+
+.case2-page .ctrl-btn--start .ctrl-icon--pause {
+  display: none;
+}
+
+.case2-page[data-state="calibrating"] .ctrl-btn--start .ctrl-icon--play {
+  display: none;
+}
+
+.case2-page[data-state="calibrating"] .ctrl-btn--start .ctrl-icon--pause {
+  display: block;
+}
+
+/* Running state keeps gray pause readable (not washed-out disabled) */
+.case2-page[data-state="calibrating"] .ctrl-btn--start:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/* Heatmap stack */
+.case2-page .heatmap-stack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--case2-space-gap-heat-stack);
+  padding: 5px;
+}
+
+.case2-page .heatmap-pair {
+  width: 100%;
+  height: var(--case2-heatmap-row-height);
+  display: flex;
+  align-items: center;
+  gap: var(--case2-space-gap-heat-pair);
+  padding: 5px 20px;
+}
+
+.case2-page .heatmap-card {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  border-radius: var(--case2-radius-card);
+  border: none;
+  /* Inset stroke sits on top of tag fill — no 1px content inset gap at TL */
+  box-shadow: inset 0 0 0 1px var(--case2-color-card-stroke);
+  background: var(--case2-color-panel);
+  overflow: hidden;
+}
+
+.case2-page .heatmap-card__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.case2-page .heatmap-base {
+  position: absolute;
+  inset: 0;
+  background: url("../../04-runtime-assets/case2/maps/heatmap-map-base.png") center / cover no-repeat;
+}
+
+.case2-page .heatmap-represent {
+  position: absolute;
+  left: 83px;
+  top: 51px;
+  width: 333px;
+  height: 176px;
+  background: var(--case2-color-heat-represent);
+  pointer-events: none;
+}
+
+/* completed Calibrated: Pencil rdP2e / vnGTY override — base map + grid heat layer */
+.case2-page .heatmap-card.is-calibrated .heatmap-represent {
+  left: 40px;
+  top: 39px;
+  width: 400px;
+  height: 200px;
+  background: url("../../04-runtime-assets/case2/maps/heatmap-calibrated-represent.png") center / 100% 100% no-repeat;
+  opacity: 0.6;
+}
+
+.case2-page .metric-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 30px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Square TL: card overflow:hidden provides the only corner curve — no dual-radius seam */
+  border-radius: 0 0 var(--case2-radius-tag) 0;
+  z-index: 2;
+}
+
+.case2-page .metric-tag__plate {
+  display: none;
+}
+
+.case2-page .metric-tag__label {
+  position: relative;
+  z-index: 1;
+  color: var(--case2-color-primary-text);
+  font-size: var(--case2-font-size-metric-tag);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.case2-page .metric-tag--rss {
+  width: 70px;
+  background-color: #2f85de;
+}
+
+.case2-page .metric-tag--path {
+  width: 200px;
+  background-color: #6137ff;
+}
+
+.case2-page .metric-tag--delay {
+  width: 164px;
+  background-color: #f7b502;
+}
+
+.case2-page .heat-empty,
+.case2-page .cdf-waiting,
+.case2-page .bar-waiting {
+  display: none !important;
+}
+
+/* KPI */
+.case2-page .kpi-stack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--case2-space-gap-kpi-rows);
+  padding: 5px;
+}
+
+.case2-page .kpi-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 5px;
+}
+
+.case2-page .metric-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+}
+
+.case2-page .metric-header h3 {
+  margin: 0;
+  font-size: var(--case2-font-size-kpi-title);
+  font-weight: 600;
+  color: var(--case2-color-text);
+}
+
+.case2-page .metric-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 18px;
+  object-fit: contain;
+}
+
+.case2-page .chart-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--case2-space-gap-chart);
+  justify-content: space-between;
+}
+
+.case2-page .cdf-area {
+  width: var(--case2-cdf-width);
+  height: var(--case2-cdf-height);
+  max-height: 100%;
+  padding: 8px 10px;
+  border-radius: var(--case2-radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.case2-page .bar-area {
+  width: var(--case2-bar-width);
+  height: 100%;
+  padding: 10px;
+  border-radius: var(--case2-radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.case2-page .chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--case2-font-size-chart-title);
+  color: var(--case2-color-text);
+}
+
+.case2-page .legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: var(--case2-font-size-legend);
+}
+
+.case2-page .legend--sm {
+  gap: 10px;
+  font-size: 9px;
+}
+
+.case2-page .leg-initial {
+  color: var(--case2-color-cdf-initial);
+}
+
+.case2-page .leg-calibrated {
+  color: var(--case2-color-calibrated);
+}
+
+.case2-page .cdf-plot,
+.case2-page .bar-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.case2-page .cdf-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.case2-page .cdf-axis-labels text {
+  fill: #939393;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 9px;
+}
+
+.case2-page .cdf-curve-layer {
+  overflow: visible;
+}
+
+.case2-page .bar-group {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.case2-page .bar-group--initial {
+  left: 42px;
+  width: 56px;
+}
+
+.case2-page .bar-group--calibrated {
+  left: 154px;
+  width: 88px;
+}
+
+.case2-page .mean-value {
+  position: absolute;
+  top: 63px;
+  left: 6px;
+  font-family: var(--case2-font-data);
+  font-size: var(--case2-font-size-mean);
+  font-weight: 600;
+  color: var(--case2-color-text);
+}
+
+.case2-page .bar-group--calibrated .mean-value {
+  top: 61px;
+  left: 10px;
+}
+
+.case2-page .bar-initial {
+  position: absolute;
+  left: 8px;
+  top: 89px;
+  width: 40px;
+  height: 101px;
+  border-radius: 6px 6px 0 0;
+  background: url("../../04-runtime-assets/case2/icons/bar-initial-fill.png") center / cover no-repeat;
+}
+
+.case2-page .bar-ghost {
+  position: absolute;
+  left: 10px;
+  top: 89px;
+  width: 40px;
+  height: 101px;
+  border-radius: 6px 6px 0 0;
+  border: 1.5px solid var(--case2-color-ghost-stroke);
+  background: transparent;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.case2-page .bar-calibrated {
+  position: relative;
+  width: 100%;
+  height: 53px;
+  border-radius: 3px 3px 0 0;
+  background: var(--case2-color-calibrated);
+  flex-shrink: 0;
+}
+
+.case2-page .bar-y-axis {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.case2-page .bar-y-axis span {
+  position: absolute;
+  left: 4px;
+  font-size: var(--case2-font-size-bar-axis);
+  color: var(--case2-color-bar-axis);
+  line-height: 1;
+}
+
+.case2-page .bar-y-axis span:nth-child(1) { top: 23px; }
+.case2-page .bar-y-axis span:nth-child(2) { top: 64px; }
+.case2-page .bar-y-axis span:nth-child(3) { top: 104px; }
+.case2-page .bar-y-axis span:nth-child(4) { top: 145px; }
+.case2-page .bar-y-axis span:nth-child(5) { top: 185px; }
+
+.case2-page .bar-guide-dash {
+  position: absolute;
+  left: 24px;
+  top: 134px;
+  width: 200px;
+  height: 2px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.case2-page .bar-guide-dash path {
+  fill: none;
+  stroke: var(--case2-color-dash);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.case2-page .bar-axis-label {
+  position: absolute;
+  left: 3px;
+  top: 195px;
+  font-size: var(--case2-font-size-bar-label);
+  color: var(--case2-color-text);
+  white-space: nowrap;
+}
+
+.case2-page .bar-group--calibrated .bar-axis-label {
+  left: -9px;
+  top: 196px;
+}
+
+.case2-page .bar-baseline {
+  position: absolute;
+  left: 22px;
+  top: 190px;
+  width: 200px;
+  height: 1px;
+  background: var(--case2-color-baseline);
+  z-index: 0;
+}
+
+.case2-page .reduction-badge {
+  position: absolute;
+  left: 139px;
+  top: 17px;
+  width: 85px;
+  height: 47px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: var(--case2-radius-reduction);
+  background: url("../../04-runtime-assets/case2/icons/reduction-badge-bg.png") center / 100% 100% no-repeat;
+  color: var(--case2-color-primary-text);
+  font-size: var(--case2-font-size-reduction);
+  font-weight: 600;
+  z-index: 2;
+}
+
+.case2-page .cdf-waiting,
+.case2-page .bar-waiting {
+  display: none;
+}
+
+/* -------- State variants -------- */
+
+/* completed: full comparison (Pencil rdP2e) */
+.case2-page[data-state="completed"] .status-feedback {
+  background: var(--case2-color-status-success-bg);
+  color: var(--case2-color-success);
+  font-size: var(--case2-font-size-status-done);
+}
+
+.case2-page[data-state="completed"] .status-dot {
+  background: var(--case2-color-success);
+}
+
+/* initial / calibrating / failed: hide calibrated comparison visuals */
+.case2-page[data-state="initial"] [data-cal-cdf],
+.case2-page[data-state="calibrating"] [data-cal-cdf],
+.case2-page[data-state="failed"] [data-cal-cdf],
+.case2-page[data-state="initial"] [data-cal-bar],
+.case2-page[data-state="calibrating"] [data-cal-bar],
+.case2-page[data-state="failed"] [data-cal-bar],
+.case2-page[data-state="initial"] [data-cal-ghost],
+.case2-page[data-state="calibrating"] [data-cal-ghost],
+.case2-page[data-state="failed"] [data-cal-ghost],
+.case2-page[data-state="initial"] [data-reduction],
+.case2-page[data-state="calibrating"] [data-reduction],
+.case2-page[data-state="failed"] [data-reduction],
+.case2-page[data-state="initial"] [data-mean-calibrated],
+.case2-page[data-state="calibrating"] [data-mean-calibrated],
+.case2-page[data-state="failed"] [data-mean-calibrated],
+.case2-page[data-state="initial"] .bar-guide-dash,
+.case2-page[data-state="calibrating"] .bar-guide-dash,
+.case2-page[data-state="failed"] .bar-guide-dash {
+  display: none !important;
+}
+
+.case2-page[data-state="initial"] .heatmap-card.is-calibrated .heatmap-represent,
+.case2-page[data-state="calibrating"] .heatmap-card.is-calibrated .heatmap-represent,
+.case2-page[data-state="failed"] .heatmap-card.is-calibrated .heatmap-represent {
+  display: none;
+}
+
+.case2-page[data-state="calibrating"] .status-feedback {
+  color: var(--case2-color-calibrated);
+}
+
+.case2-page[data-state="calibrating"] .status-dot {
+  background: var(--case2-color-calibrated);
+}
+
+.case2-page[data-state="failed"] .status-feedback {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--case2-color-error);
+}
+
+.case2-page[data-state="failed"] .status-dot {
+  background: var(--case2-color-error);
+}
+
+/* Review dock — prototype only */
+.review-dock {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  font: 12px/1 var(--case2-font-ui);
+}
+
+.review-dock__label {
+  color: #94a3b8;
+  margin-right: 4px;
+}
+
+.review-dock button {
+  appearance: none;
+  border: 1px solid #475569;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.review-dock button.is-active {
+  border-color: #22d3ee;
+  color: #22d3ee;
+}

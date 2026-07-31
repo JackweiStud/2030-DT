@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>case2 DT Calibration — Gate 1.5 Static</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../04-runtime-assets/case2/tokens.css" />
+  <link rel="stylesheet" href="./case2.css?v=icon-toggle" />
+</head>
+<body>
+  <div class="stage-viewport">
+    <div class="stage" id="stage">
+      <!-- Shell: shared chrome; case tabs only -->
+      <header class="shell-header" data-layer="ShellHeader">
+        <div class="nav-bg" aria-hidden="true"></div>
+        <div class="brand-area">
+          <img class="brand-logo" src="../../04-runtime-assets/case2/brand/brand-logo.png" width="32" height="32" alt="" />
+          <span class="brand-sub">云上外场</span>
+          <span class="brand-title">IMT-2030 DT测试</span>
+        </div>
+        <nav class="case-nav" aria-label="Case tabs">
+          <button type="button" class="case-tab" data-tab="case1">
+            <span class="case-tab__label">DT Construction</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="case-tab is-active" data-tab="case2">
+            <span class="case-tab__label">DT Calibration</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="case-tab" data-tab="case3">
+            <span class="case-tab__label">DT for Comm</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="case-tab" data-tab="case4">
+            <span class="case-tab__label">DT for positioning</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+        </nav>
+      </header>
+
+      <!-- Placeholder for non-case2 tabs -->
+      <section class="placeholder-page" id="placeholder-page" hidden>
+        <p>建设中</p>
+      </section>
+
+      <!-- case2 page -->
+      <main class="case2-page" id="case2-page" data-state="initial">
+        <div class="main-content">
+          <div class="main-row">
+            <!-- Left: Calibration comparison -->
+            <section class="calibration-panel">
+              <div class="panel-title-row">
+                <div class="title-group">
+                  <img class="title-accent" src="../../04-runtime-assets/case2/icons/panel-title-accent.png" alt="" />
+                  <h2 class="panel-title">测试对比</h2>
+                </div>
+                <a class="env-link" href="#" tabindex="-1">现场环境 &gt;</a>
+              </div>
+
+              <div class="column-header-row">
+                <div class="initial-column-head">
+                  <img src="../../04-runtime-assets/case2/icons/column-initial-icon.png" width="24" height="24" alt="" />
+                  <span>Initial DT</span>
+                </div>
+                <div class="calibrated-column-head">
+                  <div class="calibrated-info">
+                    <div class="calibrated-label">
+                      <img src="../../04-runtime-assets/case2/icons/column-calibrated-icon.png" width="24" height="24" alt="" />
+                      <span>Calibrated DT</span>
+                    </div>
+                    <div class="status-feedback" data-status-badge>
+                      <span class="status-dot"></span>
+                      <span class="status-text">等待启动测试</span>
+                    </div>
+                  </div>
+                  <div class="calibration-controls">
+                    <button type="button" class="ctrl-btn ctrl-btn--start" data-action="start" title="启动（验收切换）">
+                      <img class="ctrl-icon ctrl-icon--play" src="../../04-runtime-assets/case2/icons/icon-play.svg?v=badge" width="16" height="16" alt="" />
+                      <img class="ctrl-icon ctrl-icon--pause" src="../../04-runtime-assets/case2/icons/icon-pause.svg?v=gray" width="16" height="16" alt="" />
+                      <span data-start-label>启动</span>
+                    </button>
+                    <button type="button" class="ctrl-btn ctrl-btn--clear" data-action="clear" title="清除（验收切换）">
+                      <img src="../../04-runtime-assets/case2/icons/icon-rotate-ccw.svg?v=badge" width="16" height="16" alt="" />
+                      <span>清除</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="heatmap-stack">
+                <!-- RSS -->
+                <div class="heatmap-pair" data-metric="rss">
+                  <article class="heatmap-card is-initial">
+                    <div class="heatmap-card__media">
+                      <div class="heatmap-base"></div>
+                      <div class="heatmap-represent" data-heat="initial"></div>
+                    </div>
+                    <div class="metric-tag metric-tag--rss">
+                      <img class="metric-tag__plate" src="../../04-runtime-assets/case2/icons/metric-tag-rss.png" width="70" height="30" alt="" />
+                      <span class="metric-tag__label">RSS</span>
+                    </div>
+                  </article>
+                  <article class="heatmap-card is-calibrated" data-cal-heat>
+                    <div class="heatmap-card__media">
+                      <div class="heatmap-base"></div>
+                      <div class="heatmap-represent" data-heat="calibrated"></div>
+                      <div class="heat-empty" data-heat-empty></div>
+                    </div>
+                    <div class="metric-tag metric-tag--rss">
+                      <img class="metric-tag__plate" src="../../04-runtime-assets/case2/icons/metric-tag-rss.png" width="70" height="30" alt="" />
+                      <span class="metric-tag__label">RSS</span>
+                    </div>
+                  </article>
+                </div>
+                <!-- Path -->
+                <div class="heatmap-pair" data-metric="path">
+                  <article class="heatmap-card is-initial">
+                    <div class="heatmap-card__media">
+                      <div class="heatmap-base"></div>
+                      <div class="heatmap-represent" data-heat="initial"></div>
+                    </div>
+                    <div class="metric-tag metric-tag--path">
+                      <img class="metric-tag__plate" src="../../04-runtime-assets/case2/icons/metric-tag-path.png" width="200" height="30" alt="" />
+                      <span class="metric-tag__label">Effective Path Num</span>
+                    </div>
+                  </article>
+                  <article class="heatmap-card is-calibrated" data-cal-heat>
+                    <div class="heatmap-card__media">
+                      <div class="heatmap-base"></div>
+                      <div class="heatmap-represent" data-heat="calibrated"></div>
+                      <div class="heat-empty" data-heat-empty></div>
+                    </div>
+                    <div class="metric-tag metric-tag--path">
+                      <img class="metric-tag__plate" src="../../04-runtime-assets/case2/icons/metric-tag-path.png" width="200" height="30" alt="" />
+                      <span class="metric-tag__label">Effective Path Num</span>
+                    </div>
+                  </article>
+                </div>
+                <!-- Delay -->
+                <div class="heatmap-pair" data-metric="delay">
+                  <article class="heatmap-card is-initial">
+                    <div class="heatmap-card__media">
+                      <div class="heatmap-base"></div>
+                      <div class="heatmap-represent" data-heat="initial"></div>
+                    </div>
+                    <div class="metric-tag metric-tag--delay">
+                      <img class="metric-tag__plate" src="../../04-runtime-assets/case2/icons/metric-tag-delay.png" width="164" height="30" alt="" />
+                      <span class="metric-tag__label">First Path Delay</span>
+                    </div>
+                  </article>
+                  <article class="heatmap-card is-calibrated" data-cal-heat>
+                    <div class="heatmap-card__media">
+                      <div class="heatmap-base"></div>
+                      <div class="heatmap-represent" data-heat="calibrated"></div>
+                      <div class="heat-empty" data-heat-empty></div>
+                    </div>
+                    <div class="metric-tag metric-tag--delay">
+                      <img class="metric-tag__plate" src="../../04-runtime-assets/case2/icons/metric-tag-delay.png" width="164" height="30" alt="" />
+                      <span class="metric-tag__label">First Path Delay</span>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </section>
+
+            <!-- Right: KPI -->
+            <section class="kpi-panel">
+              <div class="kpi-title-row">
+                <img class="title-accent" src="../../04-runtime-assets/case2/icons/panel-title-accent.png" alt="" />
+                <h2 class="panel-title">KPI对比</h2>
+              </div>
+
+              <div class="kpi-stack">
+                <article class="kpi-row" data-metric="rss">
+                  <div class="metric-header">
+                    <img class="metric-icon" src="../../04-runtime-assets/case2/icons/metric-rss-icon.png" width="24" height="24" alt="" />
+                    <h3>RSS (接收信号强度)</h3>
+                  </div>
+                  <div class="chart-row">
+                    <div class="cdf-area">
+                      <div class="chart-head">
+                        <span>CDF图对比</span>
+                        <div class="legend">
+                          <span class="leg-initial">● Initial DT</span>
+                          <span class="leg-calibrated" data-cal-legend>● Calibrated DT</span>
+                        </div>
+                      </div>
+                      <div class="cdf-plot">
+                        <svg class="cdf-svg" viewBox="0 0 384 222" preserveAspectRatio="none" aria-hidden="true">
+                          <g class="cdf-grid" stroke="#ffffff33" stroke-width="1">
+                            <line x1="26" y1="4" x2="374" y2="4" /><line x1="26" y1="24" x2="374" y2="24" />
+                            <line x1="26" y1="44" x2="374" y2="44" /><line x1="26" y1="65" x2="374" y2="65" />
+                            <line x1="26" y1="85" x2="374" y2="85" /><line x1="26" y1="105" x2="374" y2="105" />
+                            <line x1="26" y1="125" x2="374" y2="125" /><line x1="26" y1="145" x2="374" y2="145" />
+                            <line x1="26" y1="166" x2="374" y2="166" /><line x1="26" y1="186" x2="374" y2="186" />
+                            <line x1="26" y1="206" x2="374" y2="206" />
+                            <line x1="26" y1="4" x2="26" y2="206" /><line x1="49" y1="4" x2="49" y2="206" />
+                            <line x1="72" y1="4" x2="72" y2="206" /><line x1="96" y1="4" x2="96" y2="206" />
+                            <line x1="119" y1="4" x2="119" y2="206" /><line x1="142" y1="4" x2="142" y2="206" />
+                            <line x1="165" y1="4" x2="165" y2="206" /><line x1="188" y1="4" x2="188" y2="206" />
+                            <line x1="212" y1="4" x2="212" y2="206" /><line x1="235" y1="4" x2="235" y2="206" />
+                            <line x1="258" y1="4" x2="258" y2="206" /><line x1="281" y1="4" x2="281" y2="206" />
+                            <line x1="304" y1="4" x2="304" y2="206" /><line x1="328" y1="4" x2="328" y2="206" />
+                            <line x1="351" y1="4" x2="351" y2="206" /><line x1="374" y1="4" x2="374" y2="206" />
+                          </g>
+                          <g class="cdf-axis-labels">
+                            <text x="1" y="8">1</text><text x="1" y="28">0.9</text><text x="1" y="48">0.8</text>
+                            <text x="1" y="69">0.7</text><text x="1" y="89">0.6</text><text x="1" y="109">0.5</text>
+                            <text x="1" y="129">0.4</text><text x="1" y="149">0.3</text><text x="1" y="170">0.2</text>
+                            <text x="1" y="190">0.1</text><text x="1" y="210">0</text>
+                          </g>
+                          <g class="cdf-axis-labels cdf-axis-labels--x">
+                            <text x="24" y="215">1</text><text x="47" y="215">2</text><text x="70" y="215">3</text>
+                            <text x="94" y="215">4</text><text x="117" y="215">5</text><text x="140" y="215">6</text>
+                            <text x="163" y="215">7</text><text x="186" y="215">8</text><text x="210" y="215">9</text>
+                            <text x="233" y="215">10</text><text x="256" y="215">11</text><text x="279" y="215">12</text>
+                            <text x="302" y="215">13</text><text x="326" y="215">14</text><text x="349" y="215">15</text>
+                            <text x="372" y="215">16</text>
+                          </g>
+                          <svg class="cdf-curve-layer" x="26" y="4" width="348" height="202" viewBox="0 0 375 100" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
+                            <path class="cdf-initial" fill="none" stroke="#939393" stroke-width="2" vector-effect="non-scaling-stroke"
+                              d="M112.5 90l0-10 62.5 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10" />
+                          </svg>
+                          <svg class="cdf-curve-layer" x="26" y="4" width="348" height="202" viewBox="0 0 375 100" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
+                            <path class="cdf-calibrated" data-cal-cdf fill="none" stroke="#22D3EE" stroke-width="2" vector-effect="non-scaling-stroke"
+                              d="M37.5 90l0-10 50 0 0-10 50 0 0-10 37.5 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 12.5 0 0-10 12.5 0 0-10" />
+                          </svg>
+                        </svg>
+                        <div class="cdf-waiting" data-cdf-waiting></div>
+                      </div>
+                    </div>
+                    <div class="bar-area">
+                      <div class="chart-head">
+                        <span>平均值对比</span>
+                        <div class="legend legend--sm">
+                          <span class="leg-initial">● Initial DT</span>
+                          <span class="leg-calibrated" data-cal-legend>● Calibrated DT</span>
+                        </div>
+                      </div>
+                      <div class="bar-plot">
+                        <div class="bar-y-axis" aria-hidden="true">
+                          <span>8</span><span>6</span><span>4</span><span>2</span><span>0</span>
+                        </div>
+                        <div class="bar-group bar-group--initial">
+                          <span class="mean-value" data-mean-initial>5.0</span>
+                          <div class="bar-initial"></div>
+                          <span class="bar-axis-label">Initial DT</span>
+                        </div>
+                        <div class="bar-group bar-group--calibrated" data-cal-bars>
+                          <span class="mean-value" data-mean-calibrated>3.0</span>
+                          <div class="bar-ghost" data-cal-ghost>
+                            <div class="bar-calibrated" data-cal-bar></div>
+                          </div>
+                          <span class="bar-axis-label">Calibrated DT</span>
+                        </div>
+                        <div class="bar-baseline"></div>
+                        <svg class="bar-guide-dash" viewBox="0 0 200 2" preserveAspectRatio="none" aria-hidden="true">
+                          <path d="M0 1h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6" />
+                        </svg>
+                        <div class="reduction-badge" data-reduction>
+                          <img src="../../04-runtime-assets/case2/icons/reduction-arrow-icon.png" width="24" height="24" alt="" />
+                          <span data-reduction-text>40%</span>
+                        </div>
+                        <div class="bar-waiting" data-bar-waiting></div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="kpi-row" data-metric="path">
+                  <div class="metric-header">
+                    <img class="metric-icon" src="../../04-runtime-assets/case2/icons/metric-path-icon.png" width="24" height="24" alt="" />
+                    <h3>Effective Path Num (有效路径数)</h3>
+                  </div>
+                  <div class="chart-row">
+                    <div class="cdf-area">
+                      <div class="chart-head">
+                        <span>CDF图对比</span>
+                        <div class="legend">
+                          <span class="leg-initial">● Initial DT</span>
+                          <span class="leg-calibrated" data-cal-legend>● Calibrated DT</span>
+                        </div>
+                      </div>
+                      <div class="cdf-plot">
+                        <svg class="cdf-svg" viewBox="0 0 384 222" preserveAspectRatio="none" aria-hidden="true">
+                          <g class="cdf-grid" stroke="#ffffff33" stroke-width="1">
+                            <line x1="26" y1="4" x2="374" y2="4" /><line x1="26" y1="24" x2="374" y2="24" />
+                            <line x1="26" y1="44" x2="374" y2="44" /><line x1="26" y1="65" x2="374" y2="65" />
+                            <line x1="26" y1="85" x2="374" y2="85" /><line x1="26" y1="105" x2="374" y2="105" />
+                            <line x1="26" y1="125" x2="374" y2="125" /><line x1="26" y1="145" x2="374" y2="145" />
+                            <line x1="26" y1="166" x2="374" y2="166" /><line x1="26" y1="186" x2="374" y2="186" />
+                            <line x1="26" y1="206" x2="374" y2="206" />
+                            <line x1="26" y1="4" x2="26" y2="206" /><line x1="49" y1="4" x2="49" y2="206" />
+                            <line x1="72" y1="4" x2="72" y2="206" /><line x1="96" y1="4" x2="96" y2="206" />
+                            <line x1="119" y1="4" x2="119" y2="206" /><line x1="142" y1="4" x2="142" y2="206" />
+                            <line x1="165" y1="4" x2="165" y2="206" /><line x1="188" y1="4" x2="188" y2="206" />
+                            <line x1="212" y1="4" x2="212" y2="206" /><line x1="235" y1="4" x2="235" y2="206" />
+                            <line x1="258" y1="4" x2="258" y2="206" /><line x1="281" y1="4" x2="281" y2="206" />
+                            <line x1="304" y1="4" x2="304" y2="206" /><line x1="328" y1="4" x2="328" y2="206" />
+                            <line x1="351" y1="4" x2="351" y2="206" /><line x1="374" y1="4" x2="374" y2="206" />
+                          </g>
+                          <g class="cdf-axis-labels">
+                            <text x="1" y="8">1</text><text x="1" y="28">0.9</text><text x="1" y="48">0.8</text>
+                            <text x="1" y="69">0.7</text><text x="1" y="89">0.6</text><text x="1" y="109">0.5</text>
+                            <text x="1" y="129">0.4</text><text x="1" y="149">0.3</text><text x="1" y="170">0.2</text>
+                            <text x="1" y="190">0.1</text><text x="1" y="210">0</text>
+                          </g>
+                          <g class="cdf-axis-labels cdf-axis-labels--x">
+                            <text x="24" y="215">1</text><text x="47" y="215">2</text><text x="70" y="215">3</text>
+                            <text x="94" y="215">4</text><text x="117" y="215">5</text><text x="140" y="215">6</text>
+                            <text x="163" y="215">7</text><text x="186" y="215">8</text><text x="210" y="215">9</text>
+                            <text x="233" y="215">10</text><text x="256" y="215">11</text><text x="279" y="215">12</text>
+                            <text x="302" y="215">13</text><text x="326" y="215">14</text><text x="349" y="215">15</text>
+                            <text x="372" y="215">16</text>
+                          </g>
+                          <svg class="cdf-curve-layer" x="26" y="4" width="348" height="202" viewBox="0 0 375 100" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
+                            <path class="cdf-initial" fill="none" stroke="#939393" stroke-width="2" vector-effect="non-scaling-stroke"
+                              d="M112.5 90l0-10 62.5 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10" />
+                          </svg>
+                          <svg class="cdf-curve-layer" x="26" y="4" width="348" height="202" viewBox="0 0 375 100" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
+                            <path class="cdf-calibrated" data-cal-cdf fill="none" stroke="#22D3EE" stroke-width="2" vector-effect="non-scaling-stroke"
+                              d="M37.5 90l0-10 50 0 0-10 50 0 0-10 37.5 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 12.5 0 0-10 12.5 0 0-10" />
+                          </svg>
+                        </svg>
+                        <div class="cdf-waiting" data-cdf-waiting></div>
+                      </div>
+                    </div>
+                    <div class="bar-area">
+                      <div class="chart-head">
+                        <span>平均值对比</span>
+                        <div class="legend legend--sm">
+                          <span class="leg-initial">● Initial DT</span>
+                          <span class="leg-calibrated" data-cal-legend>● Calibrated DT</span>
+                        </div>
+                      </div>
+                      <div class="bar-plot">
+                        <div class="bar-y-axis" aria-hidden="true">
+                          <span>8</span><span>6</span><span>4</span><span>2</span><span>0</span>
+                        </div>
+                        <div class="bar-group bar-group--initial">
+                          <span class="mean-value" data-mean-initial>5.0</span>
+                          <div class="bar-initial"></div>
+                          <span class="bar-axis-label">Initial DT</span>
+                        </div>
+                        <div class="bar-group bar-group--calibrated" data-cal-bars>
+                          <span class="mean-value" data-mean-calibrated>3.0</span>
+                          <div class="bar-ghost" data-cal-ghost>
+                            <div class="bar-calibrated" data-cal-bar></div>
+                          </div>
+                          <span class="bar-axis-label">Calibrated DT</span>
+                        </div>
+                        <div class="bar-baseline"></div>
+                        <svg class="bar-guide-dash" viewBox="0 0 200 2" preserveAspectRatio="none" aria-hidden="true">
+                          <path d="M0 1h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6" />
+                        </svg>
+                        <div class="reduction-badge" data-reduction>
+                          <img src="../../04-runtime-assets/case2/icons/reduction-arrow-icon.png" width="24" height="24" alt="" />
+                          <span data-reduction-text>40%</span>
+                        </div>
+                        <div class="bar-waiting" data-bar-waiting></div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="kpi-row" data-metric="delay">
+                  <div class="metric-header">
+                    <img class="metric-icon" src="../../04-runtime-assets/case2/icons/metric-delay-icon.png" width="24" height="24" alt="" />
+                    <h3>First Path Delay (首径时延)</h3>
+                  </div>
+                  <div class="chart-row">
+                    <div class="cdf-area">
+                      <div class="chart-head">
+                        <span>CDF图对比</span>
+                        <div class="legend">
+                          <span class="leg-initial">● Initial DT</span>
+                          <span class="leg-calibrated" data-cal-legend>● Calibrated DT</span>
+                        </div>
+                      </div>
+                      <div class="cdf-plot">
+                        <svg class="cdf-svg" viewBox="0 0 384 222" preserveAspectRatio="none" aria-hidden="true">
+                          <g class="cdf-grid" stroke="#ffffff33" stroke-width="1">
+                            <line x1="26" y1="4" x2="374" y2="4" /><line x1="26" y1="24" x2="374" y2="24" />
+                            <line x1="26" y1="44" x2="374" y2="44" /><line x1="26" y1="65" x2="374" y2="65" />
+                            <line x1="26" y1="85" x2="374" y2="85" /><line x1="26" y1="105" x2="374" y2="105" />
+                            <line x1="26" y1="125" x2="374" y2="125" /><line x1="26" y1="145" x2="374" y2="145" />
+                            <line x1="26" y1="166" x2="374" y2="166" /><line x1="26" y1="186" x2="374" y2="186" />
+                            <line x1="26" y1="206" x2="374" y2="206" />
+                            <line x1="26" y1="4" x2="26" y2="206" /><line x1="49" y1="4" x2="49" y2="206" />
+                            <line x1="72" y1="4" x2="72" y2="206" /><line x1="96" y1="4" x2="96" y2="206" />
+                            <line x1="119" y1="4" x2="119" y2="206" /><line x1="142" y1="4" x2="142" y2="206" />
+                            <line x1="165" y1="4" x2="165" y2="206" /><line x1="188" y1="4" x2="188" y2="206" />
+                            <line x1="212" y1="4" x2="212" y2="206" /><line x1="235" y1="4" x2="235" y2="206" />
+                            <line x1="258" y1="4" x2="258" y2="206" /><line x1="281" y1="4" x2="281" y2="206" />
+                            <line x1="304" y1="4" x2="304" y2="206" /><line x1="328" y1="4" x2="328" y2="206" />
+                            <line x1="351" y1="4" x2="351" y2="206" /><line x1="374" y1="4" x2="374" y2="206" />
+                          </g>
+                          <g class="cdf-axis-labels">
+                            <text x="1" y="8">1</text><text x="1" y="28">0.9</text><text x="1" y="48">0.8</text>
+                            <text x="1" y="69">0.7</text><text x="1" y="89">0.6</text><text x="1" y="109">0.5</text>
+                            <text x="1" y="129">0.4</text><text x="1" y="149">0.3</text><text x="1" y="170">0.2</text>
+                            <text x="1" y="190">0.1</text><text x="1" y="210">0</text>
+                          </g>
+                          <g class="cdf-axis-labels cdf-axis-labels--x">
+                            <text x="24" y="215">1</text><text x="47" y="215">2</text><text x="70" y="215">3</text>
+                            <text x="94" y="215">4</text><text x="117" y="215">5</text><text x="140" y="215">6</text>
+                            <text x="163" y="215">7</text><text x="186" y="215">8</text><text x="210" y="215">9</text>
+                            <text x="233" y="215">10</text><text x="256" y="215">11</text><text x="279" y="215">12</text>
+                            <text x="302" y="215">13</text><text x="326" y="215">14</text><text x="349" y="215">15</text>
+                            <text x="372" y="215">16</text>
+                          </g>
+                          <svg class="cdf-curve-layer" x="26" y="4" width="348" height="202" viewBox="0 0 375 100" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
+                            <path class="cdf-initial" fill="none" stroke="#939393" stroke-width="2" vector-effect="non-scaling-stroke"
+                              d="M112.5 90l0-10 62.5 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10" />
+                          </svg>
+                          <svg class="cdf-curve-layer" x="26" y="4" width="348" height="202" viewBox="0 0 375 100" preserveAspectRatio="none" overflow="visible" aria-hidden="true">
+                            <path class="cdf-calibrated" data-cal-cdf fill="none" stroke="#22D3EE" stroke-width="2" vector-effect="non-scaling-stroke"
+                              d="M37.5 90l0-10 50 0 0-10 50 0 0-10 37.5 0 0-10 25 0 0-10 25 0 0-10 25 0 0-10 12.5 0 0-10 12.5 0 0-10" />
+                          </svg>
+                        </svg>
+                        <div class="cdf-waiting" data-cdf-waiting></div>
+                      </div>
+                    </div>
+                    <div class="bar-area">
+                      <div class="chart-head">
+                        <span>平均值对比</span>
+                        <div class="legend legend--sm">
+                          <span class="leg-initial">● Initial DT</span>
+                          <span class="leg-calibrated" data-cal-legend>● Calibrated DT</span>
+                        </div>
+                      </div>
+                      <div class="bar-plot">
+                        <div class="bar-y-axis" aria-hidden="true">
+                          <span>8</span><span>6</span><span>4</span><span>2</span><span>0</span>
+                        </div>
+                        <div class="bar-group bar-group--initial">
+                          <span class="mean-value" data-mean-initial>5.0</span>
+                          <div class="bar-initial"></div>
+                          <span class="bar-axis-label">Initial DT</span>
+                        </div>
+                        <div class="bar-group bar-group--calibrated" data-cal-bars>
+                          <span class="mean-value" data-mean-calibrated>3.0</span>
+                          <div class="bar-ghost" data-cal-ghost>
+                            <div class="bar-calibrated" data-cal-bar></div>
+                          </div>
+                          <span class="bar-axis-label">Calibrated DT</span>
+                        </div>
+                        <div class="bar-baseline"></div>
+                        <svg class="bar-guide-dash" viewBox="0 0 200 2" preserveAspectRatio="none" aria-hidden="true">
+                          <path d="M0 1h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6" />
+                        </svg>
+                        <div class="reduction-badge" data-reduction>
+                          <img src="../../04-runtime-assets/case2/icons/reduction-arrow-icon.png" width="24" height="24" alt="" />
+                          <span data-reduction-text>40%</span>
+                        </div>
+                        <div class="bar-waiting" data-bar-waiting></div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Gate 1.5 review-only controls (not for formal frontend) -->
+  <aside class="review-dock" aria-label="Gate 1.5 review controls">
+    <span class="review-dock__label">Gate 1.5</span>
+    <button type="button" data-set-state="initial">initial</button>
+    <button type="button" data-set-state="calibrating">calibrating</button>
+    <button type="button" data-set-state="failed">failed</button>
+    <button type="button" data-set-state="completed">completed</button>
+  </aside>
+
+  <script src="./case2.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+/**
+ * case2 DT Calibration — visual tokens
+ * Source: Pencil variables + measured layout from
+ * 03-design/case2/case2-dt-calibration.pen (Gate 1 frozen)
+ *
+ * Formal frontend and Gate 1.5 static prototype MUST consume these tokens.
+ * Do not invent a parallel color/spacing system.
+ */
+
+:root {
+  /* Typography (Pencil variables) */
+  --case2-font-ui: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --case2-font-data: "Geist Mono", "SF Mono", "Menlo", monospace;
+
+  /* Colors (Pencil variables) */
+  --case2-color-text: #f8fafc;
+  --case2-color-primary-text: #ffffff;
+  --case2-color-muted: #94a3b8;
+  --case2-color-initial: #6b7280;
+  --case2-color-calibrated: #22d3ee;
+  --case2-color-success: #22c55e;
+  --case2-color-error: #ef4444;
+  --case2-color-metric-rss: #3b82f6;
+  --case2-color-metric-path: #a855f7;
+  --case2-color-metric-delay: #eab308;
+  --case2-color-panel: #121820;
+  --case2-color-surface: #0a0e14;
+
+  /* Measured page / chrome fills from Pencil frames */
+  --case2-color-page: #191a1a;
+  --case2-color-grid-line: #ffffff33;
+  --case2-color-axis: #939393;
+  --case2-color-bar-axis: #9ca3af;
+  --case2-color-baseline: #4b5563;
+  --case2-color-card-stroke: #334155;
+  --case2-color-tab-active-underline: #ebf2f5;
+  --case2-color-status-success-bg: #09aa7126;
+  --case2-color-heat-represent: #22c55e66;
+  --case2-color-cdf-initial: #939393;
+  --case2-color-ghost-stroke: #9ca3af;
+  --case2-color-dash: #d1d5dbcc;
+
+  /* Radii (Pencil variables + measured) */
+  --case2-radius-card: 8px;
+  --case2-radius-panel: 12px;
+  --case2-radius-badge: 12px;
+  --case2-radius-tag: 4px;
+  --case2-radius-button: 6px;
+  --case2-radius-reduction: 10px;
+  --case2-radius-tab-underline: 2px;
+
+  /* Spacing (Pencil variables + measured) */
+  --case2-space-gap-row: 12px;
+  --case2-space-gap-panel: 16px;
+  --case2-space-gap-main-row: 30px;
+  --case2-space-gap-heat-pair: 25px;
+  --case2-space-gap-kpi-rows: 25px;
+  --case2-space-gap-title: 8px;
+  --case2-space-gap-chart: 12px;
+  --case2-space-gap-heat-stack: 10px;
+  --case2-space-pad-panel: 15px;
+  --case2-space-pad-main: 10px;
+  --case2-space-pad-main-row-y: 10px;
+  --case2-space-pad-main-row-x: 20px;
+
+  /* Stage / shell (measured) */
+  --case2-stage-width: 1920px;
+  --case2-stage-height: 1080px;
+  --case2-shell-header-height: 78px;
+  --case2-left-panel-width: 1066px;
+  --case2-right-panel-width: 764px;
+  --case2-panel-height: 970px;
+  --case2-main-row-width: 1900px;
+  --case2-main-row-height: 987px;
+  --case2-heatmap-row-height: 278px;
+  --case2-cdf-width: 400px;
+  --case2-cdf-height: 260px;
+  --case2-bar-width: 291px;
+  --case2-brand-area-width: 540px;
+  --case2-nav-tabs-left: 607px;
+  --case2-nav-tabs-width: 689px;
+  --case2-tab-gap: 20px;
+
+  /* Type scale (measured) */
+  --case2-font-size-brand-title: 24px;
+  --case2-font-size-brand-sub: 14px;
+  --case2-font-size-tab: 18px;
+  --case2-font-size-panel-title: 18px;
+  --case2-font-size-column: 16px;
+  --case2-font-size-metric-tag: 20px;
+  --case2-font-size-kpi-title: 16px;
+  --case2-font-size-chart-title: 11px;
+  --case2-font-size-legend: 10px;
+  --case2-font-size-axis: 9px;
+  --case2-font-size-bar-axis: 10px;
+  --case2-font-size-mean: 18px;
+  --case2-font-size-bar-label: 12px;
+  --case2-font-size-button: 12px;
+  --case2-font-size-status: 12px;
+  --case2-font-size-status-done: 14px;
+  --case2-font-size-link: 13px;
+  --case2-font-size-reduction: 20px;
+}
