@@ -5,11 +5,12 @@
 - 项目 Gate 0：已于 2026-07-29 获用户批准。
 - case2 Gate 1：已于 2026-07-30 经用户视觉审阅冻结（`APPROVED`）。
 - case2 Gate 1.5：四态静态 HTML 已由用户人工检查并接受；Shell 与 case2 资源/token 归属已分离，验收记录见 `doc/case2/STATIC-HTML-ACCEPTANCE.md`。
-- 当前焦点：准备 Gate 2 API 契约；尚未进入 Gate 2，且未创建任何 React、Node 或业务实现代码。
+- case2 Gate 2：已于 2026-07-30 获用户授权进入；API 契约 v0.1 与 UI 数据来源反向清单已起草，仍待四项外部事实确认后批准 v1。
+- 当前焦点：冻结 case2 的文件控制、完整结果发布、重放和截图语义；尚未创建任何 React、Node 或业务实现代码。
 
 ## 一句话演示承诺
 
-内部团队在 `DT Calibration` 中先看到 Initial DT 的三项误差基线；启动 `with dt` 校准后，只有当后端发布完整结果并标记 `case complete`，才展示 Calibrated DT 的热力图、CDF 与均值对比，以证明校准降低误差；清除后回到 Initial DT。
+内部团队在 `DT Calibration` 中先看到 Initial DT 的三项误差基线；启动 `with dt` 校准后，只有当后端发布完整结果并标记 `case complete`，才展示 Calibrated DT 的热力图、CDF 与均值对比，以证明校准降低误差；点击“重置”（`reinit`）后回到 Initial DT。
 
 ## 当前事实
 
@@ -27,7 +28,7 @@
 | 命令成功待结果 | `status="execute success"` | 仍为校准中，不显示完成对比 | 后端状态 + 前端展示 |
 | 校准完成 | `status="case complete"` 且结果批次完整 | Calibrated 热力图、CDF、均值和降幅 | 后端结果 + 前端派生 |
 | 校准失败 | `status="execute fail"` | 失败提示与 Initial DT；不显示 Calibrated 结果 | 后端状态 + 前端展示 |
-| 清除中/回初始 | 前端写入 `reinit` | 清空本地 Calibrated 结果，等待后端回到初始语义 | 前端本地状态 + 后端控制状态 |
+| 重置中/回初始 | 前端写入 `reinit` | 清空本地 Calibrated 结果，等待后端回到初始语义 | 前端本地状态 + 后端控制状态 |
 
 ## 主要风险与证据缺口
 
@@ -44,12 +45,15 @@
 - [Case 故事矩阵](doc/CASE-STORY-MATRIX.md)
 - [文档分层](doc/DOC-STRUCTURE.md)
 - [交付计划](doc/DELIVERY-PLAN.md)
+- [case2 API 契约草案](doc/API-CONTRACT.md)
+- [case2 API 契约评审](doc/API-CONTRACT-REVIEW.md)
 - [case2 主线](doc/case2/MAINLINE.md)
+- [case2 UI 数据来源反向清单](doc/case2/UI-DATA-SOURCE-MAP.md)
 - [case2 UX 状态映射](doc/case2/UX-STATE-MAP.md)
 - [case2 Gate 1 冻结](doc/case2/GATE1-FREEZE.md)
 
 ## 最小下一步与停止条件
 
-下一步：经用户授权后进入 Gate 2，编写 case2 API 契约与 UI 数据来源反向清单；不创建 React、Node 或业务实现代码。
+下一步：确认完整结果批次/新鲜度、`reinit` 回初始、适配服务边界与截图交付四项 P0；回填 API 契约并由用户批准 v1。
 
-停止条件：Gate 2 契约覆盖正常、失败、完整结果发布、重放与截图触发语义并获用户批准前，不进入 Gate 3 或任何实现。
+停止条件：在 P0-1 至 P0-4 获确认、Gate 2 契约 v1 获用户批准前，不进入 Gate 3 或任何实现。

@@ -18,7 +18,7 @@
 
 - case2 是独立业务 case：Initial DT 基线 -> 启动校准 -> Calibrated DT 对比 -> 清除回初始态。
 - 启动时前端侧写入 `case: "case2"`、`command: "start"`、`dt_type: "with dt"`。
-- 命令枚举：`init` 为初始化/idle，`start` 为开始测试，`reinit` 为重置/清除。
+- 命令枚举：`init` 为初始化/idle，`start` 为开始测试，`reinit` 为重置（旧称“清除”）。
 - 后端侧写 `status`：`""`（初始化）、`execute success`、`execute fail`、`case complete`。只有 `case complete` 能触发前端读取 Calibrated 结果。
 - `save_picture_flag` 初始为 `0`；后端置为 `1` 后，前端侧 Node 适配服务负责在截图成功落盘后、持锁写回 `0`。这是受控的双向字段，不是浏览器直接写文件。
 - 当前 UX 的三项对比语义是误差：RSS 误差、有效路径数误差、首径时延误差。CDF 左移和平均误差下降才表示校准有效。

@@ -46,7 +46,7 @@
 | 组件 | 作用 | 是否复用 | 输入数据 | 备注 |
 |---|---|---|---|---|
 | `CaseNav` | 顶部 Tab 与激活态 | Shell 复用 | active case | 不持有业务文件状态 |
-| `CalibrationControls` | 启动/清除/反馈 | case2 独立 | UI 状态、命令结果 | 不展示未确认的后端细节 |
+| `CalibrationControls` | 启动/重置/反馈 | case2 独立 | UI 状态、命令结果 | 不展示未确认的后端细节 |
 | `MetricHeatmapPair` | 一项指标的 Initial/Calibrated 配对图 | case2 内复用三次 | 两个矩阵、显示状态 | 底图 PNG + 前端动态热力层 |
 | `KpiComparisonRow` | CDF 与均值/降幅对比 | case2 内复用三次 | 两组 KPI 样本 | CDF/柱图由前端渲染 |
 | `StatusFeedback` | 等待、失败、截图保存反馈 | case2 内复用 | UI 状态 | 当前 UX 需补建 |

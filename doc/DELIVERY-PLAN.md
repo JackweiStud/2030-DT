@@ -14,7 +14,7 @@ case3 与 case4 的先后顺序、业务主线和复用判断尚未提供；不�
 
 1. Gate 1 已完成：`case2-dt-calibration.pen` 的 initial、calibrating、completed Pencil frame 已冻结；failed 为后续 HTML 视觉派生态，边界见 `Freeze_Note.md`。
 2. Gate 1.5 已完成：四态静态 HTML 已由用户人工检查接受，Shell 与 case2 运行资源已按所有权拆分。
-3. 下一步经授权进入 Gate 2：只写 API 契约与数据来源清单，不连接共享目录、不运行真实状态机、不实现 Node 适配服务。
+3. Gate 2 已获授权并开始：已起草 API 契约与数据来源清单；只确认文件控制、结果发布、重放和截图语义，不连接共享目录、不运行真实状态机、不实现 Node 适配服务。P0 外部事实确认并获用户批准 v1 后，才可进入 Gate 3。
 
 ## 项目级停止规则
 

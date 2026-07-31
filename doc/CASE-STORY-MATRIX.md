@@ -5,7 +5,7 @@
 | Case | Tab 名 | 交付顺序 | 一句话故事 | 派生 / 独立判断 | 当前 Gate | 文档入口 |
 |---|---|---:|---|---|---|---|
 | case1 | DT Construction（按导航顺序推断，待确认） | 4 | 未提供 | 待判断 | 未启动 | `doc/case1/`（未来） |
-| case2 | DT Calibration | 1 | Initial DT 基线经 `with dt` 校准后，以 Calibrated DT 的误差分布与均值下降证明校准有效 | 独立业务 case | Gate 1.5 已人工验收；Gate 2 待授权 | `doc/case2/` |
+| case2 | DT Calibration | 1 | Initial DT 基线经 `with dt` 校准后，以 Calibrated DT 的误差分布与均值下降证明校准有效 | 独立业务 case | Gate 2 进行中：契约 v0.1 待 P0 确认 | `doc/case2/` |
 | case3 | DT for Comm（按导航顺序推断，待确认） | 2 | 未提供 | 待判断 | 未启动 | `doc/case3/`（未来） |
 | case4 | DT for positioning（按导航顺序推断，待确认） | 3 | 未提供 | 待判断 | 未启动 | `doc/case4/`（未来） |
 

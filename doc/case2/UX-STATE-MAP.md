@@ -19,14 +19,14 @@
 | `execute-success-waiting` | 无整页图 | 命令已执行但仍等待完整结果；不能显示完成 | 已并入 `case2.calibrating` 并冻结 |
 | `completed` | 三张 UX 图 | Initial/Calibrated 六张热力图；右侧三组 CDF/均值；完成标识 | 已在 `case2.completed` 结构化重建并冻结 |
 | `failed` | 无整页图 | Initial 可见、Calibrated 清空、失败反馈与可重试动作 | 无独立 Pencil frame；已在 Gate 1.5 HTML 补建并由用户人工检查接受 |
-| `resetting` | 无整页图 | 清除反馈，随后回 `initial` | 可用过渡说明，不必独立最终 frame |
+| `resetting` | 无整页图 | 重置反馈，随后回 `initial` | 可用过渡说明，不必独立最终 frame |
 
 ## 页面结构
 
 | 区域 | 组件/内容 | 数据与状态边界 |
 |---|---|---|
 | Header | 品牌、标题、四个 Tab、选中态 | Shell 共享；case2 只控制自身 Tab 激活视觉 |
-| 左侧测试对比 | Initial DT 列、Calibrated DT 列、启动/清除、三行热力图对 | 三项结果 case-local；固定地图与动态热力层分离 |
+| 左侧测试对比 | Initial DT 列、Calibrated DT 列、启动/重置、三行热力图对 | 三项结果 case-local；固定地图与动态热力层分离 |
 | 右侧 KPI 对比 | RSS/有效路径数/首径时延的 CDF 与均值柱图 | CDF、均值和降幅由当前 KPI 样本派生 |
 | 反馈层 | 完成、校准中、失败、截图保存反馈 | 不改变数据结论；当前 UX 缺失三种状态视觉 |
 

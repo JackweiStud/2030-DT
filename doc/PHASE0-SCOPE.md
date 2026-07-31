@@ -2,7 +2,7 @@
 
 ## 一句话演示承诺
 
-在内部团队演示中，case2 以 Initial DT 误差基线为起点；演示者启动 `with dt` 校准，待后端完成并完整发布结果后，以 Calibrated DT 的热力图、CDF 左移和平均误差下降证明校准有效；清除操作将画面恢复到初始状态。
+在内部团队演示中，case2 以 Initial DT 误差基线为起点；演示者启动 `with dt` 校准，待后端完成并完整发布结果后，以 Calibrated DT 的热力图、CDF 左移和平均误差下降证明校准有效；“重置”操作（`reinit`）将画面恢复到初始状态。
 
 ## 受众与决策
 
@@ -15,7 +15,7 @@
 1. 起始状态：进入 `DT Calibration`，加载 Initial DT 的 RSS 误差、有效路径数误差、首径时延误差热力图与基线统计；Calibrated 结果不预展示。
 2. 触发动作：演示者点击“启动”，前端侧通过本地适配服务在共享目录中写入 `case2 / start / with dt` 控制请求。
 3. 可见变化：校准中；后端写入 `execute success` 时仍不读取结果。只有 `case complete` 且完整结果发布后，显示三组 Calibrated 热力图、CDF 和均值/降幅对比。
-4. 结束状态：Calibrated CDF 相对 Initial 左移、平均误差下降；若 `save_picture_flag` 从 `0` 变为 `1`，前端截取完成态并由适配服务保存后清回 `0`。点击“清除”后回到 Initial DT。
+4. 结束状态：Calibrated CDF 相对 Initial 左移、平均误差下降；若 `save_picture_flag` 从 `0` 变为 `1`，前端截取完成态并由适配服务保存后清回 `0`。点击“重置”（`reinit`）后回到 Initial DT。
 
 ## 包含
 

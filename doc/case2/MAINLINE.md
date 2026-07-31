@@ -15,12 +15,12 @@
 
 | 状态 | 用户动作/外部条件 | 左侧 | 右侧 | 控件 |
 |---|---|---|---|---|
-| Initial | `command=init`，`status=""` | 仅 Initial DT 三项热力图；Calibrated 为空态 | 基线可见；Calibrated 对比为空态/说明态 | 启动可用，清除禁用或无效 |
-| 校准中 | 点击启动后，尚未完成 | 保留 Initial；Calibrated 显示校准中 | 不展示旧 CDF/均值，显示进行中反馈 | 启动禁用，清除可用 |
+| Initial | `command=init`，`status=""` | 仅 Initial DT 三项热力图；Calibrated 为空态 | 基线可见；Calibrated 对比为空态/说明态 | 启动可用，重置禁用或无效 |
+| 校准中 | 点击启动后，尚未完成 | 保留 Initial；Calibrated 显示校准中 | 不展示旧 CDF/均值，显示进行中反馈 | 启动禁用，重置可用 |
 | 命令已执行 | `status=execute success` | 仍不显示结果 | 仍为进行中 | 同上 |
-| 完成 | `status=case complete` 且结果完整 | Initial/Calibrated 三行配对热力图 | 每项显示两条 CDF 与平均误差对比 | 启动禁用或要求先清除；清除可用 |
-| 失败 | `status=execute fail` | 保留 Initial；Calibrated 不显示旧结果 | 失败说明与重试提示 | 启动可重试，清除可用 |
-| 重置 | 点击清除，写 `reinit` | 清空本地 Calibrated 显示，回 Initial | 清空对比结果，回初始说明 | 等待后端恢复初始语义 |
+| 完成 | `status=case complete` 且结果完整 | Initial/Calibrated 三行配对热力图 | 每项显示两条 CDF 与平均误差对比 | 启动禁用或要求先重置；重置可用 |
+| 失败 | `status=execute fail` | 保留 Initial；Calibrated 不显示旧结果 | 失败说明与重试提示 | 启动可重试，重置可用 |
+| 重置 | 点击重置，写 `reinit` | 清空本地 Calibrated 显示，回 Initial | 清空对比结果，回初始说明 | 等待后端恢复初始语义 |
 
 ## 结论与禁止口径
 
