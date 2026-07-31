@@ -1902,7 +1902,7 @@
                                       "id": "aCBIY",
                                       "name": "清除文案",
                                       "fill": "$text",
-                                      "content": "清除",
+                                      "content": "重置",
                                       "fontFamily": "$font",
                                       "fontSize": 12,
                                       "fontWeight": "normal"
@@ -3196,7 +3196,7 @@
                                       "id": "GPzG4",
                                       "name": "清除文案",
                                       "fill": "$muted",
-                                      "content": "清除",
+                                      "content": "重置",
                                       "fontFamily": "$font",
                                       "fontSize": 12,
                                       "fontWeight": "normal"
@@ -4552,7 +4552,7 @@
                                       "id": "cpMsp",
                                       "name": "清除文案",
                                       "fill": "$muted",
-                                      "content": "清除",
+                                      "content": "重置",
                                       "fontFamily": "$font",
                                       "fontSize": 12,
                                       "fontWeight": "normal"
