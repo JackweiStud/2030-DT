@@ -52,6 +52,7 @@
 - [交付计划](doc/DELIVERY-PLAN.md)
 - [case2 API 契约草案](doc/case2/API-CONTRACT.md)
 - [case2 API 契约评审](doc/case2/API-CONTRACT-REVIEW.md)
+- [case2 后端接口交接](doc/case2/BACKEND-API-HANDOFF.md)
 - [case2 主线](doc/case2/MAINLINE.md)
 - [case2 UI 数据来源反向清单](doc/case2/UI-DATA-SOURCE-MAP.md)
 - [case2 UX 状态映射](doc/case2/UX-STATE-MAP.md)
