@@ -39,7 +39,7 @@ python3 -m http.server 8765
 - 指定状态：`?state=initial|calibrating|failed|completed`
 - 其他 Tab：「建设中」`?tab=case1`（或 case3 / case4）
 
-右下角 Gate 1.5 验收控件可切换四态；「启动」「清除」仅驱动视觉切换。
+右下角 Gate 1.5 验收控件可切换四态；「启动」「重置」仅驱动视觉切换。
 
 资源引用：Shell mock 使用 `../../04-runtime-assets/shell/**`，case2 页面使用 `../../04-runtime-assets/case2/**`；两者均不复制到 `web-static/`。
 
@@ -78,7 +78,7 @@ Shell：
 case2：
 
 - `tokens.css`
-- `icons/*`（列头、指标标签/图标、降幅底/箭头、柱纹理、play/rotate SVG）
+- `icons/*`（列头、KPI 指标图标、降幅底/箭头、柱纹理、play/rotate SVG）；指标标签使用 `tokens.css` 颜色 token，不使用 PNG 底板
 - `maps/heatmap-map-base.png`（有条件：由 Pencil 导出还原）
 
 ## 8. 仅属静态验收、不得进入正式前端
@@ -94,7 +94,7 @@ case2：
 1. **failed 是 HTML 派生态**：当前 `.pen` 仅三态；failed 按 error token + 规格语义补建，用户已人工检查并接受。
 2. **地图底图**：`heatmap-map-base.png` 由 `ol7yg` 导出后去除代表层/标签区还原，标签区为近似修补。
 3. **非完成态 Calibrated 卡**：原型叠加「等待/失败」遮罩以明确无完成结论；Pencil 实例仍可能保留底图可见。
-4. **按钮**：设计源启动/清除无填充色，原型保持透明底以贴合测量。
+4. **按钮**：设计源启动/重置无填充色，原型保持透明底以贴合测量。
 5. ~~面板底图近似纹理~~：已按 `EM3U1`/`XNGat` 的 image fill 源文件更正为正确左右面板背景图。
 
 ## 10. 结论

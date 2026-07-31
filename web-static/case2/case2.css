@@ -469,10 +469,6 @@ body {
   z-index: 2;
 }
 
-.case2-page .metric-tag__plate {
-  display: none;
-}
-
 .case2-page .metric-tag__label {
   position: relative;
   z-index: 1;
@@ -484,17 +480,17 @@ body {
 
 .case2-page .metric-tag--rss {
   width: 70px;
-  background-color: #2f85de;
+  background-color: var(--case2-color-metric-tag-rss);
 }
 
 .case2-page .metric-tag--path {
   width: 200px;
-  background-color: #6137ff;
+  background-color: var(--case2-color-metric-tag-path);
 }
 
 .case2-page .metric-tag--delay {
   width: 164px;
-  background-color: #f7b502;
+  background-color: var(--case2-color-metric-tag-delay);
 }
 
 .case2-page .heat-empty,

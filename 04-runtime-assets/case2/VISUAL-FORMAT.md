@@ -29,7 +29,7 @@
 HeatmapCard
 ├── MapBase          固定静态资源（maps/heatmap-map-base.png）
 ├── HeatRepresent    未来运行时动态绘制（Gate 1.5 仅代表色块/代表态切图）
-└── MetricTag        固定标签底图 + 文案
+└── MetricTag        CSS 颜色 token + HTML 文案
 ```
 
 - Initial / Calibrated 两卡共用同一场景底图填充模式（`fill`）。
@@ -63,7 +63,7 @@ HeatmapCard
 |---|---|
 | 品牌 Logo、导航底图 | 热力色场插值与马赛克掩膜 |
 | 面板标题装饰条、列头图标 | CDF 经验分布曲线 |
-| 指标标签底图、KPI 指标图标 | 均值柱高、均值数字 |
+| 指标标签颜色 token、KPI 指标图标 | 均值柱高、均值数字 |
 | 地图场景底图 | 降幅百分比 |
 | 按钮 Lucide 图标 SVG | 状态机驱动的徽章文案切换（数据侧） |
 | `tokens.css` | 截图落盘、文件轮询等（非视觉） |
