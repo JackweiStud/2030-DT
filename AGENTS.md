@@ -16,10 +16,10 @@
 
 ## case2 已确认事实
 
-- case2 是独立业务 case：Initial DT 基线 -> 启动校准 -> Calibrated DT 对比 -> 清除回初始态。
+- case2 是独立业务 case：Initial DT 基线 -> 启动校准 -> Calibrated DT 对比 -> 重置回初始态。
 - 启动时前端侧写入 `case: "case2"`、`command: "start"`、`dt_type: "with dt"`。
 - 命令枚举：`init` 为初始化/idle，`start` 为开始测试，`reinit` 为重置（旧称“清除”）。
-- 后端侧写 `status`：`""`（初始化）、`execute success`、`execute fail`、`case complete`。只有 `case complete` 能触发前端读取 Calibrated 结果。
+- 后端侧写 `status`：`""`（初始化）、`execute success`、`execute fail`、`case complete`、`reinit success`。只有 `case complete` 能触发前端读取 Calibrated 结果；`reinit success` 只表示重置完成，前端据此移除 Calibrated 显示并恢复登录时按钮状态。
 - `save_picture_flag` 初始为 `0`；后端置为 `1` 后，前端侧 Node 适配服务负责在截图成功落盘后、持锁写回 `0`。这是受控的双向字段，不是浏览器直接写文件。
 - 当前 UX 的三项对比语义是误差：RSS 误差、有效路径数误差、首径时延误差。CDF 左移和平均误差下降才表示校准有效。
 
@@ -35,7 +35,7 @@
 
 - 仓库现有 Initial/Calibrated 文件是参考输入样本；不能因文件已存在而声称本次校准已产生真实结果。
 - 后端未来在 `case complete` 前完整发布的一批结果，才可表述为本次真实业务采集结果；来源与锁证据在 Gate 2/5 补齐。
-- 热力图插值/配色/叠加、CDF、均值和降幅均为前端派生数据；降幅必须按当前样本计算，不得写死为 50%。
+- 热力图插值/配色/叠加、CDF、均值和降幅均为前端派生数据；热力图尺寸为运行时解析得到的 `Nx × Ny`，KPI 样本数为运行时解析得到的 `N`，不得硬编码为 20×20 或 20 条；降幅必须按当前样本计算，不得写死为 50%。
 - 项目状态只写入 `state.md`；项目级事实写入 `doc/`；case 业务细节从 Gate 1 起写入 `doc/caseN/`。不得把当前项目事实写进资产库或 Skill 目录。
 - 设计源、Gate 1.5 静态原型和正式运行资源必须三轨分离；UX PNG 不是最终视觉契约。
 

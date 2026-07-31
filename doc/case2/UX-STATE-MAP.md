@@ -19,7 +19,7 @@
 | `execute-success-waiting` | 无整页图 | 命令已执行但仍等待完整结果；不能显示完成 | 已并入 `case2.calibrating` 并冻结 |
 | `completed` | 三张 UX 图 | Initial/Calibrated 六张热力图；右侧三组 CDF/均值；完成标识 | 已在 `case2.completed` 结构化重建并冻结 |
 | `failed` | 无整页图 | Initial 可见、Calibrated 清空、失败反馈与可重试动作 | 无独立 Pencil frame；已在 Gate 1.5 HTML 补建并由用户人工检查接受 |
-| `resetting` | 无整页图 | 重置反馈，随后回 `initial` | 可用过渡说明，不必独立最终 frame |
+| `resetting` | 无整页图 | 重置反馈；读到 `status="reinit success"` 后移除 Calibrated 数据并回 `initial` | 可用过渡说明，不必独立最终 frame |
 
 ## 页面结构
 

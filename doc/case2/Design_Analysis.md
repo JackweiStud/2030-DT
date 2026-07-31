@@ -9,7 +9,7 @@
 ## 页面目标与用户任务
 
 - 页面目标：在单一 1920×1080 内部演示舞台，讲清 Initial DT 与 Calibrated DT 的误差改善。
-- 用户任务：查看基线，启动 `with dt` 校准，等待结果，比较三项误差并清除回初始状态。
+- 用户任务：查看基线，启动 `with dt` 校准，等待结果，比较三项误差并重置回初始状态。
 - 视觉优先级：当前状态/启动操作 > Initial/Calibrated 空间对比 > KPI 分布与均值结论 > 装饰背景。
 
 ## 页面状态
@@ -19,7 +19,7 @@
 - `execute-success-waiting`：后端命令成功但结果未完整发布；视觉上仍不可误判为完成。
 - `completed`：六张热力图与三组 KPI 对比可见。
 - `failed`：Initial 保留，Calibrated 清空，显示错误与重试。
-- `resetting`：过渡到 `initial`；无需独立最终 frame。
+- `resetting`：等待 `status="reinit success"` 后过渡到 `initial`；无需独立最终 frame。
 
 ## UX 层次与信息架构
 

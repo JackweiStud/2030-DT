@@ -10,23 +10,25 @@
 - Initial 数据：三项 Initial 热力图和 KPI 样本。
 - 控制请求：前端侧适配服务写入 `case=case2`、`command=start`、`dt_type=with dt`。
 - 结果门槛：后端 `status=case complete`，且当批结果已完整发布。
+- 重置完成门槛：后端 `status=reinit success`；不要求后端再回写 `command=init,status=""`。
 
 ## 主线状态
 
 | 状态 | 用户动作/外部条件 | 左侧 | 右侧 | 控件 |
 |---|---|---|---|---|
-| Initial | `command=init`，`status=""` | 仅 Initial DT 三项热力图；Calibrated 为空态 | 基线可见；Calibrated 对比为空态/说明态 | 启动可用，重置禁用或无效 |
+| Initial | `command=init,status=""`，或重置后 `status=reinit success` | 仅 Initial DT 三项热力图；Calibrated 为空态 | 基线可见；Calibrated 对比为空态/说明态 | 启动可用，重置禁用或无效 |
 | 校准中 | 点击启动后，尚未完成 | 保留 Initial；Calibrated 显示校准中 | 不展示旧 CDF/均值，显示进行中反馈 | 启动禁用，重置可用 |
 | 命令已执行 | `status=execute success` | 仍不显示结果 | 仍为进行中 | 同上 |
 | 完成 | `status=case complete` 且结果完整 | Initial/Calibrated 三行配对热力图 | 每项显示两条 CDF 与平均误差对比 | 启动禁用或要求先重置；重置可用 |
 | 失败 | `status=execute fail` | 保留 Initial；Calibrated 不显示旧结果 | 失败说明与重试提示 | 启动可重试，重置可用 |
-| 重置 | 点击重置，写 `reinit` | 清空本地 Calibrated 显示，回 Initial | 清空对比结果，回初始说明 | 等待后端恢复初始语义 |
+| 重置 | 点击重置，写 `reinit`；启动按钮变灰 | 等待重置确认；读到 `reinit success` 后移除 Calibrated 热力图 | 等待重置确认；读到 `reinit success` 后移除 Calibrated KPI/CDF/均值 | 成功后恢复登录时按钮状态，后续可再次启动 |
 
 ## 结论与禁止口径
 
 - 结论只能表述为：在当前批次数据中，Calibrated DT 的误差分布左移且平均误差下降。
 - 不得将现有参考文件称为本次真实采集结果。
 - 不得将 `execute success` 或 Calibrated 文件存在本身称为“校准完成”。
+- 不得要求 `reinit` 成功后必须回到 `command=init,status=""`；`status=reinit success` 已是重置完成信号。
 - 截图只在 `save_picture_flag` 由 `0` 变为 `1` 时请求；适配服务保存成功后将其清回 `0`。
 
 ## 来源
