@@ -1,8 +1,8 @@
-# case2 Gate 2 API 契约（草案 v0.4）
+# case2 Gate 2 API 契约（v1）
 
-> 范围：只约束 `DT Calibration`（case2）的文件控制、结果发布、浏览器与前端 PC Node 适配服务之间的**语义**。本文是 Gate 2 的唯一接口真相源；端口、部署目录、挂载路径和具体文件锁算法留到 Gate 3。
+> 范围：只约束 `DT Calibration`（case2）的文件控制、结果发布、浏览器与前端 PC Node 适配服务之间的**语义**。本文是 Gate 2 的唯一接口真相源；端口、部署目录、挂载路径和控制文件写入算法由 Gate 3 SPEC 具体化。
 >
-> 状态：`DRAFT`。P0-1 至 P0-4 已按用户确认口径回填；在用户批准契约 v1 前，不得进入 Gate 3 或连接真实共享目录。
+> 状态：`APPROVED`。P0-1 至 P0-4 已按用户确认口径回填，用户于 2026-07-31 批准进入 Gate 3。Node 与 Web 施工细节见 [SERVER-SPEC.md](SERVER-SPEC.md) / [WEB-SPEC.md](WEB-SPEC.md)。
 
 ## 0. 契约边界与术语
 
@@ -31,7 +31,7 @@
 | 后端业务进程（后端 PC）      | 读取控制、执行校准、发布结果、写 `status` 与截图请求标志                   | 浏览器展示、前端截图编码             |
 
 
-Gate 2 冻结最小 REST 语义：不用 WebSocket，不做命令队列，不做取消命令。端口、共享目录挂载路径、锁实现与轮询频率由 Gate 3 SPEC 再定。
+Gate 2 冻结最小 REST 语义：不用 WebSocket，不做命令队列，不做取消命令。默认端口、共享目录注入方式、控制文件写入算法与轮询频率由 Gate 3 SPEC 固定，不改变本文接口语义。
 
 ## 1. 逻辑接口总表
 
@@ -154,7 +154,7 @@ sequenceDiagram
 1. 适配服务只能代表 case2 写入 `case`、`command`、`dt_type` 和受控的 `save_picture_flag` 回写；不得因整文件写入丢失 `status`、`debug_flag`、`scene_type` 或未来未消费字段。
 2. 后端拥有 `status`；Web 或适配服务不得用前端本地状态伪造 `execute success`、`execute fail`、`case complete` 或 `reinit complete`。
 3. `GET /api/case2/control-file` 与 `POST /api/case2/control-file` 是控制文件唯一 REST 口径；启动、重置和截图清零都通过 POST 控制文件表达，不再拆成多个命令专用接口。
-4. 具体原子写、互斥锁与字段保留算法是 Gate 3 实现事项，但其结果必须满足前三条。
+4. 具体原子写、串行化与字段保留算法见 [SERVER-SPEC.md](SERVER-SPEC.md)，其结果必须满足前三条。
 
 
 
@@ -171,7 +171,7 @@ sequenceDiagram
 | --- | ------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------ |
 | 1   | 适配服务不可达或快照无效                                      | 连接/读取异常，不能冒充业务失败                          | 不展示旧结果；Initial 保留或显示其自身读取错误。                           |
 | 2   | `status=execute fail`                             | `failed`                                  | 显示“执行命令失败”；本轮不再等待 `case complete` 或 `reinit complete`。 |
-| 3   | 本地已提交 `reinit`，且尚未读到 `status="reinit complete"`   | `resetting`                               | 启动按钮禁用；`execute success` 只表示重置命令执行成功，不能当成重置完成。         |
+| 3   | 本地已提交 `reinit`，且尚未读到 `status="reinit complete"`   | `resetting`                               | 启动、重置按钮均禁用；`execute success` 只表示重置命令执行成功，不能当成重置完成。         |
 | 4   | `status="reinit complete"`，且当前没有本地已接受的 `start` 请求 | `initial`                                 | 移除 Calibrated 热力图和 KPI 数据；控件回登录时状态。                    |
 | 5   | 本轮本地启动已被适配服务接受，且已观察到 `execute success -> case complete`，且六文件批次通过全部校验 | `completed`                               | 显示新批次热力图、CDF、均值与降幅。                                    |
 | 6   | 本轮本地启动已被适配服务接受，且已观察到 `case complete`，但批次缺失、解析失败或无法证明稳定          | 结果发布异常                                    | 不显示完成态，也不得回退为旧 Calibrated 结果；按钮解除，允许重置或重新启动。             |
@@ -254,7 +254,7 @@ AOA、ZOA 的参考文件不进入当前 case2 UI、结果批次、截图或“�
 4. 适配服务读取后必须一次性校验六个文件，任一缺失、解析失败、非矩形热力图或 KPI 样本非法，则整批拒绝。
 5. 被拒绝时，Web 保持 Initial 和“结果发布异常/等待处理”状态，绝不拼接旧文件、部分新文件或静态代表图。
 
-Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时目录，六个文件全部写完后做原子目录切换或原子指针切换，最后写 `status=case complete`。这是打桩端自测稳定性策略，不反向要求真实后端必须采用目录切换。
+Gate 3 后端打桩按 [SERVER-SPEC.md](SERVER-SPEC.md) 采用更强实现：先写入 run-local 临时目录，六个文件全部写完后做原子目录与指针切换，最后写 `status=case complete`。这是打桩端自测稳定性策略，不反向要求真实后端必须采用目录切换。
 
 
 
@@ -277,7 +277,7 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 | ------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | Initial / Calibrated 热力色场 | 对应 `Nx × Ny` 矩阵 + `04-runtime-assets/case2/maps/heatmap-map-base.png` | 运行时按已提供热力图说明进行插值、配色和马赛克叠加；静态代表图 `heatmap-calibrated-represent.png` 不得进入正式运行路径。                 |
 | CDF                       | 每项对应的 `N` 个 KPI 样本                                                    | 升序经验 CDF；按 `t=0..1` 的 51 个等距位置取 `floor(t×(n-1))`，其中 `n` 为当前样本数。                                |
-| 平均误差                      | 每项对应的 `N` 个 KPI 样本                                                    | 算术平均；显示精度由 Gate 3 WEB-SPEC 冻结。                                                                 |
+| 平均误差                      | 每项对应的 `N` 个 KPI 样本                                                    | 算术平均；显示精度按 [WEB-SPEC.md](WEB-SPEC.md) 执行。                                                                 |
 | 降幅                        | Initial / Calibrated 平均误差                                             | `(meanInitial - meanCalibrated) / meanInitial × 100%`，仅当 `meanInitial > 0` 且两者均有效时显示。不得写死 50%。 |
 
 
@@ -309,7 +309,7 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 
 
 
-## 8. Gate 2 验收与待确认
+## 8. Gate 2 验收结论
 
 
 
@@ -328,7 +328,7 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 
 
 
-### 剩余事项：用户批准后冻结 v1
+### P0 事项结论
 
 
 | ID | 待确认事实 | 状态 |
@@ -339,4 +339,4 @@ Gate 3 后端打桩计划可以采用更强实现：先写入 run-local 临时�
 | P0-4 | `save_picture_flag` 触发截图、Base64 传输、递增序号 PNG 落盘后清零 | 已确认并回填。 |
 
 
-**停止条件：** 用户批准本文为 API 契约 v1 后，才进入 Gate 3；此前不写 Node、React、共享目录连接或真实状态机。
+**Gate 2 结论：** 用户已于 2026-07-31 批准本文为 API 契约 v1，允许进入 Gate 3 编写施工规格；在两份 SPEC 获用户批准前，仍不创建 Node、React、共享目录连接或真实状态机。

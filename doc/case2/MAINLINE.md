@@ -17,12 +17,12 @@
 
 | 状态 | 用户动作/外部条件 | 左侧 | 右侧 | 控件 |
 |---|---|---|---|---|
-| Initial | `command=init,status=""`，或重置后 `status=reinit complete` | 仅 Initial DT 三项热力图；Calibrated 为空态 | 基线可见；Calibrated 对比为空态/说明态 | 启动可用，重置禁用或无效 |
-| 校准中 | 点击启动后，尚未完成 | 保留 Initial；Calibrated 显示校准中 | 不展示旧 CDF/均值，显示进行中反馈 | 启动禁用，重置可用 |
-| 命令已执行 | `status=execute success` | 启动路径仍不显示结果；重置路径仍等待重置完成 | 仍为进行中 | 同上 |
-| 完成 | `status=case complete` 且结果完整 | Initial/Calibrated 三行配对热力图 | 每项显示两条 CDF 与平均误差对比 | 启动禁用或要求先重置；重置可用 |
-| 失败 | `status=execute fail` | 显示执行命令失败；本轮不再等待完成终态 | 显示执行命令失败 | 按钮解除/重试策略待 Gate 3 冻结 |
-| 重置 | 点击重置，写 `reinit`；启动按钮变灰 | 等待重置确认；读到 `reinit complete` 后移除 Calibrated 热力图 | 等待重置确认；读到 `reinit complete` 后移除 Calibrated KPI/CDF/均值 | 成功后恢复登录时按钮状态，后续可再次启动 |
+| Initial | `command=init,status=""`，或重置后 `status=reinit complete` | 仅 Initial DT 三项热力图；Calibrated 为空态 | 基线可见；Calibrated 对比为空态/说明态 | 启动可用，重置禁用 |
+| 校准中 | 点击启动后，尚未完成 | 保留 Initial；Calibrated 显示校准中 | 不展示旧 CDF/均值，显示进行中反馈 | 启动、重置均禁用 |
+| 命令已执行 | `status=execute success` | 启动路径仍不显示结果；重置路径仍等待重置完成 | 仍为进行中 | 当前动作结束前两按钮均禁用 |
+| 完成 | `status=case complete` 且结果完整 | Initial/Calibrated 三行配对热力图 | 每项显示两条 CDF 与平均误差对比 | 启动禁用，重置可用 |
+| 失败 | `status=execute fail` | 显示执行命令失败；本轮不再等待完成终态 | 显示执行命令失败 | 启动与重置解除，允许手动重试；不自动重试 |
+| 重置 | 点击重置，写 `reinit`；两按钮禁用 | 等待重置确认；读到 `reinit complete` 后移除 Calibrated 热力图 | 等待重置确认；读到 `reinit complete` 后移除 Calibrated KPI/CDF/均值 | 成功后恢复登录时按钮状态，后续可再次启动 |
 
 ## 结论与禁止口径
 

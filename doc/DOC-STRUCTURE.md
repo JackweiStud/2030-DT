@@ -12,7 +12,8 @@
 | `03-design/case2/`（Pencil 创建后） | case2 `.pen` 与设计源同级验证产物 | 运行时代码、共享契约 |
 | `doc/case2/API-CONTRACT.md`（Gate 2） | case2 文件控制、结果发布、适配服务 REST、字段、异常和重放合同 | 项目级共享协议或其他 case 字段 |
 | `doc/case2/API-CONTRACT-REVIEW.md`（Gate 2） | case2 契约中的修/跳/待确认与 Gate 2 批准条件 | 具体 Node/React 实现方案 |
-| `doc/BACKEND-API-HANDOFF.md`（需要真实后端交接时） | 后端所需接口表、时序、错误形状、检查清单 | Gate 记录、打桩实现、测试命令和 AI 施工过程 |
+| `doc/case2/BACKEND-API-HANDOFF.md`（真实后端交接） | case2 后端所需接口表、时序、错误形状、检查清单 | Gate 记录、打桩实现、测试命令和 AI 施工过程 |
+| `doc/case2/SERVER-SPEC.md` / `WEB-SPEC.md`（Gate 3） | Node 适配服务、开发打桩与正式 Web 的施工边界、测试和验收 | 真实后端团队必须实现的新接口语义 |
 
 ## 三轨资源纪律
 
@@ -30,7 +31,7 @@
 
 ## 创建规则
 
-- case2 已进入 Gate 2，因此创建了 `doc/case2/API-CONTRACT.md`、`doc/case2/API-CONTRACT-REVIEW.md` 与 `doc/case2/UI-DATA-SOURCE-MAP.md`；尚未创建 Gate 3 SPEC 或 QA 文档。
+- case2 Gate 2 契约 v1 已批准，Gate 3 已创建 `doc/case2/SERVER-SPEC.md` 与 `doc/case2/WEB-SPEC.md`；QA 文档留到 Gate 5。
 - `03-design/case2/` 只在目标 `.pen` 路径经用户确认、准备进入 Pencil Phase 3 时创建。
 - API、施工、QA 文档仅在对应 Gate 获批准后创建；不为“以后可能需要”预建空文档。
 - 行为变化必须同步更新相关 case 文档和 `state.md`。

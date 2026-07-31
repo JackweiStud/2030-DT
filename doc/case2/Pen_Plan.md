@@ -11,7 +11,7 @@
 
 - 目标文件已创建：`03-design/case2/case2-dt-calibration.pen`。
 - 用户于 2026-07-30 审阅三个 Pencil frame，并在 Gate 1.5 人工检查四个 HTML 视觉状态后确认符合预期。
-- 状态：`APPROVED / frozen`。后续修改需要重新审阅；case2 已获授权进入 Gate 2 API 契约，尚未进入实现。
+- 状态：`APPROVED / frozen`。后续修改需要重新审阅；case2 当前处于 Gate 3 SPEC 评审，尚未进入实现。
 
 ## 修改基线与变更集
 

@@ -2,9 +2,9 @@
 
 ## 摘要
 
-- 评审对象：[API-CONTRACT.md](API-CONTRACT.md) `v0.4`。
+- 评审对象：[API-CONTRACT.md](API-CONTRACT.md) `v1`。
 - 评审范围：case2 文件控制、结果发布、UI 数据来源、截图语义；不评审 Node/React 实现。
-- 结论：`DRAFT / 等待用户批准 v1`。P0-1 至 P0-4 均已由用户确认并回填；批准前仍不进入 Gate 3。
+- 结论：`APPROVED`。P0-1 至 P0-4 均已由用户确认并回填；用户于 2026-07-31 批准 v1 并进入 Gate 3。
 
 ## 修
 
@@ -32,7 +32,7 @@
 
 ## 待确认
 
-P0-1 至 P0-4 均已回填。当前只等待用户批准 [API-CONTRACT.md](API-CONTRACT.md) 为 v1。
+无。P0-1 至 P0-4 均已回填，契约 v1 已获用户批准。
 
 ## Gate 2 通过条件
 
@@ -40,6 +40,6 @@ P0-1 至 P0-4 均已回填。当前只等待用户批准 [API-CONTRACT.md](API-C
 - [x] 所有可见动态区块已在 `doc/case2/UI-DATA-SOURCE-MAP.md` 反向映射。
 - [x] 数据真假边界、三项指标范围和前端派生公式已写明。
 - [x] P0-1 至 P0-4 已确认并回填契约。
-- [ ] 用户批准 API 契约 v1。
+- [x] 用户批准 API 契约 v1。
 
-在用户批准 v1 前，Gate 2 保持进行中；不得进入 Gate 3 或任何真实读写实现。
+Gate 2 已通过。当前进入 Gate 3 施工规格评审；两份 SPEC 获批准前仍不得进入真实读写实现。

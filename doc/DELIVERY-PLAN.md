@@ -4,7 +4,7 @@
 
 | 阶段 | Case | 目标 | 进入条件 | 项目级回归 |
 |---|---|---|---|---|
-| 当前 | case2 / DT Calibration | 建立设计冻结、静态验收和文件适配契约基线 | Gate 0 已批准 | Shell 视觉基线、1920×1080 缩放、其他 Tab 占位 |
+| 当前 | case2 / DT Calibration | 审批 Node 适配服务与正式 Web 施工规格 | Gate 2 契约 v1 已批准 | Shell 视觉基线、1920×1080 缩放、其他 Tab 占位 |
 | 后续 | case3、case4 | 各自完成 Gate 0，并判断派生复用或独立业务 | case2 的 Shell/文档/验收节奏已有证据 | 全 Tab 视觉冒烟、CSS 作用域、单活跃生命周期 |
 | 最后 | case1 | 独立完成自身 Gate 0 至 Gate 5 | 业务故事与材料已提供 | 同上 |
 
@@ -14,7 +14,8 @@ case3 与 case4 的先后顺序、业务主线和复用判断尚未提供；不�
 
 1. Gate 1 已完成：`case2-dt-calibration.pen` 的 initial、calibrating、completed Pencil frame 已冻结；failed 为后续 HTML 视觉派生态，边界见 `Freeze_Note.md`。
 2. Gate 1.5 已完成：四态静态 HTML 已由用户人工检查接受，Shell 与 case2 运行资源已按所有权拆分。
-3. Gate 2 已获授权并开始：已起草 API 契约与数据来源清单；只确认文件控制、结果发布、重放和截图语义，不连接共享目录、不运行真实状态机、不实现 Node 适配服务。P0 外部事实确认并获用户批准 v1 后，才可进入 Gate 3。
+3. Gate 2 已完成：API 契约 v1、数据来源清单与后端交接文档已冻结。
+4. Gate 3 进行中：`SERVER-SPEC.md` 与 `WEB-SPEC.md` 已起草，等待用户批准；批准前不连接共享目录、不运行真实状态机、不实现 Node/React。
 
 ## 项目级停止规则
 

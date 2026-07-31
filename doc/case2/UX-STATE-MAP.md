@@ -15,7 +15,7 @@
 | 状态 | UX 证据 | 必须设计的可见行为 | 当前缺口 |
 |---|---|---|---|
 | `initial` | 无整页图 | Initial 三项就绪；Calibrated 与对比区为空态/等待态 | 已在 `case2.initial` 补建并冻结 |
-| `calibrating` | 无整页图 | 保留 Initial；显示校准中；禁用重复启动；不沿用旧结果 | 已在 `case2.calibrating` 补建并冻结 |
+| `calibrating` | 无整页图 | 保留 Initial；显示校准中；启动与重置均禁用；不沿用旧结果 | 已在 `case2.calibrating` 补建并冻结 |
 | `execute-success-waiting` | 无整页图 | 命令已执行但仍等待完整结果；不能显示完成 | 已并入 `case2.calibrating` 并冻结 |
 | `completed` | 三张 UX 图 | Initial/Calibrated 六张热力图；右侧三组 CDF/均值；完成标识 | 已在 `case2.completed` 结构化重建并冻结 |
 | `failed` | 无整页图 | Initial 可见、Calibrated 清空、失败反馈与可重试动作 | 无独立 Pencil frame；已在 Gate 1.5 HTML 补建并由用户人工检查接受 |

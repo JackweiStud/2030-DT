@@ -99,4 +99,4 @@ case2：
 
 ## 10. 结论
 
-`ACCEPTED：用户已人工检查四态 HTML，确认符合预期；Gate 1.5 静态验收完成，尚未进入 Gate 2。`
+`ACCEPTED：用户已人工检查四态 HTML，确认符合预期；Gate 1.5 静态验收完成。后续阶段以项目根 state.md 为准。`

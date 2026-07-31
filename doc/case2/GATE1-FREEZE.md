@@ -25,4 +25,4 @@
 
 ## 下一步
 
-Gate 1.5 静态 HTML 已验收。case2 已获授权进入 Gate 2 API 契约；在契约 v1 获用户批准前，不得开始 Node 适配服务或业务实现。
+Gate 1.5 静态 HTML 已验收，Gate 2 API 契约 v1 已批准。当前 Gate 3 两份 SPEC 未获用户批准前，不得开始 Node 适配服务或业务实现。

@@ -1,6 +1,6 @@
 # 共享架构草案
 
-> 本文冻结 Gate 0 的责任边界，不是实现规格；端口、REST 路由、文件锁和目录路径留到 Gate 2/3。
+> 本文冻结 Gate 0 的责任边界，不是实现规格；已批准接口见 `doc/case2/API-CONTRACT.md`，具体端口、目录注入与控制写入算法见 Gate 3 SPEC。
 
 ## 项目模式
 
@@ -21,15 +21,15 @@
 
 ```text
 Chrome case2
-  -> 本机 REST（细节待冻结）
+  -> 本机 REST（默认 127.0.0.1:3102）
   -> 前端 PC Node 适配服务
-  <-> 已挂载共享目录（路径/锁待冻结）
+  <-> 已挂载共享目录（CASE2_SHARED_DIR 注入）
   <-> 后端 PC 业务进程
 
 后端：status=case complete + save_picture_flag=1
   -> 适配服务向 Web 暴露稳定状态
   -> Web 产生完成态 PNG
-  -> 适配服务保存 PNG 到 case2/out（位置待冻结）
+  -> 适配服务保存 PNG 到 {CASE2_SHARED_DIR}/out/case2/
   -> 适配服务持锁将 save_picture_flag 写回 0
 ```
 
@@ -45,10 +45,10 @@ Chrome case2
 
 当前 UX 仅消费六类 Calibrated 输出：三张热力图（RSS、有效路径数、首径时延）和三组 KPI 样本。AOA/ZOA 不进入当前 UI。
 
-后端必须先完成当批结果发布，再以 `status="case complete"` 允许前端读取；具体“同批”“原子”的锁与发布算法尚未冻结。
+后端必须先完成当批结果发布，再以 `status="case complete"` 允许前端读取。真实后端采用“六文件关闭后最后写完成状态”的最小规则；开发打桩的原子运行目录/指针策略见 `doc/case2/SERVER-SPEC.md`。
 
 ## 不纳入本草案
 
-- WebSocket、Socket.IO、Node 服务端口、REST 资源路径、鉴权、数据缓存、后台常驻 case。
+- 本草案不重复记录 WebSocket、Node 服务端口、REST 资源路径、数据缓存等施工细节；以 case2 API 契约和两份 SPEC 为准。
 - 真后端算法、文件格式升级、截图文件命名、共享目录部署脚本。
 - case1、case3、case4 的业务复用判断。
