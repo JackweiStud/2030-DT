@@ -1,4 +1,4 @@
-# case2 Gate 2 API 契约（草案 v0.2）
+# case2 Gate 2 API 契约（草案 v0.3）
 
 > 范围：只约束 `DT Calibration`（case2）的文件控制、结果发布、浏览器与前端 PC Node 适配服务之间的**语义**。本文是 Gate 2 的唯一接口真相源；实现、目录、端口、具体 REST 路由和文件锁算法留到 Gate 3。
 >
@@ -11,9 +11,9 @@
 | 面向 | 固定名称 | 含义 |
 |---|---|---|
 | UI 按钮 | **启动** | 发起一次 `with dt` 校准请求。 |
-| UI 按钮 | **重置** | 提交协议命令 `reinit`；读到 `status="reinit success"` 后移除 Calibrated 显示并回到登录时按钮状态。界面不再使用“清除”作为按钮文案。 |
+| UI 按钮 | **重置** | 提交协议命令 `reinit`；读到 `status="reinit complete"` 后移除 Calibrated 显示并回到登录时按钮状态。界面不再使用“清除”作为按钮文案。 |
 | 协议命令 | `init` / `start` / `reinit` | 初始化/空闲、开始测试、重置。 |
-| 后端状态 | `""` / `execute success` / `execute fail` / `case complete` / `reinit success` | 初始化、命令已执行但未完成、执行失败、结果已可读取、重置完成。 |
+| 后端状态 | `""` / `execute success` / `execute fail` / `case complete` / `reinit complete` | 初始化、命令执行成功、命令执行失败、后端系统测试完成、后端系统重置完成。 |
 | 结果批次 | Calibrated 六文件集合 | 三张 Calibrated 热力图 + 三组 Calibrated KPI 样本；缺任一文件即不是完整批次。 |
 
 “清除”仅可作为历史文档中的旧称；正式 Web、后端交接和后续 SPEC 一律使用“重置”。
@@ -36,7 +36,7 @@
 | 读取控制快照 | Web → 适配服务 → 控制文件 | 页面进入、恢复前台、运行期间 | 返回当前 `case_control` 字段及可用性 | Web 不直接读文件；具体 REST 形状待 Gate 3。 |
 | 提交启动 | Web → 适配服务 → 控制文件 | 用户点击“启动” | 写入 `case=case2`、`command=start`、`dt_type=with dt` | 提交后立刻丢弃本地旧 Calibrated 结果。 |
 | 提交重置 | Web → 适配服务 → 控制文件 | 用户点击“重置” | 写入 `command=reinit` | 启动按钮变灰/禁用；不得把点击动作本身当成重置完成。 |
-| 确认重置完成 | Web → 适配服务 → 控制文件 | 轮询读到后端写入 `status="reinit success"` | 返回重置完成快照 | 前端移除 Calibrated 热力图和 KPI 数据；启动按钮恢复到登录时状态。 |
+| 确认重置完成 | Web → 适配服务 → 控制文件 | 轮询读到后端写入 `status="reinit complete"` | 返回重置完成快照 | 前端移除 Calibrated 热力图和 KPI 数据；启动按钮恢复到登录时状态。 |
 | 读取 Initial 输入 | Web → 适配服务 → 初始文件 | case2 进入 Initial | 返回三项 Initial 热力矩阵与 KPI 样本 | 当前是参考离线输入，不得标为本次校准产物。 |
 | 读取完成批次 | Web → 适配服务 → Calibrated 文件 | 仅 `status=case complete` 后 | 返回经完整性与稳定性校验的六文件批次 | 文件存在、`execute success` 或旧缓存均不能替代此门槛。 |
 | 消费截图请求 | 后端标志 → 适配服务 ↔ Web | `save_picture_flag` 由 `0` 变为 `1` 且完成态稳定 | Web 生成完成态截图；适配服务确认落盘后写回 `0` | 浏览器不得写共享目录；失败不得提前清零。 |
@@ -50,7 +50,7 @@
 | `case` | 字符串；当前为 `case2` | 前端侧适配服务代表 Web 写入 | 每次启动请求必须写 `case2`。 |
 | `command` | `init` / `start` / `reinit` | 前端侧适配服务代表 Web 写入 | `start` 对应启动；`reinit` 对应重置；`init` 表示初始/空闲。 |
 | `dt_type` | `""` / `with dt` | 前端侧适配服务代表 Web 写入 | 本 case 的启动必须为 `with dt`；不得自行加入 `without dt`。 |
-| `status` | `""` / `execute success` / `execute fail` / `case complete` / `reinit success` | 后端 | Web 只读解释，绝不以此字段向后端回写业务结论。 |
+| `status` | `""` / `execute success` / `execute fail` / `case complete` / `reinit complete` | 后端 | Web 只读解释，绝不以此字段向后端回写业务结论。 |
 | `save_picture_flag` | `0` / `1` | 后端置 `1`；适配服务在截图成功后置 `0` | Web 只消费请求并回传截图数据，不能直接写标志或文件。 |
 | `debug_flag` | 整数；当前参考值 `0` | 未冻结 | 当前 UI 不消费、不修改、不赋予业务语义。 |
 | `scene_type` | 字符串；当前参考值 `U6G` | 未冻结 | 当前 UI 不消费、不修改、不赋予业务语义。 |
@@ -58,7 +58,7 @@
 ### 2.1 写入保护
 
 1. 适配服务只能代表 case2 写入 `case`、`command`、`dt_type` 和受控的 `save_picture_flag` 回写；不得因整文件写入丢失 `status`、`debug_flag`、`scene_type` 或未来未消费字段。
-2. 后端拥有 `status`；Web 或适配服务不得用前端本地状态伪造 `execute success`、`execute fail`、`case complete` 或 `reinit success`。
+2. 后端拥有 `status`；Web 或适配服务不得用前端本地状态伪造 `execute success`、`execute fail`、`case complete` 或 `reinit complete`。
 3. 具体原子写、互斥锁与字段保留算法是 Gate 3 实现事项，但其结果必须满足前两条。
 
 ## 3. 状态机与可见行为
@@ -70,11 +70,11 @@
 | 优先级 | 条件 | case2 可见状态 | Calibrated 区域 |
 |---:|---|---|---|
 | 1 | 适配服务不可达或快照无效 | 连接/读取异常，不能冒充业务失败 | 不展示旧结果；Initial 保留或显示其自身读取错误。 |
-| 2 | 本地已提交 `reinit`，且尚未读到 `status="reinit success"` | `resetting` | 启动按钮禁用；Calibrated 不得被视为新一轮可复用结果。 |
-| 3 | `status="reinit success"`，且当前没有本地已接受的 `start` 请求 | `initial` | 移除 Calibrated 热力图和 KPI 数据；控件回登录时状态。 |
-| 4 | `status=case complete` 且六文件批次通过全部校验 | `completed` | 显示新批次热力图、CDF、均值与降幅。 |
-| 5 | `status=case complete` 但批次缺失、解析失败或无法证明稳定 | 结果发布异常 | 不显示完成态，也不得回退为旧 Calibrated 结果。 |
-| 6 | `status=execute fail` | `failed` | 保留 Initial；清空 Calibrated；允许重新启动或重置。 |
+| 2 | `status=execute fail` | `failed` | 显示“执行命令失败”；本轮不再等待 `case complete` 或 `reinit complete`。 |
+| 3 | 本地已提交 `reinit`，且尚未读到 `status="reinit complete"` | `resetting` | 启动按钮禁用；`execute success` 只表示重置命令执行成功，不能当成重置完成。 |
+| 4 | `status="reinit complete"`，且当前没有本地已接受的 `start` 请求 | `initial` | 移除 Calibrated 热力图和 KPI 数据；控件回登录时状态。 |
+| 5 | `status=case complete` 且六文件批次通过全部校验 | `completed` | 显示新批次热力图、CDF、均值与降幅。 |
+| 6 | `status=case complete` 但批次缺失、解析失败或无法证明稳定 | 结果发布异常 | 不显示完成态，也不得回退为旧 Calibrated 结果。 |
 | 7 | `command=start`，或本地启动已被适配服务接受，且尚未命中上述条件 | `calibrating` / `execute-success-waiting` | 不展示任何旧结果。`execute success` 仍属于等待结果。 |
 | 8 | `command=init` 且 `status=""` | `initial` | Initial 可见；Calibrated 为空态。 |
 | 9 | 其他组合 | 未知控制状态 | 不得显示完成态；保留诊断信息给适配服务/QA。 |
@@ -85,19 +85,22 @@
 |---|---|---|---|---|
 | 进入 case2 | 请求控制快照与 Initial 输入 | 读取并返回可用快照/输入 | 无需新命令 | 仅 Initial 基线。 |
 | 启动 | 先清空本地 Calibrated，再提交启动 | 写 `case2/start/with dt` | 读取并执行 | 校准中。 |
-| 命令已执行 | 继续读取控制快照 | 转发 `execute success` | 写 `status=execute success` | 仍是等待，不读 Calibrated。 |
-| 完成发布 | 仅在 `case complete` 后请求完成批次 | 校验并提供完整稳定批次 | 先完成当批六文件发布，再写 `case complete` | 显示成对热力图、CDF、均值和运行时降幅。 |
-| 失败 | 解释 `execute fail` | 转发状态 | 写 `status=execute fail` | Initial + 失败反馈；无 Calibrated。 |
-| 重置 | 提交 `reinit` 并禁用启动 | 写命令并继续读取快照 | 写 `status="reinit success"` 表示重置完成 | 前端收到成功状态后移除 Calibrated 数据并回 Initial。 |
+| 启动命令已执行 | 继续读取控制快照 | 转发 `execute success` | 启动命令执行成功后写 `execute success` | 仍是等待，不读 Calibrated。 |
+| 测试完成发布 | 仅在 `case complete` 后请求完成批次 | 校验并提供完整稳定批次 | 启动路径终态为 `case complete` | 显示成对热力图、CDF、均值和运行时降幅。 |
+| 重置命令已执行 | 继续读取控制快照 | 转发 `execute success` | 重置命令执行成功后写 `execute success` | 继续等待 `reinit complete`，不按成功完成处理。 |
+| 重置完成 | 等待 `reinit complete` | 转发重置完成快照 | 重置路径终态为 `reinit complete` | 前端收到后移除 Calibrated 数据并回 Initial。 |
+| 命令失败 | 解释 `execute fail` | 转发状态 | 写 `status=execute fail`，且本轮不再写 `case complete` / `reinit complete` | 显示执行命令失败。 |
 
-`reinit` 后端不需要再把 `command` 改回 `init`、把 `status` 改回 `""` 才算完成；`status="reinit success"` 就是本轮重置的完成确认。后续用户点击“启动”时，前端侧适配服务再次写入 `command=start` 与 `dt_type=with dt`，进入新一轮测试。
+`execute success` 是启动与重置两条路径共用的“命令执行成功”中间状态，不是业务终态。启动路径必须继续等 `case complete`；重置路径必须继续等 `reinit complete`。`execute fail` 是命令失败终态，出现后前端显示“执行命令失败”，后端本轮不再给 `case complete` 或 `reinit complete`。
+
+`reinit` 后端不需要再把 `command` 改回 `init`、把 `status` 改回 `""` 才算完成；`status="reinit complete"` 就是本轮重置的完成确认。后续用户点击“启动”时，前端侧适配服务再次写入 `command=start` 与 `dt_type=with dt`，进入新一轮测试。
 
 ### 3.3 刷新、切 Tab 与重放
 
 - 页面刷新、切离 case2 或适配服务重连时，必须销毁 case2 的本地 Calibrated 数据、轮询和截图临时状态；回到 case2 后重新取得当前快照。
 - 仅当**本次重新读取**到 `case complete` 且完整批次校验通过，才可再次显示 Calibrated 结果；不能拿浏览器内存、静态原型或既有参考 Calibrated 文件回填。
 - `execute success`、文件已存在和静态样本均不是可重放完成态的依据。
-- 如果刷新后读到 `command=reinit` 且 `status="reinit success"`，Web 进入 Initial 可见状态并保持 Calibrated 为空；不得要求后端额外回落到 `command=init,status=""`。
+- 如果刷新后读到 `command=reinit` 且 `status="reinit complete"`，Web 进入 Initial 可见状态并保持 Calibrated 为空；不得要求后端额外回落到 `command=init,status=""`。
 - 轮询频率、超时阈值和重连退避待 Gate 3；但超时/断连必须与 `execute fail` 视觉和语义分开。
 
 ## 4. 结果批次与数据格式
@@ -164,7 +167,7 @@ AOA、ZOA 的参考文件不进入当前 case2 UI、结果批次、截图或“�
 | 适配服务不可达/读控制失败 | 与业务失败区分，显示连接/读取异常；不展示旧 Calibrated | 把网络或本机服务错误标为 `execute fail`。 |
 | `status` 未知 | 进入未知控制状态，保留诊断并停止完成态展示 | 猜测为完成。 |
 | `case complete` 但六文件不完整/格式错误 | 拒绝整批，显示结果发布异常 | 部分图表完成、复用旧数据或静态代表图。 |
-| `execute fail` | 清空 Calibrated，允许重新启动或重置 | 保留失败前的完成态结果。 |
+| `execute fail` | 显示执行命令失败；本轮不再等待 `case complete` 或 `reinit complete` | 继续假装等待完成，或把失败解释为后端系统测试完成。 |
 | `reinit` 提交后刷新 | Calibrated 继续为空，重新读快照 | 由浏览器缓存恢复旧完成态。 |
 | `save_picture_flag=1` 但未满足完成前提 | 保持请求待处理并记录异常 | 抓取 Initial/失败/半成品画面后清零。 |
 
@@ -173,8 +176,9 @@ AOA、ZOA 的参考文件不进入当前 case2 UI、结果批次、截图或“�
 ### 已冻结的合同事实
 
 - UI 文案“重置”严格映射 `command=reinit`；启动严格映射 `case=case2`、`command=start`、`dt_type=with dt`。
-- `status="reinit success"` 是重置完成信号；前端据此移除 Calibrated 数据并恢复登录时按钮状态，不再等待后端回到 `command=init,status=""`。
-- `execute success` 不是完成；只有 `case complete` 且完整有效批次才可展示 Calibrated。
+- `status="reinit complete"` 是重置完成信号；前端据此移除 Calibrated 数据并恢复登录时按钮状态，不再等待后端回到 `command=init,status=""`。
+- `execute success` 不是完成；启动路径必须继续等 `case complete`，重置路径必须继续等 `reinit complete`。
+- `execute fail` 是命令失败终态；出现后前端显示执行命令失败，后端本轮不再给 `case complete` 或 `reinit complete`。
 - 当前 UI 只消费 RSS、有效路径数、首径时延三项；每项包括动态解析得到的热力矩阵与 KPI 样本集合，不能硬编码为 20×20 或 20 个样本。
 - CDF、均值、降幅都是前端派生，降幅按当前样本计算；浏览器不能直接读写共享目录或截图文件。
 
@@ -183,7 +187,7 @@ AOA、ZOA 的参考文件不进入当前 case2 UI、结果批次、截图或“�
 | ID | 待确认事实 | 为什么阻塞 Gate 2 批准 |
 |---|---|---|
 | P0-1 | 六文件同批、原子发布与本次运行新鲜度的证明机制（例如发布清单/批次 ID/原子目录切换；具体方案由后端确认） | 只有状态字面量时无法排除新旧文件混读。 |
-| P0-2 | `reinit` 失败、超时、重复点击和刷新中断时的处理策略 | 成功口径已由 `status="reinit success"` 固定，但异常收敛与按钮解除仍需事实来源。 |
+| P0-2 | 命令超时、重复点击、刷新中断与失败后的按钮解除/重试策略 | `execute fail` 的状态口径已确认，但交互收敛仍需 Gate 3 前冻结。 |
 | P0-3 | 适配服务的 REST 路由、请求/响应 shape、轮询/超时、锁和挂载路径 | 语义已经冻结，但实现端点尚无事实来源。 |
 | P0-4 | 截图输出路径、命名、确认回执与进程重启去重策略 | 否则不能保证“已保存才清零”且可能重复输出。 |
 

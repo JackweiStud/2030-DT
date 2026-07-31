@@ -19,7 +19,7 @@
 - case2 是独立业务 case：Initial DT 基线 -> 启动校准 -> Calibrated DT 对比 -> 重置回初始态。
 - 启动时前端侧写入 `case: "case2"`、`command: "start"`、`dt_type: "with dt"`。
 - 命令枚举：`init` 为初始化/idle，`start` 为开始测试，`reinit` 为重置（旧称“清除”）。
-- 后端侧写 `status`：`""`（初始化）、`execute success`、`execute fail`、`case complete`、`reinit success`。只有 `case complete` 能触发前端读取 Calibrated 结果；`reinit success` 只表示重置完成，前端据此移除 Calibrated 显示并恢复登录时按钮状态。
+- 后端侧写 `status`：`""`（初始化）、`execute success`（命令执行成功）、`execute fail`（命令执行失败）、`case complete`（后端系统测试完成）、`reinit complete`（后端系统重置完成）。启动路径为 `execute success -> case complete`；重置路径为 `execute success -> reinit complete`。若出现 `execute fail`，前端显示执行命令失败，后端本轮不再写完成终态。只有 `case complete` 能触发前端读取 Calibrated 结果；`reinit complete` 只表示重置完成，前端据此移除 Calibrated 显示并恢复登录时按钮状态。
 - `save_picture_flag` 初始为 `0`；后端置为 `1` 后，前端侧 Node 适配服务负责在截图成功落盘后、持锁写回 `0`。这是受控的双向字段，不是浏览器直接写文件。
 - 当前 UX 的三项对比语义是误差：RSS 误差、有效路径数误差、首径时延误差。CDF 左移和平均误差下降才表示校准有效。
 

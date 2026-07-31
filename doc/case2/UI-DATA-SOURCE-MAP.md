@@ -10,12 +10,12 @@
 |---|---|---|---|---|
 | 顶部品牌、导航、1920×1080 缩放 | 否（Shell） | Shell 运行资源与公共 token | 始终 | 不读取 case2 文件。 |
 | case2 标题、面板标题、指标标签、图例、地图底图 | 否 | `04-runtime-assets/case2/` + 静态文案 | 始终 | 正式运行不得回读 `02-ux/` 或 Gate 1.5 代表图。 |
-| “启动 / 重置”按钮 | 是 | Web 本地交互 + 适配服务提交结果 | 当前状态可执行时 | “重置”唯一映射 `command=reinit`；读到 `status="reinit success"` 后恢复登录时按钮状态。 |
-| 状态反馈、按钮禁用/运行中文字 | 是 | `command`、`status` 与 Web 本地提交态 | 状态机映射成立 | 适配服务断连不是 `execute fail`；`reinit success` 是重置完成。 |
+| “启动 / 重置”按钮 | 是 | Web 本地交互 + 适配服务提交结果 | 当前状态可执行时 | “重置”唯一映射 `command=reinit`；读到 `status="reinit complete"` 后恢复登录时按钮状态。 |
+| 状态反馈、按钮禁用/运行中文字 | 是 | `command`、`status` 与 Web 本地提交态 | 状态机映射成立 | 适配服务断连不是 `execute fail`；`execute success` 是命令执行成功，`execute fail` 是命令执行失败，`reinit complete` 是重置完成。 |
 | Initial 三张热力图 | 是 | Initial 三个动态 `Nx × Ny` 文件 + 前端热图渲染 | Initial 输入通过校验 | 参考输入，不是本次校准成果；不得硬编码 20×20。 |
-| Calibrated 三张热力图 | 是 | Calibrated 三个动态 `Nx × Ny` 文件 + 前端热图渲染 | `case complete` 且六文件批次有效 | 不得显示静态 `heatmap-calibrated-represent.png`；读到 `reinit success` 后移除。 |
+| Calibrated 三张热力图 | 是 | Calibrated 三个动态 `Nx × Ny` 文件 + 前端热图渲染 | `case complete` 且六文件批次有效 | 不得显示静态 `heatmap-calibrated-represent.png`；读到 `reinit complete` 后移除。 |
 | 三张 Initial CDF、均值柱 | 是 | Initial 三组动态 `N` 个 KPI 样本 + 前端派生 | Initial KPI 输入通过校验 | CDF 为经验 CDF，均值为算术平均；不得硬编码 20 条。 |
-| 三张 Calibrated CDF、均值柱、降幅徽章 | 是 | Calibrated 三组动态 `N` 个 KPI 样本 + 前端派生 | `case complete` 且六文件批次有效 | 降幅运行时计算，不能沿用 40%/50% 视觉样例；读到 `reinit success` 后移除。 |
+| 三张 Calibrated CDF、均值柱、降幅徽章 | 是 | Calibrated 三组动态 `N` 个 KPI 样本 + 前端派生 | `case complete` 且六文件批次有效 | 降幅运行时计算，不能沿用 40%/50% 视觉样例；读到 `reinit complete` 后移除。 |
 | 完成/校准中/失败/结果发布异常反馈 | 是 | 状态机、适配服务可用性、批次校验 | 对应条件 | 业务失败、服务错误、发布错误必须分开。 |
 | 完成态截图保存反馈 | 是 | `save_picture_flag` 消费进度 | 完成态稳定后 | Web 不拥有文件输出路径或回写权。 |
 | 其他 case Tab 的建设中页 | 否（Shell） | Shell 占位 | 切入其他 Tab | 不启动 case2 轮询、读文件或截图。 |

@@ -19,7 +19,7 @@
 - `execute-success-waiting`：后端命令成功但结果未完整发布；视觉上仍不可误判为完成。
 - `completed`：六张热力图与三组 KPI 对比可见。
 - `failed`：Initial 保留，Calibrated 清空，显示错误与重试。
-- `resetting`：等待 `status="reinit success"` 后过渡到 `initial`；无需独立最终 frame。
+- `resetting`：等待 `status="reinit complete"` 后过渡到 `initial`；若收到 `execute fail` 则显示执行命令失败；无需独立最终 frame。
 
 ## UX 层次与信息架构
 
