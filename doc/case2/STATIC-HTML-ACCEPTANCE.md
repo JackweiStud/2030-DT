@@ -43,6 +43,8 @@ python3 -m http.server 8765
 
 资源引用：Shell mock 使用 `../../04-runtime-assets/shell/**`，case2 页面使用 `../../04-runtime-assets/case2/**`；两者均不复制到 `web-static/`。
 
+字体：静态入口不依赖 Google Fonts/CDN；使用 Shell 与 case2 token 中声明的本地 fallback 栈。目标设备若未安装 Inter/Geist，需按实际 fallback 结果复核字体细节。
+
 ## 4. 四态验收检查表
 
 | 检查项 | initial | calibrating | failed | completed |

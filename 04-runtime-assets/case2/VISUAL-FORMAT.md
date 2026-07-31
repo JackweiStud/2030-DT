@@ -68,6 +68,8 @@ HeatmapCard
 | 按钮 Lucide 图标 SVG | 状态机驱动的徽章文案切换（数据侧） |
 | `tokens.css` | 截图落盘、文件轮询等（非视觉） |
 
+字体由本地 fallback 栈提供：Shell 使用 `--shell-font-ui`，case2 数据使用 `--case2-font-data`；静态入口不请求 Google Fonts 或其他 CDN。若目标设备未安装 Inter/Geist，则按 token 中声明的本地后备字体渲染，像素级字体一致性需要在目标设备上单独复核。
+
 ## 6. 状态视觉差异（以 Pencil 实读为准）
 
 | 状态 | Frame ID | 状态徽章 | Calibrated KPI |
