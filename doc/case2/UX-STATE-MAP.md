@@ -18,7 +18,7 @@
 | `calibrating` | 无整页图 | 保留 Initial；显示校准中；禁用重复启动；不沿用旧结果 | 已在 `case2.calibrating` 补建并冻结 |
 | `execute-success-waiting` | 无整页图 | 命令已执行但仍等待完整结果；不能显示完成 | 已并入 `case2.calibrating` 并冻结 |
 | `completed` | 三张 UX 图 | Initial/Calibrated 六张热力图；右侧三组 CDF/均值；完成标识 | 已在 `case2.completed` 结构化重建并冻结 |
-| `failed` | 无整页图 | Initial 可见、Calibrated 清空、失败反馈与可重试动作 | 已在 `case2.failed` 补建并冻结 |
+| `failed` | 无整页图 | Initial 可见、Calibrated 清空、失败反馈与可重试动作 | 无独立 Pencil frame；已在 Gate 1.5 HTML 补建并由用户人工检查接受 |
 | `resetting` | 无整页图 | 清除反馈，随后回 `initial` | 可用过渡说明，不必独立最终 frame |
 
 ## 页面结构
@@ -41,7 +41,7 @@
 
 ## Gate 1 冻结检查
 
-- [x] 使用 Pencil 建立 initial、calibrating、failed、completed 四个 frame。
+- [x] Pencil 建立 initial、calibrating、completed 三个 frame；failed 作为 Gate 1.5 HTML 视觉派生态验收。
 - [x] Header、左侧对比区、右侧 KPI 区和反馈层具有语义组件树与布局约束。
 - [x] 热力底图、动态热力层、CDF/柱图和运行时数值的来源已分层。
 - [x] 所有降幅与错误/空态文案有数据契约来源，不复制 PNG 中的占位数。

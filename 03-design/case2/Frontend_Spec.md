@@ -13,7 +13,7 @@
 | 目标设计源 | `03-design/case2/case2-dt-calibration.pen` |
 | 画布 | 1920×1080 固定舞台；由共享 Shell 整体等比缩放 |
 | 活跃 case | case2（DT Calibration Tab） |
-| 业务状态 frame | `case2.initial` / `case2.calibrating` / `case2.failed` / `case2.completed` |
+| 业务视觉状态 | `case2.initial` / `case2.calibrating` / `case2.failed` / `case2.completed`；`.pen` 仅有 initial/calibrating/completed，failed 为 Gate 1.5 HTML 派生态 |
 | 模式 | 标准重建；Gate 1 视觉与结构交接，不含 API/Node 实现 |
 
 ### 1.1 状态与外部条件映射
@@ -233,7 +233,7 @@ initialMean, calibratedMean 来自样本均值
 
 ## 8. 前端验收条件（Gate 1.5 前置）
 
-- [ ] 四个 frame 在 Pencil 中结构完整且命名可读
+- [x] 三个 Pencil frame 结构完整且命名可读；failed 为已验收的 Gate 1.5 HTML 派生态
 - [ ] 1920×1080 无 case-local 滚动条
 - [ ] 用户 PNG 资产路径与 `.pen` 引用一致
 - [ ] 动态区使用占位/代表态，无烘焙业务数据
@@ -254,9 +254,9 @@ initialMean, calibratedMean 来自样本均值
 
 | Frame | 节点 ID | 说明 |
 |---|---|---|
-| `case2.initial` | `x23mKG` | Initial 就绪；KPI 等待态 |
-| `case2.calibrating` | `n1oqlQ` | 校准中；启动禁用 |
-| `case2.failed` | `M7TZR` | 失败反馈；可重试 |
+| `case2.initial` | `EMJd9` | Initial 就绪；KPI 等待态 |
+| `case2.calibrating` | `RCHHQ` | 校准中；启动禁用 |
+| `case2.failed` | — | Gate 1.5 HTML 派生态；失败反馈、可重试 |
 | `case2.completed` | `rdP2e` | 六热力图 + 三 KPI 行 |
 
 | 组件 | 节点 ID |
@@ -267,6 +267,6 @@ initialMean, calibratedMean 来自样本均值
 
 ## 11. 冻结决议与后续边界
 
-- 四个 frame、当前 Header 文案、面板 PNG 底纹与补建状态均已由用户审阅批准；变更须重新冻结。
+- 三个 Pencil frame、当前 Header 文案、面板 PNG 底纹与补建状态均已由用户审阅批准；failed HTML 派生态已在 Gate 1.5 人工检查接受。变更须重新冻结或重新验收。
 - 精确尺寸/token 以冻结 `.pen` 的测量值为准，Gate 1.5 只能还原，不得自行改视觉方向。
 - 下一阶段为静态 HTML 验收；不读取共享目录、不实现控制文件交互、不启动 Node 适配服务。

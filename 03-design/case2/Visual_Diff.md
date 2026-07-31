@@ -9,7 +9,7 @@
 | 检查项 | 结果 |
 |---|---|
 | Pencil MCP | 通过 |
-| 四 frame 1920×1080 | 通过（`x23mKG` / `n1oqlQ` / `M7TZR` / `rdP2e`） |
+| 三个 Pencil frame 1920×1080 | 通过（`EMJd9` / `RCHHQ` / `rdP2e`）；failed 为 Gate 1.5 HTML 派生态 |
 | 可复用组件 | 通过：`StatusFeedback` / `MetricHeatmapPair` / `KpiComparisonRow` |
 | 左栏 vs `左侧界面整体.png` | 层次对齐（§4） |
 | 右栏 vs `右侧整体效果.png` | 层次对齐（§4） |
@@ -56,9 +56,9 @@ XNGat KpiComparisonPanel (column)
 
 | Frame | ID | 尺寸 |
 |---|---|---|
-| `case2.initial` | `x23mKG` | 1920×1080 |
-| `case2.calibrating` | `n1oqlQ` | 1920×1080 |
-| `case2.failed` | `M7TZR` | 1920×1080 |
+| `case2.initial` | `EMJd9` | 1920×1080 |
+| `case2.calibrating` | `RCHHQ` | 1920×1080 |
+| `case2.failed` | — | Gate 1.5 HTML 派生态 |
 | `case2.completed` | `rdP2e` | 1920×1080 |
 
 | 可复用组件 | ID | 结构 |
@@ -97,7 +97,7 @@ XNGat KpiComparisonPanel (column)
 
 | ID | 严重度 | 描述 | 需拍板 |
 |---|---|---|---|
-| V-001 | important | initial / calibrating / failed 无 UX 整页，按语义补建 | 用户已审阅并接受 |
+| V-001 | important | initial / calibrating 无 UX 整页，按语义补建；failed 不在 `.pen` 中单列，按 error token 作为 HTML 派生态 | 用户已审阅；failed 已在 Gate 1.5 人工检查接受 |
 | V-002 | minor | Header 使用当前设计源中的文案 | 用户已审阅并接受；后续改名需重新冻结 |
 | V-003 | minor | CDF/柱图刻度密度与 ghost 精度弱于 UX | 可选 |
 | V-004 | important | Calibrated 热力无独立 UX 切图，当前同底图+绿罩 | 用户已审阅并接受；运行时仍须以动态数据层实现 |
@@ -109,4 +109,4 @@ XNGat KpiComparisonPanel (column)
 
 - **状态：`APPROVED / frozen`**
 - **blocking：无**（相对左右 UX，层次与 Flex 已对齐；补建态和代表态已获用户批准）
-- 下一步：经授权进入 Gate 1.5 静态 HTML 验收；不接共享目录或实际状态机。
+- Gate 1.5：四态 HTML 已由用户人工检查接受；下一步经授权进入 Gate 2 API 契约。

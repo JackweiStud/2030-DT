@@ -10,15 +10,15 @@
 ## Approval Record
 
 - 目标文件已创建：`03-design/case2/case2-dt-calibration.pen`。
-- 用户于 2026-07-30 审阅四个 frame 并确认符合预期。
-- 状态：`APPROVED / frozen`。后续修改需要重新审阅；下一阶段为 Gate 1.5。
+- 用户于 2026-07-30 审阅三个 Pencil frame，并在 Gate 1.5 人工检查四个 HTML 视觉状态后确认符合预期。
+- 状态：`APPROVED / frozen`。后续修改需要重新审阅；下一阶段经授权进入 Gate 2。
 
 ## 修改基线与变更集
 
 | 类别 | 节点/区域 | 处理 | 验证方式 |
 |---|---|---|---|
 | 保留 | 用户提供品牌、导航/面板视觉、热力地图、指标图标 | 作为真实资产或视觉参考 | 资产路径与 Pencil 截图比对 |
-| 新增 | 四个业务状态 frame | 使用统一组件树建立 | `snapshot_layout` + 截图比对 |
+| 新增 | 三个 Pencil frame + failed HTML 派生态 | 统一组件树；failed 复用布局并切换 error token | Pencil `snapshot_layout` + Gate 1.5 人工检查 |
 | 新增 | `MetricHeatmapPair`、`KpiComparisonRow`、`StatusFeedback` | 建为可读组件/语义分组 | `batch_get` 检查命名与复用 |
 | 更新 | 完成态中的固定数值/50% 标记 | 改为动态数据占位与绑定说明 | UX 状态映射核对 |
 | 禁止触碰 | 未启动 case 的业务画面与共享 Shell 业务状态 | 不在 case2 `.pen` 中猜测 | 范围复扫 |
@@ -29,7 +29,7 @@
 |---|---|---|---|
 | `case2.initial` | Initial 就绪 | 现有完成态拆图 + 主线语义 | Calibrated/右侧对比为空态或等待态 |
 | `case2.calibrating` | 校准中 | 现有完成态布局 | 保留 Initial；显示进行中；不显示旧结果 |
-| `case2.failed` | 校准失败 | 现有完成态布局 | 保留 Initial；失败反馈与重试动作 |
+| `case2.failed` | 校准失败 | 现有完成态布局 | Gate 1.5 HTML 派生态；保留 Initial、失败反馈与重试动作 |
 | `case2.completed` | 校准完成 | `02-ux/case2/case2整体效果图.png` | 结构化复刻完成态，数值为动态占位 |
 
 ## Component Tree
@@ -115,6 +115,6 @@ Case2Frame
 | 项目 | 决议 | 约束 |
 |---|---|---|
 | `.pen` 输出路径 | 已使用 `03-design/case2/case2-dt-calibration.pen` | 后续修改不得覆盖冻结基线而不重新审阅 |
-| 设计状态 frame | initial / calibrating / failed / completed 已冻结 | 新增/删除状态需重新冻结 |
+| 设计状态 | Pencil：initial / calibrating / completed；HTML 派生：failed | 变更 Pencil frame 须重新冻结；变更 failed HTML 态须重新验收 |
 | Header 标题 | 当前设计源文案已获接受 | 改名属于视觉变更，需重新冻结 |
 | 未提供状态的视觉方向 | 已按完成态结构，以状态徽章/空态/失败反馈补建 | 后续真实 UX 输入可触发重新评审 |

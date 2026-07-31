@@ -24,7 +24,7 @@
 - 右 `KPI对比面板` `XNGat` 764×970
 - 状态徽章文案：initial「等待启动测试」/ calibrating「测试运行中」/ completed「已完成」
 
-Pencil 变量已落入 `04-runtime-assets/case2/tokens.css`。
+Pencil 变量按所有权拆分：Shell 公共 token 在 `04-runtime-assets/shell/tokens.css`，case2 业务 token 在 `04-runtime-assets/case2/tokens.css`。
 
 ## 3. 静态原型入口与打开方式
 
@@ -41,20 +41,20 @@ python3 -m http.server 8765
 
 右下角 Gate 1.5 验收控件可切换四态；「启动」「清除」仅驱动视觉切换。
 
-资源引用：`../../04-runtime-assets/case2/**`（无复制到 web-static）。
+资源引用：Shell mock 使用 `../../04-runtime-assets/shell/**`，case2 页面使用 `../../04-runtime-assets/case2/**`；两者均不复制到 `web-static/`。
 
 ## 4. 四态验收检查表
 
 | 检查项 | initial | calibrating | failed | completed |
 |---|---|---|---|---|
-| Shell 四 Tab，默认 DT Calibration 激活 | ☐ | ☐ | ☐ | ☐ |
-| 左「测试对比」+ 右「KPI对比」双栏 | ☐ | ☐ | ☐ | ☐ |
-| Initial 三热力卡有底图与指标标签 | ☐ | ☐ | ☐ | ☐ |
-| Calibrated 无完成结论 / 有等待或失败反馈 | ☐ | ☐ | ☐ | — |
-| KPI 仅 Initial 代表曲线/柱，无降幅徽章 | ☐ | ☐ | ☐ | — |
+| Shell 四 Tab，默认 DT Calibration 激活 | ✓ | ✓ | ✓ | ✓ |
+| 左「测试对比」+ 右「KPI对比」双栏 | ✓ | ✓ | ✓ | ✓ |
+| Initial 三热力卡有底图与指标标签 | ✓ | ✓ | ✓ | ✓ |
+| Calibrated 无完成结论 / 有等待或失败反馈 | ✓ | ✓ | ✓ | — |
+| KPI 仅 Initial 代表曲线/柱，无降幅徽章 | ✓ | ✓ | ✓ | — |
 | 状态徽章文案正确 | 等待启动测试 | 测试运行中 | 测试失败 | 已完成 |
-| 完整 Initial + Calibrated 对比（双 CDF/双柱/降幅代表态） | — | — | — | ☐ |
-| 非 case2 Tab 仅「建设中」 | ☐ | ☐ | ☐ | ☐ |
+| 完整 Initial + Calibrated 对比（双 CDF/双柱/降幅代表态） | — | — | — | ✓ |
+| 非 case2 Tab 仅「建设中」 | ✓ | ✓ | ✓ | ✓ |
 
 ## 5. 1920×1080 与窗口缩放
 
@@ -67,9 +67,15 @@ python3 -m http.server 8765
 
 ## 7. 正式前端可直接使用
 
+Shell：
+
+- `../shell/tokens.css`
+- `../shell/brand-logo.png`
+- `../shell/shell-nav-background.png`
+
+case2：
+
 - `tokens.css`
-- `brand/brand-logo.png`
-- `chrome/shell-nav-background.png`
 - `icons/*`（列头、指标标签/图标、降幅底/箭头、柱纹理、play/rotate SVG）
 - `maps/heatmap-map-base.png`（有条件：由 Pencil 导出还原）
 
@@ -83,13 +89,12 @@ python3 -m http.server 8765
 
 ## 9. 与 Pencil 设计源的已知偏差
 
-1. **failed frame 缺失**：当前 `.pen` 仅三态；failed 按 error token + 规格语义补建。
+1. **failed 是 HTML 派生态**：当前 `.pen` 仅三态；failed 按 error token + 规格语义补建，用户已人工检查并接受。
 2. **地图底图**：`heatmap-map-base.png` 由 `ol7yg` 导出后去除代表层/标签区还原，标签区为近似修补。
 3. **非完成态 Calibrated 卡**：原型叠加「等待/失败」遮罩以明确无完成结论；Pencil 实例仍可能保留底图可见。
 4. **按钮**：设计源启动/清除无填充色，原型保持透明底以贴合测量。
-5. **Visual_Diff 旧 ID**（`x23mKG`/`n1oqlQ`/`M7TZR`）与当前实读 ID 不一致；以本次 Pencil MCP 实读为准。
-6. ~~面板底图近似纹理~~：已按 `EM3U1`/`XNGat` 的 image fill 源文件更正为正确左右面板背景图。
+5. ~~面板底图近似纹理~~：已按 `EM3U1`/`XNGat` 的 image fill 源文件更正为正确左右面板背景图。
 
 ## 10. 结论
 
-`REVIEW_READY：等待人工 Gate 1.5 验收，未进入 Gate 2。`
+`ACCEPTED：用户已人工检查四态 HTML，确认符合预期；Gate 1.5 静态验收完成，尚未进入 Gate 2。`

@@ -1,5 +1,6 @@
-/* case2 Gate 1.5 static prototype — scoped under .case2-page / stage shell.
-   Colors, spacing, radii MUST come from 04-runtime-assets/case2/tokens.css */
+/* case2 Gate 1.5 static prototype.
+   Shell owns .stage / navigation and consumes 04-runtime-assets/shell/tokens.css.
+   Case business styles stay scoped under .case2-page and consume case2/tokens.css. */
 
 *,
 *::before,
@@ -13,7 +14,7 @@ body {
   height: 100%;
   background: #000;
   overflow: hidden;
-  font-family: var(--case2-font-ui);
+  font-family: var(--shell-font-ui);
 }
 
 .stage-viewport {
@@ -26,23 +27,23 @@ body {
 }
 
 .stage {
-  width: var(--case2-stage-width);
-  height: var(--case2-stage-height);
+  width: var(--shell-stage-width);
+  height: var(--shell-stage-height);
   position: relative;
   flex-shrink: 0;
   transform-origin: center center;
-  background: var(--case2-color-page);
+  background: var(--shell-color-page);
   overflow: hidden;
-  color: var(--case2-color-text);
+  color: var(--shell-color-text);
 }
 
 /* -------- Shell -------- */
 .shell-header {
   position: relative;
   width: 1920px;
-  height: var(--case2-shell-header-height);
+  height: var(--shell-header-height);
   overflow: hidden;
-  background: var(--case2-color-page);
+  background: var(--shell-color-page);
 }
 
 .nav-bg {
@@ -51,7 +52,7 @@ body {
   top: -26px;
   width: 2328px;
   height: 111px;
-  background: url("../../04-runtime-assets/case2/chrome/shell-nav-background.png") center / cover no-repeat;
+  background: url("../../04-runtime-assets/shell/shell-nav-background.png") center / cover no-repeat;
   pointer-events: none;
 }
 
@@ -59,7 +60,7 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: var(--case2-brand-area-width);
+  width: var(--shell-brand-area-width);
   height: 78px;
 }
 
@@ -76,28 +77,28 @@ body {
   position: absolute;
   left: 48px;
   top: 28px;
-  font-size: var(--case2-font-size-brand-sub);
-  color: var(--case2-color-muted);
+  font-size: var(--shell-font-size-brand-sub);
+  color: var(--shell-color-muted);
 }
 
 .brand-title {
   position: absolute;
   left: 234px;
   top: 16px;
-  font-size: var(--case2-font-size-brand-title);
-  color: var(--case2-color-text);
+  font-size: var(--shell-font-size-brand-title);
+  color: var(--shell-color-text);
   line-height: 46px;
   white-space: nowrap;
 }
 
 .case-nav {
   position: absolute;
-  left: var(--case2-nav-tabs-left);
+  left: var(--shell-nav-tabs-left);
   top: 0;
-  width: var(--case2-nav-tabs-width);
+  width: var(--shell-nav-tabs-width);
   height: 78px;
   display: flex;
-  gap: var(--case2-tab-gap);
+  gap: var(--shell-tab-gap);
   padding-top: 22px;
   align-items: flex-start;
 }
@@ -133,13 +134,13 @@ body {
   display: block;
   height: 32px;
   line-height: 32px;
-  color: var(--case2-color-muted);
-  font: 500 var(--case2-font-size-tab) / 32px var(--case2-font-ui);
+  color: var(--shell-color-muted);
+  font: 500 var(--shell-font-size-tab) / 32px var(--shell-font-ui);
   white-space: nowrap;
 }
 
 .case-tab.is-active .case-tab__label {
-  color: var(--case2-color-primary-text);
+  color: var(--shell-color-primary-text);
   font-weight: 600;
 }
 
@@ -148,8 +149,8 @@ body {
   width: 90%;
   height: 4px;
   align-self: center;
-  border-radius: var(--case2-radius-tab-underline);
-  background: var(--case2-color-tab-active-underline);
+  border-radius: var(--shell-radius-tab-underline);
+  background: var(--shell-color-tab-active-underline);
 }
 
 .case-tab.is-active .tab-underline {
@@ -166,8 +167,8 @@ body {
   align-items: center;
   justify-content: center;
   /* Match Pencil frame / ShellHeader page fill #191a1a */
-  background: var(--case2-color-page);
-  color: var(--case2-color-muted);
+  background: var(--shell-color-page);
+  color: var(--shell-color-muted);
   font-size: 28px;
 }
 
@@ -183,7 +184,7 @@ body {
   width: 1920px;
   height: 1002px;
   overflow: hidden;
-  background: var(--case2-color-page);
+  background: var(--shell-color-page);
 }
 
 .case2-page[hidden] {
@@ -263,7 +264,7 @@ body {
   margin: 0;
   font-size: var(--case2-font-size-panel-title);
   font-weight: 600;
-  color: var(--case2-color-text);
+  color: var(--shell-color-text);
 }
 
 .case2-page .env-link {
@@ -322,14 +323,14 @@ body {
   border-radius: var(--case2-radius-badge);
   background: #1e293b;
   font-size: var(--case2-font-size-status);
-  color: var(--case2-color-muted);
+  color: var(--shell-color-muted);
 }
 
 .case2-page .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--case2-color-muted);
+  background: var(--shell-color-muted);
 }
 
 .case2-page .calibration-controls {
@@ -346,7 +347,7 @@ body {
   border-radius: var(--case2-radius-button);
   border: 0;
   background: transparent;
-  color: var(--case2-color-text);
+  color: var(--shell-color-text);
   font-size: var(--case2-font-size-button);
   cursor: pointer;
 }
@@ -475,7 +476,7 @@ body {
 .case2-page .metric-tag__label {
   position: relative;
   z-index: 1;
-  color: var(--case2-color-primary-text);
+  color: var(--shell-color-primary-text);
   font-size: var(--case2-font-size-metric-tag);
   white-space: nowrap;
   line-height: 1;
@@ -532,7 +533,7 @@ body {
   margin: 0;
   font-size: var(--case2-font-size-kpi-title);
   font-weight: 600;
-  color: var(--case2-color-text);
+  color: var(--shell-color-text);
 }
 
 .case2-page .metric-icon {
@@ -578,7 +579,7 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: var(--case2-font-size-chart-title);
-  color: var(--case2-color-text);
+  color: var(--shell-color-text);
 }
 
 .case2-page .legend {
@@ -617,7 +618,7 @@ body {
 
 .case2-page .cdf-axis-labels text {
   fill: #939393;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--shell-font-ui);
   font-size: 9px;
 }
 
@@ -648,7 +649,7 @@ body {
   font-family: var(--case2-font-data);
   font-size: var(--case2-font-size-mean);
   font-weight: 600;
-  color: var(--case2-color-text);
+  color: var(--shell-color-text);
 }
 
 .case2-page .bar-group--calibrated .mean-value {
@@ -736,7 +737,7 @@ body {
   left: 3px;
   top: 195px;
   font-size: var(--case2-font-size-bar-label);
-  color: var(--case2-color-text);
+  color: var(--shell-color-text);
   white-space: nowrap;
 }
 
@@ -768,7 +769,7 @@ body {
   padding: 2px 8px;
   border-radius: var(--case2-radius-reduction);
   background: url("../../04-runtime-assets/case2/icons/reduction-badge-bg.png") center / 100% 100% no-repeat;
-  color: var(--case2-color-primary-text);
+  color: var(--shell-color-primary-text);
   font-size: var(--case2-font-size-reduction);
   font-weight: 600;
   z-index: 2;
@@ -851,7 +852,7 @@ body {
   background: rgba(15, 23, 42, 0.92);
   border: 1px solid #334155;
   color: #e2e8f0;
-  font: 12px/1 var(--case2-font-ui);
+  font: 12px/1 var(--shell-font-ui);
 }
 
 .review-dock__label {

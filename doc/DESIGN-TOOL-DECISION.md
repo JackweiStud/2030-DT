@@ -9,15 +9,15 @@
 ## 冻结结果
 
 - 设计源：`03-design/case2/case2-dt-calibration.pen`。
-- 画布：1920×1080；四个 frame：initial、calibrating、failed、completed。
+- 画布：1920×1080；三个 Pencil frame：initial、calibrating、completed；failed 是 Gate 1.5 HTML 视觉派生态。
 - 结构/视觉证据：`03-design/case2/Visual_Diff.md`、`Frontend_Spec.md`。
 - 用户已于 2026-07-30 审阅并确认设计效果符合预期；冻结状态为 `APPROVED`。
-- initial、calibrating、failed 是基于完成态结构补建的状态；该取舍已获批准。
+- initial、calibrating 是基于完成态结构补建的 Pencil frame；failed 作为 HTML 派生态已获用户人工检查接受。
 
 ## 后续规则
 
 - 任何修改 `.pen` 的状态、布局、品牌/标题文案、资产或动态层语义，均需新的用户视觉确认后重新冻结。
-- 下一阶段只能是 Gate 1.5 静态 HTML 验收；不得由设计冻结直接跳到接口或实现。
+- Gate 1.5 静态 HTML 已验收；下一阶段经授权进入 Gate 2 API 契约，不得直接跳到实现。
 
 ## 不做
 

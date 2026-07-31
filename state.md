@@ -4,8 +4,8 @@
 
 - 项目 Gate 0：已于 2026-07-29 获用户批准。
 - case2 Gate 1：已于 2026-07-30 经用户视觉审阅冻结（`APPROVED`）。
-- 当前焦点：Gate 1.5 静态 HTML 验收准备；设计源为 `03-design/case2/case2-dt-calibration.pen`，证据见同目录 `Visual_Diff.md`、`Frontend_Spec.md` 与 `Freeze_Note.md`。
-- 未创建任何 React、Node 或业务实现代码；未获下一步授权前不开始 Gate 1.5 静态原型。
+- case2 Gate 1.5：四态静态 HTML 已由用户人工检查并接受；Shell 与 case2 资源/token 归属已分离，验收记录见 `doc/case2/STATIC-HTML-ACCEPTANCE.md`。
+- 当前焦点：准备 Gate 2 API 契约；尚未进入 Gate 2，且未创建任何 React、Node 或业务实现代码。
 
 ## 一句话演示承诺
 
@@ -50,6 +50,6 @@
 
 ## 最小下一步与停止条件
 
-下一步：经用户授权后，为冻结设计源建立 Gate 1.5 静态 HTML 原型与逐状态截图验收；不接共享目录、真实状态机或 Node 适配服务。
+下一步：经用户授权后进入 Gate 2，编写 case2 API 契约与 UI 数据来源反向清单；不创建 React、Node 或业务实现代码。
 
-停止条件：Gate 1.5 的关键状态与冻结 `.pen` 对齐并由用户接受前，不进入 Gate 2、文件契约或任何实现。
+停止条件：Gate 2 契约覆盖正常、失败、完整结果发布、重放与截图触发语义并获用户批准前，不进入 Gate 3 或任何实现。

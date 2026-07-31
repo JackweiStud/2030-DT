@@ -39,6 +39,7 @@ Chrome case2
 - Shell 是唯一缩放所有者；case 页面不得实现第二套全页缩放。
 - 单活跃生命周期：切离 case2 时卸载 case-local 状态、停止轮询、清理计时器；切回时按当前适配服务状态重新初始化。
 - CSS：`shell.css` 只包含 Shell；业务选择器必须有 `.caseN-page` 前缀或使用 CSS Modules；全 Tab 视觉冒烟是后续验收项。
+- 运行资源：`04-runtime-assets/shell/` 只归 Shell 所有，提供 `--shell-*` 与品牌/导航资产；`04-runtime-assets/caseN/` 只归对应 case 所有。case 页面可消费 Shell 注入的公共 token，但不得拥有或直接引用 Shell 资产。
 
 ## case2 文件结果边界
 

@@ -1,15 +1,13 @@
 # case2 运行时静态资源清单
 
-> 权威设计源：`03-design/case2/case2-dt-calibration.pen`  
-> 导出方式：Pencil MCP `export_nodes`（PNG RGBA，2×）+ 矢量图标按 Lucide 节点几何生成 SVG  
-> 本目录是正式前端唯一允许依赖的 case2 静态资源路径。
+> 权威设计源：`03-design/case2/case2-dt-calibration.pen`
+> 导出方式：Pencil MCP `export_nodes`（PNG RGBA，2×）+ 矢量图标按 Lucide 节点几何生成 SVG
+> 本目录只保存 case2 业务静态资源。Shell 资产和公共 token 见 `../shell/`，不属于 case2。
 
 ## 总览
 
 | 路径 | 来源节点 | 语义用途 | 格式/尺寸 | 正式前端可直接使用 |
 |---|---|---|---|---|
-| `brand/brand-logo.png` | `L70zre` 品牌图标 | Shell 品牌标识 | PNG RGBA 64×64（逻辑 32×32@2×） | 是 |
-| `chrome/shell-nav-background.png` | `M1hmPU` 导航背景 | 顶部导航装饰底图 | PNG RGBA 4656×222（逻辑 2328×111@2×） | 是 |
 | `chrome/panel-left-background.png` | `EM3U1` image fill（设计源嵌入路径） | 左栏校准对比面板底图 | PNG RGBA 2102×1914 | 是 |
 | `chrome/panel-right-background.png` | `XNGat` image fill（设计源嵌入路径） | 右栏 KPI 对比面板底图 | PNG RGBA 1562×1914 | 是 |
 | `icons/column-initial-icon.png` | `eh2tw` Initial图标 | Initial DT 列头图标 | PNG RGBA 48×48（逻辑 24×24@2×） | 是 |
@@ -37,8 +35,14 @@
 - 热力代表层色块 `#22c55e66`：代表态，非正式业务热力。
 - `web-static/case2/` 内假状态切换与样例绑定逻辑。
 
+## Shell 依赖（不归 case2 所有）
+
+- `../shell/tokens.css`：固定舞台、Header、Tab 与公共字体/颜色 token，由 Shell 入口加载。
+- `../shell/brand-logo.png` 与 `../shell/shell-nav-background.png`：仅由 Shell 渲染。
+- case2 组件允许消费已注入的 `--shell-*`，但不得复制、重定义或把 Shell 资源写回本目录。
+
 ## 交接说明
 
-1. 正式前端只引用本目录相对路径，禁止回读 `02-ux/`。
+1. 正式 case2 前端只引用本目录的业务资源，禁止回读 `02-ux/`；Shell 资源只由 `../shell/` 的 Shell 入口引用。
 2. 热力：底图用 `maps/heatmap-map-base.png`（或后续更高精度隔离导出）；色场/马赛克由运行时绘制（Gate 1.5 可用 `heatmap-calibrated-represent.png` 代表叠加）。
 3. KPI 图表：保留网格/轴样式 token；曲线与柱值由样本计算。
