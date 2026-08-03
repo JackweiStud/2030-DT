@@ -198,6 +198,8 @@ Initial 与 Calibrated 均从 `{CASE2_SHARED_DIR}/case2/` 读取；截图写入 
    - 缺少契约必填字段；
    - 必填字段类型错误（例如 `status` 非字符串、`save_picture_flag` 非数字）；
    - `save_picture_flag` 不是 `0` 或 `1`（截图安全；与业务 status 无关）。
+   - 五个必填字段为 `case`、`command`、`dt_type`、`status`、`save_picture_flag`。
+   - `debug_flag`、`scene_type` 为可选部署字段；存在时分别必须是整数、字符串。缺少可选字段不拒读。
 3. **`status` 字面值不在已知枚举时不得拒读**：原样放入 `control` 以 HTTP 200 返回。业务解释由 Web 按契约 / [WEB-SPEC.md](WEB-SPEC.md) 处理（等待态内未知 status：打诊断日志、保持等待态、继续轮询；不映射为完成/失败）。适配服务不做 status → UI 相翻译。
 4. `case` / `command` / `dt_type` 等其它已知名字段：类型正确即可原样返回；字面值是否落在契约枚举表由 Web/后端语义层处理，GET **不**因“枚举字面值未知”返回 `CONTROL_READ_FAILED`。（POST 写路径仍只接受三种合法 payload，见 §4.2。）
 5. 未消费的未知字段原样放入 `control` 返回，不能过滤后再用于后续写入。
@@ -221,7 +223,7 @@ Initial 与 Calibrated 均从 `{CASE2_SHARED_DIR}/case2/` 读取；截图写入 
 
 - 只接受以上三种完整 shape；请求体混入 `status`、未知字段、`save_picture_flag=1` 或其他枚举一律 `400 INVALID_REQUEST`。
 - **Gate 3 演示向放宽（开一轮清盘）**：处理 `start` / `reinit` 时，适配服务在字段合并步骤**额外强制写入** `status=""`（请求体仍禁止带 `status`）。用于去掉上轮残留终态，供 Web 用「时刻 A 见 `execute success`、之后时刻 B 见完成终态」的规则（见 WEB-SPEC）；同时使合法 `start|reinit` 命令元组 + 空 status 成为后端/打桩唯一的新轮命令门沿，从而覆盖相同 command 的失败后重试。真实后端须接受开一轮时出现空 `status`；业务终态字面值仍只由后端写出。交接口径见 [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)。
-- `save_picture_flag: 0` 路径可由截图成功事务内部调用，或由 Web 在同一截图任务累计 3 次生成/上传失败后调用；两种路径都**不得**改写 `status`。后者必须记录“本张截图已放弃”日志，且不生成 PNG、不占用新序号。
+- `save_picture_flag: 0` 路径可由截图成功落盘流程内部调用，或由 Web 在同一截图任务累计 3 次生成/上传失败后调用；两种路径都**不得**改写 `status`。后者必须记录“本张截图已放弃”日志，且不生成 PNG、不占用新序号。
 - 启动与重置是否可点击由 Web 状态机负责；适配服务仍必须防止非法字段写入。
 - 截图接口内部清零必须复用同一控制文件写服务，不另写一套文件算法。
 
@@ -315,7 +317,7 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 5. 先写同目录临时 PNG，`fsync`、关闭，再 rename 为最终文件。
 6. 目标已存在时重新扫描并取下一号，绝不覆盖。
 7. 最终 PNG 存在并可 stat 后，才调用控制文件服务写 `save_picture_flag=0`。
-8. 两步都成功后返回 `{ "ok": true, "path": "...", "seq": 0 }`。
+8. 两步都成功后返回 `{ "ok": true, "path": "out/case2/calibrated-000.png", "seq": 0 }`。API 的 `path` 固定为相对 `CASE2_SHARED_DIR` 的 POSIX 风格路径；服务日志记录实际绝对路径。
 
 
 

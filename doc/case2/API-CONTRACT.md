@@ -146,6 +146,7 @@ sequenceDiagram
 | `debug_flag`        | 整数；当前参考值 `0`                                                                    | 未冻结                             | 当前 UI 不消费、不修改、不赋予业务语义。                       |
 | `scene_type`        | 字符串；当前参考值 `U6G`                                                                 | 未冻结                             | 当前 UI 不消费、不修改、不赋予业务语义。                       |
 
+控制快照以 `case`、`command`、`dt_type`、`status`、`save_picture_flag` 为五个必填字段；`debug_flag`、`scene_type` 为可选部署字段，存在时分别校验为整数、字符串。缺少可选字段不拒读，未来未知字段继续原样透传并在写入时保留。
 
 
 
@@ -293,7 +294,7 @@ Gate 3 本地无真实后端时，模拟后端打桩按 [realback_no.md](realbac
 2. **Web 观察窗口**：仅在可见态 `calibrating` 的控制轮询中检测 `save_picture_flag` 的 **0→1**；`initial` / `completed` / `failed-*` / 纯进页诊断 GET **不**观察。`resetting` 无截图诉求，不因 flag 截图。
 3. **触发**：在观察窗口内发现 0→1 即截图一次；**不因**当前 `status` 仍是 `execute success` 还是已是 `case complete` 而拒绝。**同拍规则**：若本拍同时满足「可认 `case complete`」与「flag 0→1」，须**先开本次截图，再进入 `completed` 并停表**。
 4. 传输：Web 生成 PNG 后经 `POST /api/case2/screenshot` 以 Base64 交给适配服务。
-5. 输出：适配服务写入 `{CASE2_SHARED_DIR}/out/case2/calibrated-{seq}.png`；`seq` 从 `000` 递增，不覆盖旧文件。
+5. 输出：适配服务写入 `{CASE2_SHARED_DIR}/out/case2/calibrated-{seq}.png`；`seq` 从 `000` 递增，不覆盖旧文件。成功响应的 `path` 返回相对共享根的 `out/case2/calibrated-{seq}.png`，日志记录实际绝对路径。
 6. 所有权：Web 只生成 Base64；适配服务是截图文件、目录、落盘与标志回写的唯一所有者。
 7. 回写：正常成功路径仅在确认 PNG 完整落盘后，才经 POST 控制文件把 `save_picture_flag` 写回 `0`；累计 3 次失败后的接受丢图清盘是第 11 条唯一例外。
 8. 序号：保存前扫描已完成 `calibrated-*.png`，最大序号加一；无历史从 `000`；超过三位自然扩展。

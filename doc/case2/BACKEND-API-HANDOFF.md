@@ -60,6 +60,7 @@
 | `debug_flag`        | 整数                                                                                      | 部署约定                        | 当前 Web 不消费、不修改             |
 | `scene_type`        | 字符串                                                                                     | 部署约定                        | 当前 Web 不消费、不修改             |
 
+前端侧适配服务要求 `case`、`command`、`dt_type`、`status`、`save_picture_flag` 五个核心字段存在；`debug_flag`、`scene_type` 为可选部署字段，存在时分别必须为整数、字符串。缺少可选字段不会导致控制快照拒读。
 
 
 
@@ -364,10 +365,12 @@ REST 接口由前端侧 Node 适配服务承载，后端业务进程不需要实
 ```json
 {
   "ok": true,
-  "path": "{SHARED_DIR}/out/case2/calibrated-000.png",
+  "path": "out/case2/calibrated-000.png",
   "seq": 0
 }
 ```
+
+`path` 是相对 `{SHARED_DIR}` 的稳定路径；适配服务仅在本机日志中记录实际绝对路径。
 
 
 
