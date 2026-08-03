@@ -17,7 +17,8 @@
 - 2026-08-03 SERVER-SPEC GET 控制：未知 `status` 透传（与契约/WEB-SPEC 对齐）；仅结构/类型/`save_picture_flag` 非法才 `CONTROL_READ_FAILED`。
 - 2026-08-03 截图窗口：后端仅启动路径 success→complete（含同拍）置 flag；Web 仅 calibrating 观察；同拍 `case complete` 仍截一次；重置不截。
 - 2026-08-03 截图实现收敛：用户确认内部演示不做持久事务、SHA-256 去重或进程重启恢复；Node 只保证进程内串行、临时文件原子落盘、不覆盖和成功后清零。极端崩溃窗口允许丢失或重复截图，业务状态不受影响。
-- 当前焦点：Gate 4 — 按 `WEB-SPEC` 实现正式 React Web；依赖 Codex 侧适配服务与打桩完成联调。
+- 2026-08-03 Gate 4-A：`code/server/` Node 文件适配服务已实现；控制快照五个核心字段必填、`debug_flag`/`scene_type` 可选；截图响应返回共享根相对路径。自动测试 25 项通过；使用仓库 `code/comdatafiles` 完成控制 GET 与 Initial 三指标只读启动烟测。参考文件只用于解析验证，不代表真实业务结果。
+- 当前焦点：Gate 4 — `code/web/` 正式 React Web 与 `code/server/` Node 适配服务均已落地；下一步由独立的 `realback_no` 打桩或真实后端完成联调 / Playwright。
 
 ## 一句话演示承诺
 
@@ -79,6 +80,6 @@
 
 ## 最小下一步与停止条件
 
-下一步：按 `WEB-SPEC.md` 实现正式 React Web（`code/web/`）；Node 适配与 `realback_no` 打桩由 Codex 交付后做本地联调。`MAINLINE.md` 失败态「两按钮均解除」已过时，施工以 WEB-SPEC 路径互斥为准。
+下一步：实现独立的 `realback_no` 打桩或接入真实后端，联调四个 REST、状态链和截图窗口，再跑 Playwright。`MAINLINE.md` 失败态「两按钮均解除」已过时，施工以 WEB-SPEC 路径互斥为准。
 
-停止条件：不实现 Node 适配或打桩（非本会话范围）；不把参考 Calibrated 文件表述为本次真实结果；不偏离 WEB-SPEC 可见态写死点。
+停止条件：Gate 4-A 不实现 `code/back/` 打桩或真实业务算法；不把参考 Calibrated 文件表述为本次真实结果；不覆盖并行 Web 改动；真实挂载双端并发写验证留到完整联调。
