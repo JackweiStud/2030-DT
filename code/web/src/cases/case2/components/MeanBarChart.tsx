@@ -7,7 +7,6 @@ import barFillUrl from "../../../../assets/case2/icons/bar-initial-fill.png";
 import badgeBgUrl from "../../../../assets/case2/icons/reduction-badge-bg.png";
 import arrowUrl from "../../../../assets/case2/icons/reduction-arrow-icon.png";
 import {
-  formatOneDecimal,
   formatReductionLabel,
   meanOf,
   reductionPercent,
@@ -38,9 +37,9 @@ const Y_MAX_FILL_RATIO = 0.8;
 const GUIDE_DASH =
   "M0 1h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6";
 
-/** 柱区均值文案：四舍五入为整数。 */
+/** 柱顶均值文案：固定一位小数（如 5.0）。 */
 function formatBarMean(value: number): string {
-  return formatOneDecimal(value);
+  return (Math.round(value * 10) / 10).toFixed(1);
 }
 
 /** 视觉 y 域上界：两柱均值最大值 / 0.6。 */
