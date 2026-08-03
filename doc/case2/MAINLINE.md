@@ -31,7 +31,7 @@
 - 不得将 `execute success` 或 Calibrated 文件存在本身称为“校准完成”或“重置完成”。
 - 不得要求 `reinit` 成功后必须回到 `command=init,status=""`；`status=reinit complete` 已是重置完成信号。
 - 不得在 `execute fail` 后继续等待 `case complete` 或 `reinit complete`；前端应显示执行命令失败。
-- 截图只在 `save_picture_flag` 由 `0` 变为 `1` 时请求；适配服务保存成功后将其清回 `0`。
+- 截图：后端仅在启动路径 `execute success`→`case complete`（含同拍）将 `save_picture_flag` 0→1；Web 仅 `calibrating` 观察，同拍 complete 仍截一次；适配服务保存成功后清回 `0`。
 
 ## 来源
 

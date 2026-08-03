@@ -22,7 +22,7 @@
 | `icons/icon-play.svg` | 由 `Z1BNp` 升级为圆底徽章 | 启动按钮图标（青底 `#22D3EE` + 白三角） | SVG 14×14（按钮内显示 16×16） | 是 |
 | `icons/icon-pause.svg` | 与 `icon-play` 同系 | 运行中图标（灰底 `#475569` + 双竖杠；与 play 互斥显示） | SVG 14×14（按钮内显示 16×16） | 是 |
 | `icons/icon-rotate-ccw.svg` | 由 `LWEVT` 升级为圆底徽章 | 重置按钮图标（灰底 `#475569` + 白旋转箭头） | SVG 14×14（按钮内显示 16×16） | 是 |
-| `maps/heatmap-map-base.png` | `ol7yg` 导出后按测量去除代表层/标签区 | 热力卡场景底图 | PNG RGBA 960×560 | **有条件**：由导出还原；边缘标签区为近似修补 |
+| `maps/heatmap-map-base.png` | UX `heatmap_map.png` / 算法源同图 | 热力卡场景底图 | PNG RGBA **1974×1100** | **是**（与算法锚定坐标系 1:1；正式前端动态叠加热力层） |
 | `maps/heatmap-calibrated-represent.png` | `02-ux/.../calibrated_rss_grid.png`（`rdP2e`/`vnGTY` 完成态叠加） | Calibrated 热力代表层（马赛克色场） | PNG RGBA 999×528 | **否**（Gate 1.5 代表态；正式前端须动态绘制） |
 | `tokens.css` | Pencil `GetVariables` + frame 测量 | 颜色/间距/圆角/字号/布局尺寸 | CSS 自定义属性 | 是 |
 

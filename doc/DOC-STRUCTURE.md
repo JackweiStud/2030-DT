@@ -13,7 +13,8 @@
 | `doc/case2/API-CONTRACT.md`（Gate 2） | case2 文件控制、结果发布、适配服务 REST、字段、异常和重放合同 | 项目级共享协议或其他 case 字段 |
 | `doc/case2/API-CONTRACT-REVIEW.md`（Gate 2） | case2 契约中的修/跳/待确认与 Gate 2 批准条件 | 具体 Node/React 实现方案 |
 | `doc/case2/BACKEND-API-HANDOFF.md`（真实后端交接） | case2 后端所需接口表、时序、错误形状、检查清单 | Gate 记录、打桩实现、测试命令和 AI 施工过程 |
-| `doc/case2/SERVER-SPEC.md` / `WEB-SPEC.md`（Gate 3） | Node 适配服务、开发打桩与正式 Web 的施工边界、测试和验收 | 真实后端团队必须实现的新接口语义 |
+| `doc/case2/SERVER-SPEC.md` / `WEB-SPEC.md`（Gate 3） | 前端 PC 文件适配服务与正式 Web 的施工边界、测试和验收 | 真实后端团队必须实现的新接口语义；模拟后端打桩见 `realback_no.md` |
+| `doc/case2/realback_no.md` | 本地无真实后端时的模拟打桩行为（非真实后端合同） | 适配服务 REST / 截图落盘算法 |
 
 ## 三轨资源纪律
 

@@ -2,13 +2,15 @@
 
 本文面向后端团队，描述 `DT Calibration`（case2）需要遵守的共享文件、状态、数据文件、前端侧 REST 适配语义、WebSocket 边界、主线时序、错误格式和检查清单。
 
+> **2026-08-03 接口增量：** 前端侧适配服务在 `start` / `reinit` 写入时会**强制把 `status` 清为 `""`**（开一轮清盘）。后端须接受新一轮开始后短暂出现空 `status`；`execute success` / `execute fail` / `case complete` / `reinit complete` 等业务终态字面值仍**只由后端写出**。本文后续章节已展开控制字段、时序和检查项。
+
 ## 1. 系统边界
 
 
 | 组件            | 职责                                                                     | 不负责                                      |
 | ------------- | ---------------------------------------------------------------------- | ---------------------------------------- |
 | 后端业务进程        | 读取控制文件；执行启动/重置；写 `status`；发布 Calibrated 结果文件；按需置 `save_picture_flag=1` | 浏览器展示；截图编码；截图文件落盘；清零 `save_picture_flag` |
-| 前端侧 Node 适配服务 | 代表 Web 读写控制文件；读取和校验数据文件；保存截图 PNG；保存成功后清零 `save_picture_flag`           | 后端算法；写后端状态；伪造完成结果                        |
+| 前端侧 Node 适配服务 | 代表 Web 读写控制文件；读取和校验数据文件；保存截图 PNG；保存成功或 Web 累计 3 次失败放弃本张截图后清零 `save_picture_flag`           | 后端算法；写后端状态；伪造完成结果                        |
 | Web 前端        | 用户交互；展示状态；渲染热力图/KPI；生成 Base64 PNG 截图                                   | 直接读写共享目录；直接写控制文件；直接输出截图文件                |
 
 
@@ -53,8 +55,8 @@
 | `case`              | 字符串；case2 固定写 `"case2"`                                                                 | 前端侧适配服务                     | 启动请求必须写为 `case2`           |
 | `command`           | `"init"` / `"start"` / `"reinit"`                                                       | 前端侧适配服务                     | `start` 表示启动；`reinit` 表示重置 |
 | `dt_type`           | `""` / `"with dt"`                                                                      | 前端侧适配服务                     | case2 启动必须写 `"with dt"`    |
-| `status`            | `""` / `"execute success"` / `"execute fail"` / `"case complete"` / `"reinit complete"` | 后端业务进程                      | 前端侧不得写该字段                  |
-| `save_picture_flag` | `0` / `1`                                                                               | 后端置 `1`；前端侧适配服务保存截图成功后置 `0` | Web 不直接写该字段                |
+| `status`            | `""` / `"execute success"` / `"execute fail"` / `"case complete"` / `"reinit complete"` | **业务终态字面值**仅后端业务进程；`start`/`reinit` 时前端侧适配服务可强制写 `""` 开一轮清盘 | 后端须接受开一轮时空 status；不得由前端伪造业务终态字面值 |
+| `save_picture_flag` | `0` / `1`                                                                               | 后端仅在启动路径、`execute success` 之后至 `case complete`（允许同拍）置 `1`；适配服务落盘成功后置 `0`，或 Web 累计 3 次失败后执行接受丢图清盘；**重置路径不得置 1** | Web 不直接写文件；仅 calibrating 观察；flag 回到 0 不保证一定有 PNG |
 | `debug_flag`        | 整数                                                                                      | 部署约定                        | 当前 Web 不消费、不修改             |
 | `scene_type`        | 字符串                                                                                     | 部署约定                        | 当前 Web 不消费、不修改             |
 
@@ -66,7 +68,7 @@
 
 | `status`            | 含义          | 前端行为                                                                |
 | ------------------- | ----------- | ------------------------------------------------------------------- |
-| `""`                | 初始化/空闲      | 显示 Initial，Calibrated 为空                                            |
+| `""`                | 初始化/空闲；或新一轮 `start`/`reinit` 后由适配服务清盘 | 进页不因历史 status 改相；等待态内空 status 继续等中间态/终态                                            |
 | `"execute success"` | 命令执行成功的中间状态 | 启动路径继续等待 `case complete`； 重置路径继续等待 `reinit complete`                |
 | `"execute fail"`    | 命令执行失败终态    | 显示执行命令失败； 本轮不再等待完成状态                                                |
 | `"case complete"`   | 后端系统测试完成    | 前端只在本轮启动且已观察到 `execute success -> case complete` 后读取 Calibrated 六文件 |
@@ -76,6 +78,14 @@
 
 
 ## 5. 命令写入要求
+
+**新轮命令识别（真实后端也必须遵守）：**
+
+- 文件监视、轮询、mtime 变化只用于唤醒读取；每次都必须重新读取完整控制快照。
+- 启动的新轮门沿为 `case="case2",command="start",dt_type="with dt",status=""`。
+- 重置的新轮门沿为 `command="reinit",status=""`。
+- 不得只看 `command` 是否变化：失败后再次启动/重置时 command 可能与上一轮相同，适配服务通过再次清空 `status` 标识新轮。
+- 后端写出 `execute success` 或 `execute fail` 后，自己引发的文件变化不得被当成新命令。
 
 
 
@@ -91,6 +101,8 @@
 }
 ```
 
+适配服务合并上述字段后**额外强制写入 `status=""`**（请求 JSON 本身仍不含 `status`）。后端读取到该命令后，控制文件上可能先看到空 `status`，这是正常开一轮清盘，不是前端伪造完成态。
+
 后端读取到该命令后：
 
 1. 执行启动。
@@ -98,7 +110,7 @@
 3. 完整写完并关闭六个 Calibrated 文件。
 4. 最后写 `status="case complete"`。
 
-`case complete` 必须是结果发布之后的最后状态信号。
+`case complete` 必须是结果发布之后的最后状态信号。后端应保证 `execute success` 对前端 1000ms 级轮询可观察（勿在极短时间内跳过该中间态直接写 `case complete`，否则前端可能因未见 success 而忽略 complete）。
 
 ### 5.2 重置
 
@@ -110,14 +122,13 @@
 }
 ```
 
-后端读取到该命令后：
+适配服务同样强制 `status=""`。后端读取到该命令后：
 
 1. 执行重置。
 2. 命令执行成功后写 `status="execute success"`。
 3. 重置完成后写 `status="reinit complete"`。
 
 后端不需要再把 `command` 改回 `init`，也不需要再把 `status` 改回 `""`。
-
 ### 5.3 命令失败
 
 如果启动或重置命令执行失败，后端写：
@@ -156,7 +167,8 @@
 - 数值必须是有限数值。
 - 分隔符允许逗号或空白字符。
 - 换行允许 LF 或 CRLF。
-- 数值最多保留 2 位小数。
+- 数值宜最多保留 **2** 位小数；超过 2 位时前端适配服务会**四舍五入**到 2 位后使用（不因此拒读）。
+- 取值范围：**\-200～200**（含端点，可正可负；适配按四舍五入后的值判定）。
 
 示例：
 
@@ -181,7 +193,8 @@ KPI 文件表示 `N` 个误差样本：
 - 行列排布不表达业务语义，前端侧按数值样本集合处理。
 - 分隔符允许逗号或空白字符。
 - 换行允许 LF 或 CRLF。
-- 数值最多保留 2 位小数。
+- 数值宜最多保留 **2** 位小数；超过 2 位时前端适配服务会**四舍五入**到 2 位后使用（不因此拒读）。
+- 取值范围：**0～500**（含端点，非负；禁止负号；适配按四舍五入后的值判定）。
 
 示例：
 
@@ -220,17 +233,18 @@ KPI 文件表示 `N` 个误差样本：
 
 ## 7. 截图请求
 
-后端需要请求截图时，将控制文件中的 `save_picture_flag` 从 `0` 写为 `1`。
+**置位窗口（须遵守）**：仅在本轮启动路径中，于已写 `execute success` 之后、写 `case complete` 之时或之前，将 `save_picture_flag` 从 `0` 写为 `1`。允许与 `case complete` 同拍；若选择同拍，必须把 `status="case complete"` 与 `save_picture_flag=1` 合并为同一次完整控制文件写。若选择不同拍，必须先写 flag、再写 complete。`reinit` / 重置路径**不得**置 `1`。禁止先写 `case complete`、再补写 flag，因为前端可能已经停轮询。
 
 前端侧行为：
 
-1. Web 读取到 `save_picture_flag=1` 后立即截图，不额外判断 `status`。
-2. Web 通过 `POST /api/case2/screenshot` 上传 Base64 PNG。
-3. 前端侧适配服务保存为 `{SHARED_DIR}/out/case2/calibrated-{seq}.png`。
-4. `seq` 从 `000` 开始递增，例如 `calibrated-000.png`、`calibrated-001.png`。
-5. 前端侧适配服务确认 PNG 完整落盘后，将 `save_picture_flag` 写回 `0`。
+1. Web 仅在 `calibrating` 控制轮询中检测 0→1；发现上升沿即截图一次。
+2. 若本拍 `status` 已是 `case complete` 且同时出现 flag 0→1，仍截图一次，再进入完成展示。
+3. Web 通过 `POST /api/case2/screenshot` 上传 Base64 PNG。
+4. 前端侧适配服务保存为 `{SHARED_DIR}/out/case2/calibrated-{seq}.png`。
+5. `seq` 从 `000` 开始递增，例如 `calibrated-000.png`、`calibrated-001.png`。
+6. 正常路径由前端侧适配服务确认 PNG 完整落盘后，将 `save_picture_flag` 写回 `0`；累计 3 次失败时允许执行接受丢图清盘。
 
-若截图生成、传输或落盘失败，前端侧不得清零 `save_picture_flag`。后端后续再次把 `save_picture_flag` 从 `0` 写为 `1` 时，会生成下一张递增序号截图。
+同一 0→1 截图任务最多尝试 3 次（首次 + 2 次重试）：前两次生成/传输失败不清零；Node 以临时文件 + 原子 rename 保存 PNG，完整落盘后清零，不覆盖旧文件。内部演示不实现截图持久事务、SHA-256 去重或进程重启恢复，极端崩溃窗口允许丢失或重复截图。累计第 3 次仍失败时，Web 经 Node 自动清零并记录本张截图丢失；此时可能没有对应 PNG，后端不得仅凭 flag 回到 `0` 推断截图一定存在。该取舍已由用户接受，业务状态不受影响。
 
 ## 8. REST 输入输出
 
@@ -413,8 +427,8 @@ sequenceDiagram
   participant Backend as "后端业务进程"
 
   Web->>Adapter: POST control-file: start + with dt
-  Adapter->>Shared: 写 case=case2, command=start, dt_type=with dt
-  Backend->>Shared: 读取 command=start
+  Adapter->>Shared: 写 case=case2, command=start, dt_type=with dt<br/>并强制 status=""
+  Backend->>Shared: 读取 command=start（可先见空 status）
   Backend->>Shared: 写 status=execute success
   Backend->>Shared: 写完并关闭 6 个 Calibrated 文件
   Backend->>Shared: 最后写 status=case complete
@@ -440,7 +454,7 @@ sequenceDiagram
   participant Backend as "后端业务进程"
 
   Web->>Adapter: POST control-file: reinit
-  Adapter->>Shared: 写 command=reinit
+  Adapter->>Shared: 写 command=reinit，并强制 status=""
   Backend->>Shared: 读取 command=reinit
   Backend->>Shared: 写 status=execute success
   Backend->>Shared: 写 status=reinit complete
@@ -462,9 +476,10 @@ sequenceDiagram
   participant Shared as "共享目录"
   participant Backend as "后端业务进程"
 
-  Backend->>Shared: 写 save_picture_flag=1
-  Web->>Adapter: GET control-file
-  Adapter-->>Web: 返回 save_picture_flag=1
+  Backend->>Shared: 启动路径：execute success 之后至 case complete（可同拍）写 save_picture_flag=1
+  Web->>Adapter: GET control-file（calibrating）
+  Adapter-->>Web: flag=1（status 可为 success 或 case complete）
+  Note over Web: 0→1 即截；同拍 complete 仍截一次
   Web->>Adapter: POST screenshot: Base64 PNG
   Adapter->>Shared: 保存 out/case2/calibrated-{seq}.png
   Adapter->>Shared: 写 save_picture_flag=0
@@ -478,15 +493,20 @@ sequenceDiagram
 
 - [ ] 启动命令只认 `case="case2"`、`command="start"`、`dt_type="with dt"`。
 - [ ] 重置命令只认 `command="reinit"`。
-- [ ] `execute success` 只作为中间状态写入，不作为完成状态。
+- [ ] 接受新一轮 `start`/`reinit` 后控制文件出现 `status=""`（前端侧适配服务开一轮清盘）；不把它当成异常。
+- [ ] 以合法命令元组 + `status=""` 识别新轮；文件事件只唤醒读取，不以 command 值变化或 mtime 作为命令身份。
+- [ ] 业务终态字面值（`execute success` / `execute fail` / `case complete` / `reinit complete`）只由后端写出。
+- [ ] `execute success` 只作为中间状态写入，不作为完成状态；对前端轮询保持可观察窗口。
 - [ ] 启动成功链路为 `execute success -> case complete`。
 - [ ] 重置成功链路为 `execute success -> reinit complete`。
 - [ ] 失败链路只写 `execute fail`，本轮不再写完成状态。
 - [ ] 写 `case complete` 前，六个 Calibrated 文件已经完整写完并关闭。
 - [ ] 热力图文件为动态 `Nx × Ny` 非空矩形矩阵，不固定 20×20。
 - [ ] KPI 文件为动态 `N` 个有限样本，不固定 20 条。
-- [ ] 热力图和 KPI 文件数值最多保留 2 位小数。
-- [ ] 需要截图时，将 `save_picture_flag` 从 `0` 写为 `1`。
-- [ ] 不清零 `save_picture_flag`；清零由前端侧适配服务在截图保存成功后完成。
+- [ ] 热力图数值宜最多 2 位小数，范围 \-200～200（含端点，可正可负）；超过 2 位由适配四舍五入。
+- [ ] KPI 数值宜最多 2 位小数，范围 0～500（含端点，非负）；超过 2 位由适配四舍五入。
+- [ ] 需要截图时：仅在启动路径、`execute success` 之后至 `case complete`（允许同拍）将 `save_picture_flag` 从 `0` 写为 `1`；重置路径不置 1；勿在前端已进 completed 停轮询后再置 1。
+- [ ] flag 与 complete 同拍时合并为一次完整控制写；不同拍时严格先 flag 后 complete；禁止 complete 后补 flag。
+- [ ] 不清零 `save_picture_flag`；清零由前端侧适配服务在截图保存成功后完成，或由 Web 累计 3 次失败后经适配服务执行放弃清零。flag 回到 `0` 不再等价于一定存在截图文件。
 - [ ] 不要求重置完成后再回写 `command=init,status=""`。
 - [ ] 不依赖 WebSocket。

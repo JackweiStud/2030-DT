@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">case2 heatmap rendering principle, step by step</title>
+  <desc id="desc">Step-by-step diagram explaining how a dynamic Ny by Nx matrix becomes a semi-transparent mosaic heatmap over a map anchor rectangle.</desc>
+  <defs>
+    <style>
+      .bg { fill: #0f1115; }
+      .panel { fill: #171a21; stroke: #303642; stroke-width: 2; rx: 16; }
+      .panel-alt { fill: #141820; stroke: #2e3543; stroke-width: 2; rx: 16; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #f7f8fb; font-size: 34px; font-weight: 700; }
+      .step { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #ffffff; font-size: 24px; font-weight: 700; }
+      .text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #d9deea; font-size: 20px; }
+      .small { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #aeb7c8; font-size: 16px; }
+      .tiny { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #c7cede; font-size: 14px; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; fill: #e8edf8; font-size: 17px; }
+      .badge { fill: #273142; stroke: #46536a; stroke-width: 1.5; rx: 12; }
+      .arrow { stroke: #7d8dab; stroke-width: 4; fill: none; marker-end: url(#arrowhead); }
+      .dash { stroke: #f7c948; stroke-width: 4; fill: none; stroke-dasharray: 10 8; }
+      .anchor { fill: rgba(37, 99, 235, 0.10); stroke: #facc15; stroke-width: 4; stroke-dasharray: 10 7; }
+      .cyan { fill: #22d3ee; }
+      .blue { fill: #2563eb; }
+      .yellow { fill: #facc15; }
+      .red { fill: #ef4444; }
+      .green { fill: #40d68a; }
+      .line { stroke: #64748b; stroke-width: 2; }
+      .grid { stroke: #2c3442; stroke-width: 1; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#7d8dab" />
+    </marker>
+    <linearGradient id="heatGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="36%" stop-color="#22d3ee"/>
+      <stop offset="68%" stop-color="#facc15"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+    <linearGradient id="mapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="45%" stop-color="#273346"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <pattern id="mosaicPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="15" height="15" fill="url(#heatGradient)" opacity="1"/>
+      <rect x="15" y="0" width="5" height="20" fill="#151922" opacity="1"/>
+      <rect x="0" y="15" width="20" height="5" fill="#151922" opacity="1"/>
+    </pattern>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1600" height="980"/>
+  <text class="title" x="60" y="70">case2 热力图不是“直接画矩阵”，而是这 5 步</text>
+  <text class="text" x="60" y="108">核心口径：动态 Ny×Nx 矩阵 → 锚区大小离屏热力层 → 马赛克透明缝 → 以 0.38 透明度贴到底图固定锚区 → 整张 Canvas 再交给 Shell 缩放。</text>
+
+  <rect class="panel" x="60" y="150" width="250" height="260" filter="url(#softShadow)"/>
+  <text class="step" x="84" y="192">1. 后端数据矩阵</text>
+  <text class="small" x="84" y="224">不是固定 20×20</text>
+  <text class="small" x="84" y="248">运行时读到多少行列就用多少</text>
+  <g transform="translate(84,272)">
+    <rect width="54" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="2"/>
+    <rect x="54" width="54" height="40" fill="#22d3ee" stroke="#0f172a" stroke-width="2"/>
+    <rect x="108" width="54" height="40" fill="#facc15" stroke="#0f172a" stroke-width="2"/>
+    <rect y="40" width="54" height="40" fill="#22d3ee" stroke="#0f172a" stroke-width="2"/>
+    <rect x="54" y="40" width="54" height="40" fill="#facc15" stroke="#0f172a" stroke-width="2"/>
+    <rect x="108" y="40" width="54" height="40" fill="#ef4444" stroke="#0f172a" stroke-width="2"/>
+    <rect y="80" width="54" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="2"/>
+    <rect x="54" y="80" width="54" height="40" fill="#22d3ee" stroke="#0f172a" stroke-width="2"/>
+    <rect x="108" y="80" width="54" height="40" fill="#facc15" stroke="#0f172a" stroke-width="2"/>
+    <text class="tiny" x="13" y="25">低</text>
+    <text class="tiny" x="70" y="65">中</text>
+    <text class="tiny" x="121" y="65">高</text>
+  </g>
+  <text class="mono" x="84" y="424">Ny 行 × Nx 列</text>
+
+  <path class="arrow" d="M 320 280 C 350 280, 360 280, 390 280"/>
+
+  <rect class="panel" x="400" y="150" width="300" height="260" filter="url(#softShadow)"/>
+  <text class="step" x="424" y="192">2. 插值成连续色场</text>
+  <text class="small" x="424" y="224">离屏 Canvas 大小 = 锚区大小</text>
+  <text class="mono" x="424" y="250">RANGE_W=X1-X0=450</text>
+  <text class="mono" x="424" y="274">RANGE_H=Y1-Y0=300</text>
+  <g transform="translate(424,300)">
+    <rect width="228" height="82" rx="10" fill="url(#heatGradient)" stroke="#4b5563" stroke-width="2"/>
+    <path d="M0 62 C55 40 80 80 132 46 C171 20 190 52 228 20" stroke="#ffffff" stroke-width="1.5" opacity="0.35" fill="none"/>
+    <path d="M0 28 C60 8 95 34 140 18 C180 4 208 22 228 12" stroke="#ffffff" stroke-width="1.5" opacity="0.20" fill="none"/>
+  </g>
+  <text class="small" x="424" y="424">小矩阵被“补细”为每个锚区像素都有颜色</text>
+
+  <path class="arrow" d="M 710 280 C 740 280, 750 280, 780 280"/>
+
+  <rect class="panel" x="790" y="150" width="300" height="260" filter="url(#softShadow)"/>
+  <text class="step" x="814" y="192">3. 变成马赛克层</text>
+  <text class="small" x="814" y="224">CELL=3，GAP=1，PERIOD=4</text>
+  <text class="small" x="814" y="248">缝隙透明，不画颜色</text>
+  <g transform="translate(814,282)">
+    <rect width="228" height="104" rx="10" fill="#111827" stroke="#4b5563" stroke-width="2"/>
+    <g opacity="0.96">
+      <rect x="14" y="14" width="15" height="15" fill="#2563eb"/>
+      <rect x="34" y="14" width="15" height="15" fill="#2563eb"/>
+      <rect x="54" y="14" width="15" height="15" fill="#22d3ee"/>
+      <rect x="74" y="14" width="15" height="15" fill="#22d3ee"/>
+      <rect x="94" y="14" width="15" height="15" fill="#facc15"/>
+      <rect x="114" y="14" width="15" height="15" fill="#facc15"/>
+      <rect x="134" y="14" width="15" height="15" fill="#ef4444"/>
+      <rect x="154" y="14" width="15" height="15" fill="#ef4444"/>
+      <rect x="174" y="14" width="15" height="15" fill="#ef4444"/>
+      <rect x="194" y="14" width="15" height="15" fill="#ef4444"/>
+      <rect x="14" y="34" width="15" height="15" fill="#2563eb"/>
+      <rect x="34" y="34" width="15" height="15" fill="#22d3ee"/>
+      <rect x="54" y="34" width="15" height="15" fill="#22d3ee"/>
+      <rect x="74" y="34" width="15" height="15" fill="#facc15"/>
+      <rect x="94" y="34" width="15" height="15" fill="#facc15"/>
+      <rect x="114" y="34" width="15" height="15" fill="#facc15"/>
+      <rect x="134" y="34" width="15" height="15" fill="#ef4444"/>
+      <rect x="154" y="34" width="15" height="15" fill="#ef4444"/>
+      <rect x="174" y="34" width="15" height="15" fill="#ef4444"/>
+      <rect x="194" y="34" width="15" height="15" fill="#facc15"/>
+      <rect x="14" y="54" width="15" height="15" fill="#2563eb"/>
+      <rect x="34" y="54" width="15" height="15" fill="#22d3ee"/>
+      <rect x="54" y="54" width="15" height="15" fill="#22d3ee"/>
+      <rect x="74" y="54" width="15" height="15" fill="#22d3ee"/>
+      <rect x="94" y="54" width="15" height="15" fill="#facc15"/>
+      <rect x="114" y="54" width="15" height="15" fill="#facc15"/>
+      <rect x="134" y="54" width="15" height="15" fill="#facc15"/>
+      <rect x="154" y="54" width="15" height="15" fill="#ef4444"/>
+      <rect x="174" y="54" width="15" height="15" fill="#facc15"/>
+      <rect x="194" y="54" width="15" height="15" fill="#facc15"/>
+      <rect x="14" y="74" width="15" height="15" fill="#2563eb"/>
+      <rect x="34" y="74" width="15" height="15" fill="#2563eb"/>
+      <rect x="54" y="74" width="15" height="15" fill="#22d3ee"/>
+      <rect x="74" y="74" width="15" height="15" fill="#22d3ee"/>
+      <rect x="94" y="74" width="15" height="15" fill="#22d3ee"/>
+      <rect x="114" y="74" width="15" height="15" fill="#facc15"/>
+      <rect x="134" y="74" width="15" height="15" fill="#facc15"/>
+      <rect x="154" y="74" width="15" height="15" fill="#facc15"/>
+      <rect x="174" y="74" width="15" height="15" fill="#facc15"/>
+      <rect x="194" y="74" width="15" height="15" fill="#22d3ee"/>
+    </g>
+  </g>
+  <text class="small" x="814" y="424">透明缝最终会露出底图纹理</text>
+
+  <path class="arrow" d="M 1100 280 C 1130 280, 1140 280, 1170 280"/>
+
+  <rect class="panel" x="1180" y="150" width="360" height="260" filter="url(#softShadow)"/>
+  <text class="step" x="1204" y="192">4. 贴到底图锚区</text>
+  <text class="small" x="1204" y="224">主 Canvas = 底图真实像素 W×H</text>
+  <text class="small" x="1204" y="248">先画底图，再在 (X0,Y0) 贴热力层</text>
+  <g transform="translate(1204,274)">
+    <rect width="284" height="118" rx="12" fill="url(#mapGradient)" stroke="#4b5563" stroke-width="2"/>
+    <path d="M12 88 C52 30 92 90 130 44 C168 0 222 42 272 18" stroke="#4b5563" stroke-width="8" fill="none" opacity="0.8"/>
+    <path d="M26 106 C70 72 106 82 142 58 C180 34 220 74 260 50" stroke="#3b4658" stroke-width="6" fill="none" opacity="0.9"/>
+    <rect x="98" y="43" width="98" height="62" fill="url(#mosaicPattern)" opacity="0.38"/>
+    <rect x="98" y="43" width="98" height="62" class="anchor"/>
+    <text class="tiny" x="100" y="36" fill="#facc15">(X0,Y0)</text>
+    <text class="tiny" x="163" y="120" fill="#facc15">(X1,Y1)</text>
+  </g>
+  <text class="mono" x="1204" y="424">globalAlpha = 0.38</text>
+
+  <rect class="panel-alt" x="170" y="500" width="1260" height="345" filter="url(#softShadow)"/>
+  <text class="step" x="210" y="550">5. 最终显示：缩放整张 Canvas，不重新计算热力层</text>
+  <text class="text" x="210" y="586">底图和热力层已经合成成一张 Canvas。窗口变化时，Shell 只把这张 1920×1080 舞台整体缩放；热力锚区坐标不跟着业务代码重算。</text>
+
+  <g transform="translate(220,625)">
+    <rect width="520" height="160" rx="14" fill="url(#mapGradient)" stroke="#4b5563" stroke-width="2"/>
+    <path d="M24 125 C92 45 158 136 235 62 C318 -12 390 72 496 32" stroke="#4b5563" stroke-width="12" fill="none" opacity="0.75"/>
+    <path d="M48 145 C128 90 202 112 270 78 C340 43 414 112 482 72" stroke="#3b4658" stroke-width="8" fill="none" opacity="0.9"/>
+    <rect x="205" y="58" width="126" height="84" fill="url(#mosaicPattern)" opacity="0.38"/>
+    <rect x="205" y="58" width="126" height="84" class="anchor"/>
+    <text class="tiny" x="18" y="24">主 Canvas：W×H = 底图 naturalWidth×naturalHeight</text>
+    <text class="tiny" x="208" y="52" fill="#facc15">锚区原尺寸贴上</text>
+  </g>
+
+  <path class="arrow" d="M 770 705 C 820 705, 840 705, 890 705"/>
+  <text class="small" x="786" y="686">Shell fit</text>
+
+  <g transform="translate(920,648)">
+    <rect width="300" height="94" rx="14" fill="#202634" stroke="#4b5563" stroke-width="2"/>
+    <rect x="40" y="22" width="220" height="50" rx="10" fill="url(#mapGradient)" stroke="#4b5563" stroke-width="1.5"/>
+    <rect x="126" y="40" width="52" height="28" fill="url(#mosaicPattern)" opacity="0.38"/>
+    <rect x="126" y="40" width="52" height="28" fill="none" stroke="#facc15" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <text class="tiny" x="28" y="114">小窗口：整张 Canvas 变小</text>
+  </g>
+
+  <g transform="translate(1240,612)">
+    <rect width="150" height="152" rx="14" fill="#202634" stroke="#4b5563" stroke-width="2"/>
+    <rect x="28" y="22" width="94" height="106" rx="8" fill="url(#mapGradient)" stroke="#4b5563" stroke-width="1.5"/>
+    <rect x="65" y="61" width="22" height="30" fill="url(#mosaicPattern)" opacity="0.38"/>
+    <rect x="65" y="61" width="22" height="30" fill="none" stroke="#facc15" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="tiny" x="-8" y="178">竖屏：仍缩放整张 Canvas</text>
+  </g>
+
+  <rect x="60" y="885" width="1480" height="58" rx="16" fill="#151922" stroke="#303642" stroke-width="2"/>
+  <circle cx="92" cy="914" r="8" class="blue"/>
+  <text class="small" x="108" y="920">低</text>
+  <circle cx="160" cy="914" r="8" class="cyan"/>
+  <text class="small" x="176" y="920">中低</text>
+  <circle cx="250" cy="914" r="8" class="yellow"/>
+  <text class="small" x="266" y="920">中高</text>
+  <circle cx="350" cy="914" r="8" class="red"/>
+  <text class="small" x="366" y="920">高</text>
+  <text class="small" x="460" y="910">颜色规则：每张矩阵单独 min/max 归一化，按蓝→青→黄→红分段插值；max=min 时取中间色。</text>
+  <text class="small" x="460" y="934">关键检查：换底图时只改 env 锚区；代码不写死 1974×1100，也不写死 20×20。</text>
+</svg>

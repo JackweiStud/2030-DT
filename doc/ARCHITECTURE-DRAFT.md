@@ -45,7 +45,7 @@ Chrome case2
 
 当前 UX 仅消费六类 Calibrated 输出：三张热力图（RSS、有效路径数、首径时延）和三组 KPI 样本。AOA/ZOA 不进入当前 UI。
 
-后端必须先完成当批结果发布，再以 `status="case complete"` 允许前端读取。真实后端采用“六文件关闭后最后写完成状态”的最小规则；开发打桩的原子运行目录/指针策略见 `doc/case2/SERVER-SPEC.md`。
+后端必须先完成当批结果发布，再以 `status="case complete"` 允许前端读取。真实后端采用“六文件关闭后最后写完成状态”的最小规则；本地无真实后端时的打桩行为见 `doc/case2/realback_no.md`。前端文件适配服务见 `doc/case2/SERVER-SPEC.md`。
 
 ## 不纳入本草案
 
