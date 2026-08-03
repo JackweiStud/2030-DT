@@ -1,0 +1,12 @@
+{
+  "name": "2030-dt-back-stubs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npm --prefix case2 start",
+    "dev": "npm --prefix case2 run dev",
+    "dev:picture": "npm --prefix case2 run dev:picture",
+    "test": "npm --prefix case2 test"
+  }
+}
