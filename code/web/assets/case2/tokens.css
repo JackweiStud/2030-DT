@@ -1,0 +1,89 @@
+/**
+ * case2 DT Calibration — case-local visual tokens.
+ * Source: Pencil variables + measured layout from
+ * 03-design/case2/case2-dt-calibration.pen (Gate 1 frozen).
+ *
+ * The Shell owns its fixed-stage, navigation and public visual tokens in
+ * ../shell/tokens.css. Formal case2 code may consume --shell-* but this file
+ * owns only case2 business visual tokens.
+ */
+
+:root {
+  /* Typography */
+  --case2-font-data: "Geist Mono", "SF Mono", "Menlo", monospace;
+
+  /* Case state and metric colours */
+  --case2-color-initial: #6b7280;
+  --case2-color-calibrated: #22d3ee;
+  --case2-color-success: #22c55e;
+  --case2-color-error: #ef4444;
+  --case2-color-metric-rss: #3b82f6;
+  --case2-color-metric-path: #a855f7;
+  --case2-color-metric-delay: #eab308;
+  --case2-color-metric-tag-rss: #2f85de;
+  --case2-color-metric-tag-path: #6137ff;
+  --case2-color-metric-tag-delay: #f7b502;
+  --case2-color-panel: #121820;
+  --case2-color-surface: #0a0e14;
+
+  /* Measured case2 fills */
+  --case2-color-grid-line: #ffffff33;
+  --case2-color-axis: #939393;
+  --case2-color-bar-axis: #9ca3af;
+  --case2-color-baseline: #4b5563;
+  --case2-color-card-stroke: #334155;
+  --case2-color-status-success-bg: #09aa7126;
+  --case2-color-heat-represent: #22c55e66;
+  --case2-color-cdf-initial: #939393;
+  --case2-color-ghost-stroke: #9ca3af;
+  --case2-color-dash: #d1d5dbcc;
+
+  /* Radii (Pencil variables + measured) */
+  --case2-radius-card: 8px;
+  --case2-radius-panel: 12px;
+  --case2-radius-badge: 12px;
+  --case2-radius-tag: 4px;
+  --case2-radius-button: 6px;
+  --case2-radius-reduction: 10px;
+
+  /* Spacing (Pencil variables + measured) */
+  --case2-space-gap-row: 12px;
+  --case2-space-gap-panel: 16px;
+  --case2-space-gap-main-row: 30px;
+  --case2-space-gap-heat-pair: 25px;
+  --case2-space-gap-kpi-rows: 25px;
+  --case2-space-gap-title: 8px;
+  --case2-space-gap-chart: 12px;
+  --case2-space-gap-heat-stack: 10px;
+  --case2-space-pad-panel: 15px;
+  --case2-space-pad-main: 10px;
+  --case2-space-pad-main-row-y: 10px;
+  --case2-space-pad-main-row-x: 20px;
+
+  /* Case2 layout (measured) */
+  --case2-left-panel-width: 1066px;
+  --case2-right-panel-width: 764px;
+  --case2-panel-height: 970px;
+  --case2-main-row-width: 1900px;
+  --case2-main-row-height: 987px;
+  --case2-heatmap-row-height: 278px;
+  --case2-cdf-width: 400px;
+  --case2-cdf-height: 260px;
+  --case2-bar-width: 291px;
+  /* Case2 type scale (measured) */
+  --case2-font-size-panel-title: 18px;
+  --case2-font-size-column: 16px;
+  --case2-font-size-metric-tag: 20px;
+  --case2-font-size-kpi-title: 16px;
+  --case2-font-size-chart-title: 11px;
+  --case2-font-size-legend: 10px;
+  --case2-font-size-axis: 9px;
+  --case2-font-size-bar-axis: 10px;
+  --case2-font-size-mean: 18px;
+  --case2-font-size-bar-label: 12px;
+  --case2-font-size-button: 12px;
+  --case2-font-size-status: 12px;
+  --case2-font-size-status-done: 14px;
+  --case2-font-size-link: 13px;
+  --case2-font-size-reduction: 20px;
+}

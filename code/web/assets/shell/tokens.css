@@ -1,0 +1,31 @@
+/**
+ * Shared Shell visual tokens.
+ *
+ * Owner: the project Shell. It owns the fixed stage, header, navigation,
+ * common typography and common colours. Case pages may consume --shell-* but
+ * must not redefine these values or own Shell assets.
+ */
+
+:root {
+  --shell-font-ui: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  --shell-color-page: #191a1a;
+  --shell-color-text: #f8fafc;
+  --shell-color-primary-text: #ffffff;
+  --shell-color-muted: #94a3b8;
+  --shell-color-tab-active-underline: #ebf2f5;
+
+  --shell-radius-tab-underline: 2px;
+
+  --shell-stage-width: 1920px;
+  --shell-stage-height: 1080px;
+  --shell-header-height: 78px;
+  --shell-brand-area-width: 540px;
+  --shell-nav-tabs-left: 607px;
+  --shell-nav-tabs-width: 689px;
+  --shell-tab-gap: 20px;
+
+  --shell-font-size-brand-title: 24px;
+  --shell-font-size-brand-sub: 14px;
+  --shell-font-size-tab: 18px;
+}

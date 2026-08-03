@@ -1,0 +1,146 @@
+/* Shell 全局样式：舞台缩放、导航；不包含 case 业务。 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: var(--shell-font-ui);
+}
+
+.stage-viewport {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.stage {
+  width: var(--shell-stage-width);
+  height: var(--shell-stage-height);
+  position: relative;
+  flex-shrink: 0;
+  transform-origin: center center;
+  background: var(--shell-color-page);
+  overflow: hidden;
+  color: var(--shell-color-text);
+}
+
+.shell-header {
+  position: relative;
+  width: 1920px;
+  height: var(--shell-header-height);
+  overflow: hidden;
+  background: var(--shell-color-page);
+}
+
+.nav-bg {
+  position: absolute;
+  left: -382px;
+  top: -26px;
+  width: 2328px;
+  height: 111px;
+  background: url("../../assets/shell/shell-nav-background.png") center / cover
+    no-repeat;
+  pointer-events: none;
+}
+
+.brand-area {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--shell-brand-area-width);
+  height: 78px;
+}
+
+.brand-logo {
+  position: absolute;
+  left: 8px;
+  top: 19px;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.brand-sub {
+  position: absolute;
+  left: 48px;
+  top: 28px;
+  font-size: var(--shell-font-size-brand-sub);
+  color: var(--shell-color-muted);
+}
+
+.brand-title {
+  position: absolute;
+  left: 234px;
+  top: 16px;
+  font-size: var(--shell-font-size-brand-title);
+  color: var(--shell-color-text);
+  line-height: 46px;
+  white-space: nowrap;
+}
+
+.case-nav {
+  position: absolute;
+  left: var(--shell-nav-tabs-left);
+  top: 0;
+  width: var(--shell-nav-tabs-width);
+  height: 78px;
+  display: flex;
+  align-items: stretch;
+  gap: var(--shell-tab-gap);
+}
+
+.case-tab {
+  position: relative;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--shell-color-muted);
+  font-size: var(--shell-font-size-tab);
+  cursor: pointer;
+  padding: 0;
+}
+
+.case-tab.is-active {
+  color: var(--shell-color-primary-text);
+}
+
+.case-tab__label {
+  display: block;
+  line-height: 78px;
+  white-space: nowrap;
+}
+
+.tab-underline {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 10px;
+  height: 3px;
+  border-radius: var(--shell-radius-tab-underline);
+  background: transparent;
+}
+
+.case-tab.is-active .tab-underline {
+  background: var(--shell-color-tab-active-underline);
+}
+
+.placeholder-page {
+  height: calc(1080px - var(--shell-header-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--shell-color-muted);
+  font-size: 28px;
+}
