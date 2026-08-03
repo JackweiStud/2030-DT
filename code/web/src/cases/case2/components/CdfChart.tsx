@@ -1,5 +1,5 @@
 /**
- * CDF 阶梯 SVG；Initial 单线或 completed/resetting 双线共用 x 域。
+ * CDF 图：Gate 1.5 网格/轴标 chrome + 运行时阶梯曲线。
  */
 
 import {
@@ -12,13 +12,48 @@ type Props = {
   initialKpi: number[];
   calibratedKpi: number[] | null;
   cdfPointCap: number;
-  title: string;
 };
 
-const PLOT = { left: 36, top: 8, width: 320, height: 180 };
+/** 与静态 HTML 同构的绘图区（外层 viewBox 384×222）。 */
+const PLOT = { left: 26, top: 4, width: 348, height: 202 };
+
+const Y_LABELS = [
+  { y: 8, text: "1" },
+  { y: 28, text: "0.9" },
+  { y: 48, text: "0.8" },
+  { y: 69, text: "0.7" },
+  { y: 89, text: "0.6" },
+  { y: 109, text: "0.5" },
+  { y: 129, text: "0.4" },
+  { y: 149, text: "0.3" },
+  { y: 170, text: "0.2" },
+  { y: 190, text: "0.1" },
+  { y: 210, text: "0" },
+];
+
+const H_GRID = [4, 24, 44, 65, 85, 105, 125, 145, 166, 186, 206];
+const V_GRID = [
+  26, 49, 72, 96, 119, 142, 165, 188, 212, 235, 258, 281, 304, 328, 351, 374,
+];
+
+/** 生成与静态接近的 x 轴刻度文案（按当前 domain 均匀取点）。 */
+function buildXTickLabels(xMin: number, xMax: number): { x: number; text: string }[] {
+  const count = V_GRID.length;
+  const labels: { x: number; text: string }[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0 : i / (count - 1);
+    const value = xMin + (xMax - xMin) * t;
+    const text =
+      Math.abs(value) >= 10 || Number.isInteger(value)
+        ? String(Math.round(value))
+        : (Math.round(value * 10) / 10).toFixed(1);
+    labels.push({ x: V_GRID[i]! - 2, text });
+  }
+  return labels;
+}
 
 export function CdfChart(props: Props) {
-  const { initialKpi, calibratedKpi, cdfPointCap, title } = props;
+  const { initialKpi, calibratedKpi, cdfPointCap } = props;
   const showCali = calibratedKpi !== null && calibratedKpi.length > 0;
 
   const initPoints = buildEmpiricalCdfPoints(initialKpi, cdfPointCap);
@@ -30,6 +65,7 @@ export function CdfChart(props: Props) {
     ? [...initialKpi, ...calibratedKpi]
     : [...initialKpi];
   const domain = resolveXDomain(domainValues);
+  const xTicks = buildXTickLabels(domain.xMin, domain.xMax);
 
   const initPath = buildCdfStairPath(initPoints, domain, PLOT);
   const caliPath = caliPoints
@@ -39,37 +75,55 @@ export function CdfChart(props: Props) {
   return (
     <div className="cdf-area">
       <div className="chart-head">
-        <span>{title}</span>
+        <span>CDF图对比</span>
         <div className="legend">
-          <span className="leg-initial">Initial</span>
-          {showCali ? <span className="leg-calibrated">Calibrated</span> : null}
+          <span className="leg-initial">● Initial DT</span>
+          <span className="leg-calibrated">● Calibrated DT</span>
         </div>
       </div>
       <div className="cdf-plot">
-        <svg className="cdf-svg" viewBox="0 0 400 220" preserveAspectRatio="none">
-          <line
-            x1={PLOT.left}
-            y1={PLOT.top + PLOT.height}
-            x2={PLOT.left + PLOT.width}
-            y2={PLOT.top + PLOT.height}
-            stroke="var(--case2-color-axis)"
-            strokeWidth="1"
+        <svg
+          className="cdf-svg"
+          viewBox="0 0 384 222"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <g className="cdf-grid" stroke="#ffffff33" strokeWidth="1">
+            {H_GRID.map((y) => (
+              <line key={`h-${y}`} x1={26} y1={y} x2={374} y2={y} />
+            ))}
+            {V_GRID.map((x) => (
+              <line key={`v-${x}`} x1={x} y1={4} x2={x} y2={206} />
+            ))}
+          </g>
+          <g className="cdf-axis-labels">
+            {Y_LABELS.map((item) => (
+              <text key={item.text} x={1} y={item.y}>
+                {item.text}
+              </text>
+            ))}
+          </g>
+          <g className="cdf-axis-labels cdf-axis-labels--x">
+            {xTicks.map((item) => (
+              <text key={`x-${item.x}`} x={item.x} y={215}>
+                {item.text}
+              </text>
+            ))}
+          </g>
+          <path
+            d={initPath}
+            fill="none"
+            stroke="#939393"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
           />
-          <line
-            x1={PLOT.left}
-            y1={PLOT.top}
-            x2={PLOT.left}
-            y2={PLOT.top + PLOT.height}
-            stroke="var(--case2-color-axis)"
-            strokeWidth="1"
-          />
-          <path d={initPath} fill="none" stroke="var(--case2-color-cdf-initial)" strokeWidth="2" />
           {caliPath ? (
             <path
               d={caliPath}
               fill="none"
-              stroke="var(--case2-color-calibrated)"
+              stroke="#22D3EE"
               strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
             />
           ) : null}
         </svg>

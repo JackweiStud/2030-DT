@@ -245,17 +245,24 @@
   z-index: 0;
 }
 
-.case2-page .heatmap-canvas {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
+.case2-page .heatmap-base {
+  position: absolute;
+  inset: 0;
+  background: url("../../../assets/case2/maps/heatmap-map-base.png") center /
+    cover no-repeat;
 }
 
-.case2-page .heat-empty-slot {
+.case2-page .heatmap-canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  background: #0a0e1480;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  z-index: 1;
+  pointer-events: none;
+  background: #0a0e14;
 }
 
 .case2-page .metric-tag {
@@ -388,6 +395,10 @@
   color: var(--case2-color-calibrated);
 }
 
+.case2-page .leg-calibrated.is-muted {
+  opacity: 0.35;
+}
+
 .case2-page .cdf-plot,
 .case2-page .bar-plot {
   position: relative;
@@ -395,10 +406,21 @@
   min-height: 0;
 }
 
+.case2-page .bar-plot {
+  min-height: 210px;
+}
+
 .case2-page .cdf-svg {
   width: 100%;
   height: 100%;
   display: block;
+  overflow: visible;
+}
+
+.case2-page .cdf-axis-labels text {
+  fill: #939393;
+  font-family: var(--shell-font-ui);
+  font-size: 9px;
 }
 
 .case2-page .bar-group {
@@ -423,21 +445,141 @@
   font-family: var(--case2-font-data);
   font-size: var(--case2-font-size-mean);
   font-weight: 600;
+  color: var(--shell-color-text);
+  z-index: 2;
+  line-height: 1;
+}
+
+.case2-page .bar-group--calibrated .mean-value {
+  left: 10px;
+}
+
+.case2-page .bar-initial {
+  position: absolute;
+  border-radius: 6px 6px 0 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: 1;
+}
+
+.case2-page .bar-calibrated-fill {
+  position: absolute;
+  border-radius: 6px 6px 0 0;
+  background: var(--case2-color-calibrated);
+  z-index: 1;
+}
+
+.case2-page .bar-y-axis {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.case2-page .bar-y-axis span {
+  position: absolute;
+  left: 4px;
+  font-size: var(--case2-font-size-bar-axis);
+  color: var(--case2-color-bar-axis);
+  line-height: 1;
+}
+
+.case2-page .bar-y-axis span:nth-child(1) {
+  top: 23px;
+}
+.case2-page .bar-y-axis span:nth-child(2) {
+  top: 64px;
+}
+.case2-page .bar-y-axis span:nth-child(3) {
+  top: 104px;
+}
+.case2-page .bar-y-axis span:nth-child(4) {
+  top: 145px;
+}
+.case2-page .bar-y-axis span:nth-child(5) {
+  top: 185px;
+}
+
+.case2-page .bar-guide-dash {
+  position: absolute;
+  left: 24px;
+  /* top 由 MeanBarChart 按 Calibrated 柱顶动态写入，与柱顶水平对齐 */
+  width: 200px;
+  height: 2px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.case2-page .bar-guide-dash path {
+  fill: none;
+  stroke: var(--case2-color-dash);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.case2-page .bar-axis-label {
+  position: absolute;
+  left: 3px;
+  top: 195px;
+  font-size: var(--case2-font-size-bar-label);
+  color: var(--shell-color-text);
+  white-space: nowrap;
+}
+
+.case2-page .bar-group--calibrated .bar-axis-label {
+  left: -9px;
+  top: 196px;
+}
+
+.case2-page .bar-baseline {
+  position: absolute;
+  left: 22px;
+  width: 200px;
+  height: 1px;
+  background: var(--case2-color-baseline);
+  z-index: 0;
 }
 
 .case2-page .reduction-badge {
   position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 85px;
+  left: 139px;
+  /* top 由 MeanBarChart 写入：相对 Initial 均值再上移，避开 Calibrated 均值 */
+  /* 设计基线 85；一位小数百分比比「40%」更宽，按内容伸展 */
+  min-width: 85px;
+  width: max-content;
   height: 47px;
-  background-size: 100% 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
+  padding: 2px 10px;
+  border-radius: var(--case2-radius-reduction);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  color: var(--shell-color-primary-text);
   font-size: var(--case2-font-size-reduction);
-  color: var(--shell-color-text);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: visible;
+  z-index: 2;
+}
+
+/* 底图仅气泡；箭头与百分比由 DOM 叠上（勿再烘焙占位文案） */
+.case2-page .reduction-badge img {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.case2-page .reduction-badge span {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .case2-page .initial-error,

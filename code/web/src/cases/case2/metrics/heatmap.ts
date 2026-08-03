@@ -200,3 +200,34 @@ export function paintHeatmapOnCanvas(
   ctx.drawImage(offscreen, config.x0, config.y0);
   ctx.restore();
 }
+
+/**
+ * 只画热力马赛克层（其余透明），叠在 CSS cover 底图之上。
+ * 与底图共用同一套 cover 构图，避免整图 contain 把锚区缩没。
+ */
+export function paintHeatOverlayOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  matrix: number[][],
+  config: HeatmapConfig,
+): void {
+  const canvas = ctx.canvas;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const mosaic = buildMosaicImageData(matrix, config);
+  const offscreen = document.createElement("canvas");
+  offscreen.width = config.rangeWidth;
+  offscreen.height = config.rangeHeight;
+  const offCtx = offscreen.getContext("2d");
+  if (!offCtx) {
+    ctx.restore();
+    throw new Error("failed to create offscreen 2d context");
+  }
+  offCtx.putImageData(mosaic, 0, 0);
+
+  ctx.globalAlpha = config.alpha;
+  ctx.drawImage(offscreen, config.x0, config.y0);
+  ctx.restore();
+}

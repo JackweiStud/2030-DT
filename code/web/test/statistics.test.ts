@@ -41,6 +41,13 @@ describe("statistics", () => {
     expect(meanOf([1, 2, 3])).toBe(2);
   });
 
+  it("降幅与均值文案四舍五入为整数，不保留小数", () => {
+    expect(formatReductionLabel(40)).toBe("40%");
+    expect(formatReductionLabel(50)).toBe("50%");
+    expect(formatReductionLabel(44.44)).toBe("44%");
+    expect(formatReductionLabel(50.55)).toBe("51%");
+  });
+
   it("允许 Initial/Calibrated 不等长", () => {
     const a = buildEmpiricalCdfPoints([1, 2, 3, 4], 256);
     const b = buildEmpiricalCdfPoints([1, 2], 256);

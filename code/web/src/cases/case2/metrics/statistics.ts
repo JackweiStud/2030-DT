@@ -133,10 +133,9 @@ export function reductionPercent(
   return ((meanInitial - meanCalibrated) / meanInitial) * 100;
 }
 
-/** 最多一位小数；整数不带 `.0`。 */
+/** 四舍五入为整数文案（不保留小数）。 */
 export function formatOneDecimal(value: number): string {
-  const rounded = Math.round(value * 10) / 10;
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  return String(Math.round(value));
 }
 
 export function formatReductionLabel(pct: number | null): string {

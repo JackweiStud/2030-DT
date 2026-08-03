@@ -29,8 +29,8 @@ const TAG_CLASS: Record<MetricKey, "rss" | "path" | "delay"> = {
 
 const TAG_LABEL: Record<MetricKey, string> = {
   rss: "RSS",
-  effective_path_num: "有效路径数",
-  first_path_delay: "首径时延",
+  effective_path_num: "Effective Path Num",
+  first_path_delay: "First Path Delay",
 };
 
 export function Case2Page(props: Props) {

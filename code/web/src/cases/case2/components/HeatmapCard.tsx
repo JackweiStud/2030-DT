@@ -1,5 +1,7 @@
 /**
- * 单张热力卡：底图 + 运行时 Canvas 色场（内部分辨率=底图像素）。
+ * 单张热力卡。
+ * 有矩阵：Canvas 一次画「底图 + 热力」（object-fit:cover）。
+ * 无矩阵：只显示 CSS cover 底图空槽。
  */
 
 import { useEffect, useRef } from "react";
@@ -17,47 +19,66 @@ type Props = {
   variant: "initial" | "calibrated";
 };
 
+function loadBaseImage(): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("heatmap base image failed to load"));
+    img.src = mapBaseUrl;
+  });
+}
+
 export function HeatmapCard(props: Props) {
   const { matrix, config, empty, metricClass, label, variant } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
+  const showHeat = !empty && matrix !== null && matrix.length > 0;
 
   useEffect(() => {
-    if (empty || !matrix) return;
+    if (!showHeat || !matrix) return;
     let cancelled = false;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
 
-    const img = new Image();
-    img.decoding = "async";
-    img.src = mapBaseUrl;
-    imageRef.current = img;
+    void (async () => {
+      try {
+        const img = await loadBaseImage();
+        if (cancelled) return;
 
-    void img.decode().then(() => {
-      if (cancelled) return;
-      assertHeatmapAnchor(config, img.naturalWidth, img.naturalHeight);
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      paintHeatmapOnCanvas(ctx, img, matrix, config);
-    }).catch((err) => {
-      console.error("[case2] heatmap paint failed", err);
-    });
+        // 等 Canvas 真正挂到 DOM（StrictMode / 条件渲染后）
+        let canvas = canvasRef.current;
+        if (!canvas) {
+          await new Promise<void>((r) => requestAnimationFrame(() => r()));
+          canvas = canvasRef.current;
+        }
+        if (!canvas || cancelled) return;
+
+        assertHeatmapAnchor(config, img.naturalWidth, img.naturalHeight);
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          console.error("[case2] heatmap: 2d context unavailable");
+          return;
+        }
+        paintHeatmapOnCanvas(ctx, img, matrix, config);
+      } catch (err) {
+        console.error("[case2] heatmap paint failed", err);
+      }
+    })();
 
     return () => {
       cancelled = true;
     };
-  }, [matrix, config, empty]);
+  }, [matrix, config, showHeat]);
 
   return (
     <article className={`heatmap-card is-${variant}`}>
       <div className="heatmap-card__media">
-        {empty || !matrix ? (
-          <div className="heat-empty-slot" aria-hidden />
-        ) : (
+        {/* 有热力时由 Canvas 自带底图；空槽才用 CSS 底图 */}
+        {!showHeat ? <div className="heatmap-base" aria-hidden /> : null}
+        {showHeat ? (
           <canvas ref={canvasRef} className="heatmap-canvas" />
-        )}
+        ) : null}
       </div>
       <div className={`metric-tag metric-tag--${metricClass}`}>
         <span className="metric-tag__label">{label}</span>
