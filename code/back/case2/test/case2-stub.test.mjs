@@ -8,8 +8,15 @@ import {
   CALIBRATED_FILES,
   createControlStore,
   createPublisher,
+  createSeededRng,
   createStubRunner,
+  formatHeatmapMatrix,
+  formatKpiSamples,
+  improveHeatmap,
+  improveKpi,
   loadConfig,
+  parseHeatmapMatrix,
+  parseKpiSamples,
   parseRequestPicture,
   readControl,
   runOperation,
@@ -73,12 +80,40 @@ async function control(sharedDir) {
 function createContext(sharedDir, sourceDir, overrides = {}) {
   return {
     controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger }),
+    publisher: createPublisher({
+      sharedDir,
+      sourceDir,
+      logger: silentLogger,
+      dataMode: overrides.dataMode ?? "copy",
+      seed: overrides.seed,
+      improveMin: overrides.improveMin,
+      improveMax: overrides.improveMax,
+      noise: overrides.noise,
+    }),
     stepMs: overrides.stepMs ?? 0,
     outcome: overrides.outcome ?? "success",
     requestPicture: overrides.requestPicture ?? false,
     logger: silentLogger,
   };
+}
+
+async function writeInitialFiles(sharedDir, options = {}) {
+  const heatmap = options.heatmap ?? "10 20 30\n40 50 60\n";
+  const kpi = options.kpi ?? "10\n20\n30\n40\n";
+  const dir = path.join(sharedDir, "case2");
+  await fs.mkdir(dir, { recursive: true });
+  const files = [
+    "heatmap_init_rss.txt",
+    "heatmap_init_effective_path_num.txt",
+    "heatmap_init_first_path_delay.txt",
+    "heatmap_init_kpi_rss.txt",
+    "heatmap_init_kpi_effective_path_num.txt",
+    "heatmap_init_kpi_first_path_delay.txt",
+  ];
+  for (const name of files) {
+    const content = name.includes("_kpi_") ? kpi : heatmap;
+    await fs.writeFile(path.join(dir, name), content, "utf8");
+  }
 }
 
 test("loadConfig 要求 CASE2_SHARED_DIR，并校验 outcome", () => {
@@ -95,7 +130,18 @@ test("loadConfig 要求 CASE2_SHARED_DIR，并校验 outcome", () => {
   assert.equal(config.outcome, "success");
   assert.equal(config.stepMs, 5000);
   assert.equal(config.requestPicture, true);
+  assert.equal(config.dataMode, "random");
+  assert.equal(config.improveMin, 0.45);
+  assert.equal(config.improveMax, 0.65);
+  assert.equal(config.noise, 0.05);
   assert.equal(config.sourceDir, path.join(CASE2_STUB_DIR, "back"));
+  assert.equal(
+    loadConfig({
+      CASE2_SHARED_DIR: "/tmp/shared",
+      CASE2_STUB_DATA_MODE: "copy",
+    }).dataMode,
+    "copy",
+  );
 
   assert.equal(
     loadConfig({
@@ -339,7 +385,7 @@ test("相同 command 在 execute fail 后只要 status 再清空即可重新触�
   const sourceDir = await createSourceDir(t);
   const runner = createStubRunner({
     controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger }),
+    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
     stepMs: 0,
     pollMs: 1000,
     outcome: "fail",
@@ -368,7 +414,7 @@ test("自己写出的 status 引发 evaluate 不会重复接单", async (t) => {
   const sourceDir = await createSourceDir(t);
   const runner = createStubRunner({
     controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger }),
+    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
     stepMs: 0,
     pollMs: 1000,
     outcome: "success",
@@ -395,7 +441,7 @@ test("重启恢复：execute success 的 start/reinit 按成功路径收尾", as
       const sourceDir = await createSourceDir(st);
       const runner = createStubRunner({
         controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger }),
+        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
         stepMs: 0,
         pollMs: 1000,
         outcome: "fail",
@@ -432,7 +478,7 @@ test("重启恢复：idle、已失败、已完成、未知状态均不动作", a
       const sourceDir = await createSourceDir(st);
       const runner = createStubRunner({
         controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger }),
+        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
         stepMs: 0,
         pollMs: 1000,
         outcome: "success",
@@ -468,7 +514,7 @@ test("接单日志包含本轮 requestPicture 与 outcome", async (t) => {
   };
   const runner = createStubRunner({
     controlStore: createControlStore({ sharedDir, logger }),
-    publisher: createPublisher({ sharedDir, sourceDir, logger }),
+    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
     stepMs: 0,
     pollMs: 1000,
     outcome: "success",
@@ -483,3 +529,151 @@ test("接单日志包含本轮 requestPicture 与 outcome", async (t) => {
   assert.equal(accepted.meta.outcome, "success");
 });
 
+test("random 模式：相对 Initial 改善生成且 seed 可复现", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  await writeInitialFiles(sharedDir, {
+    heatmap: "10 20\n30 40\n",
+    kpi: "100\n200\n300\n",
+  });
+  const sourceDir = await createSourceDir(t); // copy fallback unused
+  const first = createPublisher({
+    sharedDir,
+    sourceDir,
+    logger: silentLogger,
+    dataMode: "random",
+    seed: "demo-seed",
+    improveMin: 0.5,
+    improveMax: 0.5,
+    noise: 0,
+  });
+  await first.publishCalibratedFiles();
+  const once = await fs.readFile(
+    path.join(sharedDir, "case2", "heatmap_cali_kpi_rss.txt"),
+    "utf8",
+  );
+  const second = createPublisher({
+    sharedDir,
+    sourceDir,
+    logger: silentLogger,
+    dataMode: "random",
+    seed: "demo-seed",
+    improveMin: 0.5,
+    improveMax: 0.5,
+    noise: 0,
+  });
+  await second.publishCalibratedFiles();
+  const twice = await fs.readFile(
+    path.join(sharedDir, "case2", "heatmap_cali_kpi_rss.txt"),
+    "utf8",
+  );
+  assert.equal(once, twice);
+
+  const samples = parseKpiSamples(once, "heatmap_cali_kpi_rss.txt");
+  assert.deepEqual(samples, [50, 100, 150]);
+  const matrix = parseHeatmapMatrix(
+    await fs.readFile(path.join(sharedDir, "case2", "heatmap_cali_rss.txt"), "utf8"),
+    "heatmap_cali_rss.txt",
+  );
+  assert.deepEqual(matrix, [
+    [5, 10],
+    [15, 20],
+  ]);
+});
+
+test("random 模式：不同 seed 生成不同内容，且均值不高于 Initial", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  await writeInitialFiles(sharedDir, {
+    heatmap: "20 40\n60 80\n",
+    kpi: "100\n200\n300\n400\n",
+  });
+  const sourceDir = await createSourceDir(t);
+  const a = createPublisher({
+    sharedDir,
+    sourceDir,
+    logger: silentLogger,
+    dataMode: "random",
+    seed: "seed-a",
+    improveMin: 0.5,
+    improveMax: 0.6,
+    noise: 0.02,
+  });
+  await a.publishCalibratedFiles();
+  const textA = await fs.readFile(
+    path.join(sharedDir, "case2", "heatmap_cali_kpi_rss.txt"),
+    "utf8",
+  );
+  const b = createPublisher({
+    sharedDir,
+    sourceDir,
+    logger: silentLogger,
+    dataMode: "random",
+    seed: "seed-b",
+    improveMin: 0.5,
+    improveMax: 0.6,
+    noise: 0.02,
+  });
+  await b.publishCalibratedFiles();
+  const textB = await fs.readFile(
+    path.join(sharedDir, "case2", "heatmap_cali_kpi_rss.txt"),
+    "utf8",
+  );
+  assert.notEqual(textA, textB);
+
+  const init = [100, 200, 300, 400];
+  const cali = parseKpiSamples(textB, "heatmap_cali_kpi_rss.txt");
+  const initMean = init.reduce((s, v) => s + v, 0) / init.length;
+  const caliMean = cali.reduce((s, v) => s + v, 0) / cali.length;
+  assert.ok(caliMean < initMean);
+  for (const value of cali) {
+    assert.ok(value >= 0 && value <= 500);
+  }
+});
+
+test("improve helpers 保持范围与两位小数", () => {
+  const next = createSeededRng("range-seed");
+  const matrix = improveHeatmap(
+    [
+      [-200, 0],
+      [100, 200],
+    ],
+    0.5,
+    0.2,
+    next,
+  );
+  for (const row of matrix) {
+    for (const value of row) {
+      assert.ok(value >= -200 && value <= 200);
+      assert.equal(value, Number(value.toFixed(2)));
+    }
+  }
+  const kpi = improveKpi([0, 250, 500], 0.5, 0.2, createSeededRng("kpi-seed"));
+  for (const value of kpi) {
+    assert.ok(value >= 0 && value <= 500);
+    assert.equal(value, Number(value.toFixed(2)));
+  }
+  assert.match(formatHeatmapMatrix(matrix), /\n$/);
+  assert.match(formatKpiSamples(kpi), /\n$/);
+});
+
+test("random 模式缺少 Initial 时失败且不写 complete 文件半套", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    command: "start",
+    dt_type: "with dt",
+    status: "",
+  });
+  // 不写 initial
+  const sourceDir = await createSourceDir(t);
+  const context = createContext(sharedDir, sourceDir, {
+    dataMode: "random",
+    seed: "x",
+    stepMs: 0,
+  });
+  await assert.rejects(runOperation(context, "start"), {
+    code: "INITIAL_MISSING",
+  });
+  await assert.rejects(
+    fs.stat(path.join(sharedDir, "case2", "heatmap_cali_rss.txt")),
+    { code: "ENOENT" },
+  );
+  assert.equal((await control(sharedDir)).status, "execute success");
+});

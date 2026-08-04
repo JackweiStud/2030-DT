@@ -55,6 +55,16 @@ export function HeatmapCard(props: Props) {
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
 
+        console.info("[case2] heatmap base image size", {
+          naturalWidth: img.naturalWidth,
+          naturalHeight: img.naturalHeight,
+          canvasWidth: canvas.width,
+          canvasHeight: canvas.height,
+          variant,
+          metric: metricClass,
+          label,
+        });
+
         const ctx = canvas.getContext("2d");
         if (!ctx) {
           console.error("[case2] heatmap: 2d context unavailable");
@@ -69,7 +79,7 @@ export function HeatmapCard(props: Props) {
     return () => {
       cancelled = true;
     };
-  }, [matrix, config, showHeat]);
+  }, [matrix, config, showHeat, variant, metricClass, label]);
 
   return (
     <article className={`heatmap-card is-${variant}`}>

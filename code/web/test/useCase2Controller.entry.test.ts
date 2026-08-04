@@ -133,4 +133,54 @@ describe("useCase2Controller entry gate", () => {
     expect(result.current.startEnabled).toBe(false);
     expect(result.current.state.case2UiState).toBe("initial");
   });
+
+  it("adapterError 时每 5s 探活，恢复后清 error 并拉 initial", async () => {
+    vi.useFakeTimers();
+    let failControl = true;
+    const order: string[] = [];
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        if (failControl) throw new Error("adapter down");
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async getDataFiles(phase) {
+        order.push(`data:${phase}`);
+        return metrics();
+      },
+      async postControl() {
+        throw new Error("not used");
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config,
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.state.adapterError).toBe(true);
+    expect(order).toEqual(["control"]);
+
+    failControl = false;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+      await Promise.resolve();
+    });
+
+    expect(result.current.state.adapterError).toBe(false);
+    expect(result.current.state.initialData).not.toBeNull();
+    expect(order.filter((x) => x === "control").length).toBeGreaterThanOrEqual(2);
+    expect(order).toContain("data:initial");
+    expect(result.current.state.case2UiState).toBe("initial");
+    expect(result.current.startEnabled).toBe(true);
+  });
 });

@@ -493,7 +493,7 @@ case-local state 至少包含：
 
 - **启**：POST `start`/`reinit` 成功并进入 `calibrating`/`resetting` 后启动；已在跑则不重复开。
 - **停**：进入 `completed` / `failed-start` / `failed-reinit` / 重置后的 `initial` 时清理 timer；切离 case2、卸载、刷新立即 `abort` 并清理。
-- **不启**：纯 `initial`（新进入/刷新/切回）只做一次性 `GET control-file` 诊断（必发），不作定时轮询。
+- **不启**：纯 `initial`（新进入/刷新/切回）只做一次性 `GET control-file` 诊断（必发），不作定时业务轮询。例外：`adapterError=true` 且仍为 `initial` 时，每 **5s** 探活一次 `GET control-file`（不封顶），成功后清 `adapterError`；若尚无 Initial 再拉 `data-files?phase=initial`；不因历史 `status` 改相。切离 case2 / 进入等待态 / 卸载时停探。
 - 使用递归 `setTimeout`：上一次 GET 完成后再等待 `VITE_CASE2_POLL_MS`（默认 1000），禁止 `setInterval` 造成请求重叠。
 - 每个挂载实例持有 `AbortController`；停表/卸载时 abort 当前请求并清理 timer。
 - 网络/控制读失败：置 `adapterError=true` 并继续轮询；成功后清 `adapterError`。不改 `case2UiState`。

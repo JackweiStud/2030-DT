@@ -16,8 +16,29 @@ npm start
 
 - 共享根：`../../comdatafiles`（`/Users/jackwl/Code/2030-DT/code/comdatafiles`）
 - **`CASE2_STUB_REQUEST_PICTURE=1`（演示默认开截图）**
+- **`CASE2_STUB_DATA_MODE=random`（相对 Initial 可控改善随机生成 Calibrated）**
 - start 终态同拍写 `status=case complete` + `save_picture_flag=1`
 - reinit 路径仍不置 flag
+
+数据模式：
+
+```bash
+# 默认：random（读共享目录 Initial，生成改善后的 Calibrated）
+npm start
+
+# 回退到参考样本 copy
+CASE2_STUB_DATA_MODE=copy npm start
+
+# 固定 seed，便于复现同一套 synthetic 结果
+CASE2_STUB_DATA_MODE=random CASE2_STUB_SEED=demo-1 npm start
+```
+
+random 模式说明：
+
+- 只随机/合成 **Calibrated** 六文件；Initial 不改
+- 形状继承 Initial 的 `Nx/Ny/N`
+- 默认 improve ratio ∈ [0.45, 0.65]，使误差整体下降（演示 CDF/降幅好看）
+- 日志标注 `synthetic ... not real backend acquisition`
 
 关闭截图请求：
 

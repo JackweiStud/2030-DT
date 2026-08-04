@@ -6,6 +6,8 @@
  * 1) GET control-file（诊断适配服务/控制文件，不因历史 status 改相）
  * 2) 仅当 control 成功后，再 GET data-files?phase=initial
  * StrictMode 双 effect：用 generation + AbortController 丢弃陈旧结果，避免双发 Initial。
+ *
+ * adapterError 且仍为 initial：每 5s 探活 control，成功后清 error 并补拉 Initial；不设总时长上限。
  */
 
 import { useCallback, useEffect, useReducer, useRef } from "react";
@@ -24,6 +26,9 @@ import {
   shouldShowCalibrated,
   type Case2State,
 } from "../state/case2Reducer";
+
+/** initial + adapterError 时的适配探活间隔；不封顶，直到恢复或离开 case2。 */
+export const ADAPTER_RECOVERY_PROBE_MS = 5000;
 
 export type Case2Controller = {
   state: Case2State;
@@ -94,6 +99,9 @@ export function useCase2Controller(options: Options): Case2Controller {
   const abortRef = useRef<AbortController | null>(null);
   const pollingRef = useRef(false);
   const screenshotBusyRef = useRef(false);
+  const adapterProbeTimerRef = useRef<number | null>(null);
+  const adapterProbeAbortRef = useRef<AbortController | null>(null);
+  const adapterProbingRef = useRef(false);
 
   const stopPolling = useCallback(() => {
     pollingRef.current = false;
@@ -104,6 +112,100 @@ export function useCase2Controller(options: Options): Case2Controller {
     abortRef.current?.abort();
     abortRef.current = null;
   }, []);
+
+  const stopAdapterProbe = useCallback(() => {
+    adapterProbingRef.current = false;
+    if (adapterProbeTimerRef.current !== null) {
+      window.clearTimeout(adapterProbeTimerRef.current);
+      adapterProbeTimerRef.current = null;
+    }
+    adapterProbeAbortRef.current?.abort();
+    adapterProbeAbortRef.current = null;
+  }, []);
+
+  const runAdapterRecoveryProbe = useCallback(async () => {
+    const snap = stateRef.current;
+    if (!snap.adapterError || snap.case2UiState !== "initial") {
+      stopAdapterProbe();
+      return;
+    }
+
+    const api = apiRef.current;
+    const ac = new AbortController();
+    adapterProbeAbortRef.current = ac;
+    try {
+      const control = await api.getControl(ac.signal);
+      if (ac.signal.aborted) return;
+      if (
+        stateRef.current.case2UiState !== "initial" ||
+        !stateRef.current.adapterError
+      ) {
+        return;
+      }
+
+      dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control });
+      case2Log("adapter_probe.ok", {
+        note: "adapter recovered; historical status ignored",
+        ...controlSummary(control),
+      });
+
+      if (!stateRef.current.initialData) {
+        try {
+          const metrics = await api.getDataFiles("initial", ac.signal);
+          if (ac.signal.aborted) return;
+          dispatch({ type: "INITIAL_DATA_OK", metrics });
+          case2Log("adapter_probe.initial_ok", {
+            nx: metrics.rss.heatmap[0]?.length ?? 0,
+            ny: metrics.rss.heatmap.length,
+            kpiN: metrics.rss.kpi.length,
+          });
+        } catch (err) {
+          if (isAbortError(err)) return;
+          const message = err instanceof Error ? err.message : String(err);
+          console.warn("[case2] adapter probe initial data failed", err);
+          dispatch({ type: "INITIAL_DATA_FAIL", message });
+          case2Log("adapter_probe.initial_fail", { message });
+        }
+      }
+      stopAdapterProbe();
+    } catch (err) {
+      if (isAbortError(err)) return;
+      case2Log("adapter_probe.fail", {
+        reason: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      if (adapterProbeAbortRef.current === ac) {
+        adapterProbeAbortRef.current = null;
+      }
+    }
+  }, [dispatch, stopAdapterProbe]);
+
+  const scheduleAdapterProbeLoop = useCallback(() => {
+    if (adapterProbingRef.current) return;
+    adapterProbingRef.current = true;
+    case2Log("adapter_probe.start", {
+      intervalMs: ADAPTER_RECOVERY_PROBE_MS,
+    });
+
+    const loop = async () => {
+      if (!adapterProbingRef.current) return;
+      await runAdapterRecoveryProbe();
+      if (!adapterProbingRef.current) return;
+      const snap = stateRef.current;
+      if (!snap.adapterError || snap.case2UiState !== "initial") {
+        adapterProbingRef.current = false;
+        return;
+      }
+      adapterProbeTimerRef.current = window.setTimeout(() => {
+        void loop();
+      }, ADAPTER_RECOVERY_PROBE_MS);
+    };
+
+    // 首次也等满间隔，避免与刚失败的进页诊断连打
+    adapterProbeTimerRef.current = window.setTimeout(() => {
+      void loop();
+    }, ADAPTER_RECOVERY_PROBE_MS);
+  }, [runAdapterRecoveryProbe]);
 
   const runScreenshotTask = useCallback(async () => {
     if (screenshotBusyRef.current) return;
@@ -392,9 +494,27 @@ export function useCase2Controller(options: Options): Case2Controller {
     return () => {
       ac.abort();
       stopPolling();
+      stopAdapterProbe();
       case2Log("entry.cleanup", { generation });
     };
-  }, [dispatch, stopPolling]);
+  }, [dispatch, stopAdapterProbe, stopPolling]);
+
+  // initial + adapterError：5s 探活，不封顶；恢复后清 error 并补 Initial
+  useEffect(() => {
+    if (state.adapterError && state.case2UiState === "initial") {
+      scheduleAdapterProbeLoop();
+      return () => {
+        stopAdapterProbe();
+      };
+    }
+    stopAdapterProbe();
+    return undefined;
+  }, [
+    scheduleAdapterProbeLoop,
+    state.adapterError,
+    state.case2UiState,
+    stopAdapterProbe,
+  ]);
 
   const onStart = useCallback(() => {
     const snap = stateRef.current;

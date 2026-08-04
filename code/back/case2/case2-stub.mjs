@@ -208,19 +208,155 @@ export function createControlStore(options) {
 }
 
 /**
+ * 方案 B：相对 Initial 的可控改善随机生成。
+ * 仅用于本地演示差异；不得表述为真实业务采集结果。
+ */
+export const METRIC_SPECS = Object.freeze([
+  {
+    key: "rss",
+    initHeatmap: "heatmap_init_rss.txt",
+    initKpi: "heatmap_init_kpi_rss.txt",
+    caliHeatmap: "heatmap_cali_rss.txt",
+    caliKpi: "heatmap_cali_kpi_rss.txt",
+  },
+  {
+    key: "effective_path_num",
+    initHeatmap: "heatmap_init_effective_path_num.txt",
+    initKpi: "heatmap_init_kpi_effective_path_num.txt",
+    caliHeatmap: "heatmap_cali_effective_path_num.txt",
+    caliKpi: "heatmap_cali_kpi_effective_path_num.txt",
+  },
+  {
+    key: "first_path_delay",
+    initHeatmap: "heatmap_init_first_path_delay.txt",
+    initKpi: "heatmap_init_kpi_first_path_delay.txt",
+    caliHeatmap: "heatmap_cali_first_path_delay.txt",
+    caliKpi: "heatmap_cali_kpi_first_path_delay.txt",
+  },
+]);
+
+export function createSeededRng(seedText) {
+  let state = 0;
+  const input = String(seedText);
+  for (let i = 0; i < input.length; i += 1) {
+    state = (Math.imul(31, state) + input.charCodeAt(i)) >>> 0;
+  }
+  if (state === 0) state = 0x9e3779b9;
+  return function next() {
+    // xorshift32
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 0x100000000;
+  };
+}
+
+export function roundSemanticNumber(value) {
+  const rounded =
+    Math.sign(value) *
+    (Math.round((Math.abs(value) + Number.EPSILON) * 100) / 100);
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function parseHeatmapMatrix(text, filename) {
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  while (lines.length > 0 && lines[0].trim() === "") lines.shift();
+  while (lines.length > 0 && lines.at(-1).trim() === "") lines.pop();
+  if (lines.length === 0 || lines.some((line) => line.trim() === "")) {
+    throw new StubError("DATA_INVALID", `${filename} must be a non-empty rectangular matrix`);
+  }
+  const matrix = lines.map((line) =>
+    line
+      .trim()
+      .split(/[,\s]+/)
+      .filter(Boolean)
+      .map((token) => {
+        const value = Number(token);
+        if (!Number.isFinite(value)) {
+          throw new StubError("DATA_INVALID", `${filename} contains non-finite number`);
+        }
+        return value;
+      }),
+  );
+  const width = matrix[0]?.length ?? 0;
+  if (width === 0 || matrix.some((row) => row.length !== width)) {
+    throw new StubError("DATA_INVALID", `${filename} must be rectangular`);
+  }
+  return matrix;
+}
+
+export function parseKpiSamples(text, filename) {
+  const tokens = text
+    .split(/[,\s]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+  if (tokens.length === 0) {
+    throw new StubError("DATA_INVALID", `${filename} must contain at least one KPI sample`);
+  }
+  return tokens.map((token) => {
+    const value = Number(token);
+    if (!Number.isFinite(value)) {
+      throw new StubError("DATA_INVALID", `${filename} contains non-finite number`);
+    }
+    return value;
+  });
+}
+
+export function formatHeatmapMatrix(matrix) {
+  return `${matrix
+    .map((row) => row.map((value) => String(roundSemanticNumber(value))).join(","))
+    .join("\n")}\n`;
+}
+
+export function formatKpiSamples(samples) {
+  return `${samples.map((value) => String(roundSemanticNumber(value))).join("\n")}\n`;
+}
+
+function improveValue(value, ratio, noiseAmp, nextRandom, min, max) {
+  const noise = (nextRandom() * 2 - 1) * noiseAmp * Math.max(1, Math.abs(value));
+  return clamp(roundSemanticNumber(value * ratio + noise), min, max);
+}
+
+export function improveHeatmap(matrix, ratio, noiseAmp, nextRandom) {
+  return matrix.map((row) =>
+    row.map((value) => improveValue(value, ratio, noiseAmp, nextRandom, -200, 200)),
+  );
+}
+
+export function improveKpi(samples, ratio, noiseAmp, nextRandom) {
+  return samples.map((value) =>
+    improveValue(value, ratio, noiseAmp, nextRandom, 0, 500),
+  );
+}
+
+function mean(values) {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+/**
  * Calibrated 发布器。
- * 参考样本只作为本地打桩数据复制，日志明确标注为 stub/reference，
- * 不能把这些文件表述成本轮真实业务采集结果。
+ * - copy：从 reference 目录复制（回归/可复现样本）
+ * - random：相对共享目录 Initial 做可控改善随机生成（演示默认）
+ * 日志必须标明 stub/synthetic，不得表述为真实业务采集。
  */
 export function createPublisher(options) {
   const sharedDir = path.resolve(options.sharedDir);
   const sourceDir = path.resolve(options.sourceDir);
   const fsOps = options.fsOps ?? fs;
   const logger = options.logger ?? createLogger("info");
+  const dataMode = options.dataMode ?? "random";
+  const seed = options.seed;
+  const improveMin = options.improveMin ?? 0.45;
+  const improveMax = options.improveMax ?? 0.65;
+  const noise = options.noise ?? 0.05;
   const targetDir = path.join(sharedDir, "case2");
 
-  async function publishCalibratedFiles() {
-    await fsOps.mkdir(targetDir, { recursive: true });
+  async function publishByCopy() {
     const published = [];
     for (const fileName of CALIBRATED_FILES) {
       const sourcePath = path.join(sourceDir, fileName);
@@ -230,18 +366,98 @@ export function createPublisher(options) {
       await fsOps.stat(targetPath);
       published.push(targetPath);
     }
-    for (const fileName of CALIBRATED_FILES) {
-      await fsOps.stat(path.join(targetDir, fileName));
-    }
     logger.info("published calibrated stub/reference files", {
+      mode: "copy",
       sourceDir,
       targetDir,
       count: published.length,
+      note: "stub/reference files, not real backend acquisition",
     });
     return published;
   }
 
-  return { targetDir, sourceDir, publishCalibratedFiles };
+  async function readInitialMetric(spec) {
+    const heatmapPath = path.join(targetDir, spec.initHeatmap);
+    const kpiPath = path.join(targetDir, spec.initKpi);
+    let heatmapText;
+    let kpiText;
+    try {
+      heatmapText = await fsOps.readFile(heatmapPath, "utf8");
+      kpiText = await fsOps.readFile(kpiPath, "utf8");
+    } catch (error) {
+      throw new StubError(
+        "INITIAL_MISSING",
+        `random mode requires initial files for ${spec.key}`,
+        { cause: error, metric: spec.key },
+      );
+    }
+    return {
+      heatmap: parseHeatmapMatrix(heatmapText, spec.initHeatmap),
+      kpi: parseKpiSamples(kpiText, spec.initKpi),
+    };
+  }
+
+  async function publishByRandom() {
+    const resolvedSeed =
+      seed === undefined || seed === null || seed === ""
+        ? `t${Date.now()}-r${Math.floor(Math.random() * 1e9)}`
+        : String(seed);
+    const nextRandom = createSeededRng(resolvedSeed);
+    // 三指标共用 improve ratio，演示观感更一致
+    const ratio = improveMin + (improveMax - improveMin) * nextRandom();
+    const published = [];
+    const shapes = [];
+
+    for (const spec of METRIC_SPECS) {
+      const initial = await readInitialMetric(spec);
+      const caliHeatmap = improveHeatmap(initial.heatmap, ratio, noise, nextRandom);
+      const caliKpi = improveKpi(initial.kpi, ratio, noise, nextRandom);
+      const heatmapPath = path.join(targetDir, spec.caliHeatmap);
+      const kpiPath = path.join(targetDir, spec.caliKpi);
+      await atomicReplaceFile(heatmapPath, formatHeatmapMatrix(caliHeatmap), fsOps);
+      await atomicReplaceFile(kpiPath, formatKpiSamples(caliKpi), fsOps);
+      await fsOps.stat(heatmapPath);
+      await fsOps.stat(kpiPath);
+      published.push(heatmapPath, kpiPath);
+      shapes.push({
+        metric: spec.key,
+        nx: caliHeatmap[0]?.length ?? 0,
+        ny: caliHeatmap.length,
+        kpiN: caliKpi.length,
+        initMean: roundSemanticNumber(mean(initial.kpi)),
+        caliMean: roundSemanticNumber(mean(caliKpi)),
+      });
+    }
+
+    logger.info("published calibrated synthetic files", {
+      mode: "random",
+      seed: resolvedSeed,
+      improveRatio: roundSemanticNumber(ratio),
+      noise,
+      targetDir,
+      count: published.length,
+      shapes,
+      note: "synthetic relative to Initial; not real backend acquisition",
+    });
+    return published;
+  }
+
+  async function publishCalibratedFiles() {
+    await fsOps.mkdir(targetDir, { recursive: true });
+    const published =
+      dataMode === "copy" ? await publishByCopy() : await publishByRandom();
+    for (const fileName of CALIBRATED_FILES) {
+      await fsOps.stat(path.join(targetDir, fileName));
+    }
+    return published;
+  }
+
+  return {
+    targetDir,
+    sourceDir,
+    dataMode,
+    publishCalibratedFiles,
+  };
 }
 
 function isStartEdge(control) {
@@ -403,7 +619,11 @@ export function createStubRunner(options) {
       return;
     }
 
-    if (classification === "start-recover" || classification === "reinit-recover") {
+    // 恢复只在进程启动类 reason 做；after-active/poll 再 recover 会在发布失败时把 execute success 打成死循环。
+    if (
+      (reason === "startup" || reason.startsWith("startup-")) &&
+      (classification === "start-recover" || classification === "reinit-recover")
+    ) {
       const operation = classification.startsWith("start") ? "start" : "reinit";
       active = true;
       logger.info("recovering in-flight operation", {
@@ -468,6 +688,7 @@ export function createStubRunner(options) {
       pollMs: options.pollMs,
       outcome: context.outcome,
       requestPicture: context.requestPicture,
+      dataMode: options.publisher?.dataMode,
     });
   }
 
@@ -488,6 +709,23 @@ function positiveInteger(value, name) {
   return parsed;
 }
 
+function parseDataMode(rawValue) {
+  const value = rawValue === undefined || rawValue === "" ? "random" : rawValue;
+  if (value !== "random" && value !== "copy") {
+    throw new StubError("CONFIG_INVALID", "CASE2_STUB_DATA_MODE must be random or copy");
+  }
+  return value;
+}
+
+function parseUnitInterval(rawValue, fallback, name) {
+  if (rawValue === undefined || rawValue === "") return fallback;
+  const value = Number(rawValue);
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new StubError("CONFIG_INVALID", `${name} must be a number in [0,1]`);
+  }
+  return value;
+}
+
 export function loadConfig(env = process.env) {
   if (!env.CASE2_SHARED_DIR) {
     throw new StubError("CONFIG_INVALID", "CASE2_SHARED_DIR is required");
@@ -498,6 +736,24 @@ export function loadConfig(env = process.env) {
   }
   // 演示默认开启截图请求；显式 CASE2_STUB_REQUEST_PICTURE=0 可关闭。
   const requestPicture = parseRequestPicture(env.CASE2_STUB_REQUEST_PICTURE);
+  const dataMode = parseDataMode(env.CASE2_STUB_DATA_MODE);
+  const improveMin = parseUnitInterval(
+    env.CASE2_STUB_IMPROVE_MIN,
+    0.45,
+    "CASE2_STUB_IMPROVE_MIN",
+  );
+  const improveMax = parseUnitInterval(
+    env.CASE2_STUB_IMPROVE_MAX,
+    0.65,
+    "CASE2_STUB_IMPROVE_MAX",
+  );
+  if (improveMin > improveMax) {
+    throw new StubError(
+      "CONFIG_INVALID",
+      "CASE2_STUB_IMPROVE_MIN must be <= CASE2_STUB_IMPROVE_MAX",
+    );
+  }
+  const noise = parseUnitInterval(env.CASE2_STUB_NOISE, 0.05, "CASE2_STUB_NOISE");
   return {
     sharedDir: path.resolve(env.CASE2_SHARED_DIR),
     sourceDir: path.resolve(env.CASE2_STUB_SOURCE_DIR ?? DEFAULT_SOURCE_DIR),
@@ -505,6 +761,11 @@ export function loadConfig(env = process.env) {
     pollMs: positiveInteger(env.CASE2_STUB_POLL_MS ?? "1000", "CASE2_STUB_POLL_MS"),
     outcome,
     requestPicture,
+    dataMode,
+    seed: env.CASE2_STUB_SEED ?? "",
+    improveMin,
+    improveMax,
+    noise,
     logLevel: env.CASE2_STUB_LOG_LEVEL ?? "info",
   };
 }
@@ -534,6 +795,11 @@ export function createCase2Stub(config, options = {}) {
   const publisher = createPublisher({
     sharedDir: config.sharedDir,
     sourceDir: config.sourceDir,
+    dataMode: config.dataMode,
+    seed: config.seed,
+    improveMin: config.improveMin,
+    improveMax: config.improveMax,
+    noise: config.noise,
     logger,
   });
   return createStubRunner({

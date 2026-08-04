@@ -26,6 +26,10 @@
 | `CASE2_STUB_STEP_MS` | `5000` | `execute success` 写出后至少保持该时长再写终态，保证 Web 1000ms 轮询能看见中间态。 |
 | `CASE2_STUB_OUTCOME` | `success` | 仅 `success` / `fail`；不得出现在正式 Web UI。 |
 | `CASE2_STUB_REQUEST_PICTURE` | `1` | 演示默认开截图请求。`1`：start 终态同拍 `case complete + save_picture_flag=1`；`0`：只写 `case complete`。reinit 永不置 flag。 |
+| `CASE2_STUB_DATA_MODE` | `random` | `random`：相对共享目录 Initial 可控改善生成 Calibrated（演示默认）；`copy`：从 `CASE2_STUB_SOURCE_DIR` 复制参考样本。 |
+| `CASE2_STUB_SEED` | 空 | 仅 `random`；空则每轮新 seed；非空可复现同一套 synthetic 结果。 |
+| `CASE2_STUB_IMPROVE_MIN` / `MAX` | `0.45` / `0.65` | 仅 `random`；Calibrated ≈ Initial × ratio + noise，ratio 抽自该区间。 |
+| `CASE2_STUB_NOISE` | `0.05` | 仅 `random`；相对噪声幅度。 |
 | `CASE2_STUB_POLL_MS` | `1000` | 控制文件轮询唤醒间隔（`fs.watch` 不可用时仍工作）。 |
 | `CASE2_STUB_LOG_LEVEL` | `info` | `info` / `debug`；控制写成功默认 INFO。 |
 
@@ -69,7 +73,7 @@
 4. **`start` + `CASE2_STUB_OUTCOME=success`**
    1. 通过 `patchControl` 写 `status=execute success`；
    2. 等待 `CASE2_STUB_STEP_MS`（默认 **5000ms**）；
-   3. 向 `{CASE2_SHARED_DIR}/case2/` 发布六个 `heatmap_cali_*.txt`（可从 `01-参考资料/case2/前后端数据接口文件/` 拷贝参考样本）：每个文件先写同目录临时文件，`fsync`、关闭并 rename 为最终文件；
+   3. 向 `{CASE2_SHARED_DIR}/case2/` 发布六个 `heatmap_cali_*.txt`：每个文件先写同目录临时文件，`fsync`、关闭并 rename 为最终文件。默认 `CASE2_STUB_DATA_MODE=random`：读取同目录 Initial 六文件，按可控 improve ratio 生成 synthetic Calibrated（形状继承 Initial，范围遵守热力 `[-200,200]` / KPI `[0,500]`，2 位小数）；`copy` 模式才从参考目录拷贝样本。日志必须标注 stub/synthetic，不得表述为真实业务采集；
    4. 确认六个最终文件全部存在、可 stat，且所有句柄已关闭；
    5. 按陈旧任务保护重新确认当前仍为 `command=start,status="execute success"`；
    6. **最后一次控制写**：

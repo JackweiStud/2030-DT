@@ -19,7 +19,14 @@
 - 2026-08-03 截图实现收敛：用户确认内部演示不做持久事务、SHA-256 去重或进程重启恢复；Node 只保证进程内串行、临时文件原子落盘、不覆盖和成功后清零。极端崩溃窗口允许丢失或重复截图，业务状态不受影响。
 - 2026-08-03 截图锐度：`toPng` 改为 `pixelRatio=2`（逻辑舞台仍 1920×1080，落盘 3840×2160）；WEB-SPEC / SERVER-SPEC 已同步；不跟 `devicePixelRatio` 浮动。
 - 2026-08-03 Gate 4-A：`code/server/` Node 文件适配服务已实现；控制快照五个核心字段必填、`debug_flag`/`scene_type` 可选；截图响应返回共享根相对路径。自动测试 25 项通过；使用仓库 `code/comdatafiles` 完成控制 GET 与 Initial 三指标只读启动烟测。参考文件只用于解析验证，不代表真实业务结果。
-- 当前焦点：Gate 4 — `code/web/` 正式 React Web 与 `code/server/` Node 适配服务均已落地；下一步由独立的 `realback_no` 打桩或真实后端完成联调 / Playwright。
+- 2026-08-04 Gate 4 主线联调收口：`code/web` + `code/server` + `code/back/case2` 打桩三端已可演示。
+  - 进页：Web 串行门闩（先 `GET control-file` 诊断适配服务，成功后再 `GET data-files?phase=initial`）；StrictMode 去重避免 Initial 双发。
+  - 启动：`status="" → execute success → case complete`；默认打桩同拍 `save_picture_flag=1`；Web 同拍先开截图再读 Calibrated；截图落盘后清 flag。
+  - 重置：`status="" → execute success → reinit complete`；重置路径不置 flag；回 `initial` 并清空 Calibrated。
+  - 可观测：Node 请求摘要/截图 accepted+saved；打桩接单带 `requestPicture`；Web 成功边沿结构化 console log。
+  - 用户反复实机验证：初始化 / 启动 / 重置功能正常。
+- 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run dev`。
+- 当前焦点：Gate 4 主线已通。后续优先旁路联调（`execute fail`、刷新/切 Tab、适配不可用、cali 批次失败、多轮截图序号）与 Playwright 主线自动化；打桩 Calibrated 数据源仍为参考样本 copy，随机生成方案待确认后实现。
 
 ## 一句话演示承诺
 
@@ -58,7 +65,8 @@
 - `execute success` 是必须观察的中间状态；打桩默认保持至少 `CASE2_STUB_STEP_MS=5000`（见 `realback_no.md`），真实后端是否能被 1000ms 轮询稳定观察需在 Gate 4 联调验证。
 - 启动/重置的状态链路已确认：`execute success -> case complete` 或 `execute success -> reinit complete`；`execute fail` 为失败终态；刷新页面后一切回 Initial。
 - 初始、校准中、失败态为基于完成态结构补建的设计源；用户已审阅并批准，后续变更须重新冻结。
-- 当前参考 Calibrated 文件已存在，不能作为本次任务完成证据。
+- 当前参考 Calibrated 文件已存在，不能作为本次任务完成证据；本地打桩默认从 `code/back/case2/back` copy 发布，仅 stub/reference，不得表述为真实业务采集。随机生成方案待确认。
+- 主线联调已通过；旁路场景（fail 模式、刷新/切 Tab、适配挂掉、六文件缺失、截图 3 次丢图）仍建议补齐实机覆盖与/或 E2E。
 - Gate 1 设计源中降幅已改为 `{reductionPct}%` 运行时占位；前端实现不得写死 50%。
 
 ## 关键文档
