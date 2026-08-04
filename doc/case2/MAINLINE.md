@@ -21,8 +21,9 @@
 | 校准中 | 点击启动后，尚未完成 | 保留 Initial；Calibrated 显示校准中 | 不展示旧 CDF/均值，显示进行中反馈 | 启动、重置均禁用 |
 | 命令已执行 | `status=execute success` | 启动路径仍不显示结果；重置路径仍等待重置完成 | 仍为进行中 | 当前动作结束前两按钮均禁用 |
 | 完成 | `status=case complete` 且结果完整 | Initial/Calibrated 三行配对热力图 | 每项显示两条 CDF 与平均误差对比 | 启动禁用，重置可用 |
-| 失败 | `status=execute fail` | 显示执行命令失败；本轮不再等待完成终态 | 显示执行命令失败 | 启动与重置解除，允许手动重试；不自动重试 |
-| 重置 | 点击重置，写 `reinit`；两按钮禁用 | 等待重置确认；读到 `reinit complete` 后移除 Calibrated 热力图 | 等待重置确认；读到 `reinit complete` 后移除 Calibrated KPI/CDF/均值 | 成功后恢复登录时按钮状态，后续可再次启动 |
+| 启动失败 | 启动路径 `status=execute fail` | 显示执行命令失败；本轮不再等待完成终态 | 显示执行命令失败 | 仅启动可用，允许手动再启动；不自动重试 |
+| 重置失败 | 重置路径 `status=execute fail` | 显示执行命令失败；清空 Calibrated | 显示执行命令失败；清空 Calibrated KPI/CDF/均值 | 仅重置可用，允许手动再重置；不自动重试 |
+| 重置 | 点击重置，写 `reinit`；两按钮禁用 | 等待重置确认；等待期间暂留旧 Calibrated；读到 `reinit complete` 后移除 Calibrated 热力图 | 等待重置确认；等待期间暂留旧对比；读到 `reinit complete` 后移除 Calibrated KPI/CDF/均值 | 成功后恢复登录时按钮状态，后续可再次启动 |
 
 ## 结论与禁止口径
 
@@ -32,6 +33,7 @@
 - 不得要求 `reinit` 成功后必须回到 `command=init,status=""`；`status=reinit complete` 已是重置完成信号。
 - 不得在 `execute fail` 后继续等待 `case complete` 或 `reinit complete`；前端应显示执行命令失败。
 - 截图：后端仅在启动路径 `execute success`→`case complete`（含同拍）将 `save_picture_flag` 0→1；Web 仅 `calibrating` 观察，同拍 complete 仍截一次；适配服务保存成功后清回 `0`。
+- 本地打桩联调已通过；该结论覆盖 synthetic/stub 数据与仓库共享根，不等价于真实后端或真实采集验收。
 
 ## 来源
 

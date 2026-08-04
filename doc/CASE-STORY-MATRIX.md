@@ -5,7 +5,7 @@
 | Case | Tab 名 | 交付顺序 | 一句话故事 | 派生 / 独立判断 | 当前 Gate | 文档入口 |
 |---|---|---:|---|---|---|---|
 | case1 | DT Construction（按导航顺序推断，待确认） | 4 | 未提供 | 待判断 | 未启动 | `doc/case1/`（未来） |
-| case2 | DT Calibration | 1 | Initial DT 基线经 `with dt` 校准后，以 Calibrated DT 的误差分布与均值下降证明校准有效 | 独立业务 case | Gate 3：SERVER/WEB SPEC 待批准 | `doc/case2/` |
+| case2 | DT Calibration | 1 | Initial DT 基线经 `with dt` 校准后，以 Calibrated DT 的误差分布与均值下降证明校准有效 | 独立业务 case | Gate 5：本地打桩 QA 通过；真实后端/真实挂载待外部验收 | `doc/case2/` |
 | case3 | DT for Comm（按导航顺序推断，待确认） | 2 | 未提供 | 待判断 | 未启动 | `doc/case3/`（未来） |
 | case4 | DT for positioning（按导航顺序推断，待确认） | 3 | 未提供 | 待判断 | 未启动 | `doc/case4/`（未来） |
 
@@ -14,3 +14,4 @@
 - Tab 顺序不等于业务复用关系。
 - 未启动 case 只展示 Shell 占位；不拥有文件读取、轮询、计时器或后台连接。
 - 新 case 开工时必须独立判断其主线、数据真实性、状态机和是否可派生复用。
+- case2 的可复用经验是 Shell/文档/Gate 节奏，不是 case2 指标语义或状态字段可直接套给 case3/4。

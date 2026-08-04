@@ -1,6 +1,6 @@
 # 共享架构草案
 
-> 本文冻结 Gate 0 的责任边界，不是实现规格；已批准接口见 `doc/case2/API-CONTRACT.md`，具体端口、目录注入与控制写入算法见 Gate 3 SPEC。
+> 本文冻结 Gate 0 的责任边界，不是实现规格；已批准接口见 `doc/case2/API-CONTRACT.md`，具体端口、目录注入与控制写入算法见 Gate 3 SPEC；本地实现与 QA 证据见 `doc/case2/QA-EVIDENCE.md`。
 
 ## 项目模式
 
@@ -16,6 +16,7 @@
 | case2 Web | case2 视觉状态、按钮、热力图/CDF/均值的派生展示、截图触发 UI | 直接访问共享目录、持有文件锁、写本地输出文件 |
 | Node 本地适配服务（前端 PC） | 唯一文件 I/O、锁、控制文件读写、稳定结果读取、截图 PNG 落盘、截图标志回写 | 后端业务采集、其他 case 的业务决策 |
 | 后端业务进程（后端 PC） | 读取控制、执行 `with dt` 校准、发布结果、回写 `status` 与截图请求标志 | 浏览器 UI、前端截图编码 |
+| 本地模拟后端（打桩） | 在无真实后端时扮演共享目录另一端，推进状态并发布 synthetic/stub Calibrated 文件 | 真实采集、真实算法、REST 接口 |
 
 ## 目标数据流
 
@@ -46,6 +47,8 @@ Chrome case2
 当前 UX 仅消费六类 Calibrated 输出：三张热力图（RSS、有效路径数、首径时延）和三组 KPI 样本。AOA/ZOA 不进入当前 UI。
 
 后端必须先完成当批结果发布，再以 `status="case complete"` 允许前端读取。真实后端采用“六文件关闭后最后写完成状态”的最小规则；本地无真实后端时的打桩行为见 `doc/case2/realback_no.md`。前端文件适配服务见 `doc/case2/SERVER-SPEC.md`。
+
+截至 2026-08-04，正式 Web、Node 适配服务和本地模拟后端已完成本地打桩联调。该结论只覆盖仓库内 `code/comdatafiles` 与本机进程，不覆盖真实后端 PC、真实挂载路径或真实采集数据。
 
 ## 不纳入本草案
 
