@@ -12,7 +12,7 @@
 
 - 共享根：`code/comdatafiles`（可用 `CASE2_SHARED_DIR` 覆盖）
 - 适配服务：`127.0.0.1:3102`
-- Web：`http://127.0.0.1:5173`（Vite 代理 `/api` → 3102）
+- Web：`http://127.0.0.1:5173`（Vite `host:true`，启动时另打印局域网 Network 地址；代理 `/api` → 3102）
 
 `Ctrl+C` / `SIGTERM` 会结束两个子进程。
 

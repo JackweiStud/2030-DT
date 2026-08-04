@@ -54,7 +54,8 @@ trap cleanup INT TERM EXIT
 
 echo "[dev-web-server] sharedDir=$SHARED_DIR"
 echo "[dev-web-server] adapter=http://${SERVER_HOST}:${SERVER_PORT}"
-echo "[dev-web-server] web=http://127.0.0.1:${WEB_PORT}  (proxy /api -> adapter)"
+echo "[dev-web-server] web Local=http://127.0.0.1:${WEB_PORT}  (proxy /api -> adapter)"
+echo "[dev-web-server] web Network：见下方 Vite 打印的 Network 行（host 已开）"
 echo "[dev-web-server] stub is NOT started; run code/back separately if needed"
 echo
 
@@ -69,8 +70,8 @@ PIDS+=("$!")
 
 (
   cd "$WEB_DIR"
-  # vite 默认 5173；允许外部覆盖
-  npm run dev -- --host 127.0.0.1 --port "$WEB_PORT"
+  # vite.config host:true → 打印局域网 IP；允许外部覆盖端口
+  npm run dev -- --port "$WEB_PORT"
 ) &
 PIDS+=("$!")
 

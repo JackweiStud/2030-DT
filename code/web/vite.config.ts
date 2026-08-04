@@ -5,11 +5,13 @@ import react from "@vitejs/plugin-react";
 /**
  * Vite 配置：开发时把 /api 代理到本机适配服务 3102。
  * 正式包由同机静态托管保持同源，不依赖 CORS。
+ * host:true 监听 0.0.0.0，启动时打印 Local + Network（局域网 IP）。
  */
 export default defineConfig({
   plugins: [react()],
   publicDir: false,
   server: {
+    host: true,
     port: 5173,
     proxy: {
       "/api": {
