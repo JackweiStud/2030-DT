@@ -188,10 +188,19 @@ export function createDataFilesService(options) {
       }
 
       // 只有通过全部校验后，才把这一批数据返回给前端。
+      const metrics = assembleMetrics(files, values);
+      const firstHeatmap = metrics.rss?.heatmap ?? [];
+      const firstKpi = metrics.rss?.kpi ?? [];
+      logger.info("case2 data batch read", {
+        phase,
+        nx: firstHeatmap[0]?.length ?? 0,
+        ny: firstHeatmap.length,
+        kpiN: firstKpi.length,
+      });
       return {
         ok: true,
         phase,
-        metrics: assembleMetrics(files, values),
+        metrics,
       };
     } catch (error) {
       const normalized = isAppError(error)

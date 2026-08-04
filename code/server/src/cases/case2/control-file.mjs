@@ -170,6 +170,9 @@ export function createControlFileService(options) {
       logger.info("case2 control file updated", {
         kind,
         fields: Object.keys(patch),
+        command: written.command,
+        status: written.status,
+        save_picture_flag: written.save_picture_flag,
       });
       return written;
     });

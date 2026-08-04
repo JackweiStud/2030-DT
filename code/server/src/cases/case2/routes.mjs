@@ -4,6 +4,7 @@ import { CASE2_API_PREFIX } from "./constants.mjs";
 
 /**
  * case2 路由只做 HTTP 与服务方法的映射，不在这里解释业务 status。
+ * 返回 { handled, access? }，供 app 层做请求摘要与 control GET 降噪。
  */
 export function createCase2Router(services) {
   return async function routeCase2(request, response, url) {
@@ -14,8 +15,9 @@ export function createCase2Router(services) {
       if ([...url.searchParams].length > 0) {
         throw new AppError(400, "INVALID_REQUEST", "control-file does not accept query");
       }
-      sendJson(response, 200, { ok: true, control: await services.controlFile.read() });
-      return true;
+      const control = await services.controlFile.read();
+      sendJson(response, 200, { ok: true, control });
+      return { handled: true, access: { control } };
     }
 
     if (
@@ -28,7 +30,7 @@ export function createCase2Router(services) {
       const payload = await readJsonBody(request);
       const control = await services.controlFile.updateFromHttp(payload);
       sendJson(response, 200, { ok: true, control });
-      return true;
+      return { handled: true };
     }
 
     if (
@@ -44,7 +46,7 @@ export function createCase2Router(services) {
         );
       }
       sendJson(response, 200, await services.dataFiles.readPhase(entries[0][1]));
-      return true;
+      return { handled: true };
     }
 
     if (
@@ -56,9 +58,9 @@ export function createCase2Router(services) {
       }
       const payload = await readJsonBody(request);
       sendJson(response, 200, await services.screenshot.save(payload));
-      return true;
+      return { handled: true };
     }
 
-    return false;
+    return { handled: false };
   };
 }
