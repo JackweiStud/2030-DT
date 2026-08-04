@@ -7,10 +7,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "CASE2_SHARED_DIR=${CASE2_SHARED_DIR:-../../comdatafiles} node --enable-source-maps case2-stub.mjs",
-    "start:no-picture": "CASE2_SHARED_DIR=${CASE2_SHARED_DIR:-../../comdatafiles} CASE2_STUB_REQUEST_PICTURE=0 node --enable-source-maps case2-stub.mjs",
-    "dev": "CASE2_SHARED_DIR=${CASE2_SHARED_DIR:-../../comdatafiles} CASE2_STUB_LOG_LEVEL=${CASE2_STUB_LOG_LEVEL:-debug} node --enable-source-maps case2-stub.mjs",
-    "dev:no-picture": "CASE2_SHARED_DIR=${CASE2_SHARED_DIR:-../../comdatafiles} CASE2_STUB_LOG_LEVEL=${CASE2_STUB_LOG_LEVEL:-debug} CASE2_STUB_REQUEST_PICTURE=0 node --enable-source-maps case2-stub.mjs",
+    "start": "node --enable-source-maps scripts/run.mjs",
+    "start:no-picture": "node --enable-source-maps scripts/run.mjs --no-picture",
+    "dev": "node --enable-source-maps scripts/run.mjs --dev",
+    "dev:no-picture": "node --enable-source-maps scripts/run.mjs --dev --no-picture",
     "test": "node --test --test-reporter=spec test/*.test.mjs"
   }
 }

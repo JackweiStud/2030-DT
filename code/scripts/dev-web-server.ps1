@@ -52,6 +52,12 @@ if (-not (Test-Path -LiteralPath $WebDir -PathType Container) -or
   exit 1
 }
 
+$WebNodeModules = Join-Path $WebDir 'node_modules'
+if (-not (Test-Path -LiteralPath $WebNodeModules -PathType Container)) {
+  Write-Error "[dev-web-server] ERROR: web dependencies missing. First run: cd `"$WebDir`" ; npm install"
+  exit 1
+}
+
 $npmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
 if (-not $npmCmd) {
   $npmCmd = Get-Command npm -ErrorAction SilentlyContinue
