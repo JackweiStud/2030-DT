@@ -9,6 +9,7 @@ import colCali from "../../../assets/case2/icons/column-calibrated-icon.png";
 import iconPlay from "../../../assets/case2/icons/icon-play.svg";
 import iconPause from "../../../assets/case2/icons/icon-pause.svg";
 import iconReset from "../../../assets/case2/icons/icon-rotate-ccw.svg";
+import { useSiteEnvWindow } from "../../shell/siteEnvWindowContext";
 import type { Case2RuntimeConfig } from "./metrics/heatmapConfig";
 import { useCase2Controller } from "./hooks/useCase2Controller";
 import { HeatmapCard } from "./components/HeatmapCard";
@@ -35,6 +36,7 @@ const TAG_LABEL: Record<MetricKey, string> = {
 
 export function Case2Page(props: Props) {
   const { config, stageElementRef } = props;
+  const { open: openSiteEnv } = useSiteEnvWindow();
   const {
     state,
     statusText,
@@ -62,6 +64,7 @@ export function Case2Page(props: Props) {
                 href="#现场环境"
                 onClick={(e) => {
                   e.preventDefault();
+                  openSiteEnv();
                 }}
               >
                 现场环境 &gt;

@@ -1,9 +1,22 @@
 /**
  * Shell：1920×1080 固定舞台等比缩放居中；四 Tab；非 case2 显示建设中。
+ * 拥有「现场环境」弹窗（case2/3/4 共用）。
  */
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import brandLogo from "../../assets/shell/brand-logo.png";
+import { SiteEnvWindow } from "./SiteEnvWindow";
+import {
+  SiteEnvWindowContext,
+  type SiteEnvWindowApi,
+} from "./siteEnvWindowContext";
 import "./shell.css";
 
 export type CaseTabId = "case1" | "case2" | "case3" | "case4";
@@ -30,6 +43,19 @@ export function Shell(props: Props) {
   const { activeTab, onTabChange, stageRef, children } = props;
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [siteEnvOpen, setSiteEnvOpen] = useState(false);
+
+  const openSiteEnv = useCallback(() => setSiteEnvOpen(true), []);
+  const closeSiteEnv = useCallback(() => setSiteEnvOpen(false), []);
+
+  const siteEnvApi = useMemo<SiteEnvWindowApi>(
+    () => ({ open: openSiteEnv, close: closeSiteEnv }),
+    [openSiteEnv, closeSiteEnv],
+  );
+
+  useEffect(() => {
+    setSiteEnvOpen(false);
+  }, [activeTab]);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -47,36 +73,49 @@ export function Shell(props: Props) {
   }, []);
 
   return (
-    <div className="stage-viewport" ref={viewportRef}>
-      <div
-        className="stage"
-        ref={stageRef}
-        style={{ transform: `scale(${scale})` }}
-      >
-        <header className="shell-header">
-          <div className="nav-bg" aria-hidden />
-          <div className="brand-area">
-            <img className="brand-logo" src={brandLogo} width={32} height={32} alt="" />
-            <span className="brand-sub">云上外场</span>
-            <span className="brand-title">IMT-2030 DT测试</span>
-          </div>
-          <nav className="case-nav" aria-label="Case tabs">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={`case-tab${activeTab === tab.id ? " is-active" : ""}`}
-                onClick={() => onTabChange(tab.id)}
-              >
-                <span className="case-tab__label">{tab.label}</span>
-                <span className="tab-underline" aria-hidden />
-              </button>
-            ))}
-          </nav>
-        </header>
-        {children}
+    <SiteEnvWindowContext.Provider value={siteEnvApi}>
+      <div className="stage-viewport" ref={viewportRef}>
+        <div
+          className="stage"
+          ref={stageRef}
+          style={{ transform: `scale(${scale})` }}
+        >
+          <header className="shell-header">
+            <div className="nav-bg" aria-hidden />
+            <div className="brand-area">
+              <img
+                className="brand-logo"
+                src={brandLogo}
+                width={32}
+                height={32}
+                alt=""
+              />
+              <span className="brand-sub">云上外场</span>
+              <span className="brand-title">IMT-2030 DT测试</span>
+            </div>
+            <nav className="case-nav" aria-label="Case tabs">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`case-tab${activeTab === tab.id ? " is-active" : ""}`}
+                  onClick={() => onTabChange(tab.id)}
+                >
+                  <span className="case-tab__label">{tab.label}</span>
+                  <span className="tab-underline" aria-hidden />
+                </button>
+              ))}
+            </nav>
+          </header>
+          {children}
+          <SiteEnvWindow
+            open={siteEnvOpen}
+            onClose={closeSiteEnv}
+            stageRef={stageRef}
+          />
+        </div>
       </div>
-    </div>
+    </SiteEnvWindowContext.Provider>
   );
 }
 

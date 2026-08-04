@@ -391,7 +391,7 @@ case-local 弹层、业务反馈不得渲染在 Stage 外。Header 可内嵌于 
 - 指标标签使用 `--case2-color-metric-tag-rss/path/delay` 与 HTML 文案，不复制 PNG 底板。
 - 三项指标通过配置映射复用同一套组件，不复制三套状态逻辑。
 - 正式按钮与互斥以本文和 Gate 2 为准；Gate 1.5 静态原型里 calibrating 曾允许点重置，不得照抄。
-- 「现场环境 >」按 §6.4：文案与静态一致，预留实时视频弹窗，**当前不实现**点击逻辑。
+- 「现场环境 >」按 §6.4：文案与静态一致；点击打开 Shell 级现场环境弹窗（图片占位，可关闭/拖拽）。
 
 ## 4. 类型与状态归属
 
@@ -578,7 +578,7 @@ case-local state 至少包含：
 
 ### 6.4 杂项 UI
 
-- 「现场环境 >」：文案与 Gate 1.5 静态 HTML 一致（`现场环境 >`）。视觉保留可点样式；**预留**点击后弹出实时视频窗口。**当前 Gate 不实现**该弹窗与视频逻辑：点击无业务副作用（`preventDefault` / 空 handler 即可），不得跳转外链或误接导航。
+- 「现场环境 >」：文案与 Gate 1.5 静态 HTML 一致（`现场环境 >`）。点击打开 **Shell 级**现场环境弹窗（蒙版 + 可拖拽窗口 + 双路画面）；画面当前为静态图占位，**不接入真实视频流**。弹窗挂在 1920×1080 stage 内（兼容 Shell scale）；切离当前 Tab 时关闭。不得跳转外链或误接导航。实现对照 `web-static/shared/site-env-window` 与 Pencil `oTc2N`/`jbeAj`，正式代码在 `code/web/src/shell/`，资源在 `assets/shell/site-env/`。
 - 非 `completed` 且非 `resetting` 时，Calibrated 列保留空槽骨架（对照 Gate 1.5），不整列拆掉布局。
 
 ## 7. API 接入
@@ -1169,7 +1169,7 @@ saving
 
 - 四设计态 + failed-start/failed-reinit 的文案、按钮互斥和 Calibrated 可见性；`resetting` 暂留旧对比 +「重置中」。
 - `adapterError` 替换 StatusFeedback 主文案（非双行并存）；与 `execute fail` 文案分离。
-- 「现场环境 >」文案与静态一致；当前点击无副作用；不实现实时视频弹窗。
+- 「现场环境 >」文案与静态一致；点击打开 Shell 级现场环境弹窗（图片占位；可关闭/拖拽；无真实视频）。
 - Calibrated 读失败仅日志、无专用 UI 态；未知 status 保持等待态。
 - 图表外框消费 `tokens.css` 变量；动态 path/柱高由 §9 填入。
 - 1920×1080 1:1；其他窗口只整体缩放居中；分区对照 Gate 1.5，不要求代表态数字逐像素对齐。
@@ -1199,7 +1199,7 @@ saving
 - 不单独设计命令 POST 写失败 UI 机，也不把适配错误映射为 `execute fail`；POST 失败仅回退点击前相 + `adapterError` + 日志。
 - 不对未知 `status` 另开 UI 相；保持等待态直至刷新/切 Tab。
 - 不设 `pendingAction`、`baselineStatus`、`connection-error`、`initial-data-error`、`result-error`、`unknown-control` 独立字段/phase。
-- 「现场环境 >」当前不实现实时视频弹窗；不得做成外链导航。
+- 「现场环境 >」打开 Shell 级现场环境弹窗（图片占位）；不得做成外链导航；不接入真实视频流。
 - 进页不重写共享目录 `case_control.json`；不因历史 `status` 展示 fail/完成态。开一轮清盘只发生在 start/reinit POST（适配服务侧）。
 - 截图不做无限重试或跨挂载恢复；同一挂载内同一任务最多 3 次，最终失败自动清零并接受丢图。
 - 不读取 AOA、ZOA、`without dt` 或其他 case 数据。

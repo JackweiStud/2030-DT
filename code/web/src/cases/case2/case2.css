@@ -80,6 +80,16 @@
   color: var(--case2-color-calibrated);
   font-size: var(--case2-font-size-link);
   text-decoration: none;
+  cursor: pointer;
+}
+
+.case2-page .env-link:hover {
+  text-decoration: underline;
+}
+
+.case2-page .env-link:focus-visible {
+  outline: 2px solid var(--case2-color-calibrated);
+  outline-offset: 2px;
 }
 
 .case2-page .column-header-row {
