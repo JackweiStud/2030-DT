@@ -275,9 +275,9 @@ code/
 │   │   └── cases/
 │   │       └── case2/   # 本阶段唯一业务（含 metrics 纯算法）
 │   └── test/
-├── back/                # 后端业务进程（空，待实现）
+├── back/                # 本地打桩或真实后端进程（打桩见 realback_no.md；非 Web 依赖）
 ├── server/              # 多 case 适配进程（见 SERVER-SPEC）
-│   └── src/shared/ + src/cases/case2|3|4/
+│   └── src/shared/ + src/cases/case2/   # 本阶段仅 case2；case3/4 目录待扩展
 └── comdatafiles/        # 共享根：case_control + caseN/ + out/caseN/
 ```
 
@@ -570,7 +570,7 @@ case-local state 至少包含：
 | completed                         | 已完成                               |
 | resetting                         | 重置中                               |
 | `failed-start` / `failed-reinit`  | 执行命令失败（文案相同；按钮按来源互斥）              |
-| `adapterError`                    | 适配服务连接异常：**替换** StatusFeedback 主文案（不另起第二行相文案）；按钮双禁；底层 `case2UiState` 不变 |
+| `adapterError`                    | 「case2文件服务器连接异常」：**替换** StatusFeedback 主文案（不另起第二行相文案）；按钮双禁；底层 `case2UiState` 不变 |
 | Initial 文件读取失败                    | Initial 区不可用 + 诊断日志（不另设 UI phase） |
 
 
@@ -988,41 +988,23 @@ mean = sum(samples) / N
 | 项 | 规则 |
 |---|---|
 | Initial / Calibrated | 各用各的 `N` 与 `mean` |
-| 柱高 | 由运行时 `mean` 按下列坐标公式计算；**禁止**设计稿/静态原型写死柱高 |
+| 柱高权威实现 | `MeanBarChart.tsx`：对齐 Gate 1.5 柱区像素几何（基线 `BAR_BOTTOM=190`、最大柱高 `BAR_MAX_HEIGHT=101`）；**禁止**设计稿写死与样本无关的柱高 |
+| y 视觉上界 | `yMax = max(参与显示的有限 mean, 0) / Y_MAX_FILL_RATIO`，`Y_MAX_FILL_RATIO=0.8`；无样本时轴 chrome 用占位 `EMPTY_Y_MAX=8` |
+| 柱高映射 | `height = round(BAR_MAX_HEIGHT * clamp(mean / yMax, 0, 1))`；`mean=0` 用最小可视高度 `2`；从基线向上 |
 | Initial 柱外观 | 可复用 `bar-initial-fill.png` 纹理 |
 | Calibrated 柱 | CSS/`--case2-color-calibrated`，不复用静态代表柱 |
-| 外框尺寸 | 以 `web/assets/case2/tokens.css` 的 `--case2-bar-width` 等为准；`plotTop/Height` 从柱区布局派生 |
-| y-domain（completed 双柱） | 两组均值与 **0** 一起定域；契约下 KPI∈\[0,500\]，均值 ≥0，正常路径柱在 0 上方 |
-| 0 基线 | 必须绘制或保留可感知的零基线；柱子从 `mean=0` 起画 |
-| 方向 | `mean>0` 从 0 基线向上；`mean=0` 为零高度柱或最小视觉线；负均值仅防御分支（见坐标公式），正常路径不出现 |
-| 禁止钳制 | 不得把均值钳到假值或按与样本无关的比例画柱 |
-| 显示文案 | 最多一位小数（`5`、`3.1`）；按当前样本算，不写死；与适配归一后的 2 位语义精度独立，显示再四舍五入 |
+| 外框尺寸 | 以 `web/assets/case2/tokens.css` 的 `--case2-bar-width` 等为准；绘图常量与 Gate 1.5 静态对齐 |
+| 0 基线 | 必须保留可感知零基线 |
+| 禁止钳制 | 不得把均值钳到假值或按与当前样本无关的比例画柱 |
+| 显示文案 | **固定一位小数**（`toFixed(1)`，如 `5.0`、`3.1`）；按当前样本算，不写死；与适配归一后的 2 位语义精度独立 |
 
-柱图坐标计算固定为：
+> 说明：`metrics/statistics.ts` 中的 `layoutMeanBar`（mean 与 0 定域的通用公式）保留为纯函数参考，**当前 UI 柱高不以它为准**；施工与验收以 `MeanBarChart.tsx` 为准。
 
-```text
-yMin = min(0, 所有参与显示的有限 mean)
-yMax = max(0, 所有参与显示的有限 mean)
-若 yMin == yMax == 0:
-  yMin = -1
-  yMax = 1
-
-sy(v) = plotTop + (yMax - v) / (yMax - yMin) * plotHeight
-zeroY = sy(0)
-
-若 mean >= 0:
-  barTop = sy(mean)
-  barHeight = zeroY - barTop
-否则:
-  barTop = zeroY
-  barHeight = sy(mean) - zeroY
-```
-
-Initial-only 状态（无暂留 Calibrated）只用 Initial 均值与 0 定域；`completed` 与 `resetting`（暂留双柱）用 Initial / Calibrated 两个均值与 0 联合定域。契约下 KPI 非负，正常路径柱均在 0 上方。
+Initial-only 状态只用 Initial 均值参与 `yMax`；`completed` 与 `resetting`（暂留双柱）用 Initial / Calibrated 两个均值联合取 max。契约下 KPI 非负，正常路径柱均在 0 上方。
 
 ### 9.4 降幅
 
-仅 `completed` 且该项 Initial / Calibrated 均值均有效时尝试计算：
+在 **`completed` 与 `resetting`（暂留对比）** 且该项已展示 Calibrated、Initial / Calibrated 均值均有效时尝试计算（与 §9.0「暂留含降幅」一致）：
 
 ```text
 若 meanInitial > 0 且两均值有限:
@@ -1034,7 +1016,7 @@ Initial-only 状态（无暂留 Calibrated）只用 Initial 均值与 0 定域�
 | 项 | 规则 |
 |---|---|
 | 禁止 | 写死 `50%` / `40%` 或任何与当前样本无关的降幅 |
-| 显示 | 最多一位小数；整数不显示 `.0`（`40%`、`44.4%`） |
+| 显示 | **四舍五入为整数百分比**（`formatReductionLabel` → `44%`）；不保留一位小数 |
 | 符号 | 负降幅保留负号（Calibrated 均值更大 = 误差变差） |
 | `meanInitial<=0` | KPI 契约为非负；仅当 Initial 均值恰为 0（全零样本）时分母无效，显示「不可计算」 |
 
@@ -1046,7 +1028,7 @@ Initial-only 状态（无暂留 Calibrated）只用 Initial 均值与 0 定域�
 | 固定 51 点重采样 | 参考 §3.3；契约曾写 51 | **改为**随 `N` 的完整台阶 + `CAP` 封顶 | **有意偏离**（显示应贴合真实台阶） |
 | 非 Sigmoid | 有 | 有 | **一致** |
 | KPI 动态 `N` | 契约已要求 | 强化 init/cali 可不等长 | **一致并写清** |
-| SVG 阶梯 / domain / 降幅格式 | 多未写 | §9.2–9.4 | **Web 施工增量** |
+| SVG 阶梯 / domain / 降幅格式 | 多未写 | §9.2–9.4（柱高跟 Gate 1.5 几何；均值一位小数；降幅整数%） | **Web 施工增量（以代码为准回填）** |
 
 ### 9.6 实现禁区（摘要）
 
@@ -1055,8 +1037,8 @@ Initial-only 状态（无暂留 Calibrated）只用 Initial 均值与 0 定域�
 - 不用 Sigmoid；双曲线不拆两套 x 轴。
 - `N≤CAP` 不得无故下采样；仅 `N>CAP` 才用封顶公式。
 - `CAP` 非法不得钳制；SVG 阶梯 path 不得平滑、不得从第一个点直接起笔。
-- 均值柱不得把合法非负均值钳到假值或按与样本无关的比例画柱；负均值防御分支不得按绝对值向上画。
-- 降幅/柱高/均值文案全部由当前批次样本计算。
+- 均值柱不得把合法非负均值钳到假值或按与样本无关的比例画柱；柱高以 `MeanBarChart` Gate 1.5 几何为准。
+- 降幅/柱高/均值文案全部由当前批次样本计算（均值固定一位小数；降幅整数%）。
 
 ## 10. 截图状态机
 
@@ -1156,7 +1138,7 @@ saving
 - CDF 配置：`VITE_CASE2_CDF_POINT_CAP` 缺失使用默认 `256`；存在但为空、非 `^\d+$`、非安全整数或 `<2` 时明确失败；禁止 `parseInt` 部分接受、钳制或回退默认值。
 - CDF 点集：覆盖 `N=1`、重复 x（允许合并或不合并连续同 x）、无序输入排序、Initial / Calibrated 不等长；`N≤CAP` 不下采样，`N>CAP` 按端点公式取 `CAP` 点。
 - CDF SVG：断言 path 从 `(xMin,0)` 起笔，逐点先水平后垂直，最后延伸到 `(xMax,1)`；双曲线共用联合 x-domain；`min=max` 使用指定 padding；禁止平滑曲线。
-- 均值/柱图/降幅：覆盖正均值、零均值、0 基线、正/负降幅、`meanInitial=0` 不可计算；负均值分支仅作防御（契约 KPI∈\[0,500\] 正常不出现）。
+- 均值/柱图/降幅：覆盖正均值、零均值、0 基线、正/负降幅、`meanInitial=0` 不可计算；柱高跟 Gate 1.5 几何（`Y_MAX_FILL_RATIO`）。
 - 热力配置：env 缺失使用唯一默认值；存在但为空/非法词法/非安全整数/越界时明确失败；底图加载失败或 decode 后锚区越界时显示固定配置错误、双禁且不创建 Canvas。
 - 热力插值：用 `2×2` 已知矩阵断言离屏四角精确等于矩阵四角；覆盖动态 `Ny×Nx`、`1×N`、`N×1`、`1×1` 和常量矩阵。
 - 热力方向：非对称矩阵断言第一行在上、第一列在左，且无转置、上下翻转或左右翻转。
@@ -1187,7 +1169,7 @@ saving
 6. 重置：两按钮禁用；写后 `status=""`；等待期间旧对比仍可见、文案「重置中」；时刻 A success 后时刻 B `reinit complete` 清空并回 Initial。
 7. 启动路径 `execute fail`：显示“执行命令失败”，仅启动可用；重置路径 `execute fail`：同文案，仅重置可用，且 Calibrated 已清空。
 8. 缺一个 Calibrated 文件：整批不显示、不进 `completed`，保持 `calibrating`，有诊断日志（演示主线不依赖）。
-9. 命令 POST 失败：回退点击前相 +「适配服务连接异常」，不启轮询（旁路；演示主线不依赖）。
+9. 命令 POST 失败：回退点击前相 +「case2文件服务器连接异常」，不启轮询（旁路；演示主线不依赖）。
 10. 刷新 completed 页：回 Initial，启动可用；历史 fail/complete 均不续接。
 11. 切 Tab：轮询停止；切回仍从 Initial 开始（忽略控制文件历史 status）。
 12. 启动路径内连续两次 `save_picture_flag: 0 -> 1 -> 0 -> 1`：两次上传、序号递增；同拍 `case complete`+flag=1 仍截一次；`completed` 后停表不再观察；resetting 不截。

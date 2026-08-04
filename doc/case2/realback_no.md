@@ -27,6 +27,7 @@
 | `CASE2_STUB_OUTCOME` | `success` | 仅 `success` / `fail`；不得出现在正式 Web UI。 |
 | `CASE2_STUB_REQUEST_PICTURE` | `1` | 演示默认开截图请求。`1`：start 终态同拍 `case complete + save_picture_flag=1`；`0`：只写 `case complete`。reinit 永不置 flag。 |
 | `CASE2_STUB_DATA_MODE` | `random` | `random`：相对共享目录 Initial 可控改善生成 Calibrated（演示默认）；`copy`：从 `CASE2_STUB_SOURCE_DIR` 复制参考样本。 |
+| `CASE2_STUB_SOURCE_DIR` | `code/back/case2/back`（相对打桩包目录的绝对解析） | 仅 `copy`；参考样本根目录。未设置时默认 `path.resolve(__dirname, "back")`。 |
 | `CASE2_STUB_SEED` | 空 | 仅 `random`；空则每轮新 seed；非空可复现同一套 synthetic 结果。 |
 | `CASE2_STUB_IMPROVE_MIN` / `MAX` | `0.45` / `0.65` | 仅 `random`；Calibrated ≈ Initial × ratio + noise，ratio 抽自该区间。 |
 | `CASE2_STUB_NOISE` | `0.05` | 仅 `random`；相对噪声幅度。 |
