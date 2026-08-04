@@ -21,14 +21,22 @@ type Props = {
   variant: "initial" | "calibrated";
 };
 
+let baseImagePromise: Promise<HTMLImageElement> | null = null;
+let baseImageSizeLogged = false;
+
 function loadBaseImage(): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+  if (baseImagePromise) return baseImagePromise;
+  baseImagePromise = new Promise((resolve, reject) => {
     const img = new Image();
     img.decoding = "async";
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("heatmap base image failed to load"));
+    img.onerror = () => {
+      baseImagePromise = null;
+      reject(new Error("heatmap base image failed to load"));
+    };
     img.src = mapBaseUrl;
   });
+  return baseImagePromise;
 }
 
 async function paintHeatOnCanvas(
@@ -45,13 +53,13 @@ async function paintHeatOnCanvas(
   assertHeatmapAnchor(config, img.naturalWidth, img.naturalHeight);
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
-  if (logCtx) {
+  if (logCtx && !baseImageSizeLogged) {
+    baseImageSizeLogged = true;
     console.info("[case2] heatmap base image size", {
       naturalWidth: img.naturalWidth,
       naturalHeight: img.naturalHeight,
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
-      ...logCtx,
     });
   }
   const ctx = canvas.getContext("2d");

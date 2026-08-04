@@ -37,6 +37,41 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function assertFiniteNumber(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${label} must be finite number`);
+  }
+  return value;
+}
+
+function assertHeatmap(value: unknown, label: string): number[][] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(`${label} heatmap must be non-empty array`);
+  }
+  const firstRow = value[0];
+  if (!Array.isArray(firstRow) || firstRow.length === 0) {
+    throw new Error(`${label} heatmap rows must be non-empty arrays`);
+  }
+  const cols = firstRow.length;
+  return value.map((row, rowIndex) => {
+    if (!Array.isArray(row) || row.length !== cols) {
+      throw new Error(`${label} heatmap must be rectangular`);
+    }
+    return row.map((cell, colIndex) =>
+      assertFiniteNumber(cell, `${label} heatmap[${rowIndex}][${colIndex}]`),
+    );
+  });
+}
+
+function assertKpi(value: unknown, label: string): number[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(`${label} kpi must be non-empty array`);
+  }
+  return value.map((sample, index) =>
+    assertFiniteNumber(sample, `${label} kpi[${index}]`),
+  );
+}
+
 function assertMetrics(metrics: unknown): MetricsBundle {
   if (!isObject(metrics)) throw new Error("metrics must be object");
   const out = {} as MetricsBundle;
@@ -49,8 +84,8 @@ function assertMetrics(metrics: unknown): MetricsBundle {
       throw new Error(`metric ${key} shape invalid`);
     }
     out[key as MetricKey] = {
-      heatmap: heatmap as number[][],
-      kpi: kpi as number[],
+      heatmap: assertHeatmap(heatmap, key),
+      kpi: assertKpi(kpi, key),
     };
   }
   return out;
