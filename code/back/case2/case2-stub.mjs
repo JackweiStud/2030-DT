@@ -191,14 +191,14 @@ export function createControlStore(options) {
       const current = await read();
       const merged = { ...current, ...patch };
       const serialized = `${JSON.stringify(merged, null, 2)}\n`;
-      const temporaryPath = await atomicReplaceFile(controlPath, serialized, fsOps);
+      await atomicReplaceFile(controlPath, serialized, fsOps);
       const written = await read();
       verifyPatch(current, written, patch, patchOptions);
-      logger.debug("control patched", {
+      logger.info("control patched", {
         fields: Object.keys(patch),
-        temporaryPath,
         command: written.command,
         status: written.status,
+        save_picture_flag: written.save_picture_flag,
       });
       return written;
     });
@@ -379,7 +379,12 @@ export function createStubRunner(options) {
     if (classification === "start-new" || classification === "reinit-new") {
       const operation = classification.startsWith("start") ? "start" : "reinit";
       active = true;
-      logger.info("accepted new operation", { operation, reason });
+      logger.info("accepted new operation", {
+        operation,
+        reason,
+        requestPicture: context.requestPicture,
+        outcome: context.outcome,
+      });
       try {
         await runOperation(context, operation);
       } catch (error) {
@@ -401,7 +406,12 @@ export function createStubRunner(options) {
     if (classification === "start-recover" || classification === "reinit-recover") {
       const operation = classification.startsWith("start") ? "start" : "reinit";
       active = true;
-      logger.info("recovering in-flight operation", { operation, reason });
+      logger.info("recovering in-flight operation", {
+        operation,
+        reason,
+        requestPicture: context.requestPicture,
+        outcome: context.outcome,
+      });
       try {
         await runOperation(context, operation, { isRecovery: true });
       } catch (error) {
@@ -453,7 +463,9 @@ export function createStubRunner(options) {
     }
     logger.info("case2 stub backend started", {
       controlPath: context.controlStore.controlPath,
+      sharedDir: path.dirname(context.controlStore.controlPath),
       stepMs: context.stepMs,
+      pollMs: options.pollMs,
       outcome: context.outcome,
       requestPicture: context.requestPicture,
     });
@@ -484,7 +496,8 @@ export function loadConfig(env = process.env) {
   if (outcome !== "success" && outcome !== "fail") {
     throw new StubError("CONFIG_INVALID", "CASE2_STUB_OUTCOME must be success or fail");
   }
-  const requestPicture = (env.CASE2_STUB_REQUEST_PICTURE ?? "0") === "1";
+  // 演示默认开启截图请求；显式 CASE2_STUB_REQUEST_PICTURE=0 可关闭。
+  const requestPicture = parseRequestPicture(env.CASE2_STUB_REQUEST_PICTURE);
   return {
     sharedDir: path.resolve(env.CASE2_SHARED_DIR),
     sourceDir: path.resolve(env.CASE2_STUB_SOURCE_DIR ?? DEFAULT_SOURCE_DIR),
@@ -494,6 +507,22 @@ export function loadConfig(env = process.env) {
     requestPicture,
     logLevel: env.CASE2_STUB_LOG_LEVEL ?? "info",
   };
+}
+
+/**
+ * 演示联调默认 requestPicture=true。
+ * 仅接受 0/1；未设置时按 1。
+ */
+export function parseRequestPicture(rawValue) {
+  if (rawValue === undefined || rawValue === "") {
+    return true;
+  }
+  if (rawValue === "1") return true;
+  if (rawValue === "0") return false;
+  throw new StubError(
+    "CONFIG_INVALID",
+    "CASE2_STUB_REQUEST_PICTURE must be 0 or 1",
+  );
 }
 
 export function createCase2Stub(config, options = {}) {

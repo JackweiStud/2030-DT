@@ -1,5 +1,6 @@
 /**
- * CDF 图：Gate 1.5 网格/轴标 chrome + 运行时阶梯曲线。
+ * CDF 图：Gate 1.5 网格 chrome + 运行时阶梯曲线。
+ * 轴标用 HTML 叠加（避免 html-to-image 对嵌套 SVG text 栅格化失真）。
  * 无样本时只出 chrome（网格/轴），不画阶梯线。
  */
 
@@ -17,9 +18,10 @@ type Props = {
 
 /** 与静态 HTML 同构的绘图区（外层 viewBox 宽 384；高略增以给 x 轴刻度留空）。 */
 const PLOT = { left: 26, top: 4, width: 348, height: 202 };
-const SVG_VIEWBOX = "0 0 384 222";
-/** x 轴刻度基线；相对网格底边（206）下移，避免贴轴。 */
-const X_TICK_Y = 222;
+const VB = { w: 384, h: 222 };
+const SVG_VIEWBOX = `0 0 ${VB.w} ${VB.h}`;
+/** x 轴刻度相对网格底边（206）下移；对齐静态原型约 215，避免贴底被裁。 */
+const X_TICK_Y = 215;
 
 /** 无样本时的占位 x 域（仅用于轴刻度 chrome）。 */
 const EMPTY_X_DOMAIN = { xMin: 0, xMax: 1 };
@@ -43,6 +45,14 @@ const V_GRID = [
   26, 49, 72, 96, 119, 142, 165, 188, 212, 235, 258, 281, 304, 328, 351, 374,
 ];
 
+function pctX(x: number): string {
+  return `${(x / VB.w) * 100}%`;
+}
+
+function pctY(y: number): string {
+  return `${(y / VB.h) * 100}%`;
+}
+
 /** 生成与静态接近的 x 轴刻度文案（按当前 domain 均匀取点）。 */
 function buildXTickLabels(xMin: number, xMax: number): { x: number; text: string }[] {
   const count = V_GRID.length;
@@ -54,7 +64,7 @@ function buildXTickLabels(xMin: number, xMax: number): { x: number; text: string
       Math.abs(value) >= 10 || Number.isInteger(value)
         ? String(Math.round(value))
         : (Math.round(value * 10) / 10).toFixed(1);
-    labels.push({ x: V_GRID[i]! - 2, text });
+    labels.push({ x: V_GRID[i]!, text });
   }
   return labels;
 }
@@ -109,20 +119,6 @@ export function CdfChart(props: Props) {
               <line key={`v-${x}`} x1={x} y1={4} x2={x} y2={206} />
             ))}
           </g>
-          <g className="cdf-axis-labels">
-            {Y_LABELS.map((item) => (
-              <text key={item.text} x={1} y={item.y}>
-                {item.text}
-              </text>
-            ))}
-          </g>
-          <g className="cdf-axis-labels cdf-axis-labels--x">
-            {xTicks.map((item) => (
-              <text key={`x-${item.x}`} x={item.x} y={X_TICK_Y}>
-                {item.text}
-              </text>
-            ))}
-          </g>
           {initPath ? (
             <path
               d={initPath}
@@ -142,6 +138,28 @@ export function CdfChart(props: Props) {
             />
           ) : null}
         </svg>
+        <div className="cdf-axis-labels cdf-axis-labels--y" aria-hidden>
+          {Y_LABELS.map((item) => (
+            <span
+              key={item.text}
+              className="cdf-axis-label cdf-axis-label--y"
+              style={{ top: pctY(item.y) }}
+            >
+              {item.text}
+            </span>
+          ))}
+        </div>
+        <div className="cdf-axis-labels cdf-axis-labels--x" aria-hidden>
+          {xTicks.map((item) => (
+            <span
+              key={`x-${item.x}`}
+              className="cdf-axis-label cdf-axis-label--x"
+              style={{ left: pctX(item.x), top: pctY(X_TICK_Y) }}
+            >
+              {item.text}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -34,7 +34,7 @@
 - 测试使用 `node:test` 与 `node:assert/strict`。
 - 所有 API 默认只监听 `127.0.0.1`，不暴露到局域网。
 - JSON 响应统一带 `Content-Type: application/json; charset=utf-8` 和 `Cache-Control: no-store`。
-- 请求体上限 `20 MiB`，用于容纳 1920×1080 PNG 的 Base64；超限直接拒绝。
+- 请求体上限 `20 MiB`，用于容纳 Stage 截图 PNG 的 Base64（逻辑 1920×1080、`pixelRatio=2` 时约 3840×2160）；超限直接拒绝。
 
 
 

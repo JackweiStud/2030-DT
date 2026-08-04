@@ -1,6 +1,6 @@
 # case2 模拟后端打桩
 
-本目录是独立的 case2 模拟后端进程，只扮演共享目录另一端：读取 `case_control.json`，写业务 `status`，发布 Calibrated 六文件，并在截图联调时置 `save_picture_flag=1`。
+本目录是独立的 case2 模拟后端进程，只扮演共享目录另一端：读取 `case_control.json`，写业务 `status`，发布 Calibrated 六文件，并在启动成功路径默认置 `save_picture_flag=1`（与 `case complete` 同拍）。
 
 它不提供 REST，不给浏览器直接调用，也不修改 `code/server/` 的默认启动路径。
 
@@ -12,17 +12,40 @@
 npm start
 ```
 
-默认操作仓库本地共享根 `../../comdatafiles`，也就是 `/Users/jackwl/Code/2030-DT/code/comdatafiles`。部署或特殊联调时可以覆盖：
+默认：
+
+- 共享根：`../../comdatafiles`（`/Users/jackwl/Code/2030-DT/code/comdatafiles`）
+- **`CASE2_STUB_REQUEST_PICTURE=1`（演示默认开截图）**
+- start 终态同拍写 `status=case complete` + `save_picture_flag=1`
+- reinit 路径仍不置 flag
+
+关闭截图请求：
 
 ```bash
-CASE2_SHARED_DIR=/absolute/path/to/comdatafiles npm run dev
+npm run start:no-picture
+# 或
+CASE2_STUB_REQUEST_PICTURE=0 npm start
 ```
 
-截图联调：
+调试日志：
 
 ```bash
-npm run dev:picture
+npm run dev
+npm run dev:no-picture
 ```
+
+覆盖共享根：
+
+```bash
+CASE2_SHARED_DIR=/absolute/path/to/comdatafiles npm start
+```
+
+## 验收（与适配服务联调）
+
+1. 先起 `code/server` 适配服务，再起本打桩。
+2. Web 点启动：打桩 INFO 可见 `execute success` → 发布六文件 → `case complete` 且 `save_picture_flag=1`。
+3. 适配服务 log 应出现 control `flag=1` 与 `POST /api/case2/screenshot`（若 Web 截图机正常）。
+4. Web 点重置：只到 `reinit complete`，flag 保持 0。
 
 ## 测试
 

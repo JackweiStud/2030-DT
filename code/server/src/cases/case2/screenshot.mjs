@@ -8,8 +8,16 @@ import { SerialQueue } from "../../shared/serial-queue.mjs";
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const FINISHED_PATTERN = /^calibrated-(\d+)\.png$/;
 const TEMPORARY_PATTERN = /^\.calibrated-\d+\.png\.\d+\.[a-f0-9-]+\.tmp$/;
-const BASE64_PATTERN =
-  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+/** 字符类 + *；勿用 `(?:[A-Za-z0-9+/]{4})*`——大图 Base64 会 RangeError 栈溢出。 */
+const BASE64_PATTERN = /^[A-Za-z0-9+/]*={0,2}$/;
+
+function isValidBase64(encoded) {
+  return (
+    encoded.length > 0 &&
+    encoded.length % 4 === 0 &&
+    BASE64_PATTERN.test(encoded)
+  );
+}
 
 function decodePngBase64(rawValue) {
   if (typeof rawValue !== "string") {
@@ -20,7 +28,7 @@ function decodePngBase64(rawValue) {
     ? rawValue.slice("data:image/png;base64,".length)
     : rawValue;
 
-  if (!encoded || !BASE64_PATTERN.test(encoded)) {
+  if (!isValidBase64(encoded)) {
     throw new AppError(400, "INVALID_REQUEST", "image_base64 is not valid Base64");
   }
 
@@ -87,6 +95,9 @@ export function createScreenshotService(options) {
 
   async function save(payload) {
     const png = validateScreenshotPayload(payload);
+    logger.info("case2 screenshot request accepted", {
+      bytes: png.length,
+    });
     return queue.run(async () => {
       const control = await controlFile.read();
       if (control.save_picture_flag !== 1) {
@@ -144,6 +155,7 @@ export function createScreenshotService(options) {
           logger.info("case2 screenshot saved", {
             path: finalPath,
             seq: sequence,
+            bytes: png.length,
           });
           return {
             ok: true,

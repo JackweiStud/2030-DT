@@ -6,6 +6,7 @@ import {
   createLogCollector,
   createSharedDir,
   jsonRequest,
+  PNG_BASE64,
   readControl,
   startTestServer,
   writeControl,
@@ -139,3 +140,35 @@ test("请求摘要：4xx 记 warn；control GET 仅在 status/flag 变化时记"
   );
   assert.ok(dataRead);
 });
+
+test("screenshot 请求开始与落盘均有 INFO 日志", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    status: "case complete",
+    save_picture_flag: 1,
+  });
+  const logs = createLogCollector();
+  const { baseUrl } = await startTestServer(t, {
+    sharedDir,
+    logger: logs.logger,
+  });
+  const response = await jsonRequest(baseUrl, "/api/case2/screenshot", {
+    method: "POST",
+    body: { image_base64: PNG_BASE64 },
+  });
+  assert.equal(response.status, 200);
+
+  const accepted = logs.entries.find(
+    (item) => item.message === "case2 screenshot request accepted",
+  );
+  assert.ok(accepted);
+  assert.equal(typeof accepted.context.bytes, "number");
+  assert.ok(accepted.context.bytes > 0);
+
+  const saved = logs.entries.find(
+    (item) => item.message === "case2 screenshot saved",
+  );
+  assert.ok(saved);
+  assert.equal(saved.context.seq, 0);
+  assert.equal(saved.context.bytes, accepted.context.bytes);
+});
+

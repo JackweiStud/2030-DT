@@ -121,7 +121,11 @@ flowchart TD
 
 #### ① 进入 case2
 
-无定时器。做 Initial 基线 + **一次** control 诊断 GET（必发；失败只打日志 / 可置 `adapterError`，**不**因历史 `status` 改相）。
+无定时器。进页采用**串行门闩**（非并行）：
+
+1. **必发**一次性 `GET control-file`：只诊断 **Node 适配服务 + 控制文件是否可读**；**不是**探真实后端/打桩是否在线。失败 → 置 `adapterError`，**不**改相，**不**继续拉 Initial。
+2. 仅当 control 诊断成功后，再 `GET data-files?phase=initial` 拉基线。
+3. control 成功时的历史 `status` / `command` **不**改相；开发态 StrictMode 重挂载须丢弃陈旧进页结果，避免 Initial 双发。
 
 ```mermaid
 sequenceDiagram
@@ -131,17 +135,21 @@ sequenceDiagram
 
   User->>UI: 进入 / 刷新 / 切回
   Note over UI: case2UiState = initial<br/>忽略控制文件历史 status<br/>不启动轮询定时器
-  UI->>Node: GET data-files?phase=initial
-  Node-->>UI: Initial 六文件
-  UI->>UI: 渲染三项基线（失败则基线区报错、启动禁用）
-  UI->>Node: GET control-file（一次性，非定时，必发）
-  Node-->>UI: 快照（仅诊断；不驱动业务相）
+  UI->>Node: GET control-file（一次性诊断，必发）
+  alt 适配服务/控制文件不可用
+    Node-->>UI: 失败
+    UI->>UI: adapterError=true；不拉 Initial；启动禁用
+  else 可读
+    Node-->>UI: 快照（仅诊断；不驱动业务相）
+    UI->>Node: GET data-files?phase=initial
+    Node-->>UI: Initial 六文件
+    UI->>UI: 渲染三项基线（失败则基线区报错、启动禁用）
+  end
   Note over UI: 启动可用* / 重置禁用 / 不读 Calibrated
 ```
 
-
-
-- Initial 就绪且无 `adapterError`。
+- 启动可用条件：Initial 就绪且无 `adapterError`。
+- control 诊断成功 **不**表示打桩/真实后端已在线；后端是否推进 status 只在用户 start/reinit 后的等待态轮询验证。
 
 #### ② 点击启动
 
@@ -250,7 +258,7 @@ flowchart LR
 - case2 状态使用 `useReducer` 和 case-local hooks；不引入 Redux、MobX 或全局业务 store。
 - REST 使用原生 `fetch`，不用 WebSocket。
 - 热力图使用 Canvas；CDF 使用 SVG；均值柱和降幅使用 React + CSS。
-- 截图使用 `html-to-image` 的 `toPng`，截取固定 1920×1080 Stage，`pixelRatio=1`。
+- 截图使用 `html-to-image` 的 `toPng`，截取固定 1920×1080 Stage，`pixelRatio=2`（落盘 3840×2160 PNG）。
 - 测试使用 Vitest + React Testing Library；浏览器主线使用 Playwright。
 
 ### 1.2 目标目录
@@ -470,11 +478,16 @@ case-local state 至少包含：
 ### 5.1 进入 case2
 
 1. reducer 初始化为 `initial`、`adapterError=false`、`seenExecuteSuccess=false`、无 Calibrated。
-2. 并行请求：**必发**一次性 `GET control-file`（诊断）与 `GET data-files?phase=initial`。
-3. Initial 六文件整体成功后渲染三项基线；失败则 Initial 区报错且启动禁用，不进入独立 error phase。
-4. **可见态固定** `initial`，与首包 `status`/`command` 无关：启动可用（Initial 就绪时）、重置禁用、不读 Calibrated、不进入 `failed-`*/`completed`。控制快照仅诊断日志；其 `status` 不改相。控制 GET 失败可置 `adapterError`，仍不改相。
+2. **串行门闩（必按此顺序）**：
+   1. **必发**一次性 `GET control-file`（诊断 **适配服务 + 控制文件可读性**，不是探真实后端/打桩）。
+   2. 仅当 control 诊断成功后，再 `GET data-files?phase=initial`。
+   3. control 失败：置 `adapterError=true`，**停止进页数据加载**（不得再发 Initial），可见态仍为 `initial`。
+3. Initial 六文件整体成功后渲染三项基线；失败则 Initial 区报错且启动禁用，不进入独立 error phase。Initial 失败与 control 失败语义分离：前者 `initialError`（基线不可用），后者 `adapterError`（适配连接异常）。
+4. **可见态固定** `initial`，与首包 `status`/`command` 无关：启动可用（Initial 就绪且无 adapterError 时）、重置禁用、不读 Calibrated、不进入 `failed-`*/`completed`。控制快照仅诊断；其 `status` 不改相。
 5. 进页**不**启动控制轮询定时器；在进入 `calibrating`/`resetting` 之前不因 `status` 改相。
 6. 截图：仅 `calibrating` 轮询看 `save_picture_flag`；启表后 `lastFlag` 初值当作 `0`；进页一次性 GET **不**触发。同拍 `case complete` + 0→1 须先截再停表。
+7. 开发态 React StrictMode 可能 setup→cleanup→setup：进页请求须带 abort / generation 去重，**同一有效挂载周期不得成功提交两次 Initial**。
+8. 成功路径须有可对表的结构化诊断日志（至少：进页 control/initial 结果、start/reinit POST 结果、status 边沿、截图 0→1 与成败、calibrated 成败）。
 
 ### 5.2 控制轮询
 
@@ -576,7 +589,7 @@ case-local state 至少包含：
 | `GET control-file`                | 进页一次性（诊断，**必发**）；`calibrating`/`resetting` 内 1000ms 串行轮询 | 等待态推进终态；**仅 calibrating** 消费截图 flag；非等待态不启定时器。 |
 | `POST control-file` start         | 启动按钮                                                    | 进入 `calibrating`；适配服务强制写后 `status=""`。 |
 | `POST control-file` reinit        | 重置按钮                                                    | 进入 `resetting`；适配服务强制写后 `status=""`。   |
-| `GET data-files?phase=initial`    | 每次 case2 挂载一次                                           | Initial 三项。                            |
+| `GET data-files?phase=initial`    | 进页串行门闩第 2 步：仅 control 诊断成功后，每次 case2 挂载一次 | Initial 三项。                            |
 | `GET data-files?phase=calibrated` | `calibrating` 且 `seenExecuteSuccess` 后见 `case complete` | Calibrated 三项。                         |
 | `POST screenshot`                 | 截图机生成 Base64 后（含同拍 complete 触发）                         | 保存回执；仍 calibrating → `waitClear`；已 completed → `idle`。 |
 
@@ -1084,7 +1097,7 @@ saving
 
 截取对象为 1920×1080 `ScaledStage` 内层，含 Shell 与当前 case2，不含开发工具或静态 `review-dock`。`toPng` 时强制：
 
-- `width=1920`、`height=1080`、`pixelRatio=1`；
+- `width=1920`、`height=1080`、`pixelRatio=2`（输出画布 3840×2160；不跟 `devicePixelRatio` 浮动）；
 - 去掉视口缩放 transform；
 - 等待 runtime 图片和字体；
 - 在 `onclone`（或等价钩子）中把各业务 Canvas 像素画进克隆节点，确保 PNG 含热力层；失败计入本任务 3 次尝试。

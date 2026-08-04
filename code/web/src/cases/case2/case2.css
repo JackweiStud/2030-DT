@@ -417,10 +417,30 @@
   overflow: visible;
 }
 
-.case2-page .cdf-axis-labels text {
-  fill: #939393;
+/* HTML 轴标：与 SVG viewBox 百分比对齐，避免 toPng 对嵌套 SVG text 失真 */
+.case2-page .cdf-axis-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.case2-page .cdf-axis-label {
+  position: absolute;
+  color: #939393;
   font-family: var(--shell-font-ui);
   font-size: 9px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.case2-page .cdf-axis-label--y {
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.case2-page .cdf-axis-label--x {
+  transform: translate(-50%, -50%);
 }
 
 .case2-page .bar-group {

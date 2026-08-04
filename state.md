@@ -17,6 +17,7 @@
 - 2026-08-03 SERVER-SPEC GET 控制：未知 `status` 透传（与契约/WEB-SPEC 对齐）；仅结构/类型/`save_picture_flag` 非法才 `CONTROL_READ_FAILED`。
 - 2026-08-03 截图窗口：后端仅启动路径 success→complete（含同拍）置 flag；Web 仅 calibrating 观察；同拍 `case complete` 仍截一次；重置不截。
 - 2026-08-03 截图实现收敛：用户确认内部演示不做持久事务、SHA-256 去重或进程重启恢复；Node 只保证进程内串行、临时文件原子落盘、不覆盖和成功后清零。极端崩溃窗口允许丢失或重复截图，业务状态不受影响。
+- 2026-08-03 截图锐度：`toPng` 改为 `pixelRatio=2`（逻辑舞台仍 1920×1080，落盘 3840×2160）；WEB-SPEC / SERVER-SPEC 已同步；不跟 `devicePixelRatio` 浮动。
 - 2026-08-03 Gate 4-A：`code/server/` Node 文件适配服务已实现；控制快照五个核心字段必填、`debug_flag`/`scene_type` 可选；截图响应返回共享根相对路径。自动测试 25 项通过；使用仓库 `code/comdatafiles` 完成控制 GET 与 Initial 三指标只读启动烟测。参考文件只用于解析验证，不代表真实业务结果。
 - 当前焦点：Gate 4 — `code/web/` 正式 React Web 与 `code/server/` Node 适配服务均已落地；下一步由独立的 `realback_no` 打桩或真实后端完成联调 / Playwright。
 

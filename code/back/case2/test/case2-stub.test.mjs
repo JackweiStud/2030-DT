@@ -10,6 +10,7 @@ import {
   createPublisher,
   createStubRunner,
   loadConfig,
+  parseRequestPicture,
   readControl,
   runOperation,
 } from "../case2-stub.mjs";
@@ -93,7 +94,33 @@ test("loadConfig 要求 CASE2_SHARED_DIR，并校验 outcome", () => {
   const config = loadConfig({ CASE2_SHARED_DIR: "/tmp/shared" });
   assert.equal(config.outcome, "success");
   assert.equal(config.stepMs, 5000);
+  assert.equal(config.requestPicture, true);
   assert.equal(config.sourceDir, path.join(CASE2_STUB_DIR, "back"));
+
+  assert.equal(
+    loadConfig({
+      CASE2_SHARED_DIR: "/tmp/shared",
+      CASE2_STUB_REQUEST_PICTURE: "0",
+    }).requestPicture,
+    false,
+  );
+  assert.equal(
+    loadConfig({
+      CASE2_SHARED_DIR: "/tmp/shared",
+      CASE2_STUB_REQUEST_PICTURE: "1",
+    }).requestPicture,
+    true,
+  );
+  assert.throws(
+    () =>
+      loadConfig({
+        CASE2_SHARED_DIR: "/tmp/shared",
+        CASE2_STUB_REQUEST_PICTURE: "yes",
+      }),
+    /CASE2_STUB_REQUEST_PICTURE must be 0 or 1/,
+  );
+  assert.equal(parseRequestPicture(undefined), true);
+  assert.equal(parseRequestPicture("0"), false);
 });
 
 test("patchControl 只允许打桩 owned 字段并拒绝空 status / flag=0", async (t) => {
@@ -127,7 +154,11 @@ test("start success 保持 execute success 至少 stepMs 后再 complete 并发�
     status: "",
   });
   const sourceDir = await createSourceDir(t);
-  const context = createContext(sharedDir, sourceDir, { stepMs: 80 });
+  // 显式关闭截图，验证非截图分支仍只写 case complete。
+  const context = createContext(sharedDir, sourceDir, {
+    stepMs: 80,
+    requestPicture: false,
+  });
 
   const startedAt = Date.now();
   const running = runOperation(context, "start");
@@ -146,6 +177,52 @@ test("start success 保持 execute success 至少 stepMs 后再 complete 并发�
       true,
     );
   }
+});
+
+test("演示默认 requestPicture=true 时 start 同拍 complete + flag=1", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    command: "start",
+    dt_type: "with dt",
+    status: "",
+  });
+  const sourceDir = await createSourceDir(t);
+  const config = loadConfig({ CASE2_SHARED_DIR: sharedDir });
+  assert.equal(config.requestPicture, true);
+  const context = createContext(sharedDir, sourceDir, {
+    stepMs: 0,
+    requestPicture: config.requestPicture,
+  });
+  await runOperation(context, "start");
+  const final = await control(sharedDir);
+  assert.equal(final.status, "case complete");
+  assert.equal(final.save_picture_flag, 1);
+});
+
+test("patchControl 成功以 INFO 记录 command/status/flag", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    command: "start",
+    dt_type: "with dt",
+    status: "execute success",
+  });
+  const entries = [];
+  const logger = {
+    debug() {},
+    info(message, meta) {
+      entries.push({ message, meta });
+    },
+    warn() {},
+    error() {},
+  };
+  const store = createControlStore({ sharedDir, logger });
+  await store.patchControl({
+    status: "case complete",
+    save_picture_flag: 1,
+  });
+  const entry = entries.find((item) => item.message === "control patched");
+  assert.ok(entry);
+  assert.equal(entry.meta.command, "start");
+  assert.equal(entry.meta.status, "case complete");
+  assert.equal(entry.meta.save_picture_flag, 1);
 });
 
 test("请求截图时最终 patch 同拍合并 complete 和 save_picture_flag=1", async () => {
@@ -372,3 +449,37 @@ test("重启恢复：idle、已失败、已完成、未知状态均不动作", a
     });
   }
 });
+
+test("接单日志包含本轮 requestPicture 与 outcome", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    command: "start",
+    dt_type: "with dt",
+    status: "",
+  });
+  const sourceDir = await createSourceDir(t);
+  const entries = [];
+  const logger = {
+    debug() {},
+    info(message, meta) {
+      entries.push({ message, meta });
+    },
+    warn() {},
+    error() {},
+  };
+  const runner = createStubRunner({
+    controlStore: createControlStore({ sharedDir, logger }),
+    publisher: createPublisher({ sharedDir, sourceDir, logger }),
+    stepMs: 0,
+    pollMs: 1000,
+    outcome: "success",
+    requestPicture: true,
+    logger,
+  });
+  await runner.evaluate("test-accept");
+  const accepted = entries.find((item) => item.message === "accepted new operation");
+  assert.ok(accepted);
+  assert.equal(accepted.meta.operation, "start");
+  assert.equal(accepted.meta.requestPicture, true);
+  assert.equal(accepted.meta.outcome, "success");
+});
+

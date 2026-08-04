@@ -38,6 +38,28 @@ test("flag=0 时拒绝截图，非法 Base64/PNG 也拒绝", async (t) => {
   );
 });
 
+test("pixelRatio=2 量级大 Base64 不因校验正则栈溢出", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    status: "case complete",
+    save_picture_flag: 1,
+  });
+  const { screenshot } = services(sharedDir);
+  // ~4 MiB 伪 PNG（仅签名 + 填充），接近 3840×2160 落盘量级
+  const largePng = Buffer.concat([
+    PNG_BYTES.subarray(0, 8),
+    Buffer.alloc(4 * 1024 * 1024, 0x00),
+  ]);
+  const largeBase64 = largePng.toString("base64");
+  assert.ok(largeBase64.length > 5_000_000);
+
+  const saved = await screenshot.save({ image_base64: largeBase64 });
+  assert.equal(saved.path, "out/case2/calibrated-000.png");
+  assert.equal(
+    (await fs.stat(path.join(sharedDir, saved.path))).size,
+    largePng.length,
+  );
+});
+
 test("flag=1 时递增保存 PNG、返回相对路径并成功清零", async (t) => {
   const sharedDir = await createSharedDir(t, {
     status: "case complete",

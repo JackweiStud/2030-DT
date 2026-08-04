@@ -1,0 +1,136 @@
+/**
+ * 进页串行门闩与 generation 去重。
+ */
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { useCase2Controller } from "../src/cases/case2/hooks/useCase2Controller";
+import type { Case2Api } from "../src/cases/case2/api/case2Api";
+import type { Case2RuntimeConfig } from "../src/cases/case2/metrics/heatmapConfig";
+import type { ControlSnapshot, MetricsBundle } from "../src/cases/case2/types";
+
+function metrics(): MetricsBundle {
+  return {
+    rss: { heatmap: [[1, 2], [3, 4]], kpi: [1, 2, 3] },
+    effective_path_num: { heatmap: [[1]], kpi: [1] },
+    first_path_delay: { heatmap: [[1]], kpi: [1] },
+  };
+}
+
+function control(partial: Partial<ControlSnapshot> = {}): ControlSnapshot {
+  return {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+    save_picture_flag: 0,
+    ...partial,
+  };
+}
+
+const config: Case2RuntimeConfig = {
+  apiBase: "",
+  pollMs: 1000,
+  x0: 0,
+  y0: 0,
+  x1: 10,
+  y1: 10,
+  rangeWidth: 10,
+  rangeHeight: 10,
+  cell: 8,
+  gap: 0,
+  period: 8,
+  alpha: 0.8,
+  cdfPointCap: 64,
+};
+
+function stageRef() {
+  return { current: document.createElement("div") };
+}
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+describe("useCase2Controller entry gate", () => {
+  it("先 control 成功再拉 initial；历史 complete 不改相", async () => {
+    const order: string[] = [];
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        return control({ status: "case complete" });
+      },
+      async getDataFiles(phase) {
+        order.push(`data:${phase}`);
+        return metrics();
+      },
+      async postControl() {
+        throw new Error("not used");
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config,
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.state.initialData).not.toBeNull();
+    });
+
+    expect(order[0]).toBe("control");
+    expect(order).toContain("data:initial");
+    expect(order.indexOf("control")).toBeLessThan(order.indexOf("data:initial"));
+    expect(result.current.state.case2UiState).toBe("initial");
+    expect(result.current.state.adapterError).toBe(false);
+    expect(result.current.startEnabled).toBe(true);
+    expect(result.current.state.calibratedData).toBeNull();
+  });
+
+  it("control 失败时不拉 initial，并置 adapterError", async () => {
+    const order: string[] = [];
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        throw new Error("adapter down");
+      },
+      async getDataFiles(phase) {
+        order.push(`data:${phase}`);
+        return metrics();
+      },
+      async postControl() {
+        throw new Error("not used");
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config,
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.state.adapterError).toBe(true);
+    });
+
+    // 给一点时间，确保没有迟到的 initial 调用
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+
+    expect(order).toEqual(["control"]);
+    expect(result.current.state.initialData).toBeNull();
+    expect(result.current.startEnabled).toBe(false);
+    expect(result.current.state.case2UiState).toBe("initial");
+  });
+});

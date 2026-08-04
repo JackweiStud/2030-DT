@@ -25,15 +25,18 @@
 | `CASE2_SHARED_DIR` | 无 | 必填；与适配服务指向同一共享根。 |
 | `CASE2_STUB_STEP_MS` | `5000` | `execute success` 写出后至少保持该时长再写终态，保证 Web 1000ms 轮询能看见中间态。 |
 | `CASE2_STUB_OUTCOME` | `success` | 仅 `success` / `fail`；不得出现在正式 Web UI。 |
+| `CASE2_STUB_REQUEST_PICTURE` | `1` | 演示默认开截图请求。`1`：start 终态同拍 `case complete + save_picture_flag=1`；`0`：只写 `case complete`。reinit 永不置 flag。 |
+| `CASE2_STUB_POLL_MS` | `1000` | 控制文件轮询唤醒间隔（`fs.watch` 不可用时仍工作）。 |
+| `CASE2_STUB_LOG_LEVEL` | `info` | `info` / `debug`；控制写成功默认 INFO。 |
 
 
 ## 2. 运行方式
 
 | 命令（示例名，实现自定） | 用途 |
 |---|---|
-| 单独启动打桩进程 | 只模拟后端；假定适配服务已在跑且共享目录就绪。 |
+| 单独启动打桩进程（`code/back/case2`：`npm start`） | 只模拟后端；假定适配服务已在跑且共享目录就绪。**演示默认开截图**（`CASE2_STUB_REQUEST_PICTURE=1`）。 |
+| 关闭截图的打桩（`npm run start:no-picture` 或 `CASE2_STUB_REQUEST_PICTURE=0`） | 只推进 status / 发布六文件，不置 flag。 |
 | 与适配服务一并拉起（如历史名 `dev:stub`） | 可选编排：先准备沙箱共享根，再同时起适配服务 + 打桩；`SIGINT`/`SIGTERM` 时子进程一并退出。 |
-| 截图联调脚本（如 `stub:picture`） | 仅当 `save_picture_flag=0` 时置 `1`，验证适配服务清零与序号递增；须落在契约截图窗口语义内（启动路径）。 |
 
 默认 **`npm start`（适配服务）不得启动打桩**。
 
