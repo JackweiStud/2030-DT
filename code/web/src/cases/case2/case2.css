@@ -270,6 +270,13 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
+}
+
+.case2-page .heatmap-card__xform {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
 }
 
 .case2-page .heatmap-base {
@@ -341,11 +348,17 @@
   background: #000000;
 }
 
-.case2-heatmap-lightbox__close {
+.case2-heatmap-lightbox__toolbar {
   position: absolute;
   top: 20px;
   right: 20px;
   z-index: 2;
+  display: flex;
+  gap: 10px;
+}
+
+.case2-heatmap-lightbox__close,
+.case2-heatmap-lightbox__reset {
   width: 40px;
   height: 40px;
   padding: 0;
@@ -359,11 +372,13 @@
   cursor: pointer;
 }
 
-.case2-heatmap-lightbox__close:hover {
+.case2-heatmap-lightbox__close:hover,
+.case2-heatmap-lightbox__reset:hover {
   background: rgb(255 255 255 / 22%);
 }
 
-.case2-heatmap-lightbox__close:focus-visible {
+.case2-heatmap-lightbox__close:focus-visible,
+.case2-heatmap-lightbox__reset:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
@@ -378,11 +393,39 @@
   overflow: hidden;
   background: #0a0e14;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
 }
 
-.case2-heatmap-lightbox__media {
+.case2-heatmap-lightbox__frame:active {
+  cursor: grabbing;
+}
+
+.case2-heatmap-lightbox__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  z-index: 2;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: rgb(255 255 255 / 88%);
+  background: rgb(0 0 0 / 55%);
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.case2-heatmap-lightbox__xform {
   position: absolute;
   inset: 0;
+  will-change: transform;
+  pointer-events: none;
 }
 
 .case2-heatmap-lightbox .heatmap-base {
@@ -414,6 +457,7 @@
   justify-content: center;
   border-radius: 0 0 8px 0;
   z-index: 2;
+  pointer-events: none;
 }
 
 .case2-heatmap-lightbox .metric-tag__label {

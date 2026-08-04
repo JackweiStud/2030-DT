@@ -2,10 +2,20 @@
  * 单张热力卡。
  * 有矩阵：Canvas 一次画「底图 + 热力」（object-fit:cover）。
  * 无矩阵：只显示 CSS cover 底图空槽。
- * 右上角可展开「该窗图像全屏」：黑底居中（底图+热力+标签）；Esc / 叉关闭。
+ * 该窗图像全屏：滚轮缩放（0.5×～5×，缩向指针）、左键拖旋转（±90°）、
+ * 右键拖平移；右上角 ↺ 恢复初始变换；关闭后小窗保留变换（cover 可裁切）；六窗独立。
+ * 全屏底部常驻操作提示。
  */
 
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import type { HeatmapConfig } from "../metrics/heatmapConfig";
 import { assertHeatmapAnchor } from "../metrics/heatmapConfig";
@@ -21,8 +31,30 @@ type Props = {
   variant: "initial" | "calibrated";
 };
 
+type ViewTransform = {
+  scale: number;
+  rotation: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+const SCALE_MIN = 0.5;
+const SCALE_MAX = 5;
+const ROTATION_MIN = -90;
+const ROTATION_MAX = 90;
+const IDENTITY_TRANSFORM: ViewTransform = {
+  scale: 1,
+  rotation: 0,
+  offsetX: 0,
+  offsetY: 0,
+};
+
 let baseImagePromise: Promise<HTMLImageElement> | null = null;
 let baseImageSizeLogged = false;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
 
 function loadBaseImage(): Promise<HTMLImageElement> {
   if (baseImagePromise) return baseImagePromise;
@@ -43,17 +75,13 @@ async function paintHeatOnCanvas(
   canvas: HTMLCanvasElement,
   matrix: number[][],
   config: HeatmapConfig,
-  logCtx?: {
-    variant: string;
-    metricClass: string;
-    label: string;
-  },
+  logOnce?: boolean,
 ): Promise<void> {
   const img = await loadBaseImage();
   assertHeatmapAnchor(config, img.naturalWidth, img.naturalHeight);
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
-  if (logCtx && !baseImageSizeLogged) {
+  if (logOnce && !baseImageSizeLogged) {
     baseImageSizeLogged = true;
     console.info("[case2] heatmap base image size", {
       naturalWidth: img.naturalWidth,
@@ -68,6 +96,13 @@ async function paintHeatOnCanvas(
     return;
   }
   paintHeatmapOnCanvas(ctx, img, matrix, config);
+}
+
+function toTransformStyle(view: ViewTransform): CSSProperties {
+  return {
+    transform: `translate(${view.offsetX}px, ${view.offsetY}px) rotate(${view.rotation}deg) scale(${view.scale})`,
+    transformOrigin: "center center",
+  };
 }
 
 function ExpandIcon() {
@@ -92,13 +127,37 @@ function CloseIcon() {
   );
 }
 
+function ResetIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M10 3.5a6.5 6.5 0 1 1-6.1 4.2l1.4.4A5.1 5.1 0 1 0 10 4.9V7l3-3.2L10 0.5V3.5z"
+      />
+    </svg>
+  );
+}
+
 export function HeatmapCard(props: Props) {
   const { matrix, config, empty, metricClass, label, variant } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const expandCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lightboxFrameRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    mode: "rotate" | "pan";
+    startX: number;
+    startY: number;
+    startRotation: number;
+    startOffsetX: number;
+    startOffsetY: number;
+    frameWidth: number;
+  } | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [view, setView] = useState<ViewTransform>(IDENTITY_TRANSFORM);
   const titleId = useId();
   const showHeat = !empty && matrix !== null && matrix.length > 0;
+  const xformStyle = toTransformStyle(view);
 
   useEffect(() => {
     if (!showHeat || !matrix) return;
@@ -112,11 +171,7 @@ export function HeatmapCard(props: Props) {
           canvas = canvasRef.current;
         }
         if (!canvas || cancelled) return;
-        await paintHeatOnCanvas(canvas, matrix, config, {
-          variant,
-          metricClass,
-          label,
-        });
+        await paintHeatOnCanvas(canvas, matrix, config, true);
       } catch (err) {
         console.error("[case2] heatmap paint failed", err);
       }
@@ -125,7 +180,7 @@ export function HeatmapCard(props: Props) {
     return () => {
       cancelled = true;
     };
-  }, [matrix, config, showHeat, variant, metricClass, label]);
+  }, [matrix, config, showHeat]);
 
   useEffect(() => {
     if (!expanded || !showHeat || !matrix) return;
@@ -162,11 +217,122 @@ export function HeatmapCard(props: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [expanded]);
 
+  const resetView = useCallback(() => {
+    setView(IDENTITY_TRANSFORM);
+  }, []);
+
+  // React onWheel 默认可能是 passive，preventDefault 会刷控制台警告；改为非 passive 原生监听
+  useEffect(() => {
+    if (!expanded) return;
+    const frame = lightboxFrameRef.current;
+    if (!frame) return;
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const rect = frame.getBoundingClientRect();
+      const mx = event.clientX - rect.left - rect.width / 2;
+      const my = event.clientY - rect.top - rect.height / 2;
+      const factor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
+
+      setView((prev) => {
+        const nextScale = clamp(prev.scale * factor, SCALE_MIN, SCALE_MAX);
+        if (nextScale === prev.scale) return prev;
+        const ratio = nextScale / prev.scale;
+        return {
+          ...prev,
+          scale: nextScale,
+          offsetX: mx - (mx - prev.offsetX) * ratio,
+          offsetY: my - (my - prev.offsetY) * ratio,
+        };
+      });
+    };
+
+    frame.addEventListener("wheel", onWheel, { passive: false });
+    const onContextMenu = (event: Event) => {
+      event.preventDefault();
+    };
+    frame.addEventListener("contextmenu", onContextMenu);
+    return () => {
+      frame.removeEventListener("wheel", onWheel);
+      frame.removeEventListener("contextmenu", onContextMenu);
+    };
+  }, [expanded]);
+
+  const onLightboxPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      // 0=左键旋转，2=右键平移
+      if (event.button !== 0 && event.button !== 2) return;
+      const frame = lightboxFrameRef.current;
+      if (!frame) return;
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      const mode = event.button === 2 ? "pan" : "rotate";
+      dragRef.current = {
+        pointerId: event.pointerId,
+        mode,
+        startX: event.clientX,
+        startY: event.clientY,
+        startRotation: view.rotation,
+        startOffsetX: view.offsetX,
+        startOffsetY: view.offsetY,
+        frameWidth: Math.max(1, frame.getBoundingClientRect().width),
+      };
+    },
+    [view.offsetX, view.offsetY, view.rotation],
+  );
+
+  const onLightboxPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+
+      if (drag.mode === "pan") {
+        const nextOffsetX = drag.startOffsetX + (event.clientX - drag.startX);
+        const nextOffsetY = drag.startOffsetY + (event.clientY - drag.startY);
+        setView((prev) => ({
+          ...prev,
+          offsetX: nextOffsetX,
+          offsetY: nextOffsetY,
+        }));
+        return;
+      }
+
+      const deltaX = event.clientX - drag.startX;
+      // 拖过视窗宽度 ≈ 从当前起点转到 ±90° 端点（相对 0 时满宽到端）
+      const nextRotation = clamp(
+        drag.startRotation + (deltaX / drag.frameWidth) * 90,
+        ROTATION_MIN,
+        ROTATION_MAX,
+      );
+      setView((prev) =>
+        prev.rotation === nextRotation
+          ? prev
+          : { ...prev, rotation: nextRotation },
+      );
+    },
+    [],
+  );
+
+  const endDrag = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }, []);
+
   return (
     <article className={`heatmap-card is-${variant}`}>
       <div className="heatmap-card__media">
-        {!showHeat ? <div className="heatmap-base" aria-hidden /> : null}
-        {showHeat ? <canvas ref={canvasRef} className="heatmap-canvas" /> : null}
+        <div className="heatmap-card__xform" style={xformStyle}>
+          {!showHeat ? <div className="heatmap-base" aria-hidden /> : null}
+          {showHeat ? (
+            <canvas ref={canvasRef} className="heatmap-canvas" />
+          ) : null}
+        </div>
       </div>
       <div className={`metric-tag metric-tag--${metricClass}`}>
         <span className="metric-tag__label">{label}</span>
@@ -192,20 +358,41 @@ export function HeatmapCard(props: Props) {
               aria-modal="true"
               aria-labelledby={titleId}
             >
-              <button
-                type="button"
-                className="case2-heatmap-lightbox__close"
-                title="关闭全屏"
-                aria-label="关闭全屏"
-                onClick={() => setExpanded(false)}
+              <div className="case2-heatmap-lightbox__toolbar">
+                <button
+                  type="button"
+                  className="case2-heatmap-lightbox__reset"
+                  title="恢复初始缩放、旋转与平移"
+                  aria-label="恢复初始缩放、旋转与平移"
+                  onClick={resetView}
+                >
+                  <ResetIcon />
+                </button>
+                <button
+                  type="button"
+                  className="case2-heatmap-lightbox__close"
+                  title="关闭全屏"
+                  aria-label="关闭全屏"
+                  onClick={() => setExpanded(false)}
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              <div
+                ref={lightboxFrameRef}
+                className="case2-heatmap-lightbox__frame"
+                onPointerDown={onLightboxPointerDown}
+                onPointerMove={onLightboxPointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
               >
-                <CloseIcon />
-              </button>
-              <div className="case2-heatmap-lightbox__frame">
                 <span id={titleId} className="visually-hidden">
                   {label} {variant}
                 </span>
-                <div className="case2-heatmap-lightbox__media">
+                <div
+                  className="case2-heatmap-lightbox__xform"
+                  style={xformStyle}
+                >
                   {!showHeat ? (
                     <div className="heatmap-base" aria-hidden />
                   ) : null}
@@ -220,6 +407,9 @@ export function HeatmapCard(props: Props) {
                   <span className="metric-tag__label">{label}</span>
                 </div>
               </div>
+              <p className="case2-heatmap-lightbox__hint" aria-hidden>
+                滚轮缩放 · 左键拖旋转 · 右键拖平移 · ↺恢复 · Esc关闭
+              </p>
             </div>,
             document.body,
           )
