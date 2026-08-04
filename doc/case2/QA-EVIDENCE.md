@@ -57,7 +57,7 @@
 ## 当前工作区注意项
 
 - `code/comdatafiles/case2/heatmap_cali_*.txt` 当前有运行后差异，属于本地打桩生成/联调数据，不应直接当作真实结果提交。
-- `code/comdatafiles/out/` 当前未跟踪，包含截图输出和 `.DS_Store`；`.DS_Store` 不应提交。
+- `code/comdatafiles/out/` 为本地截图输出目录，由根 `.gitignore` 忽略；`.DS_Store` 不应提交。
 - `code/web/dist/` 与 `code/web/node_modules/` 为忽略项。
 
 ## 残余风险
