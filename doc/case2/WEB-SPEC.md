@@ -114,18 +114,19 @@ flowchart TD
 | --- | ------------------------------------------------------------------------------------------------------ |
 | 启   | 进入 `calibrating`（点启动）或 `resetting`（点重置）时启动；已在跑则不重复开                                                    |
 | 停   | 离开等待态到终态时停：`completed` / `failed-start` / `failed-reinit` / 重置回到 `initial`；切离 case2、卸载、刷新也立即停并 `abort` |
-| 不启  | 纯 `initial`（含新进入 / 刷新 / 切回）**不**启定时器；进页对 control **必发**一次性 GET（诊断），不作定时轮询 |
+| 不启  | 纯 `initial`（含新进入 / 刷新 / 切回）**不**启**业务**控制轮询；进页对 control **必发**一次性 GET（诊断）。例外：`adapterError=true` 且仍为 `initial` 时每 **5s** 探活（见 ① / §5.2），**不是**业务轮询 |
 | 请求  | 同一路 `GET /api/case2/control-file`（一次响应读 `status` + `save_picture_flag`）                                |
-| 周期  | `VITE_CASE2_POLL_MS`，默认 **1000ms**；上一次 GET **结束后**再等；禁止 `setInterval` 叠请求                              |
+| 周期  | 业务轮询：`VITE_CASE2_POLL_MS`，默认 **1000ms**；上一次 GET **结束后**再等；禁止 `setInterval` 叠请求。探活间隔固定 **5000ms**，与 `POLL_MS` 无关 |
 
 
 #### ① 进入 case2
 
-无定时器。进页采用**串行门闩**（非并行）：
+**不**启业务控制轮询定时器。进页采用**串行门闩**（非并行）：
 
-1. **必发**一次性 `GET control-file`：只诊断 **Node 适配服务 + 控制文件是否可读**；**不是**探真实后端/打桩是否在线。失败 → 置 `adapterError`，**不**改相，**不**继续拉 Initial。
+1. **必发**一次性 `GET control-file`：只诊断 **Node 适配服务 + 控制文件是否可读**；**不是**探真实后端/打桩是否在线。失败 → 置 `adapterError`，**不**改相，**不**继续拉 Initial，并进入下方探活。
 2. 仅当 control 诊断成功后，再 `GET data-files?phase=initial` 拉基线。
-3. control 成功时的历史 `status` / `command` **不**改相；开发态 StrictMode 重挂载须丢弃陈旧进页结果，避免 Initial 双发。
+3. control 成功时的历史 `status` / `command` **不**改相；开发态 StrictMode 重挂载须丢弃陈旧进页结果（`entryLoadGeneration`），避免 Initial 双发。
+4. **探活（仅 `adapterError=true` 且仍为 `initial`）**：每 **5s** 再发 `GET control-file`（不封顶，直到恢复或离开 case2）。成功 → 清 `adapterError`；若尚无 Initial 再拉 `data-files?phase=initial`。探活**不**因历史 `status` 改相；切离 case2 / 进入等待态 / 卸载时停探。
 
 ```mermaid
 sequenceDiagram
@@ -134,11 +135,24 @@ sequenceDiagram
   participant Node as 适配服务
 
   User->>UI: 进入 / 刷新 / 切回
-  Note over UI: case2UiState = initial<br/>忽略控制文件历史 status<br/>不启动轮询定时器
+  Note over UI: case2UiState = initial<br/>忽略控制文件历史 status<br/>不启业务轮询定时器
   UI->>Node: GET control-file（一次性诊断，必发）
   alt 适配服务/控制文件不可用
     Node-->>UI: 失败
     UI->>UI: adapterError=true；不拉 Initial；启动禁用
+    loop 每 5s 探活（不封顶）
+      UI->>Node: GET control-file（探活）
+      alt 仍失败
+        Node-->>UI: 失败
+        Note over UI: 保持 adapterError；仍不拉 Initial
+      else 恢复可读
+        Node-->>UI: 快照（仅诊断；不驱动业务相）
+        UI->>UI: adapterError=false
+        UI->>Node: GET data-files?phase=initial
+        Node-->>UI: Initial 六文件
+        UI->>UI: 渲染三项基线
+      end
+    end
   else 可读
     Node-->>UI: 快照（仅诊断；不驱动业务相）
     UI->>Node: GET data-files?phase=initial
@@ -149,11 +163,12 @@ sequenceDiagram
 ```
 
 - 启动可用条件：Initial 就绪且无 `adapterError`。
-- control 诊断成功 **不**表示打桩/真实后端已在线；后端是否推进 status 只在用户 start/reinit 后的等待态轮询验证。
+- control 诊断/探活成功 **不**表示打桩/真实后端已在线；后端是否推进 status 只在用户 start/reinit 后的等待态轮询验证。
+- 「探活」≠「业务轮询」：探活只恢复适配可达性与 Initial 基线；不观察 `save_picture_flag`、不认完成/失败终态。
 
 #### ② 点击启动
 
-POST 时适配服务写命令字段并**清** `status=""`；成功后启动定时器。本轮须在轮询时刻 A 见 `execute success`，再在**之后**的时刻 B 见 `case complete` 并读 Calibrated（`status` 单值，两拍推进）。`completed` / `failed-start` 后停表。主路径假定 POST 成功；若 POST 失败见 §6.1。
+POST 时适配服务写命令字段并**清** `status=""`；成功后启动**业务**控制轮询定时器（`VITE_CASE2_POLL_MS`，默认 1000ms）。本轮须在轮询时刻 A 见 `execute success`，再在**之后**的时刻 B 见 `case complete` 并读 Calibrated（`status` 单值，两拍推进；截图 flag 可与时刻 B **同拍**，须先截再停表）。`completed` / `failed-start` 后停表。主路径假定 POST 成功；若 POST 失败见 §6.1。
 
 ```mermaid
 sequenceDiagram
