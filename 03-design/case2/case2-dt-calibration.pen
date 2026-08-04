@@ -4063,9 +4063,9 @@
     {
       "type": "frame",
       "id": "EMJd9",
-      "x": -960,
-      "y": 1507,
-      "name": "case2.初始状态",
+      "x": 2177,
+      "y": 4198,
+      "name": "case2.视频窗口",
       "clip": true,
       "width": 1920,
       "height": 1080,
@@ -5344,6 +5344,1557 @@
                         },
                         {
                           "id": "xqkXI",
+                          "type": "ref",
+                          "ref": "m3I4rD",
+                          "name": "KPI对比行-Delay",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "x": 5,
+                          "y": 617.6666666666666,
+                          "flipX": false,
+                          "flipY": false,
+                          "descendants": {
+                            "yIovw": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "../../02-ux/case2/%E5%8F%B3%E4%BE%A7/%E5%AD%90%E5%B7%A6/%E5%85%83%E7%B4%A0/%E9%A6%96%E5%BE%84%E5%9B%BE%E6%A0%87.png",
+                                "mode": "fit"
+                              }
+                            },
+                            "H6cQH": {
+                              "content": "First Path Delay (首径时延)",
+                              "flipX": false,
+                              "flipY": false,
+                              "width": "fit_content(200)",
+                              "height": 16,
+                              "x": 0,
+                              "y": 0,
+                              "textGrowth": "auto",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            "ob0lz": {
+                              "content": "首径时延",
+                              "enabled": false
+                            },
+                            "m7Lxv": {
+                              "enabled": false
+                            },
+                            "B38ot8": {
+                              "content": "5.0"
+                            },
+                            "Shzvb": {
+                              "enabled": false
+                            },
+                            "rf12B": {
+                              "enabled": false
+                            },
+                            "fuVUT": {
+                              "content": "3.0",
+                              "enabled": false
+                            },
+                            "pRqmR": {
+                              "enabled": true,
+                              "name": "Calibrated轴标"
+                            },
+                            "hT9ZH": {
+                              "enabled": false
+                            },
+                            "dcZnV": {
+                              "enabled": false
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "oTc2N",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "视频蒙版",
+          "fill": "#000000B3",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "type": "frame",
+          "id": "jbeAj",
+          "layoutPosition": "absolute",
+          "x": 400,
+          "y": 280,
+          "name": "现场环境弹窗",
+          "clip": true,
+          "width": 1120,
+          "height": 520,
+          "fill": "#393939",
+          "cornerRadius": 10,
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            16,
+            20,
+            20,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "MhTwe",
+              "name": "弹窗标题行",
+              "width": "fill_container",
+              "height": 28,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "yaqgs",
+                  "name": "弹窗标题",
+                  "fill": "$text",
+                  "content": "现场环境",
+                  "fontFamily": "$font",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "icon",
+                  "id": "gkyZz",
+                  "name": "关闭按钮",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "x",
+                  "library": "lucide",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "P1MBu",
+              "name": "视频双列",
+              "width": "fill_container",
+              "height": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "j8Jd7",
+                  "name": "视频列-基站视角",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "rhk6u",
+                      "name": "视频列标题行",
+                      "width": "fill_container",
+                      "height": 26,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 11,
+                          "id": "F10ft",
+                          "name": "视频图标",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/video-icon.png",
+                            "mode": "fit"
+                          },
+                          "width": 22,
+                          "height": 22
+                        },
+                        {
+                          "type": "text",
+                          "id": "ShzNp",
+                          "name": "视频标签",
+                          "fill": "$text",
+                          "content": "视频1 | 基站视角",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 8,
+                      "id": "rM6h8",
+                      "name": "视频画面",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "assets/video-feed-1.png",
+                        "mode": "fill"
+                      },
+                      "width": "fill_container",
+                      "height": "fill_container"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rcpji",
+                  "name": "视频列-集装箱视角",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "HKosk",
+                      "name": "视频列标题行",
+                      "width": "fill_container",
+                      "height": 26,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 11,
+                          "id": "mPJWp",
+                          "name": "视频图标",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/video-icon.png",
+                            "mode": "fit"
+                          },
+                          "width": 22,
+                          "height": 22
+                        },
+                        {
+                          "type": "text",
+                          "id": "zmxDR",
+                          "name": "视频标签",
+                          "fill": "$text",
+                          "content": "视频2 | 集装箱视角",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 8,
+                      "id": "UQmjr",
+                      "name": "视频画面",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "assets/video-feed-2.png",
+                        "mode": "fill"
+                      },
+                      "width": "fill_container",
+                      "height": "fill_container"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "wtnmr",
+      "x": -960,
+      "y": 1507,
+      "name": "case2.初始状态",
+      "clip": true,
+      "width": 1920,
+      "height": 1080,
+      "fill": "#191a1a",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "b9ZVq",
+          "name": "ShellHeader",
+          "clip": true,
+          "width": 1920,
+          "height": 78,
+          "fill": "#191a1a",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "MrdDN",
+              "x": -382,
+              "y": -26,
+              "name": "导航背景",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "../../02-ux/case2/%E5%AF%BC%E8%88%AA%E6%A0%8F%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                "mode": "fill"
+              },
+              "width": 2328,
+              "height": 111
+            },
+            {
+              "type": "frame",
+              "id": "YyvdI",
+              "x": 0,
+              "y": 0,
+              "name": "品牌区",
+              "width": 540,
+              "height": 78,
+              "fill": "#00000000",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "HGfrF",
+                  "x": 8,
+                  "y": 19,
+                  "name": "品牌图标",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E4%BA%91%E4%B8%8A%E5%A4%96%E5%9C%BA.png",
+                    "mode": "fit"
+                  },
+                  "width": 32,
+                  "height": 32
+                },
+                {
+                  "type": "text",
+                  "id": "tTUiZ",
+                  "x": 48,
+                  "y": 28,
+                  "name": "品牌副标题",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width-height",
+                  "width": 60,
+                  "height": 22,
+                  "content": "云上外场",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "slCTk",
+                  "x": 234,
+                  "y": 16,
+                  "name": "品牌主标题",
+                  "fill": "$text",
+                  "textGrowth": "fixed-width-height",
+                  "width": 230,
+                  "height": 46,
+                  "content": "IMT-2030 DT测试",
+                  "fontFamily": "$font",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "IVTG2",
+              "x": 607,
+              "y": 0,
+              "name": "标签导航区",
+              "width": 689,
+              "height": 78,
+              "gap": 20,
+              "padding": [
+                22,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "XI0Yp",
+                  "name": "标签项-DT Construction",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "qar42",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Construction",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lpES3",
+                  "name": "标签项-DT Calibration",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lxvsI",
+                      "name": "标签文案",
+                      "fill": "$primary-text",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Calibration",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "zjCLZ",
+                      "name": "激活指示条-case2",
+                      "fill": "#EBF2F5",
+                      "width": "fill_container",
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YQEWt",
+                  "name": "标签项-DT for Comm",
+                  "width": 130,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MI4DS",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 130,
+                      "height": 32,
+                      "content": "DT for Comm",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "L9fC7",
+                  "name": "标签项-DT for positioning",
+                  "width": 177,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "u6N09",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 177,
+                      "height": 32,
+                      "content": "DT for positioning",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "wwRDS",
+          "name": "主内容区",
+          "clip": true,
+          "width": 1920,
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 10,
+          "children": [
+            {
+              "type": "frame",
+              "id": "kyQC9",
+              "name": "主内容行",
+              "width": 1900,
+              "height": 987,
+              "gap": 30,
+              "padding": [
+                10,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Ho1TC",
+                  "name": "校准对比面板",
+                  "clip": true,
+                  "width": 1066,
+                  "height": 970,
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%B7%A6%E4%BE%A7%E9%9D%A2%E6%9D%BF%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                    "mode": "stretch"
+                  },
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 15,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "wFfQN",
+                      "name": "面板标题行",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "U25jW",
+                          "name": "标题组",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 2,
+                              "id": "vH0Yz",
+                              "name": "标题装饰条",
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/%E7%9F%A9%E5%BD%A2%E5%9B%BE%E6%A0%87.png",
+                                "mode": "fill"
+                              },
+                              "width": 3,
+                              "height": 18
+                            },
+                            {
+                              "type": "text",
+                              "id": "pgJUy",
+                              "name": "面板标题",
+                              "fill": "$text",
+                              "content": "测试对比",
+                              "fontFamily": "$font",
+                              "fontSize": 18,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "MFaRl",
+                          "name": "现场环境链接",
+                          "fill": "$color-calibrated",
+                          "content": "现场环境 >",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "y6vC8",
+                      "name": "列头行",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        5
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "qJzI1",
+                          "name": "Initial列头",
+                          "width": "fill_container",
+                          "gap": 6,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "fQGtc",
+                              "name": "Initial图标",
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/%E5%9B%BE%E6%A0%871.png",
+                                "mode": "fit"
+                              },
+                              "width": 24,
+                              "height": 24
+                            },
+                            {
+                              "type": "text",
+                              "id": "t9UUNX",
+                              "name": "Initial文案",
+                              "fill": "$text",
+                              "content": "Initial DT",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "srFSb",
+                          "name": "Calibrated列头",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "p5dwk",
+                              "name": "Calibrated信息区",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "XnwJS",
+                                  "name": "Calibrated标签",
+                                  "gap": 6,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "rectangle",
+                                      "id": "Ps2ty",
+                                      "name": "Calibrated图标",
+                                      "fill": {
+                                        "type": "image",
+                                        "enabled": true,
+                                        "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/%E5%9B%BE%E6%A0%872.png",
+                                        "mode": "fit"
+                                      },
+                                      "width": 24,
+                                      "height": 24
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "fLCvf",
+                                      "name": "Calibrated文案",
+                                      "fill": "$text",
+                                      "content": "Calibrated DT",
+                                      "fontFamily": "$font",
+                                      "fontSize": 16,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "YwEaH",
+                                  "type": "ref",
+                                  "ref": "V5nR3F",
+                                  "name": "状态反馈",
+                                  "x": 142,
+                                  "y": 0,
+                                  "width": "fit_content",
+                                  "height": 25,
+                                  "descendants": {
+                                    "GbPXk": {
+                                      "fill": "$muted"
+                                    },
+                                    "MIZi8": {
+                                      "content": "等待启动测试",
+                                      "fill": "$muted"
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "OuK5k",
+                              "name": "校准操作区",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "symxN",
+                                  "name": "启动按钮",
+                                  "cornerRadius": 6,
+                                  "gap": 2,
+                                  "padding": [
+                                    6,
+                                    12
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "iYLsL",
+                                      "name": "启动图标",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "play",
+                                      "library": "lucide",
+                                      "fill": "$text"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "J96dkB",
+                                      "name": "启动文案",
+                                      "fill": "$text",
+                                      "content": "启动",
+                                      "fontFamily": "$font",
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "kVZ9y",
+                                  "name": "清除按钮",
+                                  "cornerRadius": 6,
+                                  "gap": 2,
+                                  "padding": [
+                                    6,
+                                    12
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "iDhqg",
+                                      "name": "清除图标",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "rotate-ccw",
+                                      "library": "lucide",
+                                      "fill": "$muted"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "FGbPD",
+                                      "name": "清除文案",
+                                      "fill": "$muted",
+                                      "content": "重置",
+                                      "fontFamily": "$font",
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "krfZC",
+                      "name": "热力图行组",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 5,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "b7rywD",
+                          "type": "ref",
+                          "ref": "wwZ1i",
+                          "name": "热力对比行-RSS",
+                          "width": "fill_container",
+                          "height": 278,
+                          "gap": 25,
+                          "padding": [
+                            5,
+                            20
+                          ],
+                          "flipX": false,
+                          "flipY": false,
+                          "x": 5,
+                          "y": 5.5,
+                          "justifyContent": "start",
+                          "alignItems": "center",
+                          "enabled": true,
+                          "descendants": {
+                            "ol7yg": {
+                              "enabled": true,
+                              "name": "Initial热力区"
+                            },
+                            "Kp431": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/RSS%E5%9B%BE%E6%A0%87%E5%BA%95%E5%9B%BE.png",
+                                "mode": "fill"
+                              },
+                              "width": 70
+                            },
+                            "Gacvi": {
+                              "content": "RSS"
+                            },
+                            "vnGTY": {
+                              "enabled": true,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "VKSuf",
+                                  "name": " 底图",
+                                  "clip": true,
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/heatmap_map.png",
+                                    "mode": "fill"
+                                  },
+                                  "layout": "none",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "cmSyu",
+                                      "x": 40,
+                                      "y": 39,
+                                      "name": "Calibrated热力代表层",
+                                      "enabled": false,
+                                      "width": 400,
+                                      "height": 200,
+                                      "fill": {
+                                        "type": "image",
+                                        "opacity": 0.6,
+                                        "enabled": true,
+                                        "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/calibrated_rss_grid.png",
+                                        "mode": "fill"
+                                      },
+                                      "layout": "none"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "raN7H",
+                                      "x": 0,
+                                      "y": 0,
+                                      "name": "指标标签",
+                                      "width": 70,
+                                      "height": 30,
+                                      "fill": {
+                                        "type": "image",
+                                        "enabled": true,
+                                        "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/RSS%E5%9B%BE%E6%A0%87%E5%BA%95%E5%9B%BE.png",
+                                        "mode": "fill"
+                                      },
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        4,
+                                        10
+                                      ],
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "sPUea",
+                                          "name": "指标名",
+                                          "fill": "$primary-text",
+                                          "content": "RSS",
+                                          "fontFamily": "$font",
+                                          "fontSize": 20,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "ll9H4",
+                          "type": "ref",
+                          "ref": "wwZ1i",
+                          "name": "热力对比行-PathNum",
+                          "width": "fill_container",
+                          "height": 278,
+                          "gap": 25,
+                          "padding": [
+                            5,
+                            20
+                          ],
+                          "flipX": false,
+                          "flipY": false,
+                          "x": 5,
+                          "y": 293.5,
+                          "justifyContent": "start",
+                          "descendants": {
+                            "ol7yg": {
+                              "enabled": true
+                            },
+                            "Kp431": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/pathNum%E5%9B%BE%E6%A0%87%E5%BA%95%E5%9B%BE.png",
+                                "mode": "fill"
+                              },
+                              "width": 200
+                            },
+                            "Gacvi": {
+                              "name": "指标名",
+                              "content": "Effective Path Num"
+                            },
+                            "vnGTY": {
+                              "name": "CalibratedHeatmapCard",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "jkXfW",
+                                  "name": "Calibrated热力区",
+                                  "clip": true,
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/heatmap_map.png",
+                                    "mode": "fill"
+                                  },
+                                  "layout": "none",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "AoQMv",
+                                      "x": 40,
+                                      "y": 39,
+                                      "name": "Calibrated热力代表层",
+                                      "enabled": false,
+                                      "width": 400,
+                                      "height": 200,
+                                      "fill": {
+                                        "type": "image",
+                                        "opacity": 0.6,
+                                        "enabled": true,
+                                        "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/calibrated_rss_grid.png",
+                                        "mode": "fill"
+                                      },
+                                      "layout": "none",
+                                      "children": [
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "Z9zbO9",
+                                          "x": 76,
+                                          "y": 49,
+                                          "name": "cali马赛克3-3",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "PY03V",
+                                          "x": 90,
+                                          "y": 49,
+                                          "name": "cali马赛克3-5",
+                                          "fill": "#84CC16BB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "L2pxnF",
+                                          "x": 104,
+                                          "y": 49,
+                                          "name": "cali马赛克3-7",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "f0SoaH",
+                                          "x": 118,
+                                          "y": 49,
+                                          "name": "cali马赛克3-9",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "cImJK",
+                                          "x": 69,
+                                          "y": 56,
+                                          "name": "cali马赛克4-2",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "O3LH9c",
+                                          "x": 83,
+                                          "y": 56,
+                                          "name": "cali马赛克4-4",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "BgEDn",
+                                          "x": 97,
+                                          "y": 56,
+                                          "name": "cali马赛克4-6",
+                                          "fill": "#84CC16BB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "kA1si",
+                                          "x": 111,
+                                          "y": 56,
+                                          "name": "cali马赛克4-8",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "BsW44",
+                                          "x": 76,
+                                          "y": 63,
+                                          "name": "cali马赛克5-3",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "U6r1U8",
+                                          "x": 90,
+                                          "y": 63,
+                                          "name": "cali马赛克5-5",
+                                          "fill": "#84CC16BB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "EUb6W",
+                                          "x": 104,
+                                          "y": 63,
+                                          "name": "cali马赛克5-7",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "eGMLc",
+                                          "x": 118,
+                                          "y": 63,
+                                          "name": "cali马赛克5-9",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "l1lGnC",
+                                          "x": 69,
+                                          "y": 70,
+                                          "name": "cali马赛克6-2",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "CzRG1",
+                                          "x": 83,
+                                          "y": 70,
+                                          "name": "cali马赛克6-4",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "KRY2q",
+                                          "x": 97,
+                                          "y": 70,
+                                          "name": "cali马赛克6-6",
+                                          "fill": "#84CC16BB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "G1mMBt",
+                                          "x": 111,
+                                          "y": 70,
+                                          "name": "cali马赛克6-8",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "MbxHT",
+                                          "x": 76,
+                                          "y": 77,
+                                          "name": "cali马赛克7-3",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "APR8R",
+                                          "x": 90,
+                                          "y": 77,
+                                          "name": "cali马赛克7-5",
+                                          "fill": "#84CC16BB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "GYUb5",
+                                          "x": 104,
+                                          "y": 77,
+                                          "name": "cali马赛克7-7",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "kWPfI",
+                                          "x": 118,
+                                          "y": 77,
+                                          "name": "cali马赛克7-9",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "rceRi",
+                                          "x": 69,
+                                          "y": 84,
+                                          "name": "cali马赛克8-2",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "V6nJA",
+                                          "x": 83,
+                                          "y": 84,
+                                          "name": "cali马赛克8-4",
+                                          "fill": "#22C55EBB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "gisK7",
+                                          "x": 97,
+                                          "y": 84,
+                                          "name": "cali马赛克8-6",
+                                          "fill": "#84CC16BB",
+                                          "width": 3,
+                                          "height": 3
+                                        },
+                                        {
+                                          "type": "rectangle",
+                                          "cornerRadius": 0.5,
+                                          "id": "J3aVl",
+                                          "x": 111,
+                                          "y": 84,
+                                          "name": "cali马赛克8-8",
+                                          "fill": "#EAB30899",
+                                          "width": 3,
+                                          "height": 3
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "twGHi",
+                                      "x": 0,
+                                      "y": 0,
+                                      "name": "指标标签",
+                                      "width": 200,
+                                      "height": 30,
+                                      "fill": {
+                                        "type": "image",
+                                        "enabled": true,
+                                        "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/pathNum%E5%9B%BE%E6%A0%87%E5%BA%95%E5%9B%BE.png",
+                                        "mode": "fill"
+                                      },
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        4,
+                                        10
+                                      ],
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "N2d0Bo",
+                                          "name": "指标名",
+                                          "fill": "$primary-text",
+                                          "content": "Effective Path Num",
+                                          "fontFamily": "$font",
+                                          "fontSize": 20,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "yxgSV",
+                          "type": "ref",
+                          "ref": "wwZ1i",
+                          "name": "热力对比行-Delay",
+                          "width": "fill_container",
+                          "height": 278,
+                          "flipX": false,
+                          "flipY": false,
+                          "x": 5,
+                          "y": 581.5,
+                          "gap": 25,
+                          "padding": [
+                            5,
+                            20
+                          ],
+                          "justifyContent": "start",
+                          "descendants": {
+                            "vnGTY": {
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "KplWC",
+                                  "name": "Calibrated热力区",
+                                  "clip": true,
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/heatmap_map.png",
+                                    "mode": "fill"
+                                  },
+                                  "layout": "none",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "jnGeE",
+                                      "x": 40,
+                                      "y": 39,
+                                      "name": "Calibrated热力代表层",
+                                      "enabled": false,
+                                      "width": 400,
+                                      "height": 200,
+                                      "fill": {
+                                        "type": "image",
+                                        "opacity": 0.6,
+                                        "enabled": true,
+                                        "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/calibrated_rss_grid.png",
+                                        "mode": "fill"
+                                      },
+                                      "layout": "none"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "Qopby",
+                                      "x": 0,
+                                      "y": 0,
+                                      "name": "指标标签",
+                                      "width": 164,
+                                      "height": 30,
+                                      "fill": {
+                                        "type": "image",
+                                        "enabled": true,
+                                        "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/FirstDelay%E5%9B%BE%E6%A0%87%E5%BA%95%E5%9B%BE.png",
+                                        "mode": "fill"
+                                      },
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        4,
+                                        10
+                                      ],
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "bnm17",
+                                          "name": "指标名",
+                                          "fill": "$primary-text",
+                                          "content": "First Path Delay",
+                                          "fontFamily": "$font",
+                                          "fontSize": 20,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "a8yEn4",
+                  "name": "KPI对比面板",
+                  "clip": true,
+                  "width": 764,
+                  "height": 970,
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E5%8F%B3%E4%BE%A7/%E5%8F%B3%E4%BE%A7%E9%9D%A2%E6%9D%BF%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                    "mode": "stretch"
+                  },
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 15,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "T0pbK",
+                      "name": "KPI标题行",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 2,
+                          "id": "p1yLzH",
+                          "name": "标题装饰条",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "../../02-ux/case2/%E5%B7%A6%E4%BE%A7/%E5%85%83%E7%B4%A0/%E7%9F%A9%E5%BD%A2%E5%9B%BE%E6%A0%87.png",
+                            "mode": "fill"
+                          },
+                          "width": 3,
+                          "height": 18
+                        },
+                        {
+                          "type": "text",
+                          "id": "tmuQx",
+                          "name": "KPI标题",
+                          "fill": "$text",
+                          "content": "KPI对比",
+                          "fontFamily": "$font",
+                          "fontSize": 18,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MqkLj",
+                      "name": "KPI对比行组",
+                      "width": 737,
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 25,
+                      "padding": 5,
+                      "children": [
+                        {
+                          "id": "KtepQ",
+                          "type": "ref",
+                          "ref": "m3I4rD",
+                          "name": "KPI对比行-RSS",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "flipX": false,
+                          "flipY": false,
+                          "x": 5,
+                          "y": 5,
+                          "padding": [
+                            0,
+                            5
+                          ],
+                          "descendants": {
+                            "yIovw": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "../../02-ux/case2/%E5%8F%B3%E4%BE%A7/%E5%AD%90%E5%B7%A6/%E5%85%83%E7%B4%A0/RSS%E5%9B%BE%E6%A0%87.png",
+                                "mode": "fit"
+                              }
+                            },
+                            "H6cQH": {
+                              "content": "RSS (接收信号强度)",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            "ob0lz": {
+                              "content": "接收信号强度",
+                              "enabled": false
+                            },
+                            "m7Lxv": {
+                              "enabled": false
+                            },
+                            "B38ot8": {
+                              "content": "5.0"
+                            },
+                            "pZrDn": {
+                              "enabled": true
+                            },
+                            "Shzvb": {
+                              "enabled": false
+                            },
+                            "rf12B": {
+                              "enabled": false
+                            },
+                            "fuVUT": {
+                              "content": "3.0",
+                              "enabled": false
+                            },
+                            "wJjZ2": {
+                              "enabled": true
+                            },
+                            "hT9ZH": {
+                              "enabled": false
+                            },
+                            "dcZnV": {
+                              "enabled": false
+                            }
+                          }
+                        },
+                        {
+                          "id": "hjOlR",
+                          "type": "ref",
+                          "ref": "m3I4rD",
+                          "name": "KPI对比行-PathNum",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "flipX": false,
+                          "flipY": false,
+                          "x": 5,
+                          "y": 311.3333333333333,
+                          "descendants": {
+                            "yIovw": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "../../02-ux/case2/%E5%8F%B3%E4%BE%A7/%E5%AD%90%E5%B7%A6/%E5%85%83%E7%B4%A0/%E6%9C%89%E6%95%88%E8%B7%AF%E5%BE%84%E6%95%B0%E5%9B%BE%E6%A0%87.png",
+                                "mode": "fit"
+                              }
+                            },
+                            "H6cQH": {
+                              "content": "Effective Path Num (有效路径数)",
+                              "fontSize": 16,
+                              "fontWeight": "600",
+                              "width": "fit_content(200)",
+                              "textGrowth": "auto"
+                            },
+                            "ob0lz": {
+                              "content": "有效路径数",
+                              "enabled": false
+                            },
+                            "m7Lxv": {
+                              "enabled": false
+                            },
+                            "B38ot8": {
+                              "content": "5.0"
+                            },
+                            "Shzvb": {
+                              "enabled": false
+                            },
+                            "rf12B": {
+                              "enabled": false
+                            },
+                            "fuVUT": {
+                              "content": "3.0",
+                              "enabled": false
+                            },
+                            "hT9ZH": {
+                              "enabled": false
+                            },
+                            "dcZnV": {
+                              "enabled": false
+                            }
+                          }
+                        },
+                        {
+                          "id": "ZE6P8",
                           "type": "ref",
                           "ref": "m3I4rD",
                           "name": "KPI对比行-Delay",
