@@ -5,7 +5,13 @@
 ## 运行
 
 ```bash
-CASE2_SHARED_DIR=/absolute/path/to/comdatafiles npm start
+npm start
+```
+
+本地默认把 `CASE2_SHARED_DIR` 解析为仓库内 `code/comdatafiles` 的绝对路径（与打桩服务共用）。正式部署或换共享根时再显式覆盖：
+
+```bash
+CASE2_SHARED_DIR=/absolute/path/to/shared npm start
 ```
 
 默认监听 `127.0.0.1:3102`。可通过 `CASE2_ADAPTER_HOST`、`CASE2_ADAPTER_PORT` 覆盖。

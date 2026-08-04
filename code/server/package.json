@@ -7,8 +7,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "node --enable-source-maps src/index.mjs",
-    "dev": "node --enable-source-maps src/index.mjs",
+    "start": "CASE2_SHARED_DIR=\"${CASE2_SHARED_DIR:-$(cd ../comdatafiles && pwd)}\" node --enable-source-maps src/index.mjs",
+    "dev": "CASE2_SHARED_DIR=\"${CASE2_SHARED_DIR:-$(cd ../comdatafiles && pwd)}\" node --enable-source-maps src/index.mjs",
     "test": "node --test --test-reporter=spec test/shared/*.test.mjs test/case2/*.test.mjs"
   }
 }

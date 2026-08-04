@@ -5,6 +5,9 @@ import { AppError, isAppError } from "../../shared/errors.mjs";
 import { METRIC_FILES } from "./constants.mjs";
 import { parseHeatmap, parseKpi } from "./numeric-file.mjs";
 
+// case2 的 data-files 服务只负责读取共享目录中的数据文件并做整批校验。
+// Initial 只校验文件本身；Calibrated 额外要做控制快照 A/B 对比，
+// 用来避免读到半写完、被并发改写或已经失效的结果批次。
 function fileDefinitions(phase, sharedDir) {
   const dataDir = path.join(sharedDir, "case2");
   return Object.entries(METRIC_FILES).flatMap(([metric, phases]) => [
@@ -36,6 +39,7 @@ function sameSnapshot(left, right) {
   return left.size === right.size && left.mtimeNs === right.mtimeNs;
 }
 
+// Calibrated 批次缺文件时不能按普通 404 处理，必须统一视为批次未完成。
 function missingError(phase, filename, cause) {
   if (phase === "calibrated") {
     return new AppError(
@@ -61,6 +65,7 @@ function readFailure(filename, cause) {
 }
 
 async function statRequired(file, phase, fsOps) {
+  // 只取 size 和 mtime，用来判断文件在读取前后是否发生变化。
   try {
     return fileSnapshot(await fsOps.stat(file.path, { bigint: true }));
   } catch (error) {
@@ -98,6 +103,7 @@ async function readParsed(file, phase, fsOps) {
     : parseKpi(text, file.filename);
 }
 
+// 把 6 个文件的解析结果重新组装回每个指标对应的 heatmap/kpi 结构。
 function assembleMetrics(files, values) {
   const metrics = {};
   files.forEach((file, index) => {
@@ -118,6 +124,7 @@ export function createDataFilesService(options) {
   const logger = options.logger;
 
   async function readPhase(phase) {
+    // 先拦住非法 phase，避免把错误参数带进文件读逻辑。
     if (phase !== "initial" && phase !== "calibrated") {
       throw new AppError(
         400,
@@ -129,6 +136,7 @@ export function createDataFilesService(options) {
     const files = fileDefinitions(phase, sharedDir);
     try {
       if (phase === "calibrated") {
+        // Calibrated 先看控制文件；没到 case complete，直接判定批次未完成。
         const firstControl = await controlFile.read();
         if (firstControl.status !== "case complete") {
           throw new AppError(
@@ -139,17 +147,20 @@ export function createDataFilesService(options) {
         }
       }
 
+      // Calibrated 读取前先记一次文件快照，后面用来判断是否被并发改写。
       const firstStats =
         phase === "calibrated"
           ? await Promise.all(files.map((file) => statRequired(file, phase, fsOps)))
           : undefined;
 
+      // 逐个读取并解析 6 个文件；任何读/解析错误都会进入统一错误处理。
       const values = [];
       for (const file of files) {
         values.push(await readParsed(file, phase, fsOps));
       }
 
       if (phase === "calibrated") {
+        // 读完再记一次快照，和第一次比较，防止读到中途被改写的批次。
         const secondStats = await Promise.all(
           files.map((file) => statRequired(file, phase, fsOps)),
         );
@@ -165,6 +176,7 @@ export function createDataFilesService(options) {
           );
         }
 
+        // 再读一次控制文件，确认整批读取期间状态仍然是 case complete。
         const secondControl = await controlFile.read();
         if (secondControl.status !== "case complete") {
           throw new AppError(
@@ -175,6 +187,7 @@ export function createDataFilesService(options) {
         }
       }
 
+      // 只有通过全部校验后，才把这一批数据返回给前端。
       return {
         ok: true,
         phase,
@@ -186,6 +199,7 @@ export function createDataFilesService(options) {
         : new AppError(500, "DATA_FILE_READ_FAILED", "failed to read data batch", {
             cause: error,
           });
+      // 所有失败都打一条诊断日志，便于追踪缺文件、改写、解析或 I/O 问题。
       logger.error("case2 data batch rejected", {
         phase,
         filename: normalized.details?.filename,
