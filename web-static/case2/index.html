@@ -6,6 +6,7 @@
   <title>case2 DT Calibration — Gate 1.5 Static</title>
   <link rel="stylesheet" href="../../04-runtime-assets/shell/tokens.css" />
   <link rel="stylesheet" href="../../04-runtime-assets/case2/tokens.css" />
+  <link rel="stylesheet" href="../shared/site-env-window.css" />
   <link rel="stylesheet" href="./case2.css?v=icon-toggle" />
 </head>
 <body>
@@ -55,7 +56,7 @@
                   <img class="title-accent" src="../../04-runtime-assets/case2/icons/panel-title-accent.png" alt="" />
                   <h2 class="panel-title">测试对比</h2>
                 </div>
-                <a class="env-link" href="#" tabindex="-1">现场环境 &gt;</a>
+                <a class="env-link" href="#" data-site-env-trigger>现场环境 &gt;</a>
               </div>
 
               <div class="column-header-row">
@@ -470,6 +471,7 @@
     <button type="button" data-set-state="completed">completed</button>
   </aside>
 
+  <script src="../shared/site-env-window.js"></script>
   <script src="./case2.js"></script>
 </body>
 </html>

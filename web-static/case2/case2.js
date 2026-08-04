@@ -65,6 +65,15 @@
     history.replaceState(null, "", url.toString());
   }
 
+  const siteEnvWindow =
+    typeof SiteEnvWindow !== "undefined"
+      ? SiteEnvWindow.mount({
+          stage: stage,
+          assetBase: "../../04-runtime-assets/shell/site-env/",
+          trigger: case2Page.querySelector("[data-site-env-trigger]"),
+        })
+      : null;
+
   function showTab(tab) {
     const isCase2 = tab === "case2";
     case2Page.hidden = !isCase2;
@@ -72,6 +81,7 @@
     tabs.forEach(function (t) {
       t.classList.toggle("is-active", t.getAttribute("data-tab") === tab);
     });
+    if (!isCase2 && siteEnvWindow) siteEnvWindow.close();
     const url = new URL(window.location.href);
     if (isCase2) {
       url.searchParams.delete("tab");
