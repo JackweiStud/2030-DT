@@ -128,12 +128,6 @@ export function Case2Page(props: Props) {
               </div>
             </div>
 
-            {state.initialError ? (
-              <p className="initial-error">
-                Initial 区不可用：{state.initialError}
-              </p>
-            ) : null}
-
             <div className="heatmap-stack">
               {METRIC_KEYS.map((key) => (
                 <div className="heatmap-pair" key={key} data-metric={key}>
@@ -168,22 +162,20 @@ export function Case2Page(props: Props) {
               <h2 className="panel-title">KPI对比</h2>
             </div>
             <div className="kpi-stack">
-              {state.initialData
-                ? METRIC_KEYS.map((key) => (
-                    <KpiComparisonRow
-                      key={key}
-                      metric={key}
-                      initialKpi={state.initialData![key].kpi}
-                      calibratedKpi={
-                        showCalibrated
-                          ? (state.calibratedData?.[key].kpi ?? null)
-                          : null
-                      }
-                      cdfPointCap={config.cdfPointCap}
-                      showComparison={showCalibrated}
-                    />
-                  ))
-                : null}
+              {METRIC_KEYS.map((key) => (
+                <KpiComparisonRow
+                  key={key}
+                  metric={key}
+                  initialKpi={state.initialData?.[key].kpi ?? []}
+                  calibratedKpi={
+                    showCalibrated
+                      ? (state.calibratedData?.[key].kpi ?? null)
+                      : null
+                  }
+                  cdfPointCap={config.cdfPointCap}
+                  showComparison={showCalibrated}
+                />
+              ))}
             </div>
           </section>
         </div>

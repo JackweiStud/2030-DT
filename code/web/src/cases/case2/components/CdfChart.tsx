@@ -1,5 +1,6 @@
 /**
  * CDF 图：Gate 1.5 网格/轴标 chrome + 运行时阶梯曲线。
+ * 无样本时只出 chrome（网格/轴），不画阶梯线。
  */
 
 import {
@@ -14,8 +15,14 @@ type Props = {
   cdfPointCap: number;
 };
 
-/** 与静态 HTML 同构的绘图区（外层 viewBox 384×222）。 */
+/** 与静态 HTML 同构的绘图区（外层 viewBox 宽 384；高略增以给 x 轴刻度留空）。 */
 const PLOT = { left: 26, top: 4, width: 348, height: 202 };
+const SVG_VIEWBOX = "0 0 384 222";
+/** x 轴刻度基线；相对网格底边（206）下移，避免贴轴。 */
+const X_TICK_Y = 222;
+
+/** 无样本时的占位 x 域（仅用于轴刻度 chrome）。 */
+const EMPTY_X_DOMAIN = { xMin: 0, xMax: 1 };
 
 const Y_LABELS = [
   { y: 8, text: "1" },
@@ -54,9 +61,12 @@ function buildXTickLabels(xMin: number, xMax: number): { x: number; text: string
 
 export function CdfChart(props: Props) {
   const { initialKpi, calibratedKpi, cdfPointCap } = props;
+  const hasInit = initialKpi.length > 0;
   const showCali = calibratedKpi !== null && calibratedKpi.length > 0;
 
-  const initPoints = buildEmpiricalCdfPoints(initialKpi, cdfPointCap);
+  const initPoints = hasInit
+    ? buildEmpiricalCdfPoints(initialKpi, cdfPointCap)
+    : null;
   const caliPoints = showCali
     ? buildEmpiricalCdfPoints(calibratedKpi, cdfPointCap)
     : null;
@@ -64,10 +74,13 @@ export function CdfChart(props: Props) {
   const domainValues = showCali
     ? [...initialKpi, ...calibratedKpi]
     : [...initialKpi];
-  const domain = resolveXDomain(domainValues);
+  const domain =
+    domainValues.length > 0 ? resolveXDomain(domainValues) : EMPTY_X_DOMAIN;
   const xTicks = buildXTickLabels(domain.xMin, domain.xMax);
 
-  const initPath = buildCdfStairPath(initPoints, domain, PLOT);
+  const initPath = initPoints
+    ? buildCdfStairPath(initPoints, domain, PLOT)
+    : null;
   const caliPath = caliPoints
     ? buildCdfStairPath(caliPoints, domain, PLOT)
     : null;
@@ -84,7 +97,7 @@ export function CdfChart(props: Props) {
       <div className="cdf-plot">
         <svg
           className="cdf-svg"
-          viewBox="0 0 384 222"
+          viewBox={SVG_VIEWBOX}
           preserveAspectRatio="none"
           aria-hidden
         >
@@ -105,18 +118,20 @@ export function CdfChart(props: Props) {
           </g>
           <g className="cdf-axis-labels cdf-axis-labels--x">
             {xTicks.map((item) => (
-              <text key={`x-${item.x}`} x={item.x} y={215}>
+              <text key={`x-${item.x}`} x={item.x} y={X_TICK_Y}>
                 {item.text}
               </text>
             ))}
           </g>
-          <path
-            d={initPath}
-            fill="none"
-            stroke="#939393"
-            strokeWidth="2"
-            vectorEffect="non-scaling-stroke"
-          />
+          {initPath ? (
+            <path
+              d={initPath}
+              fill="none"
+              stroke="#939393"
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : null}
           {caliPath ? (
             <path
               d={caliPath}

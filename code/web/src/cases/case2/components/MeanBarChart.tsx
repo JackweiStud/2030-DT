@@ -1,6 +1,7 @@
 /**
  * 均值柱：Gate 1.5 静态 chrome（轴/基线/双标签）+ 运行时柱高。
  * 初始态也保留「Calibrated DT」轴标签，仅隐藏柱体。
+ * 无 Initial 样本时只出 chrome，不画柱/均值/降幅。
  */
 
 import barFillUrl from "../../../../assets/case2/icons/bar-initial-fill.png";
@@ -20,7 +21,7 @@ type Props = {
 
 /**
  * 与 web-static 一致的绘图几何（bar-plot 内像素）。
- * y 轴上界 = 当前柱均值最大值 / 0.6（最高柱约占可视柱高的 60%）。
+ * y 轴上界 = 当前柱均值最大值 / Y_MAX_FILL_RATIO。
  */
 const BASELINE_Y = 190;
 const BAR_BOTTOM = 190;
@@ -33,6 +34,8 @@ const MEAN_OFFSET_ABOVE = 26;
 const REDUCTION_BADGE_LIFT = 15;
 /** 最高柱相对 BAR_MAX_HEIGHT 的目标占比 */
 const Y_MAX_FILL_RATIO = 0.8;
+/** 无样本时的占位 y 上界（仅轴刻度 chrome，对齐 Gate 1.5 默认刻度）。 */
+const EMPTY_Y_MAX = 8;
 
 const GUIDE_DASH =
   "M0 1h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6m4 0h6";
@@ -42,7 +45,7 @@ function formatBarMean(value: number): string {
   return (Math.round(value * 10) / 10).toFixed(1);
 }
 
-/** 视觉 y 域上界：两柱均值最大值 / 0.6。 */
+/** 视觉 y 域上界：两柱均值最大值 / Y_MAX_FILL_RATIO。 */
 function resolveYMax(means: number[]): number {
   const dataMax = Math.max(0, ...means.filter((v) => Number.isFinite(v)));
   if (dataMax <= 0) return 1;
@@ -66,18 +69,22 @@ function yAxisLabels(yMax: number): string[] {
 
 export function MeanBarChart(props: Props) {
   const { initialKpi, calibratedKpi, showReduction } = props;
-  const meanInit = meanOf(initialKpi);
+  const hasInit = initialKpi.length > 0;
+  const meanInit = hasInit ? meanOf(initialKpi) : null;
   const meanCali =
     calibratedKpi && calibratedKpi.length > 0 ? meanOf(calibratedKpi) : null;
   const showCali = meanCali !== null;
 
-  const yMax = resolveYMax(showCali ? [meanInit, meanCali] : [meanInit]);
+  const yMax = hasInit
+    ? resolveYMax(showCali ? [meanInit!, meanCali] : [meanInit!])
+    : EMPTY_Y_MAX;
   const yLabels = yAxisLabels(yMax);
-  const initBar = barGeometry(meanInit, yMax);
+  const initBar =
+    hasInit && meanInit !== null ? barGeometry(meanInit, yMax) : null;
   const caliBar = showCali ? barGeometry(meanCali, yMax) : null;
 
   const reduction =
-    showReduction && showCali
+    showReduction && showCali && meanInit !== null
       ? reductionPercent(meanInit, meanCali)
       : null;
 
@@ -98,22 +105,26 @@ export function MeanBarChart(props: Props) {
         </div>
 
         <div className="bar-group bar-group--initial">
-          <span
-            className="mean-value"
-            style={{ top: Math.max(4, initBar.top - MEAN_OFFSET_ABOVE) }}
-          >
-            {formatBarMean(meanInit)}
-          </span>
-          <div
-            className="bar-initial"
-            style={{
-              left: BAR_LEFT_INIT,
-              width: BAR_WIDTH,
-              top: initBar.top,
-              height: initBar.height,
-              backgroundImage: `url(${barFillUrl})`,
-            }}
-          />
+          {initBar && meanInit !== null ? (
+            <>
+              <span
+                className="mean-value"
+                style={{ top: Math.max(4, initBar.top - MEAN_OFFSET_ABOVE) }}
+              >
+                {formatBarMean(meanInit)}
+              </span>
+              <div
+                className="bar-initial"
+                style={{
+                  left: BAR_LEFT_INIT,
+                  width: BAR_WIDTH,
+                  top: initBar.top,
+                  height: initBar.height,
+                  backgroundImage: `url(${barFillUrl})`,
+                }}
+              />
+            </>
+          ) : null}
           <span className="bar-axis-label">Initial DT</span>
         </div>
 
@@ -155,7 +166,7 @@ export function MeanBarChart(props: Props) {
           </svg>
         ) : null}
 
-        {showReduction && showCali ? (
+        {showReduction && showCali && initBar ? (
           <div
             className="reduction-badge"
             style={{
