@@ -9,6 +9,7 @@
 | `doc/ARCHITECTURE-DRAFT.md` | Shell/适配服务/后端的责任边界 | 端口、代码目录、锁实现、REST 实现细节 |
 | `doc/CASE-STORY-MATRIX.md` | case 顺序、简短故事、Gate 索引 | 未启动 case 的假想业务语义 |
 | `doc/case2/`（已启动） | case2 主线、UX 状态、设计分析/计划、设计冻结、静态验收、API 契约、UI 数据来源反查、SPEC、QA、复盘 | 其他 case 的业务细节 |
+| `doc/case3/`（草案中） | case3 主线、UX 状态、API 契约草案、UI 数据来源反查 | case2 指标语义、JSONL 草案冒充正式协议、完成后自动 init |
 | `03-design/case2/`（Pencil 创建后） | case2 `.pen` 与设计源同级验证产物 | 运行时代码、共享契约 |
 | `doc/case2/API-CONTRACT.md`（Gate 2） | case2 文件控制、结果发布、适配服务 REST、字段、异常和重放合同 | 项目级共享协议或其他 case 字段 |
 | `doc/case2/API-CONTRACT-REVIEW.md`（Gate 2） | case2 契约中的修/跳/待确认与 Gate 2 批准条件 | 具体 Node/React 实现方案 |
@@ -31,10 +32,12 @@
 - case 排期：`doc/CASE-STORY-MATRIX.md`
 - 当前事实与风险：`state.md`
 - case2 业务入口：`doc/case2/MAINLINE.md`
+- case3 业务入口草案：`doc/case3/MAINLINE.md`
 
 ## 创建规则
 
 - case2 Gate 5 本地 QA 证据已创建；后续真实后端/真实挂载验收若发生，应追加到 `doc/case2/QA-EVIDENCE.md`，不得覆盖本地打桩记录。
+- case3 Gate 0/2 草案可记录用户已确认的业务边界；进入实现前仍需 Gate 1 设计冻结、Gate 2 契约批准和 Gate 3 SPEC。
 - `03-design/case2/` 只在目标 `.pen` 路径经用户确认、准备进入 Pencil Phase 3 时创建。
 - API、施工、QA 文档仅在对应 Gate 获批准后创建；不为“以后可能需要”预建空文档。
 - 行为变化必须同步更新相关 case 文档和 `state.md`。

@@ -5,8 +5,8 @@
 ## 项目模式
 
 - 多并列 case 项目，单一 Web 入口，四个顶部 Tab。
-- 当前仅 case2 可进入业务内容；其他 Tab 进入统一“建设中”占位，不读取共享目录。
-- case2 是独立业务 case，不可因同属 IMT-2030 而继承其他 case 的指标、状态机或字段。
+- 当前仅 case2 可进入已实现业务内容；case3 已进入文档草案阶段但 Web/Node 尚未接入，运行页仍不应读取 case3 共享目录。
+- case2 与 case3 均为独立业务 case，不可因同属 IMT-2030 而互相继承指标、状态机或字段；可复用 Shell、Node 适配骨架和 Gate 节奏。
 
 ## 责任边界
 
@@ -14,17 +14,18 @@
 |---|---|---|
 | 共享 Shell | 导航、当前 Tab、1920×1080 等比缩放、公共 token、建设中占位 | case 业务状态、结果文件、图表、截图、业务 CSS |
 | case2 Web | case2 视觉状态、按钮、热力图/CDF/均值的派生展示、截图触发 UI | 直接访问共享目录、持有文件锁、写本地输出文件 |
-| Node 本地适配服务（前端 PC） | 唯一文件 I/O、锁、控制文件读写、稳定结果读取、截图 PNG 落盘、截图标志回写 | 后端业务采集、其他 case 的业务决策 |
-| 后端业务进程（后端 PC） | 读取控制、执行 `with dt` 校准、发布结果、回写 `status` 与截图请求标志 | 浏览器 UI、前端截图编码 |
+| case3 Web（未来） | case3 双侧运行可见状态、地图/波束/KPI 展示、Beam Accuracy 派生 | 直接访问共享目录、删除 append 文件、解释多 txt 行号对齐 |
+| Node 本地适配服务（前端 PC） | 唯一文件 I/O、锁、控制文件读写、稳定结果读取、case2 截图 PNG 落盘、case3 单侧实时文件清空与多 txt 结构化收编 | 后端业务采集、其他 case 的业务决策 |
+| 后端业务进程（后端 PC） | 读取控制、执行 case2 校准或 case3 通信测试、发布结果/append 文件、回写 `status` 与必要标志 | 浏览器 UI、前端截图编码、清空 case3 历史文件 |
 | 本地模拟后端（打桩） | 在无真实后端时扮演共享目录另一端，推进状态并发布 synthetic/stub Calibrated 文件 | 真实采集、真实算法、REST 接口 |
 
 ## 目标数据流
 
 ```text
-Chrome case2
+Chrome case2 / case3
   -> 本机 REST（默认 127.0.0.1:3102）
   -> 前端 PC Node 适配服务
-  <-> 已挂载共享目录（CASE2_SHARED_DIR 注入）
+  <-> 已挂载共享目录（case3 起使用 DT_SHARED_DIR；case2 当前兼容 CASE2_SHARED_DIR）
   <-> 后端 PC 业务进程
 
 后端：status=case complete + save_picture_flag=1
@@ -32,6 +33,11 @@ Chrome case2
   -> Web 产生完成态 PNG
   -> 适配服务保存 PNG 到 {CASE2_SHARED_DIR}/out/case2/
   -> 适配服务持锁将 save_picture_flag 写回 0
+
+case3:
+后端 append 多 txt
+  -> Node 增量读取并按行号收编为结构化点位
+  -> Web 只消费 Without/With 结构化点位与派生 KPI
 ```
 
 ## Shell 合同
@@ -49,6 +55,10 @@ Chrome case2
 后端必须先完成当批结果发布，再以 `status="case complete"` 允许前端读取。真实后端采用“六文件关闭后最后写完成状态”的最小规则；本地无真实后端时的打桩行为见 `doc/case2/realback_no.md`。前端文件适配服务见 `doc/case2/SERVER-SPEC.md`。
 
 截至 2026-08-04，正式 Web、Node 适配服务和本地模拟后端已完成本地打桩联调。该结论只覆盖仓库内 `code/comdatafiles` 与本机进程，不覆盖真实后端 PC、真实挂载路径或真实采集数据。
+
+## case3 文件结果边界
+
+case3 后端文件层沿用多 txt 现网协议；正式后端继续 append `{DT_SHARED_DIR}/case3/data/c3/` 下的实时 txt。Node 适配服务负责在 Start/ReInit 前清空对应侧实时 append 文件，并把多 txt 按行号收编成区分 Without/With 的结构化点位。JSONL 当前仅为讨论稿，不作为正式后端协议。
 
 ## 不纳入本草案
 
