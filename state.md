@@ -47,7 +47,7 @@
 - P0-2 已确认：启动和重置互斥；不做取消、队列、自动超时或业务命令自动重试；`execute fail` 解除按钮并允许手动重试；刷新页面后一切回 Initial。截图生成/上传的有限重试不属于业务命令重试。
 - P0-3 已确认：Node 适配服务采用最小 REST；控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。
 - P0-4 已确认：后端仅在启动路径、`execute success` 之后至 `case complete`（允许同拍）置 `save_picture_flag=1`；重置不置 1。Web 仅 `calibrating` 观察，同拍 complete 仍截一次；同一截图任务最多尝试 3 次（首次 + 2 次重试），3 次仍失败则经适配服务自动清零并接受丢失本张截图。Node 采用临时文件 + 原子 rename 落盘，成功后清零；`seq` 从 `000` 递增且不覆盖。不做持久事务、SHA-256 去重或进程重启恢复。
-- Gate 3 默认值：Node 适配服务监听 `127.0.0.1:3102`；Web 以 1000ms 串行轮询；共享根通过必填环境变量 `CASE2_SHARED_DIR` 注入。
+- Gate 3 默认值：Node 适配服务监听 `127.0.0.1:3102`；Web 以 1000ms 串行轮询；共享根通过必填环境变量 `DT_SHARED_DIR` 注入，旧 `CASE2_SHARED_DIR` 仅作为兼容 fallback。
 - Gate 3 控制写入：适配服务内串行、读最新快照、合并允许字段；`start`/`reinit` 额外强制 `status=""`；同目录临时文件 `fsync + rename`；不新增数据库、租约服务或长期锁文件。
 - Gate 3 打桩发布：与真实后端相同，向 flat `case2/` 直接写完并关闭六个 Calibrated 文件，最后写 `status=case complete`；不引入临时运行目录、内部指针或 `CASE2_DATA_MODE`（见 `doc/case2/realback_no.md`）。
 - 前后端 PC 使用同一已挂载共享目录；Web 与 Node 适配服务同机在前端 PC，适配服务是浏览器唯一文件/截图所有者。
@@ -58,7 +58,7 @@
 - 运行顺序：测试时用户必须先跑 Without DT，再跑 With DT；两侧互斥运行，一次只允许 without 或 with 一侧运行/重置。
 - 后端文件层：先沿用 `01-参考资料/case3/data/c3/` 的多 txt 现网协议；正式后端继续 append txt。JSONL 仅为收编讨论稿，当前不作为正式后端协议。
 - Node/Web 边界：Node 提供 `/api/case3/*`，负责清空单侧实时 append 文件、按行号读取和校验多 txt、收编为区分 Without/With 的结构化点位；Web 只消费结构化数据，不直接读/删共享目录。
-- 共享根配置：case3 接入时提升为项目级 `DT_SHARED_DIR`；当前 case2 的 `CASE2_SHARED_DIR` 只作为历史兼容或迁移期映射。
+- 共享根配置：case2/case3 统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 只作为历史兼容或迁移期映射。
 - 控制文件：case3 沿用同一个 `case_control.json` 五字段结构。Start/ReInit 由 Node 写入 `case=case3`、`command=start|reinit`、`dt_type=without dt|with dt` 并强制 `status=""` 开新轮；完成后前端不改回 `init`，业务终态仍只由后端写。
 - Reset：单侧重置，路径仍是 `execute success -> reinit complete`。Without 重置后 With 历史结果可保留；With 重置后 Without 历史结果可保留；任意一侧重置都使本次 Beam Accuracy 增量失效并恢复到文件基线。
 - 点位数动态 `N`，由运行时文件解析得到；点位进度显示最新 12 条，超过窗口长度滚动到最新点位。
@@ -78,7 +78,7 @@
 ## 主要风险与证据缺口
 
 - P0-1 的真实后端最小发布规则已冻结；本地模拟后端见 `doc/case2/realback_no.md`（flat；写完六文件后最后写 `case complete`），与 `SERVER-SPEC` 文件适配服务分离。
-- 共享目录实际挂载路径是部署输入，不写死在仓库；case2 当前启动时必须显式提供 `CASE2_SHARED_DIR`，case3 接入时应迁移为项目级 `DT_SHARED_DIR` 并保留兼容映射。
+- 共享目录实际挂载路径是部署输入，不写死在仓库；case2/case3 当前启动时应显式提供项目级 `DT_SHARED_DIR`，旧 `CASE2_SHARED_DIR` 只作为兼容 fallback。
 - 无版本号共享 JSON 不能仅靠单端进程锁彻底消除双端同时整文件写入的最后写者覆盖；真实后端/真实挂载验收必须验证并发字段保留，若失败则回契约层增加双方共同锁协议。
 - `execute success` 是必须观察的中间状态；打桩默认保持至少 `CASE2_STUB_STEP_MS=5000`（见 `realback_no.md`），真实后端是否能被 1000ms 轮询稳定观察需在真实环境验收时验证。
 - 启动/重置的状态链路已确认：`execute success -> case complete` 或 `execute success -> reinit complete`；`execute fail` 为失败终态；刷新页面后一切回 Initial。

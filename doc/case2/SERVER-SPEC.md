@@ -60,7 +60,7 @@ code/
 │   └── test/
 │       ├── shared/
 │       └── case2/
-└── comdatafiles/        # 本地共享根（正式部署时 CASE2_SHARED_DIR 指向前端 PC 上已挂载共享根；结构不变）
+└── comdatafiles/        # 本地共享根（正式部署时 DT_SHARED_DIR 指向前端 PC 上已挂载共享根；结构不变）
     ├── case_control.json    # 当前 case2 控制文件（契约路径）
     ├── case2/               # case2 Initial + Calibrated
     ├── out/case2/           # case2 截图
@@ -101,23 +101,23 @@ code/
 | -------------------- | ----------- | -------------------------------------------------- |
 | `CASE2_ADAPTER_HOST` | `127.0.0.1` | 只允许显式配置后改变监听地址。                                    |
 | `CASE2_ADAPTER_PORT` | `3102`      | Web 通过同源代理或 API base 访问，不在组件中散落端口。                 |
-| `CASE2_SHARED_DIR`   | 无           | 必填；前端 PC 上共享根的绝对路径（与后端通过该目录交换文件）。由部署注入，代码不得回退到 `01-参考资料/`。 |
+| `DT_SHARED_DIR`      | 无           | 必填；前端 PC 上共享根的绝对路径（与后端通过该目录交换文件）。由部署注入，代码不得回退到 `01-参考资料/`。 |
 
 
 打桩专用变量（`CASE2_STUB_STEP_MS` / `CASE2_STUB_OUTCOME`）见 [realback_no.md](realback_no.md)，**不属于**本适配服务运行合同。
 
-`CASE2_SHARED_DIR` 对应的最小运行时结构（本地演示默认指向仓库 `code/comdatafiles` 的**绝对路径**）：
+`DT_SHARED_DIR` 对应的最小运行时结构（本地演示默认指向仓库 `code/comdatafiles` 的**绝对路径**）：
 
 ```text
-{CASE2_SHARED_DIR}/
+{DT_SHARED_DIR}/
 ├── case_control.json
 ├── case2/              # Initial + Calibrated 十二个固定文件名
 └── out/case2/          # calibrated-{seq}.png
 ```
 
-Web 与本适配服务**同机**部署在前端 PC（Chrome 只访问本机 `127.0.0.1:3102`），不存在「前端 PC ↔ 适配服务」分机。正式部署时 `CASE2_SHARED_DIR` 指向该前端 PC 上已挂载的共享根（与后端侧交换文件），**目录结构**不变。文件名映射见契约 / [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)；HTTP 不接受任意路径。
+Web 与本适配服务**同机**部署在前端 PC（Chrome 只访问本机 `127.0.0.1:3102`），不存在「前端 PC ↔ 适配服务」分机。正式部署时 `DT_SHARED_DIR` 指向该前端 PC 上已挂载的共享根（与后端侧交换文件），**目录结构**不变。文件名映射见契约 / [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)；HTTP 不接受任意路径。
 
-Initial 与 Calibrated 均从 `{CASE2_SHARED_DIR}/case2/` 读取；截图写入 `{CASE2_SHARED_DIR}/out/case2/`。与真实后端或本地打桩**共用同一目录结构**（flat），本服务不设第二套数据模式。
+Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{DT_SHARED_DIR}/out/case2/`。与真实后端或本地打桩**共用同一目录结构**（flat），本服务不设第二套数据模式。
 
 ### 2.2 npm 命令
 
@@ -192,7 +192,7 @@ Initial 与 Calibrated 均从 `{CASE2_SHARED_DIR}/case2/` 读取；截图写入 
 
 ### 4.1 GET
 
-1. 从 `{CASE2_SHARED_DIR}/case_control.json` 读取 UTF-8 文本。
+1. 从 `{DT_SHARED_DIR}/case_control.json` 读取 UTF-8 文本。
 2. 下列情况返回 `CONTROL_READ_FAILED`（结构/类型不可用，不是业务 `status` 解释）：
    - 空文件、非 UTF-8 文本、非对象 JSON；
    - 缺少契约必填字段；
@@ -256,7 +256,7 @@ Initial 与 Calibrated 均从 `{CASE2_SHARED_DIR}/case2/` 读取；截图写入 
 
 ### 5.2 数值词法与解析
 
-适用于 `{CASE2_SHARED_DIR}/case2/` 下十二个固定 txt（六热力矩阵 + 六 KPI）。
+适用于 `{DT_SHARED_DIR}/case2/` 下十二个固定 txt（六热力矩阵 + 六 KPI）。
 
 **共用：**
 
@@ -311,13 +311,13 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 ### 6.2 序号与落盘
 
 1. 所有截图请求进入独立串行队列。
-2. 创建 `{CASE2_SHARED_DIR}/out/case2/`。
+2. 创建 `{DT_SHARED_DIR}/out/case2/`。
 3. 扫描严格匹配 `^calibrated-(\d+)\.png$` 的已完成文件。
 4. 无历史文件取 `000`；否则最大序号加一；三位只是最小补零宽度，`1000` 不截断。
 5. 先写同目录临时 PNG，`fsync`、关闭，再 rename 为最终文件。
 6. 目标已存在时重新扫描并取下一号，绝不覆盖。
 7. 最终 PNG 存在并可 stat 后，才调用控制文件服务写 `save_picture_flag=0`。
-8. 两步都成功后返回 `{ "ok": true, "path": "out/case2/calibrated-000.png", "seq": 0 }`。API 的 `path` 固定为相对 `CASE2_SHARED_DIR` 的 POSIX 风格路径；服务日志记录实际绝对路径。
+8. 两步都成功后返回 `{ "ok": true, "path": "out/case2/calibrated-000.png", "seq": 0 }`。API 的 `path` 固定为相对 `DT_SHARED_DIR` 的 POSIX 风格路径；服务日志记录实际绝对路径。
 
 
 

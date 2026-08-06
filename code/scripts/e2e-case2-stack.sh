@@ -61,7 +61,7 @@ node -e 'const fs=require("fs"); const p=process.argv[1]; fs.writeFileSync(p, JS
 
 (
   cd "$SERVER_DIR"
-  export CASE2_SHARED_DIR="$SHARED_DIR"
+  export DT_SHARED_DIR="$SHARED_DIR"
   export CASE2_ADAPTER_HOST="$ADAPTER_HOST"
   export CASE2_ADAPTER_PORT="$ADAPTER_PORT"
   npm start
@@ -84,7 +84,7 @@ once();
 
 (
   cd "$STUB_DIR"
-  export CASE2_SHARED_DIR="$SHARED_DIR"
+  export DT_SHARED_DIR="$SHARED_DIR"
   export CASE2_STUB_LOG_LEVEL="${CASE2_STUB_LOG_LEVEL:-info}"
   export CASE2_STUB_STEP_MS="$STUB_STEP_MS"
   export CASE2_STUB_POLL_MS="$STUB_POLL_MS"

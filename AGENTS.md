@@ -29,7 +29,7 @@
 
 - 参考控制文件：`01-参考资料/case_control.json`。
 - 参考 case2 数据目录：`01-参考资料/case2/前后端数据接口文件/`。
-- 前后端 PC 将通过同一已挂载共享目录交换文件；实际路径由前端 PC 上的 `CASE2_SHARED_DIR` 注入。Web 与 Node 适配服务同机部署在前端 PC（默认 `127.0.0.1:3102`），不存在「浏览器前端 ↔ 适配服务」分机；Web 控制轮询为 1000ms。
+- 前后端 PC 将通过同一已挂载共享目录交换文件；实际路径由前端 PC 上的 `DT_SHARED_DIR` 注入（旧 `CASE2_SHARED_DIR` 仅作为兼容 fallback）。Web 与 Node 适配服务同机部署在前端 PC（默认 `127.0.0.1:3102`），不存在「浏览器前端 ↔ 适配服务」分机；Web 控制轮询为 1000ms。
 - 前端 PC 的 Node.js 本地适配服务是浏览器唯一的文件读写、文件锁和截图落盘所有者；Chrome 只调用该服务的本机 REST 接口。
 - 适配服务不是新的业务后端，规格见 `doc/case2/SERVER-SPEC.md`（仅文件 I/O / REST）。Gate 3 控制写入采用适配服务内串行 + 同目录临时文件原子替换。本地无真实后端时的打桩见 `doc/case2/realback_no.md`。真实后端接口以 Gate 2 契约、后端交接文档及其中 2026-08-03 Gate 3 增量（开一轮空 `status`）为准。
 - 控制快照以 `case`、`command`、`dt_type`、`status`、`save_picture_flag` 为五个必填字段；`debug_flag`、`scene_type` 可选且存在时校验类型。截图成功响应返回相对共享根的 `out/case2/calibrated-{seq}.png`，日志记录实际绝对路径。

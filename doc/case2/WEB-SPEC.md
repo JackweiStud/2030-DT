@@ -296,7 +296,7 @@ code/
 └── comdatafiles/        # 共享根：case_control + caseN/ + out/caseN/
 ```
 
-本地联调：`CASE2_SHARED_DIR` 指向仓库内 `code/comdatafiles`（绝对路径）。Web 与 Node 适配服务同机在前端 PC；正式部署时该变量改为前端 PC 上已挂载共享根，目录**结构**不变。
+本地联调：`DT_SHARED_DIR` 指向仓库内 `code/comdatafiles`（绝对路径）。Web 与 Node 适配服务同机在前端 PC；正式部署时该变量改为前端 PC 上已挂载共享根，目录**结构**不变。
 
 case2 指标模块固定职责（路径可微调，合同不变）：
 

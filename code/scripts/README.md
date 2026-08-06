@@ -35,7 +35,7 @@ cd <repo>\code\scripts
 
 默认：
 
-- 共享根：`code/comdatafiles`（可用 `CASE2_SHARED_DIR` 覆盖）
+- 共享根：`code/comdatafiles`（可用 `DT_SHARED_DIR` 覆盖；`CASE2_SHARED_DIR` 仅兼容旧脚本）
 - 适配服务：`127.0.0.1:3102`
 - Web：`http://127.0.0.1:5173`（Vite `host:true`，启动时另打印局域网 Network 地址；代理 `/api` → 3102）
 

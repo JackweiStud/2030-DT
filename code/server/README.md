@@ -8,11 +8,13 @@
 npm start
 ```
 
-本地默认把 `CASE2_SHARED_DIR` 解析为仓库内 `code/comdatafiles` 的绝对路径（与打桩服务共用）。该默认由 **`npm start` / `npm run dev` 脚本注入**（见 `package.json`），**不是** `config.mjs` 静默回退：配置层仍要求环境变量为绝对目录。正式部署或换共享根时再显式覆盖：
+本地默认把 `DT_SHARED_DIR` 解析为仓库内 `code/comdatafiles` 的绝对路径（与打桩服务共用）。该默认由 **`npm start` / `npm run dev` 脚本注入**（见 `package.json`），**不是** `config.mjs` 静默回退：配置层仍要求环境变量为绝对目录。正式部署或换共享根时再显式覆盖：
 
 ```bash
-CASE2_SHARED_DIR=/absolute/path/to/shared npm start
+DT_SHARED_DIR=/absolute/path/to/shared npm start
 ```
+
+`CASE2_SHARED_DIR` 仅作为旧脚本兼容 fallback；新配置使用 `DT_SHARED_DIR`。
 
 默认监听 `127.0.0.1:3102`。可通过 `CASE2_ADAPTER_HOST`、`CASE2_ADAPTER_PORT` 覆盖。
 

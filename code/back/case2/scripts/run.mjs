@@ -4,8 +4,9 @@ import { fileURLToPath } from "node:url";
 
 const case2Root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-if (!process.env.CASE2_SHARED_DIR) {
-  process.env.CASE2_SHARED_DIR = path.resolve(case2Root, "../../comdatafiles");
+if (!process.env.DT_SHARED_DIR) {
+  process.env.DT_SHARED_DIR =
+    process.env.CASE2_SHARED_DIR ?? path.resolve(case2Root, "../../comdatafiles");
 }
 
 const args = new Set(process.argv.slice(2));

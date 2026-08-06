@@ -25,13 +25,13 @@
 Chrome case2 / case3
   -> 本机 REST（默认 127.0.0.1:3102）
   -> 前端 PC Node 适配服务
-  <-> 已挂载共享目录（case3 起使用 DT_SHARED_DIR；case2 当前兼容 CASE2_SHARED_DIR）
+  <-> 已挂载共享目录（DT_SHARED_DIR 注入；CASE2_SHARED_DIR 仅兼容旧脚本）
   <-> 后端 PC 业务进程
 
 后端：status=case complete + save_picture_flag=1
   -> 适配服务向 Web 暴露稳定状态
   -> Web 产生完成态 PNG
-  -> 适配服务保存 PNG 到 {CASE2_SHARED_DIR}/out/case2/
+  -> 适配服务保存 PNG 到 {DT_SHARED_DIR}/out/case2/
   -> 适配服务持锁将 save_picture_flag 写回 0
 
 case3:
@@ -58,7 +58,7 @@ case3:
 
 ## case3 文件结果边界
 
-case3 后端文件层沿用多 txt 现网协议；正式后端继续 append `{DT_SHARED_DIR}/case3/data/c3/` 下的实时 txt。Node 适配服务负责在 Start/ReInit 前清空对应侧实时 append 文件，并把多 txt 按行号收编成区分 Without/With 的结构化点位。JSONL 当前仅为讨论稿，不作为正式后端协议。
+case3 后端文件层沿用多 txt 现网协议；正式后端继续 append `{DT_SHARED_DIR}/case3/` 下的实时 txt。本地联调共享根为 `/Users/jackwl/Code/2030-DT/code/comdatafiles`，case3 数据目录为 `/Users/jackwl/Code/2030-DT/code/comdatafiles/case3`。Node 适配服务负责在 Start/ReInit 前清空对应侧实时 append 文件，并把多 txt 按行号收编成区分 Without/With 的结构化点位。JSONL 当前仅为讨论稿，不作为正式后端协议。
 
 ## 不纳入本草案
 

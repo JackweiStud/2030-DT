@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WEB_DIR="$ROOT/web"
 SERVER_DIR="$ROOT/server"
-SHARED_DIR="${CASE2_SHARED_DIR:-$ROOT/comdatafiles}"
+SHARED_DIR="${DT_SHARED_DIR:-${CASE2_SHARED_DIR:-$ROOT/comdatafiles}}"
 WEB_PORT="${WEB_PORT:-5173}"
 SERVER_HOST="${CASE2_ADAPTER_HOST:-127.0.0.1}"
 SERVER_PORT="${CASE2_ADAPTER_PORT:-3102}"
@@ -61,7 +61,7 @@ echo
 
 (
   cd "$SERVER_DIR"
-  export CASE2_SHARED_DIR="$SHARED_DIR"
+  export DT_SHARED_DIR="$SHARED_DIR"
   export CASE2_ADAPTER_HOST="$SERVER_HOST"
   export CASE2_ADAPTER_PORT="$SERVER_PORT"
   npm start

@@ -10,7 +10,7 @@
 - 执行顺序：用户必须先跑 Without DT，再跑 With DT；两侧互斥运行，一次只允许一侧处于运行或重置中。
 - 后端文件层：沿用 `01-参考资料/case3/data/c3/` 的多 txt 现网协议；正式后端继续 append txt。
 - Web 与 Node：浏览器不直接读、删或写共享目录；Node 适配服务提供 `/api/case3/*`，负责清空单侧 append 文件、读取增量、按行号收编并校验为区分 Without/With 的结构化点位数据。
-- 控制文件：沿用同一个 `case_control.json` 五个核心字段结构。case3 接入时共享根配置提升为项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 仅可作为 case2 历史兼容名。
+- 控制文件：沿用同一个 `case_control.json` 五个核心字段结构。case2/case3 共享根统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 仅可作为历史兼容名。
 - 完成后：case3 与 case2 一样，前端不把 `command` 改回 `init`，也不清空 `status`；下一轮 Start/ReInit 由 Node 写入 `status=""` 开新轮，业务终态仍只由后端写。
 - 删除清空：Start/ReInit 前清空对应侧实时 append 文件归属 Node 适配服务；后端不负责清历史文件，React 不直接删文件。
 - Reset：单侧重置。Without 重置后 With 历史结果可保留；With 重置后 Without 历史结果可保留。任意一侧重置都必须让本次 Beam Accuracy 增量对比失效，恢复到跑 With 前的基线展示。
@@ -36,6 +36,7 @@
 - `reinit complete` 是单侧重置完成信号，不要求后端再写 `command=init,status=""`。
 - JSONL 是收编讨论稿，不是当前正式后端文件协议。除非重新冻结契约，不要求正式后端改写为 JSONL。
 - `ue_comm_*_mse.txt` 暂不进入 case3 正式 UI 主线；不得把 case2 的误差下降语义套到 case3 Cost。
+- 调试 JSONL 若落盘，应写入 `{DT_SHARED_DIR}/out/case3/points/{without|with}.jsonl`；不得写到 `out/case2/` 下污染 case2 输出归属。
 
 ## 来源
 

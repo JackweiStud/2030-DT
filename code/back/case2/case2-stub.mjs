@@ -727,8 +727,9 @@ function parseUnitInterval(rawValue, fallback, name) {
 }
 
 export function loadConfig(env = process.env) {
-  if (!env.CASE2_SHARED_DIR) {
-    throw new StubError("CONFIG_INVALID", "CASE2_SHARED_DIR is required");
+  const sharedDir = env.DT_SHARED_DIR || env.CASE2_SHARED_DIR;
+  if (!sharedDir) {
+    throw new StubError("CONFIG_INVALID", "DT_SHARED_DIR is required");
   }
   const outcome = env.CASE2_STUB_OUTCOME ?? "success";
   if (outcome !== "success" && outcome !== "fail") {
@@ -755,7 +756,7 @@ export function loadConfig(env = process.env) {
   }
   const noise = parseUnitInterval(env.CASE2_STUB_NOISE, 0.05, "CASE2_STUB_NOISE");
   return {
-    sharedDir: path.resolve(env.CASE2_SHARED_DIR),
+    sharedDir: path.resolve(sharedDir),
     sourceDir: path.resolve(env.CASE2_STUB_SOURCE_DIR ?? DEFAULT_SOURCE_DIR),
     stepMs: positiveInteger(env.CASE2_STUB_STEP_MS ?? "5000", "CASE2_STUB_STEP_MS"),
     pollMs: positiveInteger(env.CASE2_STUB_POLL_MS ?? "1000", "CASE2_STUB_POLL_MS"),

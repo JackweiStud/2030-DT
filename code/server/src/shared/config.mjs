@@ -26,20 +26,21 @@ function parsePort(rawValue) {
  */
 export async function loadRuntimeConfig(env = process.env, options = {}) {
   const fsOps = options.fsOps ?? defaultFs;
-  const sharedDir = env.CASE2_SHARED_DIR;
+  const sharedDir = env.DT_SHARED_DIR || env.CASE2_SHARED_DIR;
+  const sharedDirEnvName = env.DT_SHARED_DIR ? "DT_SHARED_DIR" : "CASE2_SHARED_DIR";
   if (!sharedDir) {
-    throw new Error("缺少必填环境变量 CASE2_SHARED_DIR");
+    throw new Error("缺少必填环境变量 DT_SHARED_DIR");
   }
   if (!path.isAbsolute(sharedDir)) {
-    throw new Error("CASE2_SHARED_DIR 必须是绝对路径");
+    throw new Error(`${sharedDirEnvName} 必须是绝对路径`);
   }
 
   const resolvedSharedDir = path.resolve(sharedDir);
   const sharedStat = await fsOps.stat(resolvedSharedDir).catch((error) => {
-    throw new Error(`CASE2_SHARED_DIR 不可用：${resolvedSharedDir}`, { cause: error });
+    throw new Error(`${sharedDirEnvName} 不可用：${resolvedSharedDir}`, { cause: error });
   });
   if (!sharedStat.isDirectory()) {
-    throw new Error(`CASE2_SHARED_DIR 不是目录：${resolvedSharedDir}`);
+    throw new Error(`${sharedDirEnvName} 不是目录：${resolvedSharedDir}`);
   }
 
   const controlPath = path.join(resolvedSharedDir, "case_control.json");

@@ -58,8 +58,10 @@ npm run dev:no-picture
 覆盖共享根：
 
 ```bash
-CASE2_SHARED_DIR=/absolute/path/to/comdatafiles npm start
+DT_SHARED_DIR=/absolute/path/to/comdatafiles npm start
 ```
+
+`CASE2_SHARED_DIR` 仅作为旧脚本兼容 fallback；新配置使用 `DT_SHARED_DIR`。
 
 ## 验收（与适配服务联调）
 

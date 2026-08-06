@@ -10,10 +10,10 @@
 
 | 做 | 不做 |
 |---|---|
-| 轮询/监视 `{CASE2_SHARED_DIR}/case_control.json` 上由适配服务写入的 `start` / `reinit` | 实现 REST、给浏览器直接调用 |
+| 轮询/监视 `{DT_SHARED_DIR}/case_control.json` 上由适配服务写入的 `start` / `reinit` | 实现 REST、给浏览器直接调用 |
 | 按契约链路写业务 `status` 与 Calibrated 文件 | 替代 [SERVER-SPEC.md](SERVER-SPEC.md) 的控制写、截图落盘、清零 |
 | 本地联调 / Gate 4 无真实后端时的演示 | 把延时、参考样本、打桩目录写成真实后端要求 |
-| 与适配服务**共用同一** `CASE2_SHARED_DIR`（flat 目录） | 引入 `CASE2_DATA_MODE` / stub 指针目录 / manifest |
+| 与适配服务**共用同一** `DT_SHARED_DIR`（flat 目录） | 引入 `CASE2_DATA_MODE` / stub 指针目录 / manifest |
 
 建议实现位置（Gate 4 可选）：`code/back/` 或独立脚本进程；**不得**塞进适配服务的正式 `npm start` 默认路径。
 
@@ -22,7 +22,7 @@
 
 | 变量 | 默认值 | 要求 |
 |---|---|---|
-| `CASE2_SHARED_DIR` | 无 | 必填；与适配服务指向同一共享根。 |
+| `DT_SHARED_DIR` | 无 | 必填；与适配服务指向同一共享根。 |
 | `CASE2_STUB_STEP_MS` | `5000` | `execute success` 写出后至少保持该时长再写终态，保证 Web 1000ms 轮询能看见中间态。 |
 | `CASE2_STUB_OUTCOME` | `success` | 仅 `success` / `fail`；不得出现在正式 Web UI。 |
 | `CASE2_STUB_REQUEST_PICTURE` | `1` | 演示默认开截图请求。`1`：start 终态同拍 `case complete + save_picture_flag=1`；`0`：只写 `case complete`。reinit 永不置 flag。 |
@@ -74,7 +74,7 @@
 4. **`start` + `CASE2_STUB_OUTCOME=success`**
    1. 通过 `patchControl` 写 `status=execute success`；
    2. 等待 `CASE2_STUB_STEP_MS`（默认 **5000ms**）；
-   3. 向 `{CASE2_SHARED_DIR}/case2/` 发布六个 `heatmap_cali_*.txt`：每个文件先写同目录临时文件，`fsync`、关闭并 rename 为最终文件。默认 `CASE2_STUB_DATA_MODE=random`：读取同目录 Initial 六文件，按可控 improve ratio 生成 synthetic Calibrated（形状继承 Initial，范围遵守热力 `[-200,200]` / KPI `[0,500]`，2 位小数）；`copy` 模式才从参考目录拷贝样本。日志必须标注 stub/synthetic，不得表述为真实业务采集；
+   3. 向 `{DT_SHARED_DIR}/case2/` 发布六个 `heatmap_cali_*.txt`：每个文件先写同目录临时文件，`fsync`、关闭并 rename 为最终文件。默认 `CASE2_STUB_DATA_MODE=random`：读取同目录 Initial 六文件，按可控 improve ratio 生成 synthetic Calibrated（形状继承 Initial，范围遵守热力 `[-200,200]` / KPI `[0,500]`，2 位小数）；`copy` 模式才从参考目录拷贝样本。日志必须标注 stub/synthetic，不得表述为真实业务采集；
    4. 确认六个最终文件全部存在、可 stat，且所有句柄已关闭；
    5. 按陈旧任务保护重新确认当前仍为 `command=start,status="execute success"`；
    6. **最后一次控制写**：

@@ -116,17 +116,17 @@ async function writeInitialFiles(sharedDir, options = {}) {
   }
 }
 
-test("loadConfig 要求 CASE2_SHARED_DIR，并校验 outcome", () => {
-  assert.throws(() => loadConfig({}), /CASE2_SHARED_DIR is required/);
+test("loadConfig 要求 DT_SHARED_DIR，并兼容 CASE2_SHARED_DIR", () => {
+  assert.throws(() => loadConfig({}), /DT_SHARED_DIR is required/);
   assert.throws(
     () =>
       loadConfig({
-        CASE2_SHARED_DIR: "/tmp/shared",
+        DT_SHARED_DIR: "/tmp/shared",
         CASE2_STUB_OUTCOME: "maybe",
       }),
     /CASE2_STUB_OUTCOME must be success or fail/,
   );
-  const config = loadConfig({ CASE2_SHARED_DIR: "/tmp/shared" });
+  const config = loadConfig({ DT_SHARED_DIR: "/tmp/shared" });
   assert.equal(config.outcome, "success");
   assert.equal(config.stepMs, 5000);
   assert.equal(config.requestPicture, true);
@@ -135,9 +135,10 @@ test("loadConfig 要求 CASE2_SHARED_DIR，并校验 outcome", () => {
   assert.equal(config.improveMax, 0.65);
   assert.equal(config.noise, 0.05);
   assert.equal(config.sourceDir, path.join(CASE2_STUB_DIR, "back"));
+  assert.equal(loadConfig({ CASE2_SHARED_DIR: "/tmp/legacy" }).sharedDir, "/tmp/legacy");
   assert.equal(
     loadConfig({
-      CASE2_SHARED_DIR: "/tmp/shared",
+      DT_SHARED_DIR: "/tmp/shared",
       CASE2_STUB_DATA_MODE: "copy",
     }).dataMode,
     "copy",
@@ -145,14 +146,14 @@ test("loadConfig 要求 CASE2_SHARED_DIR，并校验 outcome", () => {
 
   assert.equal(
     loadConfig({
-      CASE2_SHARED_DIR: "/tmp/shared",
+      DT_SHARED_DIR: "/tmp/shared",
       CASE2_STUB_REQUEST_PICTURE: "0",
     }).requestPicture,
     false,
   );
   assert.equal(
     loadConfig({
-      CASE2_SHARED_DIR: "/tmp/shared",
+      DT_SHARED_DIR: "/tmp/shared",
       CASE2_STUB_REQUEST_PICTURE: "1",
     }).requestPicture,
     true,
@@ -160,7 +161,7 @@ test("loadConfig 要求 CASE2_SHARED_DIR，并校验 outcome", () => {
   assert.throws(
     () =>
       loadConfig({
-        CASE2_SHARED_DIR: "/tmp/shared",
+        DT_SHARED_DIR: "/tmp/shared",
         CASE2_STUB_REQUEST_PICTURE: "yes",
       }),
     /CASE2_STUB_REQUEST_PICTURE must be 0 or 1/,
@@ -232,7 +233,7 @@ test("演示默认 requestPicture=true 时 start 同拍 complete + flag=1", asyn
     status: "",
   });
   const sourceDir = await createSourceDir(t);
-  const config = loadConfig({ CASE2_SHARED_DIR: sharedDir });
+  const config = loadConfig({ DT_SHARED_DIR: sharedDir });
   assert.equal(config.requestPicture, true);
   const context = createContext(sharedDir, sourceDir, {
     stepMs: 0,

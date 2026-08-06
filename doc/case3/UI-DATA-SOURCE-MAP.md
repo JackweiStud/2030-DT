@@ -50,6 +50,7 @@
 | Cost | 对应 cost 文件最新非空行，单位 `%` | 该侧柱值显示为空/不可用，不沿用旧值冒充本轮。 |
 | Throughput | 每个结构化点位的 `throughputGbps` 按 `no` 入曲线 | 缺点不补 0，不跨侧对齐。 |
 | Beam Accuracy 增量 | With 完成后，用同坐标 Without/With 点位比较 `selectedBeamId` | Without 缺失或任意侧重置后，仅显示基线。 |
+| 调试 JSONL | Node 可将完整结构化点位追加到 `{DT_SHARED_DIR}/out/case3/points/{without\|with}.jsonl` | 仅作 QA/定位证据，Web 不回读；不写入 `out/case2/`。 |
 
 ## 4. 覆盖检查
 
@@ -58,3 +59,4 @@
 - [x] Node 是清空文件、读取多 txt 和结构化收编的唯一浏览器侧文件所有者。
 - [x] Cost 单位已固定为 `%`，不继承 UX 切图中的 dB 语义。
 - [x] 点位数按运行时动态 N，不硬编码 12 或 32。
+- [x] case3 调试输出归属 `out/case3/`，不污染 `out/case2/`。

@@ -27,7 +27,9 @@ $Root = Resolve-RepoRoot
 $WebDir = Join-Path $Root 'web'
 $ServerDir = Join-Path $Root 'server'
 
-if ([string]::IsNullOrWhiteSpace($env:CASE2_SHARED_DIR)) {
+if (-not [string]::IsNullOrWhiteSpace($env:DT_SHARED_DIR)) {
+  $SharedDir = $env:DT_SHARED_DIR
+} elseif ([string]::IsNullOrWhiteSpace($env:CASE2_SHARED_DIR)) {
   $SharedDir = Join-Path $Root 'comdatafiles'
 } else {
   $SharedDir = $env:CASE2_SHARED_DIR
@@ -113,7 +115,7 @@ Write-DevLog 'stub is NOT started; run code/back separately if needed'
 Write-Host ''
 
 # Pass env into child processes (same as bash export)
-$env:CASE2_SHARED_DIR = $SharedDir
+$env:DT_SHARED_DIR = $SharedDir
 $env:CASE2_ADAPTER_HOST = $ServerHostName
 $env:CASE2_ADAPTER_PORT = $ServerPort
 
