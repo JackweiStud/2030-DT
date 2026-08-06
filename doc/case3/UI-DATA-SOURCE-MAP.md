@@ -17,7 +17,7 @@
 | With 地图轨迹 | 是 | `/api/case3/side?side=with` 的 `points` | With 本轮已见 `execute success` | UE 坐标由 `ue_comm_with_dt_coordinates.txt` 收编。 |
 | Without BS 波束扫描 | 是 | 结构化点位 `scanBeamIds` + `selectedBeamId` | Without 逐点播放 | 扫描集合来自 `ue_comm_without_dt_beams.txt`；选择波束来自 `ue_comm_without_dt_sel_beam.txt`。 |
 | With BS 波束预测 | 是 | 结构化点位 `selectedBeamId` | With 逐点播放 | 来自 `ue_comm_with_dt_sel_beam.txt`。 |
-| With 反射/LOS 示意 | 是 | 结构化点位 `reflection` | With 逐点播放且反射点行有效 | 来自 `ue_comm_with_dt_coordinates_reflection_point.txt`。 |
+| With 反射/LOS 示意 | 是 | 结构化点位 `reflection` | With 逐点播放 | 来自 `ue_comm_with_dt_coordinates_reflection_point.txt`；reflection 是 With 完整点必需字段，缺第 `i` 行时不返回第 `i` 个半点。 |
 | 点位进度 | 是 | 结构化点位 `no` 与运行时 `N` | 逐点播放 | 显示最新 12 条；超过窗口长度滚动到最新。 |
 | Cost Comparison | 是 | `/api/case3/side` 同包侧级字段 `costPct` | 对应侧运行后 | 单位 `Cost (%)`；取 cost 文件最新一行；与点无关，不写入 `Case3Point`；不使用 dB。 |
 | Throughput Comparison | 是 | 结构化点位 `throughputGbps` | 对应侧逐点数据有效 | Without/With 两条曲线；点位数动态。 |
@@ -49,7 +49,7 @@
 | 点位进度窗口 | 当前点附近最新 12 条；超过 12 条滚动到最新 | 不压缩到不可读文字。 |
 | Cost | 对应 cost 文件最新非空行，单位 `%` | 该侧柱值显示为空/不可用，不沿用旧值冒充本轮。 |
 | Throughput | 每个结构化点位的 `throughputGbps` 按 `no` 入曲线 | 缺点不补 0，不跨侧对齐。 |
-| Beam Accuracy 增量 | With 完成后，用同坐标 Without/With 点位比较 `selectedBeamId` | Without 缺失或任意侧重置后，仅显示基线。 |
+| Beam Accuracy 增量 | With 完成后，用相同 `no` 的 Without/With 点位比较 `selectedBeamId`；坐标只做可选诊断，不做匹配主键 | Without 缺失、同 `no` 点位不完整或任意侧重置后，仅显示基线。 |
 | 调试 JSONL 快照 | Node 在 `completeCount` 变化时，将当前完整点全量以整文件原子替换写入 `{DT_SHARED_DIR}/out/case3/points/{without|with}.jsonl` | 仅作 QA/定位证据，Web 不回读；不写 cost 行；不写入 `out/case2/`。 |
 
 ## 4. 覆盖检查

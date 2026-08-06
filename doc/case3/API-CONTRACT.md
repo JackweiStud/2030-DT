@@ -15,6 +15,8 @@
 
 正式后端文件层沿用多 txt 现网协议。Node/Web 内部可以 normalized point model 收编，但不得反向要求正式后端提供 JSONL、manifest、batch_id 或原子目录切换。
 
+Start/ReInit 开新轮后，Node 会先清空该侧实时 append 文件，再写控制命令。正式后端必须停止旧轮写入，并且只向当前命令侧文件写入本轮数据；不得把旧轮尾部 append 回已清空文件，否则 Web 会把旧轮尾巴解释成本轮数据。
+
 ## 1. 运行配置
 
 - 共享根：case3 接入后使用项目级环境变量 `DT_SHARED_DIR` 指向已挂载共享目录。
@@ -113,7 +115,7 @@ type Case3Point = {
   selectedBeamId: number;
   throughputGbps: number;
   scanBeamIds?: number[]; // Without 必需
-  reflection?: { x: number; y: number; z: number; los: boolean }; // With 有对应行时
+  reflection?: { x: number; y: number; z: number; los: boolean }; // 仅 With；With 完整点必需，Without 不带
 };
 
 type Case3SideSnapshot = {
@@ -236,7 +238,7 @@ setCostPct(snap.costPct);   // 侧级标量
 
 - `no` 从 1 递增，由运行时行号得到，不固定为 12 或 32。
 - Without 点位必须包含 `scanBeamIds` 和 `selectedBeamId`。
-- With 点位必须包含 `selectedBeamId`，并在反射点文件有对应行时包含 `reflection`。
+- With 点位必须包含 `selectedBeamId` 和 `reflection`；反射点文件第 `i` 行是 With 第 `i` 个完整点位的必需字段。
 - 同侧逐点文件按行号对齐。Node 只返回已经具备完整必需字段的连续点位；不完整尾行保留到下次轮询，不向 Web 暴露半点。
 - 坐标与数值非法时，该侧本轮进入数据异常，不拼接旧行或跨侧补齐。
 - Throughput 来自 `points[].throughputGbps`；Cost 来自同包 `costPct`，不再提供独立 `/api/case3/kpis` 主路径。
@@ -265,10 +267,10 @@ With 第 `i` 个点位需要同时具备：
 
 “不完整尾行”包括两类：
 
-- 后端正在 append，某文件末尾一行还没写完或还没有换行；
+- 后端正在 append，某文件末尾字段截断、字段数不足或字段非法，暂不可 parse；
 - 某些文件已经有第 `i` 行，但同侧另一个必需文件还没有第 `i` 行。
 
-Node 对这类尾部数据只保留在内部读取状态，不向 Web 暴露。Web 不会看到只有坐标但没有 beamId、或只有吞吐但没有坐标的“半点”。
+末行没有尾随 LF/CRLF 但字段完整且可 parse 时，按完整行处理，不因 `wc -l` 结果偏小而判为 pending tail。Node 对真正不完整的尾部数据只保留在内部读取状态，不向 Web 暴露。Web 不会看到只有坐标但没有 beamId、或只有吞吐但没有坐标的“半点”。
 
 ### 5.4 调试 JSONL 快照落盘
 
@@ -307,7 +309,7 @@ Node 对这类尾部数据只保留在内部读取状态，不向 Web 暴露。W
 输入：
 
 - 文件基线：`ue_comm_with_dt_beam_accuracy_rate.txt` 的 `success,total`。
-- 本轮增量：With 完成后，用 With 点位与 Without 点位按同坐标点对比 `selectedBeamId`。
+- 本轮增量：With 完成后，用 With 第 `i` 个点位与 Without 第 `i` 个点位按 `no` 对比 `selectedBeamId`。坐标只作为可选诊断，不作为匹配主键。
 
 计算：
 
@@ -324,6 +326,7 @@ Node 对这类尾部数据只保留在内部读取状态，不向 Web 暴露。W
 约束：
 
 - 没有 Without 本轮有效结果时，不计算 With 增量。
+- 只有 Without/With 两侧都存在相同 `no` 的完整点位时，该序号才进入本轮 Beam Accuracy 增量统计；不得用浮点坐标相等性做匹配。
 - 任意一侧 ReInit 后，本次增量对比失效，展示恢复到文件基线。
 - Beam Accuracy 不由后端提供本轮最终百分比；本轮增量由 Web 基于 Node 结构化点位派生。
 

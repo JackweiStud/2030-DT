@@ -12,7 +12,7 @@
 - Web 与 Node：浏览器不直接读、删或写共享目录；Node 适配服务提供 `/api/case3/*`，负责清空单侧 append 文件、按行号收编并校验为区分 Without/With 的结构化点位；Web 通过 `GET /api/case3/side` 拉取单侧全量快照（完整点 + 侧级 `costPct`）。
 - 控制文件：沿用同一个 `case_control.json` 五个核心字段结构。case2/case3 共享根统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 仅可作为历史兼容名。
 - 完成后：case3 与 case2 一样，前端不把 `command` 改回 `init`，也不清空 `status`；下一轮 Start/ReInit 由 Node 写入 `status=""` 开新轮，业务终态仍只由后端写。
-- 删除清空：Start/ReInit 前清空对应侧实时 append 文件归属 Node 适配服务；后端不负责清历史文件，React 不直接删文件。
+- 删除清空：Start/ReInit 前清空对应侧实时 append 文件归属 Node 适配服务；后端不负责清历史文件，React 不直接删文件。开新轮后，正式后端必须停止旧轮写入，并只向当前命令侧文件写入本轮数据。
 - Reset：单侧重置。Without 重置后 With 历史结果可保留；With 重置后 Without 历史结果可保留。任意一侧重置都必须让本次 Beam Accuracy 增量对比失效，恢复到跑 With 前的基线展示。
 - 点位数：动态 `N`，由运行时数据解析得到。顶部点位进度固定窗口显示最新 12 条；超过窗口长度时滚动到最新点位。
 - Cost：单位为 `%`，正式 UI 文案统一为 `Cost (%)`；不得沿用 UX 切图中的 dB 或误差减少语义。
