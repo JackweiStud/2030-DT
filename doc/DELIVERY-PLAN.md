@@ -23,7 +23,7 @@ case3 已进入草案阶段；case4 的业务主线和复用判断尚未提供�
 ## case3 当前节奏
 
 1. Gate 0 草案：主线为 Without DT 通信基线 -> With DT 数字孪生辅助通信 -> Cost/Throughput/Beam Accuracy 对比。
-2. Gate 2 草案：正式后端文件层先沿用多 txt；Node `/api/case3/*` 收编为结构化点位；Web 只消费结构化数据。
+2. Gate 2 草案：正式后端文件层先沿用多 txt；Node `/api/case3/*` 收编为结构化点位；Web 主路径 `GET /api/case3/side` 单侧全量快照（points + costPct）；调试 JSONL 整文件替换落盘 `out/case3/points/`。
 3. 进入实现前仍需：Gate 1 设计源冻结、Gate 2 契约批准、Gate 3 `SERVER-SPEC.md` / `WEB-SPEC.md`。
 
 ## 项目级停止规则

@@ -9,7 +9,7 @@
 - 当前 Tab：`DT for Comm`（case3）。
 - 执行顺序：用户必须先跑 Without DT，再跑 With DT；两侧互斥运行，一次只允许一侧处于运行或重置中。
 - 后端文件层：沿用 `01-参考资料/case3/data/c3/` 的多 txt 现网协议；正式后端继续 append txt。
-- Web 与 Node：浏览器不直接读、删或写共享目录；Node 适配服务提供 `/api/case3/*`，负责清空单侧 append 文件、读取增量、按行号收编并校验为区分 Without/With 的结构化点位数据。
+- Web 与 Node：浏览器不直接读、删或写共享目录；Node 适配服务提供 `/api/case3/*`，负责清空单侧 append 文件、按行号收编并校验为区分 Without/With 的结构化点位；Web 通过 `GET /api/case3/side` 拉取单侧全量快照（完整点 + 侧级 `costPct`）。
 - 控制文件：沿用同一个 `case_control.json` 五个核心字段结构。case2/case3 共享根统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 仅可作为历史兼容名。
 - 完成后：case3 与 case2 一样，前端不把 `command` 改回 `init`，也不清空 `status`；下一轮 Start/ReInit 由 Node 写入 `status=""` 开新轮，业务终态仍只由后端写。
 - 删除清空：Start/ReInit 前清空对应侧实时 append 文件归属 Node 适配服务；后端不负责清历史文件，React 不直接删文件。
@@ -36,7 +36,9 @@
 - `reinit complete` 是单侧重置完成信号，不要求后端再写 `command=init,status=""`。
 - JSONL 是收编讨论稿，不是当前正式后端文件协议。除非重新冻结契约，不要求正式后端改写为 JSONL。
 - `ue_comm_*_mse.txt` 暂不进入 case3 正式 UI 主线；不得把 case2 的误差下降语义套到 case3 Cost。
-- 调试 JSONL 若落盘，应写入 `{DT_SHARED_DIR}/out/case3/points/{without|with}.jsonl`；不得写到 `out/case2/` 下污染 case2 输出归属。
+- 调试 JSONL 快照落盘：Node 在完整点变化时，将当前侧完整点以**整文件原子替换**写入 `{DT_SHARED_DIR}/out/case3/points/{without|with}.jsonl`；Web 不回读；不得写到 `out/case2/`。
+- 演示期主路径不采用 `/points` + `/kpis` 双 cursor 增量；Cost 与点位同包于 `/side`，但不进入 `Case3Point`。
+- Web 主逻辑只消费 `/side` 的 `points` + `costPct`；先判 `ok`，`ok:false` 不更新业务数据、不推断业务终态。`pendingTail` 仅可选提示，不参与完成/失败判定。`Case3Point` 不带 `side`，侧别只在 snapshot/`side` 参数表达。
 
 ## 来源
 

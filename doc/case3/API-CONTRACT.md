@@ -32,11 +32,12 @@
 | Start 单侧  | `POST /api/case3/control-file`                                | Web -> Node -> 控制文件/文件清空 | 用户点击 Without/With Start      | Node 先清空该侧实时 append 文件，再写 `case=case3,command=start,dt_type=without dt 或 with dt,status=""`。 |
 | ReInit 单侧 | `POST /api/case3/control-file`                                | Web -> Node -> 控制文件/文件清空 | 用户点击单侧重置                     | Node 写 `command=reinit,dt_type=without dt 或 with dt,status=""`；清空该侧本轮实时文件；不清另一侧文件。 |
 | 读取初始化数据   | `GET /api/case3/init-data`                                    | Web -> Node -> 文件        | 进 Tab、单侧重置完成后按需刷新            | 返回地图资源路径、base route、Beam Accuracy 基线。                                   |
-| 读取单侧增量点位  | `GET /api/case3/points?side=without&cursor=<n>` 或 `side=with` | Web -> Node -> 多 txt     | 该侧已见 `execute success` 后每 1s | 返回 cursor 之后的结构化点位数组和最新 cursor。                                         |
-| 读取单侧标量    | `GET /api/case3/kpis?side=without&cursor=<n>` 或 `side=with`   | Web -> Node -> cost txt  | 该侧已见 `execute success` 后每 1s | 返回该侧 Cost 最新值；Throughput 已随 point 返回，不在 kpis 重复。                        |
+| 读取单侧运行快照  | `GET /api/case3/side?side=without` 或 `side=with`              | Web -> Node -> 多 txt     | 该侧已见 `execute success` 后每 1s | 返回该侧当前已收齐完整点位全量 + 侧级 `costPct`；不使用双 cursor 增量。                          |
 
 
 具体路径名可在 Gate 3 SPEC 收窄，但语义不得改变：浏览器不直接删文件，Node 先清文件再写控制，后端只写业务状态和追加数据。
+
+演示期主路径**不采用** `GET /api/case3/points?cursor=` 与 `GET /api/case3/kpis?cursor=` 双增量 REST。若未来点数显著增大，可在仍返回侧级 `costPct` 的前提下，为 `/side` 增加可选 `sinceCount` 减负；不得再拆回独立 kpis 流作为默认方案。
 
 ## 3. 控制文件合同
 
@@ -100,34 +101,54 @@
 
 ## 5. 结构化点位模型
 
-Node 对多 txt 增量读取后，向 Web 返回区分侧别的结构化点位：
+Node 对多 txt 增量读取后，向 Web 返回区分侧别的结构化点位；Cost 与点无关，作为**侧级字段**与点位快照同包返回，不写入 `Case3Point`。
 
 ```ts
 type Case3Side = "without" | "with";
 
+// 点位本身不带 side；侧别只在 Case3SideSnapshot.side / 请求参数里表达
 type Case3Point = {
-  side: Case3Side;
-  no: number;
+  no: number; // 该侧本轮点位序号，从 1 递增；由完整点行号得到
   ue: { x: number; y: number; z: number };
   selectedBeamId: number;
   throughputGbps: number;
-  scanBeamIds?: number[];
-  reflection?: { x: number; y: number; z: number; los: boolean };
+  scanBeamIds?: number[]; // Without 必需
+  reflection?: { x: number; y: number; z: number; los: boolean }; // With 有对应行时
 };
+
+type Case3SideSnapshot = {
+  // 包级成功位：true=本次 REST 读侧成功，业务字段可信。
+  // 失败时返回 ok:false + error，不带可用 points/costPct。
+  // ok 不是业务状态；完成/失败只看 control.status。
+  ok: true;
+  side: Case3Side; // 侧别权威字段；points 内不再重复 side
+  points: Case3Point[];
+  completeCount: number;
+  // 读侧提示：可能存在未齐半点。前端主逻辑只消费 points + costPct；
+  // pendingTail 最多做可选“收数中”提示，不参与完成/失败判定。
+  pendingTail: boolean;
+  costPct: number | null; // 侧级 Cost(%)；与点无关，不得写入 Case3Point
+};
+
+// 失败响应（与 case2 适配服务习惯一致；具体 error.code 矩阵 Gate 3 再冻结）
+// {
+//   ok: false,
+//   error: { code: string, message: string }
+// }
 ```
 
 
 
-### 5.1 `GET /api/case3/points` 响应
+### 5.1 `GET /api/case3/side` 响应
 
 请求：
 
 ```http
-GET /api/case3/points?side=without&cursor=0
-GET /api/case3/points?side=with&cursor=12
+GET /api/case3/side?side=without
+GET /api/case3/side?side=with
 ```
 
-`cursor` 表示 Web 已消费到的完整点位行数；不传时等同 `0`。`cursor=0` 返回从第 1 行开始的新增完整点位；响应里的 `nextCursor` 作为下一次请求的 cursor。
+语义：返回该侧**当前已收齐完整点位的全量快照**，不是“只返回自上次轮询后的新点”。Web 每次用响应直接替换本地 `points` 与 `costPct`，不维护 cursor，不在本地 append。
 
 Without DT 示例：
 
@@ -135,11 +156,8 @@ Without DT 示例：
 {
   "ok": true,
   "side": "without",
-  "cursor": 0,
-  "nextCursor": 2,
   "points": [
     {
-      "side": "without",
       "no": 1,
       "ue": { "x": 1.01, "y": 15.01, "z": 0.00 },
       "selectedBeamId": 0,
@@ -147,7 +165,6 @@ Without DT 示例：
       "throughputGbps": 8.50
     },
     {
-      "side": "without",
       "no": 2,
       "ue": { "x": 1.01, "y": 14.01, "z": 0.00 },
       "selectedBeamId": 4,
@@ -155,7 +172,9 @@ Without DT 示例：
       "throughputGbps": 8.10
     }
   ],
-  "pendingTail": false
+  "completeCount": 2,
+  "pendingTail": false,
+  "costPct": 10
 }
 ```
 
@@ -165,11 +184,8 @@ With DT 示例：
 {
   "ok": true,
   "side": "with",
-  "cursor": 0,
-  "nextCursor": 1,
   "points": [
     {
-      "side": "with",
       "no": 1,
       "ue": { "x": 1.01, "y": 15.01, "z": 0.00 },
       "selectedBeamId": 0,
@@ -177,56 +193,53 @@ With DT 示例：
       "reflection": { "x": 5.01, "y": 7.01, "z": 0.00, "los": true }
     }
   ],
-  "pendingTail": false
+  "completeCount": 1,
+  "pendingTail": false,
+  "costPct": 5
 }
 ```
 
-`pendingTail=true` 表示 Node 看到了某些文件已经多出新行，但还不能形成完整点位；Web 不报错、不展示半点，下一轮继续带同一个 `nextCursor` 请求。
+字段规则：
 
-### 5.2 `GET /api/case3/kpis` 响应
+- `ok`：包级成功位。`true` 表示本次 REST 读侧成功；`false` 表示接口失败，响应无可用业务快照。
+- `ok` **不是**业务运行/完成/失败状态；业务终态只看控制文件 `status`。
+- `side`：只出现在 snapshot 根上；`Case3Point` **不带** `side` 字段。
+- `points`：仅含完整连续点位 `1..K`；`completeCount === points.length`。
+- `pendingTail=true`：Node 已看到某些文件多出新行，但还不能形成下一个完整点；Web 不报错、不展示半点。
+- `costPct`：侧级字段。Node 取该侧 cost txt 最新非空行；没有有效 cost 时为 `null`。
+- Cost 与点位解耦：cost 缺失不阻塞 `points`；半点不阻塞已有 `costPct` 返回。
+- Cost **不得**写入每个 `Case3Point`。
 
-请求：
+Web 消费约定：
 
-```http
-GET /api/case3/kpis?side=without&cursor=0
-GET /api/case3/kpis?side=with&cursor=1
-```
+```ts
+// 该侧已见 execute success 后每 1s
+const snap = await getCase3Side("without");
 
-`kpis` 当前只返回单侧 Cost。Cost 不是逐点对齐文件，Node 取 cost txt 的最新非空行；`cursor` 表示 Web 已看到的 cost 行数，响应 `nextCursor` 表示 Node 已读到的 cost 行数。
-
-有新增 cost 行时：
-
-```json
-{
-  "ok": true,
-  "side": "without",
-  "cursor": 0,
-  "nextCursor": 1,
-  "costPct": 10,
-  "updated": true
+// 1) 先判 ok：失败则不更新业务数据，不推断 case complete / execute fail
+if (!snap.ok) {
+  // 保留上一帧成功数据或空态；可记日志/轻提示
+  // 下一秒继续轮询；不自动 start/reinit
+  return;
 }
+
+// 2) 主逻辑只消费 points + costPct
+setPoints(snap.points);     // 全量替换，不 append
+setCostPct(snap.costPct);   // 侧级标量
+
+// 3) pendingTail 最多做可选提示，不参与完成/失败判定
+// 完成看 execute success -> case complete；失败看 execute fail
+// if (snap.pendingTail) showReceivingHint();
 ```
 
-无新增 cost 行时：
-
-```json
-{
-  "ok": true,
-  "side": "without",
-  "cursor": 1,
-  "nextCursor": 1,
-  "costPct": 10,
-  "updated": false
-}
-```
-
-规则：
+### 5.2 点位与 Cost 规则
 
 - `no` 从 1 递增，由运行时行号得到，不固定为 12 或 32。
 - Without 点位必须包含 `scanBeamIds` 和 `selectedBeamId`。
 - With 点位必须包含 `selectedBeamId`，并在反射点文件有对应行时包含 `reflection`。
 - 同侧逐点文件按行号对齐。Node 只返回已经具备完整必需字段的连续点位；不完整尾行保留到下次轮询，不向 Web 暴露半点。
 - 坐标与数值非法时，该侧本轮进入数据异常，不拼接旧行或跨侧补齐。
+- Throughput 来自 `points[].throughputGbps`；Cost 来自同包 `costPct`，不再提供独立 `/api/case3/kpis` 主路径。
 
 
 
@@ -257,18 +270,37 @@ With 第 `i` 个点位需要同时具备：
 
 Node 对这类尾部数据只保留在内部读取状态，不向 Web 暴露。Web 不会看到只有坐标但没有 beamId、或只有吞吐但没有坐标的“半点”。
 
-### 5.4 调试 JSONL 输出
+### 5.4 调试 JSONL 快照落盘
 
-为方便定位数据，Node 在收编出完整点位后，可以同步追加调试 JSONL：
+为方便维护测试和回看数据，Node 在收编出该侧当前完整点位后，同步维护本地快照文件：
 
 ```text
 {DT_SHARED_DIR}/out/case3/points/without.jsonl
 {DT_SHARED_DIR}/out/case3/points/with.jsonl
 ```
 
-每行写一个已经返回给 Web 的 `Case3Point`。该输出仅为本地调试/QA 证据，不能作为正式后端输入，也不参与 Web 主路径读取。
+本地联调路径示例：
 
-不建议写入 `{DT_SHARED_DIR}/out/case2/case3/`，因为 case3 运行输出应归属 `out/case3/`，不能挂在 case2 输出目录下。
+```text
+/Users/jackwl/Code/2030-DT/code/comdatafiles/out/case3/points/without.jsonl
+/Users/jackwl/Code/2030-DT/code/comdatafiles/out/case3/points/with.jsonl
+```
+
+更新方式：**整文件原子替换**，不是运行期逐行 append。
+
+1. 内容 = 该侧当前已返回给 Web 的完整点位 `1..K`（与 REST `points` 一致）。
+2. 每行一个 `Case3Point` JSON（无 `side` 字段；侧别由文件名 without/with 表达）。
+3. 写入同目录临时文件 → `fsync` → rename 覆盖目标文件。
+4. 仅当该侧 `completeCount` 变化时重写；无新完整点时不改文件。
+5. 该侧 Start/ReInit 清空实时数据后，将对应 jsonl 写成空文件（或等价清空）。
+6. 只重置一侧时，不动另一侧 jsonl。
+
+约束：
+
+- 该输出仅为本地调试/QA 证据，不能作为正式后端输入。
+- **Web 主路径不回读**这些 jsonl。
+- **不写 cost 进 jsonl 行**；cost 仍是 side-level REST 字段。
+- 不得写入 `{DT_SHARED_DIR}/out/case2/` 或 `out/case2/case3/`。
 
 ## 6. Beam Accuracy 派生
 

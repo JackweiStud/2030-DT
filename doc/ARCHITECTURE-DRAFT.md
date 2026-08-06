@@ -36,7 +36,8 @@ Chrome case2 / case3
 
 case3:
 后端 append 多 txt
-  -> Node 增量读取并按行号收编为结构化点位
+  -> Node 按行号收编为结构化点位，经 GET /api/case3/side 返回单侧全量快照（points + costPct）
+  -> 可选将当前完整点原子替换写入 out/case3/points/{without|with}.jsonl 供回看
   -> Web 只消费 Without/With 结构化点位与派生 KPI
 ```
 
@@ -58,7 +59,7 @@ case3:
 
 ## case3 文件结果边界
 
-case3 后端文件层沿用多 txt 现网协议；正式后端继续 append `{DT_SHARED_DIR}/case3/` 下的实时 txt。本地联调共享根为 `/Users/jackwl/Code/2030-DT/code/comdatafiles`，case3 数据目录为 `/Users/jackwl/Code/2030-DT/code/comdatafiles/case3`。Node 适配服务负责在 Start/ReInit 前清空对应侧实时 append 文件，并把多 txt 按行号收编成区分 Without/With 的结构化点位。JSONL 当前仅为讨论稿，不作为正式后端协议。
+case3 后端文件层沿用多 txt 现网协议；正式后端继续 append `{DT_SHARED_DIR}/case3/` 下的实时 txt。本地联调共享根为 `/Users/jackwl/Code/2030-DT/code/comdatafiles`，case3 数据目录为 `/Users/jackwl/Code/2030-DT/code/comdatafiles/case3`。Node 适配服务负责在 Start/ReInit 前清空对应侧实时 append 文件，并把多 txt 按行号收编成区分 Without/With 的结构化点位；Web 主路径为 `GET /api/case3/side` 单侧全量快照（完整点 + 侧级 costPct）。调试 JSONL 快照以整文件原子替换写入 `{DT_SHARED_DIR}/out/case3/points/{without|with}.jsonl`，Web 不回读。正式后端协议仍是多 txt append，不是 JSONL。
 
 ## 不纳入本草案
 

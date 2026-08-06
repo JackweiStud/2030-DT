@@ -13,13 +13,13 @@
 | case3 背景、面板、图标、地图底图 | 否/半静态 | `04-runtime-assets/case3/`（未来正式运行资源） | 进入 case3 Tab | 正式运行不得直接回读 `02-ux/` 切图。 |
 | Without Start/ReInit | 是 | Web 本地状态 + `/api/case3/control-file` | 无其他侧运行/重置时 | Node 清 without 侧实时 append 文件并写控制；React 不直接删文件。 |
 | With Start/ReInit | 是 | Web 本地状态 + `/api/case3/control-file` | 已有 Without 有效结果且无其他侧运行/重置时 | Node 清 with 侧实时 append 文件并写控制；React 不直接删文件。 |
-| Without 地图轨迹 | 是 | `/api/case3/points?side=without` 的结构化点位 | Without 本轮已见 `execute success` | UE 坐标由 `ue_comm_without_dt_coordinates.txt` 收编。 |
-| With 地图轨迹 | 是 | `/api/case3/points?side=with` 的结构化点位 | With 本轮已见 `execute success` | UE 坐标由 `ue_comm_with_dt_coordinates.txt` 收编。 |
+| Without 地图轨迹 | 是 | `/api/case3/side?side=without` 的 `points` | Without 本轮已见 `execute success` | UE 坐标由 `ue_comm_without_dt_coordinates.txt` 收编。 |
+| With 地图轨迹 | 是 | `/api/case3/side?side=with` 的 `points` | With 本轮已见 `execute success` | UE 坐标由 `ue_comm_with_dt_coordinates.txt` 收编。 |
 | Without BS 波束扫描 | 是 | 结构化点位 `scanBeamIds` + `selectedBeamId` | Without 逐点播放 | 扫描集合来自 `ue_comm_without_dt_beams.txt`；选择波束来自 `ue_comm_without_dt_sel_beam.txt`。 |
 | With BS 波束预测 | 是 | 结构化点位 `selectedBeamId` | With 逐点播放 | 来自 `ue_comm_with_dt_sel_beam.txt`。 |
 | With 反射/LOS 示意 | 是 | 结构化点位 `reflection` | With 逐点播放且反射点行有效 | 来自 `ue_comm_with_dt_coordinates_reflection_point.txt`。 |
 | 点位进度 | 是 | 结构化点位 `no` 与运行时 `N` | 逐点播放 | 显示最新 12 条；超过窗口长度滚动到最新。 |
-| Cost Comparison | 是 | `/api/case3/kpis` 或点位轮询附带的最新 cost | 对应侧运行后 | 单位 `Cost (%)`；取 cost 文件最新一行；不使用 dB。 |
+| Cost Comparison | 是 | `/api/case3/side` 同包侧级字段 `costPct` | 对应侧运行后 | 单位 `Cost (%)`；取 cost 文件最新一行；与点无关，不写入 `Case3Point`；不使用 dB。 |
 | Throughput Comparison | 是 | 结构化点位 `throughputGbps` | 对应侧逐点数据有效 | Without/With 两条曲线；点位数动态。 |
 | Beam Accuracy | 是 | 文件基线 + Web 本轮点位派生 | 进 Tab 显示基线；With 完成后且 Without 有效时显示基线+增量 | 任意一侧重置后增量失效，回到基线。 |
 | 运行/失败/完成反馈 | 是 | `case_control.status` + Web 本轮动作来源 | 本轮等待态内 | `execute success` 非完成；`case complete` / `reinit complete` 是完成门槛。 |
@@ -45,12 +45,12 @@
 
 | 派生项 | 公式/规则 | 非法或不足时 |
 |---|---|---|
-| 动态点位数 `N` | 已返回结构化点位总数；完整 N 可随后端 append 增长 | 不显示固定 P1-P12 全量；只显示已有点位窗口。 |
+| 动态点位数 `N` | `/side` 返回的 `completeCount` / `points.length`；完整 N 可随后端 append 增长 | 不显示固定 P1-P12 全量；只显示已有点位窗口。 |
 | 点位进度窗口 | 当前点附近最新 12 条；超过 12 条滚动到最新 | 不压缩到不可读文字。 |
 | Cost | 对应 cost 文件最新非空行，单位 `%` | 该侧柱值显示为空/不可用，不沿用旧值冒充本轮。 |
 | Throughput | 每个结构化点位的 `throughputGbps` 按 `no` 入曲线 | 缺点不补 0，不跨侧对齐。 |
 | Beam Accuracy 增量 | With 完成后，用同坐标 Without/With 点位比较 `selectedBeamId` | Without 缺失或任意侧重置后，仅显示基线。 |
-| 调试 JSONL | Node 可将完整结构化点位追加到 `{DT_SHARED_DIR}/out/case3/points/{without\|with}.jsonl` | 仅作 QA/定位证据，Web 不回读；不写入 `out/case2/`。 |
+| 调试 JSONL 快照 | Node 在 `completeCount` 变化时，将当前完整点全量以整文件原子替换写入 `{DT_SHARED_DIR}/out/case3/points/{without|with}.jsonl` | 仅作 QA/定位证据，Web 不回读；不写 cost 行；不写入 `out/case2/`。 |
 
 ## 4. 覆盖检查
 
@@ -60,3 +60,4 @@
 - [x] Cost 单位已固定为 `%`，不继承 UX 切图中的 dB 语义。
 - [x] 点位数按运行时动态 N，不硬编码 12 或 32。
 - [x] case3 调试输出归属 `out/case3/`，不污染 `out/case2/`。
+- [x] Web 主路径为单侧全量快照 `/api/case3/side`（points 全量 + 侧级 costPct），不采用双 cursor 增量。
