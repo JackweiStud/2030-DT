@@ -9,7 +9,8 @@
 - case2 Gate 3：`WEB-SPEC` / `SERVER-SPEC` / Gate 3 演示向放宽已于 2026-08-03 获用户定稿确认。
 - case2 Gate 4：正式 Web、Node 文件适配服务、模拟后端打桩均已实现；2026-08-04 用户确认三者本地测试联调完成，自动 + 人工 check 通过。
 - case2 Gate 5：本地 QA 证据已补齐（`doc/case2/QA-EVIDENCE.md`）；本地打桩演示可进入用户/领导测试。真实后端、真实挂载和真实采集不在本次完成口径内。
-- case3 Gate 0/2 草案：2026-08-06 用户确认 8 条关键边界，已创建 `doc/case3/MAINLINE.md`、`doc/case3/API-CONTRACT.md`、`doc/case3/UI-DATA-SOURCE-MAP.md`、`doc/case3/UX-STATE-MAP.md`。当前仅为文档草案，正式 Web/Node 尚未实现，Gate 1 设计源和 Gate 2 契约 v1 仍待批准。
+- case3 Gate 0/2 草案：2026-08-06 用户确认 8 条关键边界，已创建 `doc/case3/MAINLINE.md`、`doc/case3/API-CONTRACT.md`、`doc/case3/UI-DATA-SOURCE-MAP.md`、`doc/case3/UX-STATE-MAP.md`。当前仅为文档草案，正式 Web/Node 尚未实现，Gate 2 契约 v1 仍待批准。
+- case3 Gate 1：2026-08-06 设计源已推至 `REVIEW_READY`（`03-design/case3/case3-dt-com.pen` + Gate 1 文档）；**尚未**用户视觉审阅，不得标 `APPROVED`。
 - 2026-08-03 用户定稿：失败态按 WEB-SPEC 路径互斥（`failed-start` 只可再启动，`failed-reinit` 只可再重置）；进页一律 `initial`；无 result-error/unknown-control；六文件失败保持 `calibrating`；`start`/`reinit` 强制 `status=""`；真实后端已确认接受开一轮空 `status`。
 - 2026-08-03 分工：本会话只实现正式 Web（`WEB-SPEC`）；Node 适配（`SERVER-SPEC`）与 `realback_no` 打桩由 Codex 交付；本地联调必须同时具备打桩。
 - 2026-08-03 Web SPEC 审阅增量已回填 `WEB-SPEC.md`。
