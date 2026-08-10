@@ -1,6 +1,6 @@
 # Frontend Spec — case3 Gate 1 交接
 
-> 设计源：`03-design/case3/case3-dt-com.pen`（`REVIEW_READY`，非 APPROVED）  
+> 设计源：`03-design/case3/case3-dt-com.pen`（`APPROVED`，2026-08-09 用户确认冻结）  
 > 契约草案：`doc/case3/API-CONTRACT.md`  
 > 目标 viewport：1920×1080（Shell 等比缩放）
 
