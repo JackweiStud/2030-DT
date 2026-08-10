@@ -22,7 +22,7 @@
 | Cost Comparison | 是 | `/api/case3/side` 同包侧级字段 `costPct` | 对应侧运行后 | 单位 `Cost (%)`；取 cost 文件最新一行；与点无关，不写入 `Case3Point`；不使用 dB。 |
 | Throughput Comparison | 是 | 结构化点位 `throughputGbps` | 对应侧逐点数据有效 | Without/With 两条曲线；点位数动态。 |
 | Beam Accuracy | 是 | 文件基线 + Web 本轮点位派生 | 进 Tab 显示基线；With 完成后且 Without 有效时显示基线+增量 | 任意一侧重置后增量失效，回到基线。 |
-| 运行/失败/完成反馈 | 是 | `case_control.status` + Web 本轮动作来源 | 本轮等待态内 | `execute success` 非完成；`case complete` / `reinit complete` 是完成门槛。 |
+| 运行/失败/完成反馈 | 是 | `case_control.status` + Web 本轮动作来源 | 本轮等待态内 | `execute success` 非完成；`case complete` / `reinit complete` 是完成门槛。终态被 Web 消费后会写回 `init,status=""`，所以已完成结果必须保留在 Web 单侧本地状态，不从残留控制文件恢复。 |
 
 ## 2. 文件到 UI 映射
 
@@ -61,3 +61,4 @@
 - [x] 点位数按运行时动态 N，不硬编码 12 或 32。
 - [x] case3 调试输出归属 `out/case3/`，不污染 `out/case2/`。
 - [x] Web 主路径为单侧全量快照 `/api/case3/side`（points 全量 + 侧级 costPct），不采用双 cursor 增量。
+- [x] 控制文件完成/重置终态只在本轮等待态内消费；随后写回 `init,status=""`，不把历史 `case complete` / `reinit complete` 当作刷新恢复依据。

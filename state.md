@@ -60,7 +60,7 @@
 - 后端文件层：先沿用 `01-参考资料/case3/data/c3/` 的多 txt 现网协议；正式后端继续 append txt。JSONL 仅为收编讨论稿，当前不作为正式后端协议。
 - Node/Web 边界：Node 提供 `/api/case3/*`，负责清空单侧实时 append 文件、按行号读取和校验多 txt、收编为区分 Without/With 的结构化点位；Web 只消费结构化数据，不直接读/删共享目录。
 - 共享根配置：case2/case3 统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 只作为历史兼容或迁移期映射。
-- 控制文件：case3 沿用同一个 `case_control.json` 五字段结构。Start/ReInit 由 Node 写入 `case=case3`、`command=start|reinit`、`dt_type=without dt|with dt` 并强制 `status=""` 开新轮；完成后前端不改回 `init`，业务终态仍只由后端写。
+- 控制文件：case3 沿用同一个 `case_control.json` 五字段结构。Start/ReInit 由 Node 写入 `case=case3`、`command=start|reinit`、`dt_type=without dt|with dt` 并强制 `status=""` 开新轮；进页/刷新/切回 case3 的 GET 成功后、单侧 `case complete` 结果被 Web 接收后、单侧 `reinit complete` 被 UI 消费后，Web 经 Node 写回 `command=init,status=""` 空闲态；业务终态仍只由后端写。
 - Reset：单侧重置，路径仍是 `execute success -> reinit complete`。Without 重置后 With 历史结果可保留；With 重置后 Without 历史结果可保留；任意一侧重置都使本次 Beam Accuracy 增量失效并恢复到文件基线。
 - 点位数动态 `N`，由运行时文件解析得到；点位进度显示最新 12 条，超过窗口长度滚动到最新点位。
 - Cost 单位是 `%`；正式 UI 文案统一为 `Cost (%)`，不得沿用 UX 切图里的 dB 或 case2 误差减少语义。

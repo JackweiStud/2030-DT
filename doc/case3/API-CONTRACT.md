@@ -31,8 +31,9 @@ Start/ReInit 开新轮后，Node 会先清空该侧实时 append 文件，再写
 | 逻辑操作      | 最小 REST 语义                                                    | 方向                       | 触发                           | 语义                                                                      |
 | --------- | ------------------------------------------------------------- | ------------------------ | ---------------------------- | ----------------------------------------------------------------------- |
 | GET 控制文件  | `GET /api/case3/control-file`                                 | Web -> Node -> 控制文件      | 进 Tab、运行/重置轮询                | 返回 `case_control.json` 当前快照。                                            |
-| Start 单侧  | `POST /api/case3/control-file`                                | Web -> Node -> 控制文件/文件清空 | 用户点击 Without/With Start      | Node 先清空该侧实时 append 文件，再写 `case=case3,command=start,dt_type=without dt 或 with dt,status=""`。 |
-| ReInit 单侧 | `POST /api/case3/control-file`                                | Web -> Node -> 控制文件/文件清空 | 用户点击单侧重置                     | Node 写 `command=reinit,dt_type=without dt 或 with dt,status=""`；清空该侧本轮实时文件；不清另一侧文件。 |
+| Start 单侧  | `POST /api/case3/control-file`                                | Web -> Node -> 控制文件/文件清空 | 用户点击 Without/With Start      | Node 先清空该侧实时 append 文件，再写 `case=case3,command=start,dt_type=without dt 或 with dt,status=""`；该侧完成并被 Web 接收后，Web 再触发一次空闲写回。 |
+| ReInit 单侧 | `POST /api/case3/control-file`                                | Web -> Node -> 控制文件/文件清空 | 用户点击单侧重置                     | Node 写 `command=reinit,dt_type=without dt 或 with dt,status=""`；清空该侧本轮实时文件；不清另一侧文件；UI 消费 `reinit complete` 后再空闲写回。 |
+| 空闲写回      | `POST /api/case3/control-file`                                | Web -> Node -> 控制文件          | 进页 GET 成功、单侧完成收尾、单侧重置收尾       | 写回 `case=case3,command=init,dt_type="",status="",save_picture_flag=0`。这是控制文件清洁态，不是业务新命令。 |
 | 读取初始化数据   | `GET /api/case3/init-data`                                    | Web -> Node -> 文件        | 进 Tab、单侧重置完成后按需刷新            | 返回地图资源路径、base route、Beam Accuracy 基线。                                   |
 | 读取单侧运行快照  | `GET /api/case3/side?side=without` 或 `side=with`              | Web -> Node -> 多 txt     | 该侧已见 `execute success` 后每 1s | 返回该侧当前已收齐完整点位全量 + 侧级 `costPct`；不使用双 cursor 增量。                          |
 
@@ -49,10 +50,10 @@ Start/ReInit 开新轮后，Node 会先清空该侧实时 append 文件，再写
 | 字段                  | 类型/允许值                                                                          | 权威写方                                       | case3 语义                                           |
 | ------------------- | ------------------------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------- |
 | `case`              | 字符串；case3 请求写 `case3`                                                           | Node 代表 Web 写入                             | Start/ReInit 必须写入 `case3`。                         |
-| `command`           | `init` / `start` / `reinit`                                                     | Node 代表 Web 写入                             | Start 对应单侧运行；ReInit 对应单侧重置。完成后前端不改回 `init`。        |
-| `dt_type`           | `without dt` / `with dt` / `""`                                                 | Node 代表 Web 写入                             | 指明当前命令侧。Without 与 With 互斥运行。                       |
-| `status`            | `""` / `execute success` / `execute fail` / `case complete` / `reinit complete` | 业务终态只由后端写；Node 仅在 Start/ReInit 开轮时强制清 `""` | Web 必须按本轮已见 `execute success` 后的完成/失败终态解释，不解释历史残留。 |
-| `save_picture_flag` | `0` / `1`                                                                       | case2 截图路径使用；case3 暂不消费                    | case3 不因该字段触发截图或业务状态。                              |
+| `command`           | `init` / `start` / `reinit`                                                     | Node 代表 Web 写入                             | `start` / `reinit` 是单侧命令轮；`init` 是空闲态。进页 GET 成功、单侧完成收尾、单侧重置收尾后由 Web/Node 写回 `init`。 |
+| `dt_type`           | `without dt` / `with dt` / `""`                                                 | Node 代表 Web 写入                             | Start/ReInit 指明当前命令侧；空闲写回时清 `""`。Without 与 With 互斥运行。 |
+| `status`            | `""` / `execute success` / `execute fail` / `case complete` / `reinit complete` | 业务终态只由后端写；Node 在 Start/ReInit 开轮和空闲写回时清 `""` | Web 必须按本轮已见 `execute success` 后的完成/失败终态解释，不解释历史残留；不得在消费 `case complete` / `reinit complete` 前清状态。 |
+| `save_picture_flag` | `0` / `1`                                                                       | case2 截图路径使用；case3 暂不消费                    | case3 不因该字段触发截图或业务状态；空闲写回统一写 `0` 以清洁共享控制文件。 |
 
 
 `debug_flag`、`scene_type` 和未来未知字段存在时应保留。Node 写控制文件必须合并最新快照，禁止整文件覆盖导致其他字段丢失。
@@ -334,7 +335,10 @@ With 第 `i` 个点位需要同时具备：
 
 ## 7. 刷新、切 Tab、失败
 
-- 刷新后一切回 case3 初始可见状态；不因控制文件残留 `case complete` 自动恢复运行结果。
-- 切离 case3 时停止 case3 轮询、定时器和本地播放状态；切回按进 Tab 重新加载初始化数据。
+- 刷新后一切回 case3 初始可见状态；不因控制文件残留 `case complete` 自动恢复运行结果。进页或刷新时先 `GET /api/case3/control-file`，GET 成功后 Web 触发一次空闲写回，再加载初始化数据。
+- 切离 case3 时停止 case3 轮询、定时器和本地播放状态；切回按进 Tab 流程重新 GET 控制文件、空闲写回、加载初始化数据。
+- 单侧启动收尾：只有本轮已见 `execute success -> case complete`，且 Web 已接收该侧完成结果后，才触发空闲写回。case3 不消费截图，所以不需要等待 `save_picture_flag` 截图链路。
+- 单侧重置收尾：必须先消费 `reinit complete`，完成 UI 单侧结果清理和 Beam Accuracy 增量失效处理，再触发空闲写回。
+- 空闲写回后的 `command=init,status=""` 不构成后端新命令；正式后端识别新轮次仍只应看 `command=start|reinit` 且 `status=""` 的合法命令元组。
 - `execute fail` 是命令失败终态；该侧显示执行命令失败并允许手动重试。前端不得自动重试、自动超时或发取消命令。
 - Without/With 两侧互斥：任一侧运行或重置期间，另一侧 Start/ReInit 禁用。
