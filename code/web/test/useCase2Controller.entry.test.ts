@@ -52,7 +52,7 @@ afterEach(() => {
 });
 
 describe("useCase2Controller entry gate", () => {
-  it("先 control 成功再拉 initial；历史 complete 不改相", async () => {
+  it("先 control 成功再写回 init，然后拉 initial；历史 complete 不改相", async () => {
     const order: string[] = [];
     const api: Case2Api = {
       async getControl() {
@@ -63,8 +63,9 @@ describe("useCase2Controller entry gate", () => {
         order.push(`data:${phase}`);
         return metrics();
       },
-      async postControl() {
-        throw new Error("not used");
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        return control({ command: "init", status: "", dt_type: "" });
       },
       async postScreenshot() {
         throw new Error("not used");
@@ -84,8 +85,11 @@ describe("useCase2Controller entry gate", () => {
     });
 
     expect(order[0]).toBe("control");
+    expect(order[1]).toBe("post:init");
     expect(order).toContain("data:initial");
-    expect(order.indexOf("control")).toBeLessThan(order.indexOf("data:initial"));
+    expect(order.indexOf("post:init")).toBeLessThan(
+      order.indexOf("data:initial"),
+    );
     expect(result.current.state.case2UiState).toBe("initial");
     expect(result.current.state.adapterError).toBe(false);
     expect(result.current.startEnabled).toBe(true);
@@ -103,8 +107,9 @@ describe("useCase2Controller entry gate", () => {
         order.push(`data:${phase}`);
         return metrics();
       },
-      async postControl() {
-        throw new Error("not used");
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        return control({ command: "init", status: "", dt_type: "" });
       },
       async postScreenshot() {
         throw new Error("not used");
@@ -148,8 +153,9 @@ describe("useCase2Controller entry gate", () => {
         order.push(`data:${phase}`);
         return metrics();
       },
-      async postControl() {
-        throw new Error("not used");
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        return control({ command: "init", status: "", dt_type: "" });
       },
       async postScreenshot() {
         throw new Error("not used");
@@ -179,8 +185,51 @@ describe("useCase2Controller entry gate", () => {
     expect(result.current.state.adapterError).toBe(false);
     expect(result.current.state.initialData).not.toBeNull();
     expect(order.filter((x) => x === "control").length).toBeGreaterThanOrEqual(2);
+    expect(order).toContain("post:init");
     expect(order).toContain("data:initial");
     expect(result.current.state.case2UiState).toBe("initial");
     expect(result.current.startEnabled).toBe(true);
+  });
+
+  it("control 成功但 init 写回失败时不拉 initial，并置 adapterError", async () => {
+    const order: string[] = [];
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        return control({ status: "case complete" });
+      },
+      async getDataFiles(phase) {
+        order.push(`data:${phase}`);
+        return metrics();
+      },
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        throw new Error("control write denied");
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config,
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.state.adapterError).toBe(true);
+    });
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+
+    expect(order).toEqual(["control", "post:init"]);
+    expect(result.current.state.initialData).toBeNull();
+    expect(result.current.startEnabled).toBe(false);
+    expect(result.current.state.case2UiState).toBe("initial");
   });
 });

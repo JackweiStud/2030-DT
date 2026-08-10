@@ -25,7 +25,7 @@
 - 2026-08-03 适配探活：`initial`+`adapterError` 时每 5s `GET control-file`，不封顶；恢复后清 error 并补拉 Initial。
 - 2026-08-03 Gate 4-A：`code/server/` Node 文件适配服务已实现；控制快照五个核心字段必填、`debug_flag`/`scene_type` 可选；截图响应返回共享根相对路径。自动测试 25 项通过；使用仓库 `code/comdatafiles` 完成控制 GET 与 Initial 三指标只读启动烟测。参考文件只用于解析验证，不代表真实业务结果。
 - 2026-08-04 Gate 4 主线联调收口：`code/web` + `code/server` + `code/back/case2` 打桩三端已可演示。
-  - 进页：Web 串行门闩（先 `GET control-file` 诊断适配服务，成功后再 `GET data-files?phase=initial`）；StrictMode 去重避免 Initial 双发。
+  - 进页：Web 串行门闩（先 `GET control-file` 诊断适配服务，成功后 `POST {command:"init"}` 写回空闲态，再 `GET data-files?phase=initial`）；StrictMode 去重避免 Initial 双发。
   - 启动：`status="" → execute success → case complete`；默认打桩同拍 `save_picture_flag=1`；Web 同拍先开截图再读 Calibrated；截图落盘后清 flag。
   - 重置：`status="" → execute success → reinit complete`；重置路径不置 flag；回 `initial` 并清空 Calibrated。
   - 可观测：Node 请求摘要/截图 accepted+saved；打桩接单带 `requestPicture`；Web 成功边沿结构化 console log。
@@ -43,7 +43,7 @@
 
 - 四个 case 通过同一 Web 入口的顶部 Tab 切换；case2 当前已实现，case3 已有 UX/数据资料和文档草案但运行页仍未接入，case1/case4 仍显示“建设中”。
 - case2 控制参考文件为 `01-参考资料/case_control.json`；参考数据在 `01-参考资料/case2/前后端数据接口文件/`。
-- `command`、`case`、`dt_type` 由前端侧发起；Gate 3 演示向：start/reinit 时适配服务强制清 `status=""`；合法 `start|reinit` 命令元组 + 空 status 是后端/打桩唯一的新轮命令门沿，不依赖 command 值变化或文件 mtime。其后业务 `status` 仍由后端写入。`case complete` 是测试完成信号，`reinit complete` 是重置完成信号；截图成功后前端侧适配服务将 `save_picture_flag` 从 `1` 清回 `0`。
+- `command`、`case`、`dt_type` 由前端侧发起；进页/刷新/切回 case2 的诊断 GET 成功后，Web 经适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`，只表示空闲握手。Gate 3 演示向：start/reinit 时适配服务强制清 `status=""`；合法 `start|reinit` 命令元组 + 空 status 是后端/打桩唯一的新轮命令门沿，不依赖 command 值变化或文件 mtime。其后业务 `status` 仍由后端写入。`case complete` 是测试完成信号，`reinit complete` 是重置完成信号；截图成功后前端侧适配服务将 `save_picture_flag` 从 `1` 清回 `0`。
 - P0-1 已确认：后端每轮启动后，先完整写完并关闭六个 Calibrated 文件，最后才写 `status=case complete`；前端只在本轮启动后已见 `execute success` 再见到 `case complete` 的链路上读取这六个文件。本地打桩若本轮请求截图，在六文件全部完成后将 `case complete + save_picture_flag=1` 合并为同一次最终原子控制写。
 - P0-2 已确认：启动和重置互斥；不做取消、队列、自动超时或业务命令自动重试；`execute fail` 解除按钮并允许手动重试；刷新页面后一切回 Initial。截图生成/上传的有限重试不属于业务命令重试。
 - P0-3 已确认：Node 适配服务采用最小 REST；控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。

@@ -123,6 +123,13 @@ export function useCase2Controller(options: Options): Case2Controller {
     adapterProbeAbortRef.current = null;
   }, []);
 
+  const postEntryInit = useCallback(
+    async (api: Case2Api, signal: AbortSignal): Promise<ControlSnapshot> => {
+      return api.postControl({ command: "init" }, signal);
+    },
+    [],
+  );
+
   const runAdapterRecoveryProbe = useCallback(async () => {
     const snap = stateRef.current;
     if (!snap.adapterError || snap.case2UiState !== "initial") {
@@ -143,11 +150,14 @@ export function useCase2Controller(options: Options): Case2Controller {
         return;
       }
 
-      dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control });
       case2Log("adapter_probe.ok", {
-        note: "adapter recovered; historical status ignored",
+        note: "adapter recovered; historical status ignored before init reset",
         ...controlSummary(control),
       });
+      const resetControl = await postEntryInit(api, ac.signal);
+      if (ac.signal.aborted) return;
+      dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control: resetControl });
+      case2Log("adapter_probe.init_reset_ok", controlSummary(resetControl));
 
       if (!stateRef.current.initialData) {
         try {
@@ -178,7 +188,7 @@ export function useCase2Controller(options: Options): Case2Controller {
         adapterProbeAbortRef.current = null;
       }
     }
-  }, [dispatch, stopAdapterProbe]);
+  }, [dispatch, postEntryInit, stopAdapterProbe]);
 
   const scheduleAdapterProbeLoop = useCallback(() => {
     if (adapterProbingRef.current) return;
@@ -437,25 +447,34 @@ export function useCase2Controller(options: Options): Case2Controller {
     case2Log("entry.begin", { generation });
 
     void (async () => {
-      // 1) 诊断适配服务 / 控制文件；失败则不拉 Initial
+      // 1) 诊断适配服务 / 控制文件；随后清回 init。任一步失败则不拉 Initial
       try {
         const control = await api.getControl(ac.signal);
         if (generation !== entryLoadGeneration || ac.signal.aborted) {
           case2Log("entry.stale_after_control", { generation });
           return;
         }
-        dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control });
         case2Log("entry.control_ok", {
           generation,
-          note: "adapter/control readable; historical status ignored",
+          note: "adapter/control readable; historical status ignored before init reset",
           ...controlSummary(control),
+        });
+        const resetControl = await postEntryInit(api, ac.signal);
+        if (generation !== entryLoadGeneration || ac.signal.aborted) {
+          case2Log("entry.stale_after_init_reset", { generation });
+          return;
+        }
+        dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control: resetControl });
+        case2Log("entry.init_reset_ok", {
+          generation,
+          ...controlSummary(resetControl),
         });
       } catch (err) {
         if (isAbortError(err) || generation !== entryLoadGeneration) {
           case2Log("entry.control_aborted_or_stale", { generation });
           return;
         }
-        console.warn("[case2] diagnostic control failed", err);
+        console.warn("[case2] diagnostic control/init reset failed", err);
         dispatch({ type: "DIAGNOSTIC_CONTROL_FAIL" });
         case2Log("entry.control_fail", {
           generation,
@@ -497,7 +516,7 @@ export function useCase2Controller(options: Options): Case2Controller {
       stopAdapterProbe();
       case2Log("entry.cleanup", { generation });
     };
-  }, [dispatch, stopAdapterProbe, stopPolling]);
+  }, [dispatch, postEntryInit, stopAdapterProbe, stopPolling]);
 
   // initial + adapterError：5s 探活，不封顶；恢复后清 error 并补 Initial
   useEffect(() => {

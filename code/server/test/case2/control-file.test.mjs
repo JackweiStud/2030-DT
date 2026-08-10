@@ -51,9 +51,10 @@ test("缺失核心字段或可选字段类型错误时拒绝控制文件", async
   });
 });
 
-test("start 和 reinit 合并最新快照、清空 status 并保留未知字段", async (t) => {
+test("start、reinit 和进页 init 合并最新快照、清空 status 并保留未知字段", async (t) => {
   const sharedDir = await createSharedDir(t, {
     status: "execute fail",
+    save_picture_flag: 1,
     future_field: "keep-me",
   });
   const controlFile = service(sharedDir);
@@ -72,6 +73,19 @@ test("start 和 reinit 合并最新快照、清空 status 并保留未知字段"
   assert.equal(reset.status, "");
   assert.equal(reset.command, "reinit");
   assert.equal(reset.future_field, "keep-me");
+
+  await writeControl(sharedDir, {
+    ...reset,
+    status: "case complete",
+    save_picture_flag: 1,
+  });
+  const idle = await controlFile.updateFromHttp({ command: "init" });
+  assert.equal(idle.case, "case2");
+  assert.equal(idle.command, "init");
+  assert.equal(idle.dt_type, "");
+  assert.equal(idle.status, "");
+  assert.equal(idle.save_picture_flag, 0);
+  assert.equal(idle.future_field, "keep-me");
 });
 
 test("控制写入进程内串行，清 flag 不修改 status", async (t) => {
@@ -107,7 +121,7 @@ test("控制写入进程内串行，清 flag 不修改 status", async (t) => {
   assert.deepEqual(leftovers, []);
 });
 
-test("POST 控制 payload 必须严格匹配三种 shape", async (t) => {
+test("POST 控制 payload 必须严格匹配四种 shape", async (t) => {
   const sharedDir = await createSharedDir(t);
   const controlFile = service(sharedDir);
   await assert.rejects(

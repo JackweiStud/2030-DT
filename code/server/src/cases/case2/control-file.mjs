@@ -92,6 +92,19 @@ function classifyPayload(payload) {
     return { kind: "reinit", patch: { command: "reinit", status: "" } };
   }
 
+  if (exactKeys("command") && payload.command === "init") {
+    return {
+      kind: "entry-init",
+      patch: {
+        case: "case2",
+        command: "init",
+        dt_type: "",
+        status: "",
+        save_picture_flag: 0,
+      },
+    };
+  }
+
   if (
     exactKeys("save_picture_flag") &&
     payload.save_picture_flag === 0
@@ -102,7 +115,7 @@ function classifyPayload(payload) {
   throw new AppError(
     400,
     "INVALID_REQUEST",
-    "control payload must be exactly start, reinit, or save_picture_flag=0",
+    "control payload must be exactly start, reinit, init, or save_picture_flag=0",
   );
 }
 

@@ -7,7 +7,7 @@
 - [ ] Shell 独立拥有四 Tab、1920×1080 等比缩放、公共 token 和“建设中”占位。
 - [ ] case2 离开 Tab 即卸载，停止轮询并清空业务态、Calibrated 和截图状态。
 - [ ] Initial、calibrating、completed、failed-start/failed-reinit、resetting 与适配错误行为符合**本文施工写死点**（相对契约的 Gate 3 放宽以本文为准；无 result-error/unknown-control UI）。
-- [ ] 新进入 / 刷新 / 切回 case2 一律 `initial`（可启动、不读 Calibrated），不续接控制文件历史 `status`；无自动业务超时、业务命令自动重试、取消或队列；截图有限重试按 P0-4 单独执行。
+- [ ] 新进入 / 刷新 / 切回 case2 一律 `initial`（可启动、不读 Calibrated），不续接控制文件历史 `status`；诊断 GET 成功后触发一次 `POST {command:"init"}` 空闲写回；无自动业务超时、业务命令自动重试、取消或队列；截图有限重试按 P0-4 单独执行。
 - [ ] 启动和重置互斥；`failed-start` / `failed-reinit` 仅本挂载内本轮命令失败后出现。
 - [ ] 启动/重置 POST 由适配服务清 `status=""`；仅在 `calibrating` 内本轮已见 `execute success` 后再见 `case complete`，才读取 Calibrated 六文件。
 - [ ] 动态 `Nx × Ny` 热力图、动态 `N` CDF/均值/降幅均由当前响应计算，无固定 20 或固定百分比。
@@ -19,7 +19,7 @@
 
 > 先看图是否符合预期，再下钻后文。字段与后端时序语义以 [API-CONTRACT.md](API-CONTRACT.md) §1.1–1.3 为准；**Web 可见态、按钮互斥、旁路失败处理以本文为准**（含相对契约的 Gate 3 施工写死点）。下列为相对契约的写死点（其余不重复罗列「符合」项）：
 
-1. **新进入 / 刷新 / 切回 case2：一律** `initial`（可启动、不读 Calibrated），**不续接**控制文件里任何历史 `status`。`failed-start` / `failed-reinit` 只在**本挂载内**本轮命令失败后出现。进页**不**重写控制文件（可选运维卫生除外）。
+1. **新进入 / 刷新 / 切回 case2：一律** `initial`（可启动、不读 Calibrated），**不续接**控制文件里任何历史 `status`。`failed-start` / `failed-reinit` 只在**本挂载内**本轮命令失败后出现。进页诊断 GET 成功后，Web 再触发一次 `POST {command:"init"}`，由适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`。
 2. **本轮开盘（Gate 3 演示向，相对契约放宽）**：启动/重置的 `POST control-file` 由适配服务在写命令字段时**同时清** `status=""`，去掉上轮残留。等待态内：**先见** `execute success`**，再认** `case complete` / `reinit complete`；`execute fail` 可直接认（清盘后即为本轮失败）。不设 `baselineStatus` / `pendingAction`。
 3. 连接异常用 `adapterError` 叠加，不另切 phase。
 4. `completed`：启动禁、只可重置。`failed-start`：只可再启动；`failed-reinit`：只可再重置。不设 `result-error` / `unknown-control` UI：六文件失败或未知 status 只打诊断日志并保持等待态（演示主路径假定可读）。
@@ -61,7 +61,7 @@
 
 ```mermaid
 flowchart TD
-  entry(["新进入 / 刷新 / 切回"]) -->|"忽略历史 status"| I["initial<br/>启动✓ 重置✗"]
+  entry(["新进入 / 刷新 / 切回"]) -->|"忽略历史 status<br/>GET 后 POST init"| I["initial<br/>启动✓ 重置✗"]
 
   I -->|点击启动<br/>POST 清 status| C["calibrating<br/>双禁"]
 
@@ -114,7 +114,7 @@ flowchart TD
 | --- | ------------------------------------------------------------------------------------------------------ |
 | 启   | 进入 `calibrating`（点启动）或 `resetting`（点重置）时启动；已在跑则不重复开                                                    |
 | 停   | 离开等待态到终态时停：`completed` / `failed-start` / `failed-reinit` / 重置回到 `initial`；切离 case2、卸载、刷新也立即停并 `abort` |
-| 不启  | 纯 `initial`（含新进入 / 刷新 / 切回）**不**启**业务**控制轮询；进页对 control **必发**一次性 GET（诊断）。例外：`adapterError=true` 且仍为 `initial` 时每 **5s** 探活（见 ① / §5.2），**不是**业务轮询 |
+| 不启  | 纯 `initial`（含新进入 / 刷新 / 切回）**不**启**业务**控制轮询；进页对 control **必发**一次性 GET（诊断），成功后再 POST `init` 空闲写回。例外：`adapterError=true` 且仍为 `initial` 时每 **5s** 探活（见 ① / §5.2），探活 GET 成功后同样先 POST `init`，**不是**业务轮询 |
 | 请求  | 同一路 `GET /api/case2/control-file`（一次响应读 `status` + `save_picture_flag`）                                |
 | 周期  | 业务轮询：`VITE_CASE2_POLL_MS`，默认 **1000ms**；上一次 GET **结束后**再等；禁止 `setInterval` 叠请求。探活间隔固定 **5000ms**，与 `POLL_MS` 无关 |
 
@@ -124,9 +124,10 @@ flowchart TD
 **不**启业务控制轮询定时器。进页采用**串行门闩**（非并行）：
 
 1. **必发**一次性 `GET control-file`：只诊断 **Node 适配服务 + 控制文件是否可读**；**不是**探真实后端/打桩是否在线。失败 → 置 `adapterError`，**不**改相，**不**继续拉 Initial，并进入下方探活。
-2. 仅当 control 诊断成功后，再 `GET data-files?phase=initial` 拉基线。
-3. control 成功时的历史 `status` / `command` **不**改相；开发态 StrictMode 重挂载须丢弃陈旧进页结果（`entryLoadGeneration`），避免 Initial 双发。
-4. **探活（仅 `adapterError=true` 且仍为 `initial`）**：每 **5s** 再发 `GET control-file`（不封顶，直到恢复或离开 case2）。成功 → 清 `adapterError`；若尚无 Initial 再拉 `data-files?phase=initial`。探活**不**因历史 `status` 改相；切离 case2 / 进入等待态 / 卸载时停探。
+2. 仅当 control 诊断成功后，再 `POST control-file {command:"init"}`，由适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`。写回失败 → 置 `adapterError`，不继续拉 Initial。
+3. 仅当 init 写回成功后，再 `GET data-files?phase=initial` 拉基线。
+4. control 成功时的历史 `status` / `command` **不**改相；开发态 StrictMode 重挂载须丢弃陈旧进页结果（`entryLoadGeneration`），避免 Initial 双发。
+5. **探活（仅 `adapterError=true` 且仍为 `initial`）**：每 **5s** 再发 `GET control-file`（不封顶，直到恢复或离开 case2）。GET 成功后先 POST `init`；POST 成功 → 清 `adapterError`；若尚无 Initial 再拉 `data-files?phase=initial`。探活**不**因历史 `status` 改相；切离 case2 / 进入等待态 / 卸载时停探。
 
 ```mermaid
 sequenceDiagram
@@ -147,6 +148,8 @@ sequenceDiagram
         Note over UI: 保持 adapterError；仍不拉 Initial
       else 恢复可读
         Node-->>UI: 快照（仅诊断；不驱动业务相）
+        UI->>Node: POST control-file（init 空闲写回）
+        Node-->>UI: command=init,status=""
         UI->>UI: adapterError=false
         UI->>Node: GET data-files?phase=initial
         Node-->>UI: Initial 六文件
@@ -155,6 +158,8 @@ sequenceDiagram
     end
   else 可读
     Node-->>UI: 快照（仅诊断；不驱动业务相）
+    UI->>Node: POST control-file（init 空闲写回）
+    Node-->>UI: command=init,status=""
     UI->>Node: GET data-files?phase=initial
     Node-->>UI: Initial 六文件
     UI->>UI: 渲染三项基线（失败则基线区报错、启动禁用）
@@ -163,7 +168,7 @@ sequenceDiagram
 ```
 
 - 启动可用条件：Initial 就绪且无 `adapterError`。
-- control 诊断/探活成功 **不**表示打桩/真实后端已在线；后端是否推进 status 只在用户 start/reinit 后的等待态轮询验证。
+- control 诊断/探活成功及随后 `init` 写回成功 **不**表示打桩/真实后端已在线；后端是否推进 status 只在用户 start/reinit 后的等待态轮询验证。
 - 「探活」≠「业务轮询」：探活只恢复适配可达性与 Initial 基线；不观察 `save_picture_flag`、不认完成/失败终态。
 
 #### ② 点击启动
@@ -495,10 +500,11 @@ case-local state 至少包含：
 1. reducer 初始化为 `initial`、`adapterError=false`、`seenExecuteSuccess=false`、无 Calibrated。
 2. **串行门闩（必按此顺序）**：
    1. **必发**一次性 `GET control-file`（诊断 **适配服务 + 控制文件可读性**，不是探真实后端/打桩）。
-   2. 仅当 control 诊断成功后，再 `GET data-files?phase=initial`。
-   3. control 失败：置 `adapterError=true`，**停止进页数据加载**（不得再发 Initial），可见态仍为 `initial`。
+   2. 仅当 control 诊断成功后，再 `POST {command:"init"}` 空闲写回；写回失败与 control 失败一样置 `adapterError=true` 并停止进页数据加载。
+   3. 仅当 init 写回成功后，再 `GET data-files?phase=initial`。
+   4. control 或 init 写回失败：置 `adapterError=true`，**停止进页数据加载**（不得再发 Initial），可见态仍为 `initial`。
 3. Initial 六文件整体成功后渲染三项基线；失败则 Initial 区报错且启动禁用，不进入独立 error phase。Initial 失败与 control 失败语义分离：前者 `initialError`（基线不可用），后者 `adapterError`（适配连接异常）。
-4. **可见态固定** `initial`，与首包 `status`/`command` 无关：启动可用（Initial 就绪且无 adapterError 时）、重置禁用、不读 Calibrated、不进入 `failed-`*/`completed`。控制快照仅诊断；其 `status` 不改相。
+4. **可见态固定** `initial`，与首包 `status`/`command` 无关：启动可用（Initial 就绪且无 adapterError 时）、重置禁用、不读 Calibrated、不进入 `failed-`*/`completed`。控制快照仅诊断；其 `status` 不改相；init 写回只清控制文件空闲态。
 5. 进页**不**启动控制轮询定时器；在进入 `calibrating`/`resetting` 之前不因 `status` 改相。
 6. 截图：仅 `calibrating` 轮询看 `save_picture_flag`；启表后 `lastFlag` 初值当作 `0`；进页一次性 GET **不**触发。同拍 `case complete` + 0→1 须先截再停表。
 7. 开发态 React StrictMode 可能 setup→cleanup→setup：进页请求须带 abort / generation 去重，**同一有效挂载周期不得成功提交两次 Initial**。
@@ -508,7 +514,7 @@ case-local state 至少包含：
 
 - **启**：POST `start`/`reinit` 成功并进入 `calibrating`/`resetting` 后启动；已在跑则不重复开。
 - **停**：进入 `completed` / `failed-start` / `failed-reinit` / 重置后的 `initial` 时清理 timer；切离 case2、卸载、刷新立即 `abort` 并清理。
-- **不启**：纯 `initial`（新进入/刷新/切回）只做一次性 `GET control-file` 诊断（必发），不作定时业务轮询。例外：`adapterError=true` 且仍为 `initial` 时，每 **5s** 探活一次 `GET control-file`（不封顶），成功后清 `adapterError`；若尚无 Initial 再拉 `data-files?phase=initial`；不因历史 `status` 改相。切离 case2 / 进入等待态 / 卸载时停探。
+- **不启**：纯 `initial`（新进入/刷新/切回）只做一次性 `GET control-file` 诊断（必发）+ `POST init` 空闲写回，不作定时业务轮询。例外：`adapterError=true` 且仍为 `initial` 时，每 **5s** 探活一次 `GET control-file`（不封顶），成功后先 `POST init`，再清 `adapterError`；若尚无 Initial 再拉 `data-files?phase=initial`；不因历史 `status` 改相。切离 case2 / 进入等待态 / 卸载时停探。
 - 使用递归 `setTimeout`：上一次 GET 完成后再等待 `VITE_CASE2_POLL_MS`（默认 1000），禁止 `setInterval` 造成请求重叠。
 - 每个挂载实例持有 `AbortController`；停表/卸载时 abort 当前请求并清理 timer。
 - 网络/控制读失败：置 `adapterError=true` 并继续轮询；成功后清 `adapterError`。不改 `case2UiState`。
@@ -602,9 +608,10 @@ case-local state 至少包含：
 | 接口                                | 调用点                                                     | 成功更新                                   |
 | --------------------------------- | ------------------------------------------------------- | -------------------------------------- |
 | `GET control-file`                | 进页一次性（诊断，**必发**）；`calibrating`/`resetting` 内 1000ms 串行轮询 | 等待态推进终态；**仅 calibrating** 消费截图 flag；非等待态不启定时器。 |
+| `POST control-file` init          | 进页/刷新/切回的诊断 GET 成功后；adapterError 探活 GET 成功后 | 写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；只表示空闲握手，不是业务轮询。 |
 | `POST control-file` start         | 启动按钮                                                    | 进入 `calibrating`；适配服务强制写后 `status=""`。 |
 | `POST control-file` reinit        | 重置按钮                                                    | 进入 `resetting`；适配服务强制写后 `status=""`。   |
-| `GET data-files?phase=initial`    | 进页串行门闩第 2 步：仅 control 诊断成功后，每次 case2 挂载一次 | Initial 三项。                            |
+| `GET data-files?phase=initial`    | 进页串行门闩第 3 步：仅 init 写回成功后，每次 case2 挂载一次 | Initial 三项。                            |
 | `GET data-files?phase=calibrated` | `calibrating` 且 `seenExecuteSuccess` 后见 `case complete` | Calibrated 三项。                         |
 | `POST screenshot`                 | 截图机生成 Base64 后（含同拍 complete 触发）                         | 保存回执；仍 calibrating → `waitClear`；已 completed → `idle`。 |
 
@@ -1197,7 +1204,7 @@ saving
 - 不对未知 `status` 另开 UI 相；保持等待态直至刷新/切 Tab。
 - 不设 `pendingAction`、`baselineStatus`、`connection-error`、`initial-data-error`、`result-error`、`unknown-control` 独立字段/phase。
 - 「现场环境 >」打开 Shell 级现场环境弹窗（图片占位）；不得做成外链导航；不接入真实视频流。
-- 进页不重写共享目录 `case_control.json`；不因历史 `status` 展示 fail/完成态。开一轮清盘只发生在 start/reinit POST（适配服务侧）。
+- 进页诊断 GET 成功后会通过 Node 重写共享目录 `case_control.json` 到 init 空闲态；但不因历史 `status` 展示 fail/完成态。业务开一轮清盘仍只发生在 start/reinit POST（适配服务侧）。
 - 截图不做无限重试或跨挂载恢复；同一挂载内同一任务最多 3 次，最终失败自动清零并接受丢图。
 - 不读取 AOA、ZOA、`without dt` 或其他 case 数据。
 - 不缓存或恢复旧 Calibrated，不把参考文件包装成本轮结果；`resetting` 暂留的是本挂载刚完成的批次，不是跨刷新恢复。

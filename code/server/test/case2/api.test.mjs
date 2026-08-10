@@ -29,6 +29,14 @@ test("四个 case2 REST 成功路径可联通", async (t) => {
   assert.equal(controlPost.status, 200);
   assert.equal(controlPost.body.control.status, "");
 
+  const entryInitPost = await jsonRequest(baseUrl, "/api/case2/control-file", {
+    method: "POST",
+    body: { command: "init" },
+  });
+  assert.equal(entryInitPost.status, 200);
+  assert.equal(entryInitPost.body.control.command, "init");
+  assert.equal(entryInitPost.body.control.status, "");
+
   const dataGet = await jsonRequest(
     baseUrl,
     "/api/case2/data-files?phase=initial",
