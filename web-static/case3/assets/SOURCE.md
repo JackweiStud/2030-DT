@@ -7,7 +7,7 @@
 | `ue_comm_map.png` | `02-ux/case3/上部分/元素/ue_comm_map.png` |
 | `ue-vehicle.png` | `02-ux/case3/上部分/元素/UE车贴图.png` |
 | `bs-antenna.png` | `02-ux/case3/上部分/元素/基站贴图.png` |
-| `icon-with.png` / `icon-without.png` | 同上目录 with/nowith 图标 |
+| `icon-play.svg` / `icon-rotate-ccw.svg` | Lucide `play` / `rotate-ccw`（对齐 Pencil 按钮图标） |
 | `icon-ok.png` / `icon-err.png` | 同上目录 正确/错误 |
 | `beam-short.png` / `beam-long.png` | 同上目录波束示意 |
 | `icon-bs-beam.png` / `icon-point.png` / `beam-card-bg.png` / `beam-grid-bg.png` | `02-ux/case3/上部分/元素/1BS波束部分/` |
