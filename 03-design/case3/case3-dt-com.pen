@@ -12153,7 +12153,7 @@
                                           "id": "CLqQI",
                                           "name": "点位文案",
                                           "fill": "#FFFFFF",
-                                          "content": "点位{no}",
+                                          "content": "点位20",
                                           "fontFamily": "$font",
                                           "fontSize": 14,
                                           "fontWeight": "500"
@@ -16473,7 +16473,7 @@
                                           "id": "ETZ7e",
                                           "name": "点位文案",
                                           "fill": "#FFFFFF",
-                                          "content": "点位{no}",
+                                          "content": "点位20",
                                           "fontFamily": "$font",
                                           "fontSize": 14,
                                           "fontWeight": "500"
@@ -19569,7 +19569,7 @@
                                           "fill": {
                                             "type": "image",
                                             "enabled": true,
-                                            "url": "assets/icon-ok.png",
+                                            "url": "assets/icon-err.png",
                                             "mode": "fit"
                                           },
                                           "width": 14,
@@ -19579,8 +19579,8 @@
                                           "type": "text",
                                           "id": "E1UW1",
                                           "name": "最优说明",
-                                          "fill": "#09aa71",
-                                          "content": "波束预测成功,BeamId:{no}",
+                                          "fill": "#f2210aff",
+                                          "content": "波束预测失败,BeamId: 44",
                                           "fontFamily": "$font",
                                           "fontSize": 14,
                                           "fontWeight": "500"
@@ -20583,7 +20583,7 @@
                                   "x": 282.5,
                                   "y": 113.5,
                                   "name": "路线点-19",
-                                  "fill": "#22C55E",
+                                  "fill": "#c44a21ff",
                                   "width": 4,
                                   "height": 4,
                                   "stroke": "#FFFFFF",
@@ -20595,7 +20595,7 @@
                                   "x": 282.5,
                                   "y": 121.5,
                                   "name": "路线点-20",
-                                  "fill": "#22C55E",
+                                  "fill": "#c44a21",
                                   "width": 4,
                                   "height": 4,
                                   "stroke": "#FFFFFF",
@@ -34757,7 +34757,7 @@
                                           "id": "SxzUO",
                                           "name": "点位文案",
                                           "fill": "#FFFFFF",
-                                          "content": "点位{no}",
+                                          "content": "点位20",
                                           "fontFamily": "$font",
                                           "fontSize": 14,
                                           "fontWeight": "500"
@@ -46001,7 +46001,7 @@
                                           "id": "L0wcC",
                                           "name": "点位文案",
                                           "fill": "#FFFFFF",
-                                          "content": "点位{no}",
+                                          "content": "点位18",
                                           "fontFamily": "$font",
                                           "fontSize": 14,
                                           "fontWeight": "500"
@@ -57205,7 +57205,10 @@
                                     {
                                       "type": "frame",
                                       "id": "pIL6z",
+                                      "x": 147,
+                                      "y": 0,
                                       "name": "标题右区",
+                                      "enabled": false,
                                       "height": 22,
                                       "fill": "#00000000",
                                       "gap": 4,
