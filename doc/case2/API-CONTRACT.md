@@ -39,7 +39,7 @@ Gate 2 冻结最小 REST 语义：不用 WebSocket，不做命令队列，不做
 | 逻辑操作          | 最小 REST 语义                         | 方向                         | 触发                                  | 输入/输出语义                                           | 约束                                  |
 | ------------- | ---------------------------------- | -------------------------- | ----------------------------------- | ------------------------------------------------- | ----------------------------------- |
 | GET 控制文件      | `GET /api/case2/control-file`      | Web → 适配服务 → 控制文件          | 页面进入、运行期间、截图请求检测                    | 返回当前 `case_control` 字段及可用性                        | Web 不直接读文件。                         |
-| POST 控制文件     | `POST /api/case2/control-file`     | Web → 适配服务 → 控制文件          | 进入/刷新/切回 case2 的 GET 诊断成功后；用户点击“启动”或“重置”；截图成功或累计 3 次失败后清零           | 进页写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；启动写 `case=case2,command=start,dt_type=with dt`；重置写 `command=reinit`；截图成功或放弃本张截图写 `save_picture_flag=0`；**Gate 3：`start`/`reinit` 额外强制 `status=""`** | 请求体不含 `status`；业务终态字面值仍只由后端写出；保留未知字段。                   |
+| POST 控制文件     | `POST /api/case2/control-file`     | Web → 适配服务 → 控制文件          | 进入/刷新/切回 case2 的 GET 诊断成功后；启动轮 Calibrated 与截图收尾完成后；重置完成并回 Initial 后；用户点击“启动”或“重置”；截图成功或累计 3 次失败后清零           | 空闲写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；启动写 `case=case2,command=start,dt_type=with dt`；重置写 `command=reinit`；截图成功或放弃本张截图写 `save_picture_flag=0`；**Gate 3：`start`/`reinit` 额外强制 `status=""`** | 请求体不含 `status`；业务终态字面值仍只由后端写出；保留未知字段。                   |
 | 读取数据文件        | `GET /api/case2/data-files`        | Web → 适配服务 → Initial/Calibrated 文件 | Initial 首屏；本轮启动观察到 `execute success -> case complete` | 返回三项热力矩阵与 KPI 样本；Calibrated 必须为完整六文件批次             | 文件存在、`execute success` 或旧缓存均不能替代完成门槛。 |
 | 提交截图          | `POST /api/case2/screenshot`       | Web → 适配服务 → 输出目录          | Web 发现 `save_picture_flag` 从 `0` 变为 `1` | Web 对同一任务最多尝试 3 次；Node 以临时文件 + 原子 rename 落盘，成功后清零 | 浏览器不得写共享目录；前两次失败不得清零；第三次仍失败允许清零并丢失本张截图；不得覆盖旧截图。                |
 
@@ -71,6 +71,10 @@ sequenceDiagram
   Node->>Shared: 一次性读取并校验 6 文件
   Node-->>Web: 返回完整批次
   Web->>Web: 渲染 Calibrated 热力图/KPI，按钮解除
+  opt 截图请求已保存或放弃，或本轮无截图
+    Web->>Node: POST 控制文件：init
+    Node->>Shared: 写 command=init, dt_type="", status="", save_picture_flag=0
+  end
 ```
 
 ### 1.2 重置、失败与刷新时序
@@ -156,8 +160,10 @@ sequenceDiagram
 2. **业务终态字面值**（`execute success` / `execute fail` / `case complete` / `reinit complete`）仅后端写出；Web 或适配服务不得伪造这些终态。
 3. **Gate 3 演示向放宽（开一轮清盘）**：处理 `start` / `reinit` 时，适配服务在合并命令字段后**额外强制写入 `status=""`**（HTTP 请求体仍禁止带 `status`）。用于去掉上轮残留终态，供 Web 用「时刻 A 见 `execute success`、之后时刻 B 见完成终态」的简单规则。合法 `start|reinit` 命令元组与 `status=""` 的组合同时构成后端/打桩唯一的新轮命令门沿；不得仅凭 `command` 值变化、文件 mtime 或一次文件事件判断新命令。真实后端须接受开一轮时出现空 `status`。截图清零路径**不得**改写 `status`。细节见 [SERVER-SPEC.md](SERVER-SPEC.md) / [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)。
 4. 进页空闲写回：Web 在进入/刷新/切回 case2 时先 `GET control-file`；GET 成功后再 `POST {command:"init"}`，由适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`。该写回只表示页面进入后的空闲握手，不是一次业务 start/reinit 门沿。
-5. `GET /api/case2/control-file` 与 `POST /api/case2/control-file` 是控制文件唯一 REST 口径；进页空闲写回、启动、重置和截图清零都通过 POST 控制文件表达，不再拆成多个命令专用接口。
-6. 具体原子写、串行化与字段保留算法见 [SERVER-SPEC.md](SERVER-SPEC.md)，其结果必须满足前五条。
+5. 启动轮收尾写回：Web 已按 `execute success -> case complete` 读取 Calibrated 六文件并进入 `completed` 后，若本轮截图请求已保存并清零、已累计 3 次失败后放弃清零，或本轮无截图请求，再 `POST {command:"init"}` 写回空闲态。不得在读取 Calibrated 或截图收尾前提前清 `status` / `save_picture_flag`。
+6. 重置轮收尾写回：Web 已按 `execute success -> reinit complete` 清空 Calibrated 并回到 `initial` 后，再 `POST {command:"init"}` 写回空闲态。不得在 UI 消费 `reinit complete` 前提前清 `status`。
+7. `GET /api/case2/control-file` 与 `POST /api/case2/control-file` 是控制文件唯一 REST 口径；进页空闲写回、启动/重置轮收尾写回、启动、重置和截图清零都通过 POST 控制文件表达，不再拆成多个命令专用接口。
+8. 具体原子写、串行化与字段保留算法见 [SERVER-SPEC.md](SERVER-SPEC.md)，其结果必须满足前七条。
 
 
 

@@ -9,6 +9,7 @@ import {
   case2Reducer,
   createInitialCase2State,
   shouldFetchCalibrated,
+  shouldResetCommandAfterCommandCompletion,
   shouldStartScreenshot,
   statusFeedbackText,
   shouldShowCalibrated,
@@ -69,6 +70,7 @@ describe("case2Reducer", () => {
     s = case2Reducer(s, { type: "CONTROL_POLL_OK", control: completeCtrl });
     s = case2Reducer(s, { type: "CALIBRATED_OK", metrics: metrics() });
     expect(s.case2UiState).toBe("completed");
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
     expect(canStart(s)).toBe(false);
     expect(canReset(s)).toBe(true);
   });
@@ -181,5 +183,55 @@ describe("case2Reducer", () => {
     s = case2Reducer(s, { type: "SCREENSHOT_DROPPED" });
     expect(s.screenshotPhase).toBe("idle");
     expect(s.screenshotAttempts).toBe(0);
+  });
+
+  it("启动轮空闲写回必须等待 Calibrated 与截图状态收尾", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "START_CLICK" });
+    s = case2Reducer(s, {
+      type: "CONTROL_POLL_OK",
+      control: control({ status: "case complete" }),
+    });
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(false);
+
+    s = {
+      ...s,
+      case2UiState: "completed",
+      calibratedData: metrics(),
+      lastControl: control({ status: "case complete" }),
+      screenshotPhase: "saving",
+    };
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(false);
+
+    s = { ...s, screenshotPhase: "idle" };
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
+
+    s = {
+      ...s,
+      lastControl: control({ command: "init", status: "" }),
+    };
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(false);
+  });
+
+  it("重置完成回 initial 后可以写回 init 空闲态", () => {
+    let s = createInitialCase2State();
+    s = {
+      ...s,
+      case2UiState: "completed",
+      calibratedData: metrics(),
+      initialData: metrics(),
+    };
+    s = case2Reducer(s, { type: "RESET_CLICK" });
+    s = case2Reducer(s, {
+      type: "CONTROL_POLL_OK",
+      control: control({ status: "execute success", command: "reinit" }),
+    });
+    s = case2Reducer(s, {
+      type: "CONTROL_POLL_OK",
+      control: control({ status: "reinit complete", command: "reinit" }),
+    });
+    expect(s.case2UiState).toBe("initial");
+    expect(s.calibratedData).toBeNull();
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
   });
 });

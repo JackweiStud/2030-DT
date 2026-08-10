@@ -14474,8 +14474,8 @@
                                 {
                                   "type": "frame",
                                   "id": "mgAuE",
-                                  "x": 85,
-                                  "y": 68,
+                                  "x": 144,
+                                  "y": 67,
                                   "name": "数值块",
                                   "flipX": true,
                                   "layout": "vertical",
@@ -14973,7 +14973,7 @@
                                   "type": "ellipse",
                                   "id": "xeiRw",
                                   "name": "图例点-有DT",
-                                  "rotation": -0.14288193867204882,
+                                  "rotation": -0.14288193867204885,
                                   "fill": "#22D3EE",
                                   "width": 10,
                                   "height": 10

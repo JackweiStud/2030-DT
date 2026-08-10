@@ -385,3 +385,21 @@ export function shouldStartScreenshot(
   if (state.screenshotPhase !== "idle") return false;
   return state.screenshotLastFlag === 0 && control.save_picture_flag === 1;
 }
+
+/** 启动/重置轮完整收尾后，是否可以把控制文件写回 init 空闲态。 */
+export function shouldResetCommandAfterCommandCompletion(state: Case2State): boolean {
+  const startComplete =
+    state.case2UiState === "completed" &&
+    state.calibratedData !== null &&
+    state.lastControl?.command === "start" &&
+    state.lastControl.status === "case complete" &&
+    state.screenshotPhase === "idle";
+
+  const reinitComplete =
+    state.case2UiState === "initial" &&
+    state.calibratedData === null &&
+    state.lastControl?.command === "reinit" &&
+    state.lastControl.status === "reinit complete";
+
+  return startComplete || reinitComplete;
+}

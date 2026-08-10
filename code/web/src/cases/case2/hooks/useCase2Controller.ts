@@ -4,10 +4,11 @@
  *
  * 进页：串行门闩
  * 1) GET control-file（诊断适配服务/控制文件，不因历史 status 改相）
- * 2) 仅当 control 成功后，再 GET data-files?phase=initial
+ * 2) POST init 空闲写回
+ * 3) 仅当 init 成功后，再 GET data-files?phase=initial
  * StrictMode 双 effect：用 generation + AbortController 丢弃陈旧结果，避免双发 Initial。
  *
- * adapterError 且仍为 initial：每 5s 探活 control，成功后清 error 并补拉 Initial；不设总时长上限。
+ * adapterError 且仍为 initial：每 5s 探活 control，成功后写回 init、清 error 并补拉 Initial；不设总时长上限。
  */
 
 import { useCallback, useEffect, useReducer, useRef } from "react";
@@ -21,6 +22,7 @@ import {
   case2Reducer,
   createInitialCase2State,
   shouldFetchCalibrated,
+  shouldResetCommandAfterCommandCompletion,
   shouldStartScreenshot,
   statusFeedbackText,
   shouldShowCalibrated,
@@ -102,6 +104,8 @@ export function useCase2Controller(options: Options): Case2Controller {
   const adapterProbeTimerRef = useRef<number | null>(null);
   const adapterProbeAbortRef = useRef<AbortController | null>(null);
   const adapterProbingRef = useRef(false);
+  const completionIdleResetAbortRef = useRef<AbortController | null>(null);
+  const completionIdleResetPostedRef = useRef(false);
 
   const stopPolling = useCallback(() => {
     pollingRef.current = false;
@@ -121,6 +125,11 @@ export function useCase2Controller(options: Options): Case2Controller {
     }
     adapterProbeAbortRef.current?.abort();
     adapterProbeAbortRef.current = null;
+  }, []);
+
+  const stopCompletionIdleReset = useCallback(() => {
+    completionIdleResetAbortRef.current?.abort();
+    completionIdleResetAbortRef.current = null;
   }, []);
 
   const postEntryInit = useCallback(
@@ -484,7 +493,7 @@ export function useCase2Controller(options: Options): Case2Controller {
         return;
       }
 
-      // 2) 仅 control 成功后拉 Initial 基线
+      // 2) 仅 init 写回成功后拉 Initial 基线
       try {
         const metrics = await api.getDataFiles("initial", ac.signal);
         if (generation !== entryLoadGeneration || ac.signal.aborted) {
@@ -514,9 +523,10 @@ export function useCase2Controller(options: Options): Case2Controller {
       ac.abort();
       stopPolling();
       stopAdapterProbe();
+      stopCompletionIdleReset();
       case2Log("entry.cleanup", { generation });
     };
-  }, [dispatch, postEntryInit, stopAdapterProbe, stopPolling]);
+  }, [dispatch, postEntryInit, stopAdapterProbe, stopCompletionIdleReset, stopPolling]);
 
   // initial + adapterError：5s 探活，不封顶；恢复后清 error 并补 Initial
   useEffect(() => {
@@ -535,9 +545,62 @@ export function useCase2Controller(options: Options): Case2Controller {
     stopAdapterProbe,
   ]);
 
+  useEffect(() => {
+    if (
+      completionIdleResetPostedRef.current ||
+      screenshotBusyRef.current ||
+      !shouldResetCommandAfterCommandCompletion(state)
+    ) {
+      return undefined;
+    }
+
+    completionIdleResetPostedRef.current = true;
+    const completedControl = state.lastControl;
+    if (!completedControl) return undefined;
+    const ac = new AbortController();
+    completionIdleResetAbortRef.current = ac;
+    case2Log("completion.init_reset_begin", controlSummary(completedControl));
+
+    void (async () => {
+      try {
+        const control = await postEntryInit(apiRef.current, ac.signal);
+        if (ac.signal.aborted) return;
+        dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control });
+        case2Log("completion.init_reset_ok", controlSummary(control));
+      } catch (err) {
+        if (isAbortError(err)) return;
+        console.warn("[case2] completion init reset failed", err);
+        dispatch({ type: "CONTROL_POLL_FAIL" });
+        case2Log("completion.init_reset_fail", {
+          reason: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+        if (completionIdleResetAbortRef.current === ac) {
+          completionIdleResetAbortRef.current = null;
+        }
+      }
+    })();
+
+    return () => {
+      if (completionIdleResetAbortRef.current === ac) {
+        completionIdleResetAbortRef.current = null;
+      }
+      ac.abort();
+    };
+  }, [
+    dispatch,
+    postEntryInit,
+    state.calibratedData,
+    state.case2UiState,
+    state.lastControl,
+    state.screenshotPhase,
+  ]);
+
   const onStart = useCallback(() => {
     const snap = stateRef.current;
     if (!canStart(snap)) return;
+    completionIdleResetPostedRef.current = false;
+    stopCompletionIdleReset();
     dispatch({ type: "START_CLICK" });
     case2Log("command.start_click");
     void (async () => {
@@ -558,11 +621,13 @@ export function useCase2Controller(options: Options): Case2Controller {
         });
       }
     })();
-  }, [dispatch, schedulePollLoop]);
+  }, [dispatch, schedulePollLoop, stopCompletionIdleReset]);
 
   const onReset = useCallback(() => {
     const snap = stateRef.current;
     if (!canReset(snap)) return;
+    completionIdleResetPostedRef.current = false;
+    stopCompletionIdleReset();
     dispatch({ type: "RESET_CLICK" });
     case2Log("command.reset_click");
     void (async () => {
@@ -579,7 +644,7 @@ export function useCase2Controller(options: Options): Case2Controller {
         });
       }
     })();
-  }, [dispatch, schedulePollLoop]);
+  }, [dispatch, schedulePollLoop, stopCompletionIdleReset]);
 
   return {
     state,

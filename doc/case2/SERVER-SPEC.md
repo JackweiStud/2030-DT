@@ -12,7 +12,7 @@
 
 - [ ] 四个 REST 接口的路径、输入、输出和错误 shape 与契约一致。
 - [ ] 浏览器不直接访问共享目录；所有控制、数据和截图文件 I/O 都由适配服务完成。
-- [ ] 控制文件写入：请求体只含允许字段；`start`/`reinit` 合并时强制 `status=""`；进页 `init` 写回强制 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；截图清零保留后端 `status` 及未知字段。
+- [ ] 控制文件写入：请求体只含允许字段；`start`/`reinit` 合并时强制 `status=""`；进页、启动轮收尾和重置轮收尾的 `init` 写回强制 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；截图清零保留后端 `status` 及未知字段。
 - [ ] 控制文件 GET：结构/类型失败才 `CONTROL_READ_FAILED`；未知 `status` 字面值 200 透传（与契约 / WEB-SPEC 一致，由 Web 保持等待态）。
 - [ ] 动态 `Nx × Ny` 热力矩阵、动态 `N` KPI 样本、超过 2 位小数四舍五入到 2 位，以及热力 `[-200,200]` / KPI `[0,500]` 范围规则有自动测试。
 - [ ] Calibrated 任一文件缺失、变化或非法时整批拒绝：HTTP **不**返回部分业务数据；适配服务**必须**打诊断日志（失败文件名、原因），响应体仍为 `{ok:false,error:{code,message}}`。
@@ -227,7 +227,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 
 - 只接受以上四种完整 shape；请求体混入 `status`、未知字段、`save_picture_flag=1` 或其他枚举一律 `400 INVALID_REQUEST`。
 - **Gate 3 演示向放宽（开一轮清盘）**：处理 `start` / `reinit` 时，适配服务在字段合并步骤**额外强制写入** `status=""`（请求体仍禁止带 `status`）。用于去掉上轮残留终态，供 Web 用「时刻 A 见 `execute success`、之后时刻 B 见完成终态」的规则（见 WEB-SPEC）；同时使合法 `start|reinit` 命令元组 + 空 status 成为后端/打桩唯一的新轮命令门沿，从而覆盖相同 command 的失败后重试。真实后端须接受开一轮时出现空 `status`；业务终态字面值仍只由后端写出。交接口径见 [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)。
-- **进页空闲写回**：Web 进入 / 刷新 / 切回 case2 时，先 `GET control-file` 诊断可读；成功后再 `POST {command:"init"}`。适配服务合并为 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`，保留未知字段，用于满足后端侧“页面进入后控制文件回空闲”的握手诉求。该写回不是业务 start/reinit 门沿，后端不得把 `init,status=""` 当成一次测试命令。
+- **空闲写回**：Web 进入 / 刷新 / 切回 case2 时，先 `GET control-file` 诊断可读；成功后再 `POST {command:"init"}`。启动轮已读取 Calibrated 六文件并完成截图保存/放弃收尾后、重置轮已消费 `reinit complete` 并回到 Initial 后，也可 `POST {command:"init"}`。适配服务合并为 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`，保留未知字段，用于满足后端侧“控制文件回空闲”的握手诉求。该写回不是业务 start/reinit 门沿，后端不得把 `init,status=""` 当成一次测试命令。
 - `save_picture_flag: 0` 路径可由截图成功落盘流程内部调用，或由 Web 在同一截图任务累计 3 次生成/上传失败后调用；两种路径都**不得**改写 `status`。后者必须记录“本张截图已放弃”日志，且不生成 PNG、不占用新序号。
 - 启动与重置是否可点击由 Web 状态机负责；适配服务仍必须防止非法字段写入。
 - 截图接口内部清零必须复用同一控制文件写服务，不另写一套文件算法。
