@@ -144,4 +144,150 @@ describe("useCase3Controller entry", () => {
     hook.unmount();
     errorLog.mockRestore();
   });
+
+  it("非法 control 成功响应按控制链路错误处理，不误标 init-data", async () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        throw new Case3ApiError(
+          "CASE3_INVALID_RESPONSE",
+          "control.case",
+          200,
+        );
+      }),
+      postControl: vi.fn(),
+      getInitData: vi.fn(),
+      getSide: vi.fn(),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({ config, stageElementRef: stageRef(), api }),
+    );
+
+    await waitFor(() =>
+      expect(hook.result.current.state.adapterError).toBe(true),
+    );
+    expect(hook.result.current.state.initStatus).toBe("loading");
+    expect(errorLog).toHaveBeenCalledWith(
+      "[case3] adapter unreachable",
+      expect.objectContaining({
+        endpoint: "/api/case3/control-file",
+        code: "CASE3_INVALID_RESPONSE",
+      }),
+    );
+    hook.unmount();
+    errorLog.mockRestore();
+  });
+
+  it("控制元组漂移时忽略其他轮终态，等待当前轮 complete", async () => {
+    let controlReads = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        controlReads += 1;
+        if (controlReads === 1) return control();
+        if (controlReads === 2) {
+          return control({
+            command: "start",
+            dt_type: "without dt",
+            status: "execute success",
+          });
+        }
+        if (controlReads === 3) {
+          return control({
+            case: "case2",
+            command: "start",
+            dt_type: "with dt",
+            status: "execute fail",
+          });
+        }
+        return control({
+          command: "start",
+          dt_type: "without dt",
+          status: "case complete",
+        });
+      }),
+      postControl: vi.fn(async () => control()),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 1, total: 2 },
+      })),
+      getSide: vi.fn(async () => ({
+        side: "without" as const,
+        points: [
+          {
+            no: 1,
+            ue: { x: 1, y: 2, z: 0 },
+            selectedBeamId: 1,
+            throughputGbps: 2,
+            scanBeamIds: Array.from({ length: 16 }, (_, index) => index),
+          },
+        ],
+        completeCount: 1,
+        pendingTail: false,
+        costPct: 25,
+      })),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({ config, stageElementRef: stageRef(), api }),
+    );
+    await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
+
+    act(() => hook.result.current.onStartWithout());
+
+    await waitFor(() =>
+      expect(hook.result.current.visible).toBe("without-completed"),
+    );
+    expect(controlReads).toBeGreaterThanOrEqual(4);
+    hook.unmount();
+  });
+
+  it("卸载会取消仍在途的 Start POST，且不会启动旧轮轮询", async () => {
+    let actionSignal: AbortSignal | undefined;
+    let controlReads = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        controlReads += 1;
+        return control();
+      }),
+      postControl: vi.fn(async (payload, signal) => {
+        if ("command" in payload && payload.command === "start") {
+          actionSignal = signal;
+          await new Promise<never>((_, reject) => {
+            signal?.addEventListener(
+              "abort",
+              () =>
+                reject(
+                  new DOMException("The operation was aborted", "AbortError"),
+                ),
+              { once: true },
+            );
+          });
+        }
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 1, total: 2 },
+      })),
+      getSide: vi.fn(),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({ config, stageElementRef: stageRef(), api }),
+    );
+    await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
+    const readsBeforeStart = controlReads;
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() => expect(actionSignal).toBeDefined());
+    hook.unmount();
+
+    expect(actionSignal?.aborted).toBe(true);
+    await new Promise((resolve) => window.setTimeout(resolve, config.pollMs * 2));
+    expect(controlReads).toBe(readsBeforeStart);
+  });
 });

@@ -92,4 +92,33 @@ describe("case3Api", () => {
       httpStatus: 409,
     });
   });
+
+  it("单次请求超过时限时中止 fetch 并返回 REQUEST_TIMEOUT", async () => {
+    let observedAbort = false;
+    const api = createCase3Api({
+      requestTimeoutMs: 10,
+      fetchImpl: async (_input, init) => {
+        const signal = init?.signal;
+        await new Promise<never>((_, reject) => {
+          signal?.addEventListener(
+            "abort",
+            () => {
+              observedAbort = signal.aborted;
+              reject(
+                new DOMException("The operation was aborted", "AbortError"),
+              );
+            },
+            { once: true },
+          );
+        });
+        throw new Error("unreachable");
+      },
+    });
+
+    await expect(api.getControl()).rejects.toMatchObject({
+      code: "REQUEST_TIMEOUT",
+      httpStatus: 0,
+    });
+    expect(observedAbort).toBe(true);
+  });
 });

@@ -22,6 +22,8 @@ export type Case3State = {
   live: { without: SideSnapshot | null; with: SideSnapshot | null };
   pairValid: boolean;
   activeAction: ActiveAction | null;
+  /** 结果已提交，但截图与最终 init 尚未完成；此时禁止开始下一轮。 */
+  roundClosing: boolean;
   failure: Failure;
   adapterError: boolean;
   generation: number;
@@ -49,6 +51,7 @@ export type Case3Action =
   | { type: "LIVE_SNAPSHOT"; side: Case3Side; snapshot: SideSnapshot }
   | { type: "START_COMPLETE"; side: Case3Side; snapshot: SideSnapshot }
   | { type: "REINIT_COMPLETE"; side: Case3Side }
+  | { type: "ROUND_CLOSE_COMPLETE" }
   | { type: "EXECUTE_FAIL" }
   | { type: "CLEAR_ACTIVE" };
 
@@ -64,6 +67,7 @@ export function createInitialCase3State(): Case3State {
     live: { without: null, with: null },
     pairValid: false,
     activeAction: null,
+    roundClosing: false,
     failure: null,
     adapterError: false,
     generation: 0,
@@ -130,6 +134,7 @@ export function case3Reducer(
           seenExecuteSuccess: false,
           generation: action.generation,
         },
+        roundClosing: false,
       };
     }
 
@@ -196,6 +201,7 @@ export function case3Reducer(
         live,
         pairValid,
         activeAction: null,
+        roundClosing: true,
         failure: null,
       };
     }
@@ -214,9 +220,13 @@ export function case3Reducer(
         live: { ...state.live, [action.side]: null },
         pairValid: false,
         activeAction: null,
+        roundClosing: true,
         failure: null,
       };
     }
+
+    case "ROUND_CLOSE_COMPLETE":
+      return { ...state, roundClosing: false };
 
     case "EXECUTE_FAIL": {
       if (!state.activeAction) return state;
@@ -231,6 +241,7 @@ export function case3Reducer(
         live: { ...state.live, [side]: null },
         pairValid: false,
         activeAction: null,
+        roundClosing: false,
         failure,
       };
     }
@@ -334,7 +345,7 @@ export function sideStatusBadgeIsError(state: Case3State): boolean {
 /** Without Start 是否可点。 */
 export function canStartWithout(state: Case3State): boolean {
   if (state.initStatus !== "ready") return false;
-  if (state.activeAction) return false;
+  if (state.activeAction || state.roundClosing) return false;
   if (state.failure) {
     return (
       state.failure.kind === "start" && state.failure.side === "without"
@@ -349,7 +360,7 @@ export function canStartWithout(state: Case3State): boolean {
  */
 export function canStartWith(state: Case3State): boolean {
   if (state.initStatus !== "ready") return false;
-  if (state.activeAction) return false;
+  if (state.activeAction || state.roundClosing) return false;
   if (state.results.without === null) return false;
   if (state.failure) {
     return state.failure.kind === "start" && state.failure.side === "with";
@@ -361,7 +372,7 @@ export function canStartWith(state: Case3State): boolean {
 
 /** ReInit：目标侧有结果，或同侧 failed-reinit。 */
 export function canReinit(state: Case3State, side: Case3Side): boolean {
-  if (state.activeAction) return false;
+  if (state.activeAction || state.roundClosing) return false;
   if (state.failure) {
     return state.failure.kind === "reinit" && state.failure.side === side;
   }
@@ -370,7 +381,7 @@ export function canReinit(state: Case3State, side: Case3Side): boolean {
 
 /** 业务动作等待态。 */
 export function isActionBusy(state: Case3State): boolean {
-  return state.activeAction !== null;
+  return state.activeAction !== null || state.roundClosing;
 }
 
 /**

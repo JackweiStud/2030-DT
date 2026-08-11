@@ -90,6 +90,10 @@ describe("case3Reducer", () => {
     });
     expect(s.pairValid).toBe(false);
     expect(deriveVisibleState(s)).toBe("without-completed");
+    expect(s.roundClosing).toBe(true);
+    expect(canStartWith(s)).toBe(false);
+    expect(canReinit(s, "without")).toBe(false);
+    s = case3Reducer(s, { type: "ROUND_CLOSE_COMPLETE" });
     expect(canStartWith(s)).toBe(true);
   });
 
@@ -121,6 +125,8 @@ describe("case3Reducer", () => {
     });
     expect(s.pairValid).toBe(true);
     expect(deriveVisibleState(s)).toBe("with-completed");
+    expect(s.roundClosing).toBe(true);
+    s = case3Reducer(s, { type: "ROUND_CLOSE_COMPLETE" });
 
     s = case3Reducer(s, {
       type: "ACTION_BEGIN",
@@ -156,6 +162,8 @@ describe("case3Reducer", () => {
     });
     expect(s.pairValid).toBe(false);
     expect(deriveVisibleState(s)).toBe("unpaired-both");
+    expect(canStartWith(s)).toBe(false);
+    s = case3Reducer(s, { type: "ROUND_CLOSE_COMPLETE" });
     expect(canStartWith(s)).toBe(true);
     expect(canCompareWithCurrentWithout(s)).toBe(false);
 

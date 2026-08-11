@@ -28,7 +28,11 @@ import {
   sideStatusBadge,
   sideStatusBadgeIsError,
 } from "../state/case3Reducer";
-import type { Case3Side } from "../types";
+import type {
+  ActiveAction,
+  Case3Side,
+  ControlSnapshot,
+} from "../types";
 
 export type Case3BusyChange = (busy: boolean) => void;
 
@@ -71,6 +75,18 @@ function isAbortError(err: unknown): boolean {
 
 function dtTypeFor(side: Case3Side): "without dt" | "with dt" {
   return side === "without" ? "without dt" : "with dt";
+}
+
+/** 控制快照必须仍属于当前动作，其他 Case/侧/轮次的终态不得被认领。 */
+function controlMatchesAction(
+  control: ControlSnapshot,
+  action: ActiveAction,
+): boolean {
+  return (
+    control.case === "case3" &&
+    control.command === action.kind &&
+    control.dt_type === dtTypeFor(action.side)
+  );
 }
 
 function stripDataUrl(base64: string): string {
@@ -119,15 +135,17 @@ export function useCase3Controller(options: Options) {
   const screenshotBusyRef = useRef(false);
   const pendingCompleteSideRef = useRef<Case3Side | null>(null);
   const busyRef = useRef(false);
+  const lifecycleGenerationRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const screenshotAbortRef = useRef<AbortController | null>(null);
+  const onBusyChangeRef = useRef(onBusyChange);
+  onBusyChangeRef.current = onBusyChange;
 
-  const setBusy = useCallback(
-    (busy: boolean) => {
-      if (busyRef.current === busy) return;
-      busyRef.current = busy;
-      onBusyChange?.(busy);
-    },
-    [onBusyChange],
-  );
+  const setBusy = useCallback((busy: boolean) => {
+    if (busyRef.current === busy) return;
+    busyRef.current = busy;
+    onBusyChangeRef.current?.(busy);
+  }, []);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current != null) {
@@ -155,15 +173,26 @@ export function useCase3Controller(options: Options) {
     }
     const side = pendingCompleteSideRef.current;
     pendingCompleteSideRef.current = null;
+    const lifecycleGeneration = lifecycleGenerationRef.current;
+    const signal = actionAbortRef.current?.signal;
     try {
-      await apiRef.current.postControl({ command: "init" });
+      await apiRef.current.postControl({ command: "init" }, signal);
     } catch (err) {
+      if (
+        isAbortError(err) ||
+        lifecycleGeneration !== lifecycleGenerationRef.current
+      ) {
+        return;
+      }
       case3Log("completion.init_fail", {
         side,
         reason: err instanceof Error ? err.message : String(err),
       });
       dispatch({ type: "ADAPTER_ERROR", value: true });
     }
+    if (lifecycleGeneration !== lifecycleGenerationRef.current) return;
+    dispatch({ type: "ROUND_CLOSE_COMPLETE" });
+    actionAbortRef.current = null;
     setBusy(false);
     stopPolling();
   }, [dispatch, setBusy, stopPolling]);
@@ -178,8 +207,15 @@ export function useCase3Controller(options: Options) {
     setBusy(true);
 
     const api = apiRef.current;
+    const lifecycleGeneration = lifecycleGenerationRef.current;
+    const ac = new AbortController();
+    screenshotAbortRef.current?.abort();
+    screenshotAbortRef.current = ac;
     let attempt = 0;
     let base64 = screenshotBase64Ref.current;
+    const isStale = () =>
+      ac.signal.aborted ||
+      lifecycleGeneration !== lifecycleGenerationRef.current;
 
     try {
       while (attempt < CASE3_SCREENSHOT_MAX_ATTEMPTS) {
@@ -194,6 +230,7 @@ export function useCase3Controller(options: Options) {
             if (!stage) throw new Error("stage missing");
             await mapRendererRefs?.without.current?.prepareCapture();
             await mapRendererRefs?.with.current?.prepareCapture();
+            if (isStale()) return;
             const png = await toPng(stage, {
               width: CASE3_STAGE_WIDTH,
               height: CASE3_STAGE_HEIGHT,
@@ -204,11 +241,13 @@ export function useCase3Controller(options: Options) {
                 return !node.classList.contains("review-dock");
               },
             });
+            if (isStale()) return;
             base64 = stripDataUrl(png);
             screenshotBase64Ref.current = base64;
           }
           failurePhase = "upload";
-          await api.postScreenshot(base64);
+          await api.postScreenshot(base64, ac.signal);
+          if (isStale()) return;
           screenshotPhaseRef.current = stateRef.current.activeAction
             ? "waitClear"
             : "idle";
@@ -223,30 +262,48 @@ export function useCase3Controller(options: Options) {
           return;
         } catch (err) {
           if (isAbortError(err)) return;
+          if (isStale()) return;
           case3Log("screenshot.attempt_fail", {
             attempt,
             reason: err instanceof Error ? err.message : String(err),
             code: err instanceof Case3ApiError ? err.code : undefined,
           });
-          if (
-            err instanceof Case3ApiError &&
-            err.code === "SCREENSHOT_NOT_REQUESTED"
-          ) {
+          if (failurePhase === "upload") {
             try {
-              const control = await api.getControl();
-              if (control.save_picture_flag === 0) {
+              const control = await api.getControl(ac.signal);
+              if (isStale()) return;
+              const expectedSide =
+                stateRef.current.activeAction?.side ??
+                pendingCompleteSideRef.current;
+              const ownershipLost =
+                control.case !== "case3" ||
+                control.command !== "start" ||
+                (expectedSide !== null &&
+                  expectedSide !== undefined &&
+                  control.dt_type !== dtTypeFor(expectedSide));
+              if (control.save_picture_flag === 0 || ownershipLost) {
                 screenshotPhaseRef.current = "idle";
                 await maybeFinishAfterScreenshot();
                 return;
               }
-            } catch {
-              /* continue */
+            } catch (confirmErr) {
+              if (isAbortError(confirmErr) || isStale()) return;
+              case3Log("screenshot.confirm_fail", {
+                reason:
+                  confirmErr instanceof Error
+                    ? confirmErr.message
+                    : String(confirmErr),
+              });
             }
           }
           if (attempt >= CASE3_SCREENSHOT_MAX_ATTEMPTS) {
             try {
-              await api.postControl({ save_picture_flag: 0 });
+              await api.postControl(
+                { save_picture_flag: 0 },
+                ac.signal,
+              );
             } catch (clearErr) {
+              if (isAbortError(clearErr) || isStale()) return;
               case3Log("screenshot.clear_flag_fail", {
                 reason:
                   clearErr instanceof Error
@@ -269,6 +326,9 @@ export function useCase3Controller(options: Options) {
       }
     } finally {
       screenshotBusyRef.current = false;
+      if (screenshotAbortRef.current === ac) {
+        screenshotAbortRef.current = null;
+      }
     }
   }, [mapRendererRefs, maybeFinishAfterScreenshot, setBusy, stageElementRef]);
 
@@ -277,18 +337,39 @@ export function useCase3Controller(options: Options) {
    */
   const pollOnce = useCallback(async () => {
     const action = stateRef.current.activeAction;
-    if (!action) return;
-    const generation = action.generation;
+    const closingScreenshot =
+      action === null &&
+      pendingCompleteSideRef.current !== null &&
+      screenshotPhaseRef.current === "waitClear";
+    if (!action && !closingScreenshot) return;
+    const generation = action?.generation;
     const api = apiRef.current;
     const ac = new AbortController();
     pollAbortRef.current = ac;
 
     try {
       const control = await api.getControl(ac.signal);
-      if (
-        stateRef.current.activeAction?.generation !== generation ||
-        ac.signal.aborted
-      ) {
+      if (ac.signal.aborted) {
+        return;
+      }
+      if (!action) {
+        if (control.save_picture_flag === 0) {
+          screenshotPhaseRef.current = "idle";
+          await maybeFinishAfterScreenshot();
+        }
+        return;
+      }
+      if (stateRef.current.activeAction?.generation !== generation) return;
+      if (!controlMatchesAction(control, action)) {
+        case3Log("control_context_mismatch", {
+          expectedCase: "case3",
+          expectedCommand: action.kind,
+          expectedDtType: dtTypeFor(action.side),
+          actualCase: control.case,
+          actualCommand: control.command,
+          actualDtType: control.dt_type,
+          status: control.status,
+        });
         return;
       }
 
@@ -314,6 +395,12 @@ export function useCase3Controller(options: Options) {
         }
       } else if (status === "execute fail") {
         dispatch({ type: "EXECUTE_FAIL" });
+        screenshotAbortRef.current?.abort();
+        screenshotAbortRef.current = null;
+        screenshotPhaseRef.current = "idle";
+        pendingCompleteSideRef.current = null;
+        actionAbortRef.current?.abort();
+        actionAbortRef.current = null;
         setBusy(false);
         stopPolling();
         return;
@@ -355,7 +442,6 @@ export function useCase3Controller(options: Options) {
               ) {
                 await maybeFinishAfterScreenshot();
               }
-              stopPolling();
               return;
             }
           } catch (err) {
@@ -402,14 +488,27 @@ export function useCase3Controller(options: Options) {
 
       if (action.kind === "reinit" && seen && status === "reinit complete") {
         dispatch({ type: "REINIT_COMPLETE", side: action.side });
+        const lifecycleGeneration = lifecycleGenerationRef.current;
         try {
-          await api.postControl({ command: "init" });
+          await api.postControl(
+            { command: "init" },
+            actionAbortRef.current?.signal,
+          );
         } catch (err) {
+          if (
+            isAbortError(err) ||
+            lifecycleGeneration !== lifecycleGenerationRef.current
+          ) {
+            return;
+          }
           case3Log("reinit.init_fail", {
             reason: err instanceof Error ? err.message : String(err),
           });
           dispatch({ type: "ADAPTER_ERROR", value: true });
         }
+        if (lifecycleGeneration !== lifecycleGenerationRef.current) return;
+        dispatch({ type: "ROUND_CLOSE_COMPLETE" });
+        actionAbortRef.current = null;
         setBusy(false);
         stopPolling();
         return;
@@ -440,10 +539,25 @@ export function useCase3Controller(options: Options) {
 
   const schedulePollLoop = useCallback(() => {
     stopPolling();
+    const lifecycleGeneration = lifecycleGenerationRef.current;
+    const hasPollingWork = () =>
+      stateRef.current.activeAction !== null ||
+      (pendingCompleteSideRef.current !== null &&
+        screenshotPhaseRef.current === "waitClear");
     const tick = async () => {
-      if (!stateRef.current.activeAction) return;
+      if (
+        lifecycleGeneration !== lifecycleGenerationRef.current ||
+        !hasPollingWork()
+      ) {
+        return;
+      }
       await pollOnce();
-      if (!stateRef.current.activeAction) return;
+      if (
+        lifecycleGeneration !== lifecycleGenerationRef.current ||
+        !hasPollingWork()
+      ) {
+        return;
+      }
       pollTimerRef.current = window.setTimeout(tick, config.pollMs);
     };
     void tick();
@@ -458,16 +572,20 @@ export function useCase3Controller(options: Options) {
       signal: AbortSignal,
     ): Promise<"ok" | "transport" | "init-data"> => {
       const api = apiRef.current;
+      let phase: "get-control" | "post-init" | "get-init-data" =
+        "get-control";
       try {
         dispatch({ type: "INIT_LOADING" });
         await api.getControl(signal);
         if (generation !== entryLoadGeneration || signal.aborted) {
           return "transport";
         }
+        phase = "post-init";
         await api.postControl({ command: "init" }, signal);
         if (generation !== entryLoadGeneration || signal.aborted) {
           return "transport";
         }
+        phase = "get-init-data";
         const initData = await api.getInitData(signal);
         if (generation !== entryLoadGeneration || signal.aborted) {
           return "transport";
@@ -483,6 +601,7 @@ export function useCase3Controller(options: Options) {
           return "transport";
         }
         if (
+          phase === "get-init-data" &&
           err instanceof Case3ApiError &&
           (err.code === "INIT_DATA_INVALID" ||
             err.code === "DATA_FILE_MISSING" ||
@@ -510,6 +629,7 @@ export function useCase3Controller(options: Options) {
   );
 
   useEffect(() => {
+    lifecycleGenerationRef.current += 1;
     const generation = ++entryLoadGeneration;
     const ac = new AbortController();
     dispatch({ type: "MOUNT_RESET" });
@@ -542,7 +662,15 @@ export function useCase3Controller(options: Options) {
     })();
 
     return () => {
+      lifecycleGenerationRef.current += 1;
       ac.abort();
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      screenshotAbortRef.current?.abort();
+      screenshotAbortRef.current = null;
+      screenshotBusyRef.current = false;
+      screenshotPhaseRef.current = "idle";
+      pendingCompleteSideRef.current = null;
       stopPolling();
       stopProbe();
       entryLoadGeneration += 1;
@@ -552,8 +680,12 @@ export function useCase3Controller(options: Options) {
 
   const beginAction = useCallback(
     async (kind: "start" | "reinit", side: Case3Side) => {
-      if (stateRef.current.activeAction) return;
+      if (stateRef.current.activeAction || stateRef.current.roundClosing) return;
       const generation = stateRef.current.generation + 1;
+      const lifecycleGeneration = lifecycleGenerationRef.current;
+      const actionAbort = new AbortController();
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = actionAbort;
       dispatch({ type: "ACTION_BEGIN", kind, side, generation });
       setBusy(true);
       stopProbe();
@@ -562,12 +694,23 @@ export function useCase3Controller(options: Options) {
       screenshotBase64Ref.current = null;
 
       try {
-        await apiRef.current.postControl({
-          case: "case3",
-          command: kind,
-          dt_type: dtTypeFor(side),
-        });
+        await apiRef.current.postControl(
+          {
+            case: "case3",
+            command: kind,
+            dt_type: dtTypeFor(side),
+          },
+          actionAbort.signal,
+        );
       } catch (err) {
+        if (
+          isAbortError(err) ||
+          actionAbort.signal.aborted ||
+          lifecycleGeneration !== lifecycleGenerationRef.current
+        ) {
+          return;
+        }
+        actionAbortRef.current = null;
         if (err instanceof Case3ApiError && err.code === "CONTROL_BUSY") {
           case3Log("CONTROL_BUSY", { kind, side });
           dispatch({ type: "CLEAR_ACTIVE" });
@@ -591,6 +734,13 @@ export function useCase3Controller(options: Options) {
         return;
       }
 
+      if (
+        actionAbort.signal.aborted ||
+        lifecycleGeneration !== lifecycleGenerationRef.current ||
+        stateRef.current.generation !== generation
+      ) {
+        return;
+      }
       schedulePollLoop();
     },
     [dispatch, schedulePollLoop, setBusy, stopProbe],
@@ -618,9 +768,15 @@ export function useCase3Controller(options: Options) {
 
   useEffect(() => {
     const onHide = () => {
-      void apiRef.current.postControl({ command: "init" }, undefined, {
-        keepalive: true,
-      });
+      void apiRef.current
+        .postControl({ command: "init" }, undefined, {
+          keepalive: true,
+        })
+        .catch((err) => {
+          case3Log("pagehide.init_fail", {
+            reason: err instanceof Error ? err.message : String(err),
+          });
+        });
     };
     window.addEventListener("pagehide", onHide);
     return () => window.removeEventListener("pagehide", onHide);

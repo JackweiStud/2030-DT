@@ -31,7 +31,11 @@ export class Case3ApiError extends Error {
 
 type ApiClientOptions = {
   fetchImpl?: typeof fetch;
+  /** 单次 HTTP 请求超时；用于测试注入，正式默认 5000ms。 */
+  requestTimeoutMs?: number;
 };
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 5000;
 
 function resolveApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -185,6 +189,8 @@ async function parseJson(res: Response): Promise<unknown> {
  */
 export function createCase3Api(options: ApiClientOptions = {}) {
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestTimeoutMs =
+    options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
   async function request<T>(
     path: string,
@@ -192,49 +198,83 @@ export function createCase3Api(options: ApiClientOptions = {}) {
     mapOk: (body: Record<string, unknown>) => T,
   ): Promise<T> {
     const url = resolveApiUrl(path);
-    const res = await fetchImpl(url, {
-      ...init,
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
-        ...init.headers,
-      },
-    });
-    let body: unknown;
+    const requestAbort = new AbortController();
+    let timedOut = false;
+    let callerAborted = false;
+    const callerSignal = init.signal;
+    const abortFromCaller = () => {
+      callerAborted = true;
+      requestAbort.abort(callerSignal?.reason);
+    };
+    if (callerSignal?.aborted) {
+      abortFromCaller();
+    } else {
+      callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
+    }
+    const timeoutId = globalThis.setTimeout(() => {
+      if (callerAborted) return;
+      timedOut = true;
+      requestAbort.abort();
+    }, requestTimeoutMs);
+
     try {
-      body = await parseJson(res);
-    } catch {
-      throw new Case3ApiError(
-        "CASE3_INVALID_RESPONSE",
-        "response is not JSON",
-        res.status,
-      );
-    }
-    if (!isObject(body)) {
-      throw new Case3ApiError(
-        "CASE3_INVALID_RESPONSE",
-        "response is not object",
-        res.status,
-      );
-    }
-    if (body.ok === true) {
+      const res = await fetchImpl(url, {
+        ...init,
+        signal: requestAbort.signal,
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+          ...(init.body ? { "Content-Type": "application/json" } : {}),
+          ...init.headers,
+        },
+      });
+      let body: unknown;
       try {
-        return mapOk(body);
-      } catch (err) {
+        body = await parseJson(res);
+      } catch {
         throw new Case3ApiError(
           "CASE3_INVALID_RESPONSE",
-          err instanceof Error ? err.message : "invalid ok body",
+          "response is not JSON",
           res.status,
         );
       }
+      if (!isObject(body)) {
+        throw new Case3ApiError(
+          "CASE3_INVALID_RESPONSE",
+          "response is not object",
+          res.status,
+        );
+      }
+      if (body.ok === true) {
+        try {
+          return mapOk(body);
+        } catch (err) {
+          throw new Case3ApiError(
+            "CASE3_INVALID_RESPONSE",
+            err instanceof Error ? err.message : "invalid ok body",
+            res.status,
+          );
+        }
+      }
+      const err = body as ApiErrorBody;
+      throw new Case3ApiError(
+        err.error?.code ?? "UNKNOWN",
+        err.error?.message ?? "request failed",
+        res.status,
+      );
+    } catch (err) {
+      if (timedOut) {
+        throw new Case3ApiError(
+          "REQUEST_TIMEOUT",
+          `request exceeded ${requestTimeoutMs}ms`,
+          0,
+        );
+      }
+      throw err;
+    } finally {
+      globalThis.clearTimeout(timeoutId);
+      callerSignal?.removeEventListener("abort", abortFromCaller);
     }
-    const err = body as ApiErrorBody;
-    throw new Case3ApiError(
-      err.error?.code ?? "UNKNOWN",
-      err.error?.message ?? "request failed",
-      res.status,
-    );
   }
 
   return {
