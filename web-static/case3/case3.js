@@ -112,7 +112,7 @@
       },
       costWo: 25,
       costW: 15,
-      costDelta: 66.7,
+      costDelta: 40.0,
       thrpWo: 20,
       thrpW: 2,
       baOk: 80,
@@ -144,7 +144,7 @@
       },
       costWo: 25,
       costW: 15,
-      costDelta: 66.7,
+      costDelta: 40.0,
       thrpWo: 20,
       thrpW: 20,
       baOk: 98,
@@ -493,7 +493,10 @@
     setCostArc("with", cfg.costW);
     var delta = case3Page.querySelector("[data-cost-delta]");
     var arrow = case3Page.querySelector("[data-cost-arrow]");
-    if (delta) delta.textContent = cfg.costDelta == null ? "--" : String(cfg.costDelta);
+    if (delta) {
+      delta.textContent =
+        cfg.costDelta == null ? "--" : Number(cfg.costDelta).toFixed(1);
+    }
     if (arrow) arrow.hidden = cfg.costDelta == null;
 
     setThroughput("without", cfg.thrpWo, THRP_WO);

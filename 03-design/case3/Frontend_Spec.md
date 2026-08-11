@@ -1,7 +1,7 @@
 # Frontend Spec — case3 Gate 1 交接
 
-> 设计源：`03-design/case3/case3-dt-com.pen`（`APPROVED`，2026-08-09 用户确认冻结）  
-> 契约草案：`doc/case3/API-CONTRACT.md`  
+> 设计源：`03-design/case3/case3-dt-com.pen`（`APPROVED`，2026-08-09 用户确认冻结）
+> Gate 2 契约：`doc/case3/API-CONTRACT.md`（`APPROVED`，2026-08-10）
 > 目标 viewport：1920×1080（Shell 等比缩放）
 
 ## 1. Frame / 状态映射
@@ -50,10 +50,10 @@ CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
 
 | UI | 绑定 | 空/异常 |
 |---|---|---|
-| 预置路线 | `GET /api/case3/init-data` → baseRoute | 缺则空路线 |
+| 预置路线 / BA 基线 | `GET /api/case3/init-data` | 任一缺失或非法：双侧 Start 禁用，Web 输出结构化 `console.error`，不以空路线冒充初始化成功 |
 | Without/With 点 | `GET /api/case3/side?side=` → `points` 全量替换 | `ok:false` 不更新 |
-| Cost | 同包 `costPct` | `null` → 空，不沿用旧值 |
-| 相对开销降低率 | Web 派生 `(withoutCostPct - withCostPct) / withoutCostPct * 100` | 任一 Cost 缺失或 Without Cost 为 0 → `--`；不显示百分点差。 |
+| Cost | 同包 `costPct`（Node 已校验 `0～100` 并保留 1 位） | 运行中 `null` → 空；完成门槛要求有效，不沿用旧值 |
+| 相对开销变化 | Web 派生 `(withoutCostPct - withCostPct) / withoutCostPct * 100` | 任一 Cost 缺失或 Without Cost 为 0 → `--`；正数表示降低、负数表示上升。 |
 | Throughput 曲线 | `points[].throughputGbps` 按 `no` | 缺点不补 0 |
 | Beam Accuracy | 基线文件 + 同 `no` 的 `selectedBeamId` 对比 | 任意重置回基线；无 without 有效结果不算增量 |
 | 点位进度窗口 | `completeCount`；显示 `points.slice(-20)` | 文案标明窗口≠上限 |
@@ -81,7 +81,11 @@ CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
 - 任一侧 running 或 resetting：两侧 Start/ReInit 均不可点（除失败后的手动重试规则）。
 - With Start：Without 无有效完成 → disabled（可 tooltip「需先完成 Without」）。
 - `execute fail`：显示失败；该侧允许手动重试；不自动重试；不拼接旧半轮 points。
+- ReInit 失败：不恢复目标侧旧结果，只保留对应侧 ReInit 重试按钮；另一侧历史结果可保留。
+- 任一 Case 处于 Start/ReInit 等待态：Shell 锁定其他 Case Tab；完成、失败或重置结束后解除。
 - 刷新/切离 Tab：回 initial 语义；停轮询。
+
+Web 仅对 REST 响应做 envelope/shape/JSON 类型检查；Node 负责小数归一、范围、行号与多文件一致性。非法响应输出 `CASE3_INVALID_RESPONSE`，不更新页面数据。
 
 ## 6. 资产落点
 

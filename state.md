@@ -9,7 +9,7 @@
 - case2 Gate 3：`WEB-SPEC` / `SERVER-SPEC` / Gate 3 演示向放宽已于 2026-08-03 获用户定稿确认。
 - case2 Gate 4：正式 Web、Node 文件适配服务、模拟后端打桩均已实现；2026-08-04 用户确认三者本地测试联调完成，自动 + 人工 check 通过。
 - case2 Gate 5：本地 QA 证据已补齐（`doc/case2/QA-EVIDENCE.md`）；本地打桩演示可进入用户/领导测试。真实后端、真实挂载和真实采集不在本次完成口径内。
-- case3 Gate 0/2 草案：2026-08-06 用户确认 8 条关键边界，已创建 `doc/case3/MAINLINE.md`、`doc/case3/API-CONTRACT.md`、`doc/case3/UI-DATA-SOURCE-MAP.md`、`doc/case3/UX-STATE-MAP.md`。当前正式 Web/Node 尚未实现，Gate 2 契约 v1 仍待批准。
+- case3 Gate 0/2：2026-08-06 用户确认首批关键边界；2026-08-10 再确认跨 Case Tab 锁、init 撤销旧轮写入权、最终结果门槛、success 最少 3000ms、REST/错误 shape、ReInit 失败重试、初始化门槛、Node/Web 校验边界和后端交接，并批准冻结 Gate 2 API 契约 v1 与真实后端交接材料。
 - case3 Gate 1：2026-08-09 用户确认 `03-design/case3/case3-dt-com.pen` 已全部完成并冻结；冻结记录见 `doc/case3/GATE1-FREEZE.md`。
 - case3 Gate 1.5：2026-08-10 用户已人工检查并接受 `web-static/case3/` 的初始、Without 运行/完成、With 运行/完成和现场环境弹窗。该目录只作视觉与假交互验收；正式 Web 可选择性迁移其 `.case3-*` 视觉规则和资源，但不得直接导入静态 CSS/JS、共享目录或假状态逻辑。
 - 2026-08-03 用户定稿：失败态按 WEB-SPEC 路径互斥（`failed-start` 只可再启动，`failed-reinit` 只可再重置）；进页一律 `initial`；无 result-error/unknown-control；六文件失败保持 `calibrating`；`start`/`reinit` 强制 `status=""`；真实后端已确认接受开一轮空 `status`。
@@ -34,7 +34,7 @@
 - 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run dev`。
 - 2026-08-04 Web 代码检视后补齐主线 E2E：`code/scripts/e2e-case2-stack.sh` 会准备临时共享目录并启动 Web + Node 适配 + case2 打桩；`code/web npm run test:e2e` 覆盖进页 Initial、启动、截图落盘/清 flag、重置回 Initial。
 - 2026-08-04 本轮文档复核自动命令：`code/server npm test` 30/30 通过；`code/back npm test` 28/28 通过（首次复跑曾出现一次陈旧任务测试瞬时失败，立即重跑通过，后续保留观察）；`code/web npm run typecheck` 通过；`code/web npm test` 30/30 通过；`code/web npm run build` 通过；`code/web npm run test:e2e` 1/1 通过。
-- 当前焦点：case2 本地打桩版本已具备测试/演示条件；case3 Gate 1.5 静态 HTML 已接受，Gate 2 契约 v1 仍待批准。下一步若继续 case2，应做真实后端/真实挂载验收；若推进 case3，应先批准 Gate 2 契约 v1，再编写 Gate 3 SPEC。
+- 当前焦点：case2 本地打桩版本已具备测试/演示条件；case3 Gate 1.5 已接受，Gate 2 v1 已于 2026-08-10 批准冻结。下一阶段为 Gate 3 `SERVER-SPEC` / `WEB-SPEC`，本轮尚未创建。
 
 ## 一句话演示承诺
 
@@ -54,7 +54,7 @@
 - Gate 3 打桩发布：与真实后端相同，向 flat `case2/` 直接写完并关闭六个 Calibrated 文件，最后写 `status=case complete`；不引入临时运行目录、内部指针或 `CASE2_DATA_MODE`（见 `doc/case2/realback_no.md`）。
 - 前后端 PC 使用同一已挂载共享目录；Web 与 Node 适配服务同机在前端 PC，适配服务是浏览器唯一文件/截图所有者。
 
-## case3 已确认事实（Gate 0/2 草案）
+## case3 已确认事实（Gate 0/2 已批准）
 
 - case3 主线：Without DT 先跑通信基线，With DT 再跑数字孪生辅助通信，最后对比 Cost、Throughput、Beam Accuracy。
 - 运行顺序：测试时用户必须先跑 Without DT，再跑 With DT；两侧互斥运行，一次只允许 without 或 with 一侧运行/重置。
@@ -62,9 +62,15 @@
 - Node/Web 边界：Node 提供 `/api/case3/*`，负责清空单侧实时 append 文件、按行号读取和校验多 txt、收编为区分 Without/With 的结构化点位；Web 只消费结构化数据，不直接读/删共享目录。
 - 共享根配置：case2/case3 统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 只作为历史兼容或迁移期映射。
 - 控制文件：case3 沿用同一个 `case_control.json` 五字段结构。Start/ReInit 由 Node 写入 `case=case3`、`command=start|reinit`、`dt_type=without dt|with dt` 并强制 `status=""` 开新轮；进页/刷新/切回 case3 的 GET 成功后、单侧 `case complete` 结果被 Web 接收后、单侧 `reinit complete` 被 UI 消费后，Web 经 Node 写回 `command=init,status=""` 空闲态；业务终态仍只由后端写。
-- Reset：单侧重置，路径仍是 `execute success -> reinit complete`。Without 重置后 With 历史结果可保留；With 重置后 Without 历史结果可保留；任意一侧重置都使本次 Beam Accuracy 增量失效并恢复到文件基线。
+- `init`：除空闲清洁态外，同时撤销旧 Case/旧侧文件写入权；后端观察到 init 后必须停止旧轮继续写文件。页面关闭时的卸载请求只作 best-effort，下一次 mount 的 GET→POST init 是可靠恢复门槛。
+- 跨 Case：任一 Case 处于 Start/ReInit 等待态时，Shell 锁定其他 Case Tab；不增加取消、命令队列、自动业务超时或自动业务重试。
+- 完成门槛：后端必须保持 `execute success` 至少 3000ms；完整写完、关闭并停止目标侧必需文件和 Cost 后最后写 `case complete`。Web 最终 `/side` 必须 `ok=true,pendingTail=false,points>0,costPct!=null` 并渲染完成后才 POST init。
+- Reset：单侧重置，路径仍是 `execute success -> reinit complete`。ReInit 立即使目标侧结果和跨侧派生失效；失败不恢复旧结果，只允许用户重试同侧 ReInit；另一侧历史结果可保留。
+- 初始化：base route 必须非空，Beam Accuracy 基线必须满足 `0 <= success <= total` 且 `total > 0`；失败时双侧 Start 禁用，Web 输出结构化 `console.error`。
 - 点位数动态 `N`，由运行时文件解析得到；点位进度固定显示最新 20 条，超过窗口长度滚动到最新点位；20 只是窗口长度，不是点位总上限。
-- Cost 单位是 `%`；正式 UI 文案统一为 `Cost (%)`，不得沿用 UX 切图里的 dB 或 case2 误差减少语义。两侧 Cost 都有效且 Without Cost 非 0 时，Web 派生相对开销降低率：`(withoutCostPct - withCostPct) / withoutCostPct * 100`。
+- Node/Web 校验：Node 权威校验共享文件和归一数值；Web 只防御 REST envelope/shape/JSON 类型，非法响应记 `CASE3_INVALID_RESPONSE`，不重复业务数值校验。
+- 数值：坐标/Reflection 2 位、Throughput 非负且 2 位、Cost `0～100` 且 1 位、beam id `0～255`、Without scan 恰好 16 项且包含 selected、reflection flag 仅 `0/1`。
+- Cost 单位是 `%`；正式 UI 标题为 `开销(%)`。两侧 Cost 有效且 Without Cost 非 0 时，Web 派生相对开销变化：`(withoutCostPct - withCostPct) / withoutCostPct * 100`。
 
 ## case2 状态机（Gate 0 语义）
 
@@ -110,14 +116,16 @@
 - [case2 复盘方法](doc/case2/RETRO-METHOD.md)
 - [case2 UX 状态映射](doc/case2/UX-STATE-MAP.md)
 - [case2 Gate 1 冻结](doc/case2/GATE1-FREEZE.md)
-- [case3 主线草案](doc/case3/MAINLINE.md)
-- [case3 API 契约草案](doc/case3/API-CONTRACT.md)
+- [case3 主线](doc/case3/MAINLINE.md)
+- [case3 API 契约 v1](doc/case3/API-CONTRACT.md)
+- [case3 API 契约评审](doc/case3/API-CONTRACT-REVIEW.md)
+- [case3 真实后端接口交接](doc/case3/BACKEND-API-HANDOFF.md)
 - [case3 UI 数据来源反向清单](doc/case3/UI-DATA-SOURCE-MAP.md)
 - [case3 UX 状态映射](doc/case3/UX-STATE-MAP.md)
 - [case3 Gate 1 冻结](doc/case3/GATE1-FREEZE.md)
 
 ## 最小下一步与停止条件
 
-下一步：二选一推进。若继续 case2，接真实后端与真实挂载路径，复跑 `QA-EVIDENCE.md` 的验证矩阵；若推进 case3，先审阅并批准 `doc/case3/API-CONTRACT.md` v1，再进入 Gate 3 `SERVER-SPEC` / `WEB-SPEC`。
+下一步：二选一推进。若继续 case2，接真实后端与真实挂载路径，复跑 `QA-EVIDENCE.md` 的验证矩阵；若推进 case3，进入 Gate 3，编写并评审 `SERVER-SPEC` / `WEB-SPEC`。
 
 停止条件：不把本地打桩 synthetic/stub 数据表述为真实采集；不把 `code/comdatafiles/out/` 运行输出默认提交为源码；不把 case2 契约直接套用到 case3/4；不把 case3 JSONL 草案当作正式后端协议。
