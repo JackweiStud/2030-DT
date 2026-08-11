@@ -29,6 +29,7 @@ function CostGauge(props: {
 }) {
   const offset = arcOffset(props.value);
   const isWith = props.side === "with";
+  // presentation attribute 供 html-to-image 深克隆；内联 style 覆盖 CSS 默认空轨道并驱动实时变化。
   const dash = {
     strokeDasharray: String(COST_RING_LEN),
     strokeDashoffset: String(offset),
@@ -117,11 +118,24 @@ function CostGauge(props: {
             </>
           )}
         </defs>
-        <path className="case3-cost-arc__track" d="M66 8 A58 58 0 0 1 66 124" />
+        <path
+          className="case3-cost-arc__track"
+          d="M66 8 A58 58 0 0 1 66 124"
+          fill="none"
+          stroke="#ffffff22"
+          strokeLinecap="round"
+          strokeWidth={19}
+        />
         <path
           className={`case3-cost-arc__glow${isWith ? " case3-cost-arc__glow--with" : ""}`}
           filter={isWith ? "url(#case3-cost-blur-w)" : "url(#case3-cost-blur-wo)"}
           d="M66 124 A58 58 0 0 0 66 8"
+          fill="none"
+          stroke={isWith ? "#895bf5b2" : "#d1cbcba1"}
+          strokeDasharray={String(COST_RING_LEN)}
+          strokeDashoffset={String(offset)}
+          strokeLinecap="round"
+          strokeWidth={25}
           style={dash}
         />
         <path
@@ -131,6 +145,11 @@ function CostGauge(props: {
           }
           stroke={isWith ? "url(#case3-cost-grad-w)" : "url(#case3-cost-grad-wo)"}
           d="M66 124 A58 58 0 0 0 66 8"
+          fill="none"
+          strokeDasharray={String(COST_RING_LEN)}
+          strokeDashoffset={String(offset)}
+          strokeLinecap="round"
+          strokeWidth={19}
           style={dash}
         />
       </svg>

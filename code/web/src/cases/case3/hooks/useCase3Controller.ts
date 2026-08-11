@@ -41,7 +41,7 @@ export type MapRendererHandle = {
   prepareCapture(): Promise<void>;
 };
 
-type ScreenshotPhase = "idle" | "saving" | "waitClear";
+type ScreenshotPhase = "idle" | "pending" | "saving" | "waitClear";
 
 type Options = {
   config: Case3RuntimeConfig;
@@ -166,6 +166,7 @@ export function useCase3Controller(options: Options) {
   const maybeFinishAfterScreenshot = useCallback(async () => {
     if (pendingCompleteSideRef.current == null) return;
     if (
+      screenshotPhaseRef.current === "pending" ||
       screenshotPhaseRef.current === "saving" ||
       screenshotPhaseRef.current === "waitClear"
     ) {
@@ -198,7 +199,7 @@ export function useCase3Controller(options: Options) {
   }, [dispatch, setBusy, stopPolling]);
 
   /**
-   * 截图机：仅 Start 等待态观察 flag 0→1；最多 3 次。
+   * 截图机：截图请求已登记且 completed 结果完成渲染后才执行；最多 3 次。
    */
   const runScreenshotTask = useCallback(async () => {
     if (screenshotBusyRef.current) return;
@@ -380,7 +381,14 @@ export function useCase3Controller(options: Options) {
         lastFlagRef.current === 0 &&
         flag === 1
       ) {
-        void runScreenshotTask();
+        // 这里只登记截图请求。真正生成 PNG 必须等待最终 side 通过门槛并完成 completed 渲染。
+        screenshotPhaseRef.current = "pending";
+      }
+      if (screenshotPhaseRef.current === "pending" && flag === 0) {
+        screenshotPhaseRef.current = "idle";
+        case3Log("screenshot.request_cleared_before_capture", {
+          side: action.side,
+        });
       }
       if (screenshotPhaseRef.current === "waitClear" && flag === 0) {
         screenshotPhaseRef.current = "idle";
@@ -436,7 +444,9 @@ export function useCase3Controller(options: Options) {
               });
               pendingCompleteSideRef.current = action.side;
               await waitForNextRender();
-              if (
+              if (screenshotPhaseRef.current === "pending") {
+                await runScreenshotTask();
+              } else if (
                 screenshotPhaseRef.current !== "saving" &&
                 screenshotPhaseRef.current !== "waitClear"
               ) {

@@ -90,15 +90,21 @@ export function BeamAccuracyCard(props: Props) {
               <path
                 className="case3-ba-ring__track"
                 d="M50.23 170.95 A86 86 0 1 1 185.77 170.95"
+                fill="none"
+                stroke="#3a4048"
+                strokeLinecap="round"
+                strokeWidth={12}
               />
               <path
                 className="case3-ba-ring__value"
                 filter="url(#case3-ba-glow)"
                 d="M50.23 170.95 A86 86 0 1 1 185.77 170.95"
-                style={{
-                  strokeDasharray: String(BA_ARC_LEN),
-                  strokeDashoffset: String(offset),
-                }}
+                fill="none"
+                stroke="#22c55e"
+                strokeDasharray={String(BA_ARC_LEN)}
+                strokeDashoffset={String(offset)}
+                strokeLinecap="round"
+                strokeWidth={12}
               />
             </svg>
             <div className="case3-ba-center">

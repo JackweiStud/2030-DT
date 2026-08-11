@@ -84,6 +84,12 @@ export function BeamScanCard(props: Props) {
       : legend && !legend.ok
         ? "case3-scan-path--predict-fail"
         : "case3-scan-path--predict";
+  const selectedFill =
+    side === "without"
+      ? "#2d7cf6"
+      : legend && !legend.ok
+        ? "#f2210a"
+        : "#09aa71";
 
   return (
     <div
@@ -115,17 +121,25 @@ export function BeamScanCard(props: Props) {
           <path
             className="case3-scan-path case3-scan-path--base"
             d={ALL_BEAMS_PATH}
+            fill="#d0d4db33"
+            fillRule="evenodd"
+            stroke="#d0d4dc80"
+            strokeWidth={1}
           />
           {scanPath ? (
             <path
               className="case3-scan-path case3-scan-path--scan"
               d={scanPath}
+              fill="#ffffff"
+              fillRule="evenodd"
             />
           ) : null}
           {selectedPath ? (
             <path
               className={`case3-scan-path ${selectedClass}`}
               d={selectedPath}
+              fill={selectedFill}
+              fillRule="evenodd"
             />
           ) : null}
         </svg>

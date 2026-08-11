@@ -190,7 +190,7 @@ describe("useCase3Controller lifecycle", () => {
           command: "start",
           dt_type: "without dt",
           status: "case complete",
-          save_picture_flag: 0,
+          save_picture_flag: 1,
         });
       }),
       postControl: vi.fn(async (payload) =>
@@ -305,9 +305,17 @@ describe("useCase3Controller lifecycle", () => {
     hook.unmount();
   });
 
-  it("同拍 complete+flag 且截图先完成时仍能退出 waitClear 并 POST init", async () => {
+  it("同拍 complete+flag 等最终结果完成渲染后才截图", async () => {
     vi.mocked(toPng).mockResolvedValue(
       "data:image/png;base64,FAST_SCREENSHOT",
+    );
+    let nextFrame: FrameRequestCallback | null = null;
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((callback: FrameRequestCallback) => {
+        nextFrame = callback;
+        return 1;
+      }),
     );
     const finalSide = deferred<SideSnapshot>();
     let controlReads = 0;
@@ -360,17 +368,27 @@ describe("useCase3Controller lifecycle", () => {
     await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
 
     act(() => hook.result.current.onStartWithout());
-    await waitFor(() => expect(api.postScreenshot).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(sideReads).toBe(2));
+    expect(toPng).not.toHaveBeenCalled();
+    expect(api.postScreenshot).not.toHaveBeenCalled();
 
     await act(async () => {
       finalSide.resolve(finalWithout());
       await finalSide.promise;
     });
-
-    await waitFor(() => expect(initPosts).toBe(2));
     await waitFor(() =>
       expect(hook.result.current.visible).toBe("without-completed"),
     );
+    expect(nextFrame).not.toBeNull();
+    expect(toPng).not.toHaveBeenCalled();
+    expect(api.postScreenshot).not.toHaveBeenCalled();
+
+    act(() => {
+      nextFrame?.(0);
+    });
+    await waitFor(() => expect(toPng).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(api.postScreenshot).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(initPosts).toBe(2));
     expect(hook.result.current.startWithEnabled).toBe(true);
     hook.unmount();
   });
@@ -392,15 +410,14 @@ describe("useCase3Controller lifecycle", () => {
             command: "start",
             dt_type: "without dt",
             status: "execute success",
-            save_picture_flag: 1,
           });
         }
         if (controlReads === 3) {
           return control({
             command: "start",
             dt_type: "without dt",
-            status: "execute success",
-            save_picture_flag: 0,
+            status: "case complete",
+            save_picture_flag: 1,
           });
         }
         return control({
