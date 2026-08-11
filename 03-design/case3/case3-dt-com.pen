@@ -21007,7 +21007,7 @@
                                       "id": "Rtpar",
                                       "name": "增量数值",
                                       "fill": "#4ADE80",
-                                      "content": "66.7",
+                                      "content": "40.0",
                                       "fontFamily": "$font",
                                       "fontSize": 24,
                                       "fontWeight": "600"
@@ -32422,7 +32422,7 @@
                                       "id": "QeFYB",
                                       "name": "增量数值",
                                       "fill": "#4ADE80",
-                                      "content": "66.7",
+                                      "content": "40.0",
                                       "fontFamily": "$font",
                                       "fontSize": 24,
                                       "fontWeight": "600"
