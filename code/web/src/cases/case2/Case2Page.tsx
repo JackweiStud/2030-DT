@@ -9,6 +9,7 @@ import colCali from "../../../assets/case2/icons/column-calibrated-icon.png";
 import iconPlay from "../../../assets/case2/icons/icon-play.svg";
 import iconPause from "../../../assets/case2/icons/icon-pause.svg";
 import iconReset from "../../../assets/case2/icons/icon-rotate-ccw.svg";
+import { useEffect } from "react";
 import { useSiteEnvWindow } from "../../shell/siteEnvWindowContext";
 import type { Case2RuntimeConfig } from "./metrics/heatmapConfig";
 import { useCase2Controller } from "./hooks/useCase2Controller";
@@ -20,6 +21,8 @@ import "./case2.css";
 type Props = {
   config: Case2RuntimeConfig;
   stageElementRef: React.RefObject<HTMLElement>;
+  /** 跨 Case Tab 锁：calibrating/resetting（及截图收尾）时上报 busy。 */
+  onBusyChange?: (busy: boolean) => void;
 };
 
 const TAG_CLASS: Record<MetricKey, "rss" | "path" | "delay"> = {
@@ -35,7 +38,7 @@ const TAG_LABEL: Record<MetricKey, string> = {
 };
 
 export function Case2Page(props: Props) {
-  const { config, stageElementRef } = props;
+  const { config, stageElementRef, onBusyChange } = props;
   const { open: openSiteEnv } = useSiteEnvWindow();
   const {
     state,
@@ -48,6 +51,16 @@ export function Case2Page(props: Props) {
   } = useCase2Controller({ config, stageElementRef });
 
   const ui = state.case2UiState;
+  const busy =
+    ui === "calibrating" ||
+    ui === "resetting" ||
+    state.screenshotPhase === "saving" ||
+    state.screenshotPhase === "waitClear";
+
+  useEffect(() => {
+    onBusyChange?.(busy);
+    return () => onBusyChange?.(false);
+  }, [busy, onBusyChange]);
 
   return (
     <main className="case2-page" data-state={ui}>

@@ -1,5 +1,5 @@
 /**
- * Shell：1920×1080 固定舞台等比缩放居中；四 Tab；非 case2 显示建设中。
+ * Shell：1920×1080 固定舞台等比缩放居中；四 Tab；跨 Case 导航锁。
  * 拥有「现场环境」弹窗（case2/3/4 共用）。
  */
 
@@ -33,6 +33,8 @@ type Props = {
   onTabChange: (tab: CaseTabId) => void;
   /** Stage 内层节点，供截图使用。 */
   stageRef: React.RefObject<HTMLDivElement>;
+  /** 当前 Case Start/ReInit（含截图收尾）等待时锁定其他 Tab。 */
+  navigationLocked?: boolean;
   children: ReactNode;
 };
 
@@ -40,7 +42,13 @@ type Props = {
  * 固定舞台 + 视口缩放。业务页不得自行做第二套响应式。
  */
 export function Shell(props: Props) {
-  const { activeTab, onTabChange, stageRef, children } = props;
+  const {
+    activeTab,
+    onTabChange,
+    stageRef,
+    navigationLocked = false,
+    children,
+  } = props;
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [siteEnvOpen, setSiteEnvOpen] = useState(false);
@@ -94,17 +102,24 @@ export function Shell(props: Props) {
               <span className="brand-title">IMT-2030 DT测试</span>
             </div>
             <nav className="case-nav" aria-label="Case tabs">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  className={`case-tab${activeTab === tab.id ? " is-active" : ""}`}
-                  onClick={() => onTabChange(tab.id)}
-                >
-                  <span className="case-tab__label">{tab.label}</span>
-                  <span className="tab-underline" aria-hidden />
-                </button>
-              ))}
+              {TABS.map((tab) => {
+                const lockedOther = navigationLocked && tab.id !== activeTab;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`case-tab${activeTab === tab.id ? " is-active" : ""}`}
+                    disabled={lockedOther}
+                    onClick={() => {
+                      if (lockedOther) return;
+                      onTabChange(tab.id);
+                    }}
+                  >
+                    <span className="case-tab__label">{tab.label}</span>
+                    <span className="tab-underline" aria-hidden />
+                  </button>
+                );
+              })}
             </nav>
           </header>
           {children}

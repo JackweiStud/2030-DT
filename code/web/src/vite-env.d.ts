@@ -10,6 +10,10 @@ interface ImportMetaEnv {
   readonly VITE_CASE2_HEATMAP_GAP?: string;
   readonly VITE_CASE2_HEATMAP_ALPHA?: string;
   readonly VITE_CASE2_CDF_POINT_CAP?: string;
+  readonly VITE_CASE3_POLL_MS?: string;
+  readonly VITE_CASE3_MAP_ORIGIN_X?: string;
+  readonly VITE_CASE3_MAP_ORIGIN_Y?: string;
+  readonly VITE_CASE3_MAP_UNITS_PER_PX?: string;
 }
 
 interface ImportMeta {
