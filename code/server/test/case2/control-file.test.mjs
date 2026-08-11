@@ -53,7 +53,6 @@ test("缺失核心字段或可选字段类型错误时拒绝控制文件", async
 
 test("start、reinit 和进页 init 合并最新快照、清空 status 并保留未知字段", async (t) => {
   const sharedDir = await createSharedDir(t, {
-    status: "execute fail",
     save_picture_flag: 1,
     future_field: "keep-me",
   });
@@ -68,7 +67,7 @@ test("start、reinit 和进页 init 合并最新快照、清空 status 并保留
   assert.equal(started.command, "start");
   assert.equal(started.future_field, "keep-me");
 
-  await writeControl(sharedDir, { ...started, status: "execute fail" });
+  await controlFile.updateFromHttp({ command: "init" });
   const reset = await controlFile.updateFromHttp({ command: "reinit" });
   assert.equal(reset.status, "");
   assert.equal(reset.command, "reinit");
@@ -89,10 +88,7 @@ test("start、reinit 和进页 init 合并最新快照、清空 status 并保留
 });
 
 test("控制写入进程内串行，清 flag 不修改 status", async (t) => {
-  const sharedDir = await createSharedDir(t, {
-    status: "case complete",
-    save_picture_flag: 1,
-  });
+  const sharedDir = await createSharedDir(t);
   const controlFile = service(sharedDir);
 
   const first = controlFile.updateFromHttp({
@@ -101,13 +97,19 @@ test("控制写入进程内串行，清 flag 不修改 status", async (t) => {
     dt_type: "with dt",
   });
   const second = controlFile.updateFromHttp({ command: "reinit" });
-  await Promise.all([first, second]);
+  const [firstResult, secondResult] = await Promise.allSettled([first, second]);
+  assert.equal(firstResult.status, "fulfilled");
+  assert.equal(secondResult.status, "rejected");
+  assert.equal(secondResult.reason.code, "CONTROL_BUSY");
   const finalAfterCommands = await readControl(sharedDir);
-  assert.equal(finalAfterCommands.command, "reinit");
+  assert.equal(finalAfterCommands.command, "start");
   assert.equal(finalAfterCommands.status, "");
 
   await writeControl(sharedDir, {
     ...finalAfterCommands,
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
     status: "case complete",
     save_picture_flag: 1,
   });

@@ -46,6 +46,10 @@ test("四个 case2 REST 成功路径可联通", async (t) => {
 
   await writeControl(sharedDir, {
     ...(await readControl(sharedDir)),
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
     save_picture_flag: 1,
   });
   const screenshotPost = await jsonRequest(baseUrl, "/api/case2/screenshot", {
@@ -110,15 +114,17 @@ test("超过 20 MiB 的两个 POST 路由均拒绝", async (t) => {
   }
 });
 
-test("不注册 case3/case4 路由", async (t) => {
+test("Case3 控制路由已注册，Case4 仍返回 404", async (t) => {
   const sharedDir = await createSharedDir(t);
   const { baseUrl } = await startTestServer(t, { sharedDir });
-  for (const pathname of [
-    "/api/case3/control-file",
+  const case3 = await jsonRequest(baseUrl, "/api/case3/control-file");
+  assert.equal(case3.status, 200);
+  assert.equal(case3.body.control.command, "init");
+
+  const case4 = await jsonRequest(
+    baseUrl,
     "/api/case4/data-files?phase=initial",
-  ]) {
-    const response = await jsonRequest(baseUrl, pathname);
-    assert.equal(response.status, 404);
-    assert.equal(response.body.error.code, "NOT_FOUND");
-  }
+  );
+  assert.equal(case4.status, 404);
+  assert.equal(case4.body.error.code, "NOT_FOUND");
 });

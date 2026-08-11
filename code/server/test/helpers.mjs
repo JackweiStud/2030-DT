@@ -4,6 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { createAdapterApp } from "../src/app.mjs";
 import { METRIC_FILES } from "../src/cases/case2/constants.mjs";
+import {
+  CASE3_INIT_FILES,
+  CASE3_SIDE_FILES,
+} from "../src/cases/case3/constants.mjs";
 import { createSilentLogger } from "../src/shared/logger.mjs";
 
 export const DEFAULT_CONTROL = Object.freeze({
@@ -24,7 +28,9 @@ export const PNG_BASE64 = PNG_BYTES.toString("base64");
 export async function createSharedDir(testContext, control = {}) {
   const sharedDir = await fs.mkdtemp(path.join(os.tmpdir(), "case2-adapter-"));
   await fs.mkdir(path.join(sharedDir, "case2"), { recursive: true });
+  await fs.mkdir(path.join(sharedDir, "case3"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "out", "case2"), { recursive: true });
+  await fs.mkdir(path.join(sharedDir, "out", "case3"), { recursive: true });
   await writeControl(sharedDir, { ...DEFAULT_CONTROL, ...control });
   testContext.after(() => fs.rm(sharedDir, { recursive: true, force: true }));
   return sharedDir;
@@ -55,6 +61,40 @@ export async function writePhaseFiles(sharedDir, phase, options = {}) {
       path.join(sharedDir, "case2", phases[phase].kpi),
       kpi,
     );
+  }
+}
+
+export async function writeCase3InitFiles(sharedDir, options = {}) {
+  const dataDir = path.join(sharedDir, "case3");
+  await fs.writeFile(
+    path.join(dataDir, CASE3_INIT_FILES.baseRoute),
+    options.baseRoute ?? "1.005,-2.005,0\n3,4,5\n",
+  );
+  await fs.writeFile(
+    path.join(dataDir, CASE3_INIT_FILES.beamAccuracy),
+    options.beamAccuracy ?? "222,235\n",
+  );
+}
+
+export async function writeCase3SideFiles(sharedDir, side, options = {}) {
+  const dataDir = path.join(sharedDir, "case3");
+  const files = CASE3_SIDE_FILES[side];
+  const common = {
+    coordinates: options.coordinates ?? "1.005,15.014,0\n2,16,0\n",
+    selected: options.selected ?? "4\n5\n",
+    throughput: options.throughput ?? "8.555\n9\n",
+    cost: options.cost ?? (side === "without" ? "25\n" : "15\n"),
+  };
+  if (side === "without") {
+    common.scans =
+      options.scans ??
+      "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15\n0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15\n";
+  } else {
+    common.reflection =
+      options.reflection ?? "5,7,0,1\n6.005,8.005,0,0\n";
+  }
+  for (const [key, content] of Object.entries(common)) {
+    await fs.writeFile(path.join(dataDir, files[key]), content);
   }
 }
 

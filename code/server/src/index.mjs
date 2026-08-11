@@ -21,7 +21,7 @@ async function main() {
     server.listen(config.port, config.host, resolve);
   });
 
-  logger.info("case2 adapter started", {
+  logger.info("dt adapter started", {
     host: config.host,
     port: config.port,
     sharedDir: config.sharedDir,
@@ -31,10 +31,10 @@ async function main() {
   const shutdown = (signal) => {
     if (closing) return;
     closing = true;
-    logger.info("case2 adapter stopping", { signal });
+    logger.info("dt adapter stopping", { signal });
     server.close((error) => {
       if (error) {
-        logger.error("case2 adapter shutdown failed", { reason: error.message });
+        logger.error("dt adapter shutdown failed", { reason: error.message });
         process.exitCode = 1;
       }
     });
@@ -45,7 +45,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  logger.error("case2 adapter failed to start", {
+  logger.error("dt adapter failed to start", {
     reason: error?.message ?? String(error),
   });
   process.exitCode = 1;

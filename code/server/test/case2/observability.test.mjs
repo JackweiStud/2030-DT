@@ -14,7 +14,7 @@ import {
 } from "../helpers.mjs";
 
 test("控制写成功日志附带 command/status/save_picture_flag 快照", async (t) => {
-  const sharedDir = await createSharedDir(t, { status: "execute fail" });
+  const sharedDir = await createSharedDir(t);
   const logs = createLogCollector();
   const controlFile = createControlFileService({
     sharedDir,
@@ -28,7 +28,7 @@ test("控制写成功日志附带 command/status/save_picture_flag 快照", asyn
   });
 
   const entry = logs.entries.find(
-    (item) => item.message === "case2 control file updated",
+    (item) => item.message === "control file updated",
   );
   assert.ok(entry);
   assert.equal(entry.context.kind, "start");
@@ -83,7 +83,7 @@ test("请求摘要：4xx 记 warn；control GET 仅在 status/flag 变化时记"
 
   let controlGetInfos = logs.entries.filter(
     (item) =>
-      item.message === "case2 adapter request" &&
+      item.message === "dt adapter request" &&
       item.context.path === "/api/case2/control-file" &&
       item.context.method === "GET" &&
       item.level === "info",
@@ -103,7 +103,7 @@ test("请求摘要：4xx 记 warn；control GET 仅在 status/flag 变化时记"
 
   controlGetInfos = logs.entries.filter(
     (item) =>
-      item.message === "case2 adapter request" &&
+      item.message === "dt adapter request" &&
       item.context.path === "/api/case2/control-file" &&
       item.context.method === "GET" &&
       item.level === "info",
@@ -119,7 +119,7 @@ test("请求摘要：4xx 记 warn；control GET 仅在 status/flag 变化时记"
   const warn = logs.entries.find(
     (item) =>
       item.level === "warn" &&
-      item.message === "case2 adapter request" &&
+      item.message === "dt adapter request" &&
       item.context.code === "INVALID_REQUEST",
   );
   assert.ok(warn);
@@ -130,7 +130,7 @@ test("请求摘要：4xx 记 warn；control GET 仅在 status/flag 变化时记"
   assert.equal(data.status, 200);
   const dataAccess = logs.entries.find(
     (item) =>
-      item.message === "case2 adapter request" &&
+      item.message === "dt adapter request" &&
       item.context.path === "/api/case2/data-files?phase=initial",
   );
   assert.ok(dataAccess);
@@ -143,6 +143,9 @@ test("请求摘要：4xx 记 warn；control GET 仅在 status/flag 变化时记"
 
 test("screenshot 请求开始与落盘均有 INFO 日志", async (t) => {
   const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
     status: "case complete",
     save_picture_flag: 1,
   });
@@ -171,4 +174,3 @@ test("screenshot 请求开始与落盘均有 INFO 日志", async (t) => {
   assert.equal(saved.context.seq, 0);
   assert.equal(saved.context.bytes, accepted.context.bytes);
 });
-

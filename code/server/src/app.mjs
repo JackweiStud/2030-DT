@@ -1,44 +1,101 @@
 import http from "node:http";
 import { promises as defaultFs } from "node:fs";
-import { createControlFileService } from "./cases/case2/control-file.mjs";
+import { createControlFileService as createCase2ControlFileService } from "./cases/case2/control-file.mjs";
 import { createDataFilesService } from "./cases/case2/data-files.mjs";
 import { createCase2Router } from "./cases/case2/routes.mjs";
-import { createScreenshotService } from "./cases/case2/screenshot.mjs";
+import { createScreenshotService as createCase2ScreenshotService } from "./cases/case2/screenshot.mjs";
+import { createCase3ControlFileService } from "./cases/case3/control-file.mjs";
+import { createDebugJsonlService } from "./cases/case3/debug-jsonl.mjs";
+import { createInitDataService } from "./cases/case3/init-data.mjs";
+import { createCase3Router } from "./cases/case3/routes.mjs";
+import { createCase3ScreenshotService } from "./cases/case3/screenshot.mjs";
+import { createSideFilesService } from "./cases/case3/side-files.mjs";
+import { createControlFileStore } from "./shared/control-file-store.mjs";
 import { isAppError } from "./shared/errors.mjs";
 import { sendJson } from "./shared/http.mjs";
 import { createLogger } from "./shared/logger.mjs";
 
 /**
- * 组装依赖而不启动监听，便于测试替换文件系统和日志。
- * case3/case4 没有注册路由，因此请求会明确返回 404。
+ * 组装 Case2 + Case3 适配依赖而不启动监听。
+ * 两个 Case 共享同一个控制文件 store 和串行写队列，避免跨 Case 覆盖。
  */
 export function createAdapterApp(options) {
   const fsOps = options.fsOps ?? defaultFs;
   const logger = options.logger ?? createLogger();
-  const controlFile = createControlFileService({
+  const controlStore = createControlFileStore({
     sharedDir: options.sharedDir,
     fsOps,
     logger,
   });
-  const dataFiles = createDataFilesService({
+  const case2ControlFile = createCase2ControlFileService({
     sharedDir: options.sharedDir,
-    controlFile,
+    store: controlStore,
     fsOps,
     logger,
   });
-  const screenshot = createScreenshotService({
+  const case2DataFiles = createDataFilesService({
     sharedDir: options.sharedDir,
-    controlFile,
+    controlFile: case2ControlFile,
     fsOps,
     logger,
   });
-  const routeCase2 = createCase2Router({ controlFile, dataFiles, screenshot });
-  // control GET 1Hz 轮询：仅在 status / save_picture_flag 变化时记请求摘要。
+  const case2Screenshot = createCase2ScreenshotService({
+    sharedDir: options.sharedDir,
+    controlFile: case2ControlFile,
+    fsOps,
+    logger,
+  });
+  const routeCase2 = createCase2Router({
+    controlFile: case2ControlFile,
+    dataFiles: case2DataFiles,
+    screenshot: case2Screenshot,
+  });
+
+  const case3DebugJsonl = createDebugJsonlService({
+    sharedDir: options.sharedDir,
+    fsOps,
+    logger,
+  });
+  const case3ControlFile = createCase3ControlFileService({
+    sharedDir: options.sharedDir,
+    store: controlStore,
+    debugJsonl: case3DebugJsonl,
+    fsOps,
+    logger,
+  });
+  const case3InitData = createInitDataService({
+    sharedDir: options.sharedDir,
+    fsOps,
+  });
+  const case3SideFiles = createSideFilesService({
+    sharedDir: options.sharedDir,
+    controlFile: case3ControlFile,
+    debugJsonl: case3DebugJsonl,
+    fsOps,
+    logger,
+  });
+  const case3Screenshot = createCase3ScreenshotService({
+    sharedDir: options.sharedDir,
+    controlFile: case3ControlFile,
+    fsOps,
+    logger,
+  });
+  const routeCase3 = createCase3Router({
+    controlFile: case3ControlFile,
+    initData: case3InitData,
+    sideFiles: case3SideFiles,
+    screenshot: case3Screenshot,
+  });
+
+  // 高频 control GET 仅在状态或截图标志变化时记录摘要。
   const controlGetSampler = createControlGetSampler();
 
   async function initialize() {
-    await controlFile.read();
-    await screenshot.cleanupTemporaryFiles();
+    await controlStore.read();
+    await Promise.all([
+      case2Screenshot.cleanupTemporaryFiles(),
+      case3Screenshot.cleanupTemporaryFiles(),
+    ]);
   }
 
   async function handler(request, response) {
@@ -48,7 +105,10 @@ export function createAdapterApp(options) {
     let accessExtra = {};
 
     try {
-      const result = await routeCase2(request, response, url);
+      let result = await routeCase2(request, response, url);
+      if (!result?.handled) {
+        result = await routeCase3(request, response, url);
+      }
       if (!result?.handled) {
         sendJson(response, 404, {
           ok: false,
@@ -64,7 +124,7 @@ export function createAdapterApp(options) {
       } else if (isAppError(error)) {
         errorCode = error.code;
         if (error.status >= 500) {
-          logger.error("case2 adapter request failed", {
+          logger.error("dt adapter request failed", {
             method: request.method,
             url: request.url,
             code: error.code,
@@ -77,7 +137,7 @@ export function createAdapterApp(options) {
         });
       } else {
         errorCode = "INTERNAL_ERROR";
-        logger.error("case2 adapter unexpected error", {
+        logger.error("dt adapter unexpected error", {
           method: request.method,
           url: request.url,
           reason: error?.message ?? String(error),
@@ -104,7 +164,21 @@ export function createAdapterApp(options) {
   return {
     handler,
     initialize,
-    services: { controlFile, dataFiles, screenshot },
+    services: {
+      controlStore,
+      case2: {
+        controlFile: case2ControlFile,
+        dataFiles: case2DataFiles,
+        screenshot: case2Screenshot,
+      },
+      case3: {
+        controlFile: case3ControlFile,
+        initData: case3InitData,
+        sideFiles: case3SideFiles,
+        screenshot: case3Screenshot,
+        debugJsonl: case3DebugJsonl,
+      },
+    },
   };
 }
 
@@ -116,12 +190,12 @@ export function createAdapterServer(app) {
  * 控制轮询降噪：同一 status + save_picture_flag 连续成功 GET 只记首条。
  */
 export function createControlGetSampler() {
-  let lastKey = null;
+  const lastKeys = new Map();
   return {
-    shouldLog(control) {
+    shouldLog(caseId, control) {
       const key = `${control?.status ?? ""}\u0000${control?.save_picture_flag ?? ""}`;
-      if (key === lastKey) return false;
-      lastKey = key;
+      if (key === lastKeys.get(caseId)) return false;
+      lastKeys.set(caseId, key);
       return true;
     },
   };
@@ -146,19 +220,24 @@ function logRequestSummary(options) {
   const statusCode = response.statusCode || 0;
   const durationMs = Math.max(0, Date.now() - startedAt);
   const path = `${url.pathname}${url.search}`;
+  const caseId =
+    accessExtra.caseId ??
+    (url.pathname.startsWith("/api/case3/") ? "case3" : "case2");
   const isQuietControlGet =
     request.method === "GET" &&
-    url.pathname === "/api/case2/control-file" &&
+    (url.pathname === "/api/case2/control-file" ||
+      url.pathname === "/api/case3/control-file") &&
     statusCode === 200;
 
   if (isQuietControlGet) {
     const control = accessExtra.control;
-    if (!control || !controlGetSampler.shouldLog(control)) {
+    if (!control || !controlGetSampler.shouldLog(caseId, control)) {
       return;
     }
   }
 
   const context = {
+    caseId,
     method: request.method,
     path,
     statusCode,
@@ -175,5 +254,5 @@ function logRequestSummary(options) {
 
   const level =
     statusCode >= 500 ? "error" : statusCode >= 400 ? "warn" : "info";
-  logger[level]("case2 adapter request", context);
+  logger[level]("dt adapter request", context);
 }

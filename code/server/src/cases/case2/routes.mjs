@@ -17,7 +17,7 @@ export function createCase2Router(services) {
       }
       const control = await services.controlFile.read();
       sendJson(response, 200, { ok: true, control });
-      return { handled: true, access: { control } };
+      return { handled: true, access: { caseId: "case2", control } };
     }
 
     if (
@@ -30,7 +30,7 @@ export function createCase2Router(services) {
       const payload = await readJsonBody(request);
       const control = await services.controlFile.updateFromHttp(payload);
       sendJson(response, 200, { ok: true, control });
-      return { handled: true };
+      return { handled: true, access: { caseId: "case2" } };
     }
 
     if (
@@ -46,7 +46,7 @@ export function createCase2Router(services) {
         );
       }
       sendJson(response, 200, await services.dataFiles.readPhase(entries[0][1]));
-      return { handled: true };
+      return { handled: true, access: { caseId: "case2" } };
     }
 
     if (
@@ -58,7 +58,7 @@ export function createCase2Router(services) {
       }
       const payload = await readJsonBody(request);
       sendJson(response, 200, await services.screenshot.save(payload));
-      return { handled: true };
+      return { handled: true, access: { caseId: "case2" } };
     }
 
     return { handled: false };

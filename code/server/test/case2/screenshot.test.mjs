@@ -40,6 +40,9 @@ test("flag=0 时拒绝截图，非法 Base64/PNG 也拒绝", async (t) => {
 
 test("pixelRatio=2 量级大 Base64 不因校验正则栈溢出", async (t) => {
   const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
     status: "case complete",
     save_picture_flag: 1,
   });
@@ -62,6 +65,9 @@ test("pixelRatio=2 量级大 Base64 不因校验正则栈溢出", async (t) => {
 
 test("flag=1 时递增保存 PNG、返回相对路径并成功清零", async (t) => {
   const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
     status: "case complete",
     save_picture_flag: 1,
   });
@@ -107,7 +113,12 @@ test("启动只清理残留临时 PNG，不删除完成文件", async (t) => {
 });
 
 test("截图序号从已有 009 递增到 010，超过 999 后自然扩展", async (t) => {
-  const sharedDir = await createSharedDir(t, { save_picture_flag: 1 });
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    save_picture_flag: 1,
+  });
   const outputDir = path.join(sharedDir, "out", "case2");
   await fs.writeFile(path.join(outputDir, "calibrated-009.png"), PNG_BYTES);
   const { screenshot } = services(sharedDir);
@@ -127,12 +138,23 @@ test("截图序号从已有 009 递增到 010，超过 999 后自然扩展", asy
 });
 
 test("PNG 已落盘但清零失败时保留完成文件并返回固定错误", async (t) => {
-  const sharedDir = await createSharedDir(t, { save_picture_flag: 1 });
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    save_picture_flag: 1,
+  });
   const screenshot = createScreenshotService({
     sharedDir,
     logger: createSilentLogger(),
     controlFile: {
-      read: async () => ({ save_picture_flag: 1 }),
+      read: async () => ({
+        case: "case2",
+        command: "start",
+        dt_type: "with dt",
+        save_picture_flag: 1,
+      }),
+      assertScreenshotOwnership() {},
       clearPictureFlag: async () => {
         throw new Error("simulated clear failure");
       },

@@ -4,18 +4,18 @@ import path from "node:path";
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3102;
 
-function parsePort(rawValue) {
+function parsePort(rawValue, envName) {
   if (rawValue === undefined || rawValue === "") {
     return DEFAULT_PORT;
   }
 
   if (!/^\d+$/.test(rawValue)) {
-    throw new Error("CASE2_ADAPTER_PORT 必须是 1-65535 的十进制整数");
+    throw new Error(`${envName} 必须是 1-65535 的十进制整数`);
   }
 
   const port = Number(rawValue);
   if (!Number.isSafeInteger(port) || port < 1 || port > 65535) {
-    throw new Error("CASE2_ADAPTER_PORT 必须是 1-65535 的十进制整数");
+    throw new Error(`${envName} 必须是 1-65535 的十进制整数`);
   }
   return port;
 }
@@ -51,9 +51,10 @@ export async function loadRuntimeConfig(env = process.env, options = {}) {
     throw new Error(`控制文件不是普通文件：${controlPath}`);
   }
 
+  const portEnvName = env.DT_ADAPTER_PORT ? "DT_ADAPTER_PORT" : "CASE2_ADAPTER_PORT";
   return {
-    host: env.CASE2_ADAPTER_HOST || DEFAULT_HOST,
-    port: parsePort(env.CASE2_ADAPTER_PORT),
+    host: env.DT_ADAPTER_HOST || env.CASE2_ADAPTER_HOST || DEFAULT_HOST,
+    port: parsePort(env.DT_ADAPTER_PORT || env.CASE2_ADAPTER_PORT, portEnvName),
     sharedDir: resolvedSharedDir,
   };
 }
