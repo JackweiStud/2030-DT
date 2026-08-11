@@ -3,6 +3,8 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  CASE3_ADAPTER_ERROR_BADGE,
+  CASE3_INIT_DATA_ERROR_BADGE,
   canCompareWithCurrentWithout,
   canReinit,
   canStartWith,
@@ -10,6 +12,8 @@ import {
   case3Reducer,
   createInitialCase3State,
   deriveVisibleState,
+  sideStatusBadge,
+  sideStatusBadgeIsError,
 } from "../../src/cases/case3/state/case3Reducer";
 import type { SideSnapshot } from "../../src/cases/case3/types";
 
@@ -45,6 +49,24 @@ describe("case3Reducer", () => {
     });
     expect(canStartWithout(s)).toBe(true);
     expect(canStartWith(s)).toBe(false);
+  });
+
+  it("adapterError 时徽标替换为连接异常文案", () => {
+    let s = createInitialCase3State();
+    s = case3Reducer(s, { type: "INIT_LOADING" });
+    s = case3Reducer(s, { type: "ADAPTER_ERROR", value: true });
+    expect(sideStatusBadgeIsError(s)).toBe(true);
+    expect(sideStatusBadge(s, "without")).toBe(CASE3_ADAPTER_ERROR_BADGE);
+    expect(sideStatusBadge(s, "with")).toBe(CASE3_ADAPTER_ERROR_BADGE);
+    expect(canStartWithout(s)).toBe(false);
+  });
+
+  it("initStatus=error 时徽标替换为初始化数据异常", () => {
+    let s = createInitialCase3State();
+    s = case3Reducer(s, { type: "INIT_ERROR" });
+    expect(sideStatusBadgeIsError(s)).toBe(true);
+    expect(sideStatusBadge(s, "without")).toBe(CASE3_INIT_DATA_ERROR_BADGE);
+    expect(canStartWithout(s)).toBe(false);
   });
 
   it("Without 完成后 With 可 Start；pairValid 仍 false", () => {

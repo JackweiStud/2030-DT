@@ -17,6 +17,7 @@ type Props = {
   points: Case3Point[];
   peerPoints?: Case3Point[] | null;
   badge: string;
+  badgeError?: boolean;
   startEnabled: boolean;
   resetEnabled: boolean;
   onStart: () => void;
@@ -39,7 +40,9 @@ export function SidePanel(props: Props) {
         <div className="case3-side-label-group">
           <img className="case3-side-icon" src={icon} width={24} height={24} alt="" />
           <span className="case3-side-label">{label}</span>
-          <span className="case3-status-badge">
+          <span
+            className={`case3-status-badge${props.badgeError ? " is-error" : ""}`}
+          >
             <span className="case3-status-text">{props.badge}</span>
           </span>
         </div>

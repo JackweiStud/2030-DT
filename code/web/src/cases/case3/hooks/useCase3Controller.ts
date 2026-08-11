@@ -25,7 +25,8 @@ import {
   createInitialCase3State,
   deriveVisibleState,
   isActionBusy,
-  statusBadgeText,
+  sideStatusBadge,
+  sideStatusBadgeIsError,
 } from "../state/case3Reducer";
 import type { Case3Side } from "../types";
 
@@ -75,6 +76,19 @@ function dtTypeFor(side: Case3Side): "without dt" | "with dt" {
 function stripDataUrl(base64: string): string {
   const idx = base64.indexOf("base64,");
   return idx >= 0 ? base64.slice(idx + 7) : base64;
+}
+
+/**
+ * 让 reducer 的 completed 结果至少完成一次浏览器渲染机会，再撤销控制权。
+ */
+function waitForNextRender(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(() => resolve());
+      return;
+    }
+    window.setTimeout(resolve, 0);
+  });
 }
 
 /**
@@ -311,9 +325,6 @@ export function useCase3Controller(options: Options) {
 
       if (action.kind === "start" && seen) {
         if (status === "case complete") {
-          if (flag === 1 && screenshotPhaseRef.current === "idle") {
-            void runScreenshotTask();
-          }
           try {
             const snapshot = await api.getSide(action.side, ac.signal);
             if (
@@ -337,7 +348,7 @@ export function useCase3Controller(options: Options) {
                 snapshot,
               });
               pendingCompleteSideRef.current = action.side;
-              await Promise.resolve();
+              await waitForNextRender();
               if (
                 screenshotPhaseRef.current !== "saving" &&
                 screenshotPhaseRef.current !== "waitClear"
@@ -625,8 +636,9 @@ export function useCase3Controller(options: Options) {
     startWithEnabled: canStartWith(state),
     reinitWithoutEnabled: canReinit(state, "without"),
     reinitWithEnabled: canReinit(state, "with"),
-    withoutBadge: statusBadgeText(visible, "without"),
-    withBadge: statusBadgeText(visible, "with"),
+    withoutBadge: sideStatusBadge(state, "without"),
+    withBadge: sideStatusBadge(state, "with"),
+    badgeError: sideStatusBadgeIsError(state),
     onStartWithout,
     onStartWith,
     onReinitWithout,

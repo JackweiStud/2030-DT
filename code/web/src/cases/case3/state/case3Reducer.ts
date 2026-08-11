@@ -311,6 +311,26 @@ export function statusBadgeText(
   return "等待无DT测试完成";
 }
 
+/** 与 Case2「case2文件服务器连接异常」同机制的连接失败文案。 */
+export const CASE3_ADAPTER_ERROR_BADGE = "case3文件服务器连接异常";
+
+/** init-data 语义错误（非 Node 不可达）时的徽标文案。 */
+export const CASE3_INIT_DATA_ERROR_BADGE = "case3初始化数据异常";
+
+/**
+ * 侧栏徽标最终文案：adapter / init 错误优先替换业务态文案。
+ */
+export function sideStatusBadge(state: Case3State, side: Case3Side): string {
+  if (state.adapterError) return CASE3_ADAPTER_ERROR_BADGE;
+  if (state.initStatus === "error") return CASE3_INIT_DATA_ERROR_BADGE;
+  return statusBadgeText(deriveVisibleState(state), side);
+}
+
+/** 徽标是否应使用错误样式。 */
+export function sideStatusBadgeIsError(state: Case3State): boolean {
+  return state.adapterError || state.initStatus === "error";
+}
+
 /** Without Start 是否可点。 */
 export function canStartWithout(state: Case3State): boolean {
   if (state.initStatus !== "ready") return false;

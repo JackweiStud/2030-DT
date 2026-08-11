@@ -233,7 +233,7 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
             <svg
               className="case3-route-layer"
               viewBox={`0 0 ${natural.w} ${natural.h}`}
-              preserveAspectRatio="none"
+              preserveAspectRatio="xMidYMid meet"
             >
               {routePts.length > 1 ? (
                 <polyline

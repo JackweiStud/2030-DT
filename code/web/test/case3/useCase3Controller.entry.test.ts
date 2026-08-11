@@ -3,8 +3,11 @@
  */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  Case3ApiError,
+  type Case3Api,
+} from "../../src/cases/case3/api/case3Api";
 import { useCase3Controller } from "../../src/cases/case3/hooks/useCase3Controller";
-import type { Case3Api } from "../../src/cases/case3/api/case3Api";
 import type { Case3RuntimeConfig } from "../../src/cases/case3/config/case3RuntimeConfig";
 import type { ControlSnapshot } from "../../src/cases/case3/types";
 
@@ -108,5 +111,37 @@ describe("useCase3Controller entry", () => {
       expect(result.current.visible).toBe("failed-start-without");
     });
     unmount();
+  });
+
+  it("init-data 语义错误进入 error，停止恢复探测", async () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const api: Case3Api = {
+      getControl: vi.fn(async () => control()),
+      postControl: vi.fn(async () => control()),
+      getInitData: vi.fn(async () => {
+        throw new Case3ApiError(
+          "INIT_DATA_INVALID",
+          "baseline invalid",
+          422,
+        );
+      }),
+      getSide: vi.fn(),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({ config, stageElementRef: stageRef(), api }),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.state.initStatus).toBe("error"),
+    );
+    expect(api.getControl).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.startWithoutEnabled).toBe(false);
+    expect(errorLog).toHaveBeenCalledWith(
+      "case3 init-data failed",
+      expect.objectContaining({ code: "INIT_DATA_INVALID" }),
+    );
+    hook.unmount();
+    errorLog.mockRestore();
   });
 });

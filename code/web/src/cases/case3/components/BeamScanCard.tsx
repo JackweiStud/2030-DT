@@ -15,6 +15,44 @@ type Props = {
   peerPoint?: Case3Point | null;
 };
 
+const BEAM_GRID_SIZE = 16;
+const BEAM_COUNT = BEAM_GRID_SIZE * BEAM_GRID_SIZE;
+const BEAM_DOT_RADIUS = 4;
+const BEAM_GRID_WIDTH = 215;
+const BEAM_GRID_HEIGHT = 252;
+const BEAM_X_START = 11.5;
+const BEAM_X_STEP = 12.8;
+const BEAM_Y_START = 4;
+const BEAM_Y_STEP =
+  (BEAM_GRID_HEIGHT - BEAM_DOT_RADIUS * 2) / (BEAM_GRID_SIZE - 1);
+const ALL_BEAM_IDS = Array.from({ length: BEAM_COUNT }, (_, id) => id);
+
+function isBeamId(id: number): boolean {
+  return Number.isInteger(id) && id >= 0 && id < BEAM_COUNT;
+}
+
+/**
+ * 多个圆点合并成一条 SVG path，避免 256 个 React 叶子节点。
+ */
+function beamPath(ids: Iterable<number>): string {
+  const commands: string[] = [];
+  for (const id of ids) {
+    if (!isBeamId(id)) continue;
+    const row = Math.floor(id / BEAM_GRID_SIZE);
+    const col = id % BEAM_GRID_SIZE;
+    const cx = BEAM_X_START + col * BEAM_X_STEP;
+    const cy = BEAM_Y_START + row * BEAM_Y_STEP;
+    commands.push(
+      `M ${cx - BEAM_DOT_RADIUS} ${cy}`,
+      `a ${BEAM_DOT_RADIUS} ${BEAM_DOT_RADIUS} 0 1 0 ${BEAM_DOT_RADIUS * 2} 0`,
+      `a ${BEAM_DOT_RADIUS} ${BEAM_DOT_RADIUS} 0 1 0 ${-BEAM_DOT_RADIUS * 2} 0`,
+    );
+  }
+  return commands.join(" ");
+}
+
+const ALL_BEAMS_PATH = beamPath(ALL_BEAM_IDS);
+
 /**
  * BS 波束浮层卡片。
  */
@@ -22,20 +60,12 @@ export function BeamScanCard(props: Props) {
   const { side, point, peerPoint } = props;
   const scan = new Set(point?.scanBeamIds ?? []);
   const selected = point?.selectedBeamId;
-
-  const rows = Array.from({ length: 16 }, (_, r) =>
-    Array.from({ length: 16 }, (_, c) => {
-      const id = r * 16 + c;
-      let cls = "case3-scan-dot";
-      if (side === "without") {
-        if (selected === id) cls += " is-best";
-        else if (scan.has(id)) cls += " is-scan";
-      } else if (selected === id) {
-        cls += " is-predict";
-      }
-      return { id, cls };
-    }),
-  );
+  const scanPath =
+    side === "without"
+      ? beamPath([...scan].filter((id) => id !== selected))
+      : "";
+  const selectedPath =
+    selected === undefined ? "" : beamPath([selected]);
 
   let legend: { ok: boolean; text: string } | null = null;
   if (side === "with" && point && peerPoint) {
@@ -66,19 +96,33 @@ export function BeamScanCard(props: Props) {
         ) : null}
       </div>
       <div className="case3-scan-grid-bg">
-        <div className="case3-scan-grid">
-          {rows.map((row, r) => (
-            <div key={r} className="case3-scan-row">
-              {row.map((cell) => (
-                <span
-                  key={cell.id}
-                  className={cell.cls}
-                  data-beam-index={cell.id}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+        <svg
+          className="case3-scan-grid"
+          viewBox={`0 0 ${BEAM_GRID_WIDTH} ${BEAM_GRID_HEIGHT}`}
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden
+        >
+          <path
+            className="case3-scan-path case3-scan-path--base"
+            d={ALL_BEAMS_PATH}
+          />
+          {scanPath ? (
+            <path
+              className="case3-scan-path case3-scan-path--scan"
+              d={scanPath}
+            />
+          ) : null}
+          {selectedPath ? (
+            <path
+              className={`case3-scan-path ${
+                side === "without"
+                  ? "case3-scan-path--best"
+                  : "case3-scan-path--predict"
+              }`}
+              d={selectedPath}
+            />
+          ) : null}
+        </svg>
       </div>
       {side === "without" ? (
         <div className="case3-beam-legend">
@@ -91,7 +135,11 @@ export function BeamScanCard(props: Props) {
         </div>
       ) : legend ? (
         <div className="case3-beam-legend">
-          <span className="case3-beam-legend__item case3-beam-legend__item--predict">
+          <span
+            className={`case3-beam-legend__item case3-beam-legend__item--predict ${
+              legend.ok ? "is-ok" : "is-fail"
+            }`}
+          >
             <img
               className="case3-beam-legend__icon"
               src={legend.ok ? iconOk : iconErr}

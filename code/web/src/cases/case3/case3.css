@@ -174,12 +174,25 @@
   white-space: nowrap;
 }
 
+.case3-status-badge.is-error {
+  background: #ef444433;
+  color: #f87171;
+}
+
 .case3-page[data-state="without-completed"] [data-side="without"] .case3-status-badge,
 .case3-page[data-state="with-running"] [data-side="without"] .case3-status-badge,
 .case3-page[data-state="with-completed"] [data-side="without"] .case3-status-badge,
 .case3-page[data-state="with-completed"] [data-side="with"] .case3-status-badge {
   background: #22c55e33;
   color: #22c55e;
+}
+
+.case3-page[data-state="without-completed"] [data-side="without"] .case3-status-badge.is-error,
+.case3-page[data-state="with-running"] [data-side="without"] .case3-status-badge.is-error,
+.case3-page[data-state="with-completed"] [data-side="without"] .case3-status-badge.is-error,
+.case3-page[data-state="with-completed"] [data-side="with"] .case3-status-badge.is-error {
+  background: #ef444433;
+  color: #f87171;
 }
 
 .case3-side-actions {
@@ -369,56 +382,33 @@
 }
 
 .case3-scan-grid {
-  width: 212px;
-  height: 252px;
-  padding: 2px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2px;
-  box-sizing: border-box;
-  background: transparent;
-}
-
-.case3-scan-row {
-  display: flex;
   width: 215px;
-  height: 8px;
-  gap: 4.8px;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
+  height: 252px;
+  display: block;
+  background: transparent;
+  overflow: visible;
 }
 
-.case3-scan-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #d0d4db33;
-  border: 1px solid #d0d4dc80;
-  box-sizing: border-box;
-  flex-shrink: 0;
+.case3-scan-path {
+  fill-rule: evenodd;
 }
 
-.case3-scan-dot.is-scan {
-  background: #ffffff;
-  border-color: transparent;
+.case3-scan-path--base {
+  fill: #d0d4db33;
+  stroke: #d0d4dc80;
+  stroke-width: 1;
 }
 
-.case3-scan-dot.is-best {
-  background: #2d7cf6;
-  border-color: transparent;
+.case3-scan-path--scan {
+  fill: #ffffff;
 }
 
-.case3-scan-dot.is-predict {
-  background: #09aa71;
-  border-color: transparent;
+.case3-scan-path--best {
+  fill: #2d7cf6;
 }
 
-.case3-page[data-state="with-completed"] .case3-scan-dot.is-predict {
-  background: #f2210aff;
-  border-color: transparent;
+.case3-scan-path--predict {
+  fill: #09aa71;
 }
 
 .case3-beam-legend {
