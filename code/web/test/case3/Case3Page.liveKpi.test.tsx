@@ -26,8 +26,14 @@ vi.mock("../../src/cases/case3/hooks/useCase3Controller", async () => {
 });
 
 vi.mock("../../src/cases/case3/components/SidePanel", () => ({
-  SidePanel: ({ side }: { side: Case3Side }) => (
-    <div data-testid={`side-${side}`} />
+  SidePanel: ({
+    side,
+    points,
+  }: {
+    side: Case3Side;
+    points: Array<unknown>;
+  }) => (
+    <div data-testid={`side-${side}`} data-point-count={points.length} />
   ),
 }));
 
@@ -197,5 +203,78 @@ describe("Case3Page live KPI", () => {
     expect(
       view.container.querySelector(".case3-cost-delta__value")?.textContent,
     ).toBe("--");
+  });
+
+  it("双侧完成后重置 Without，With 历史地图、Cost 和吞吐仍独立显示", () => {
+    const withHistory = snapshot("with", 2, 15);
+    const historyState = {
+      ...createInitialCase3State(),
+      initStatus: "ready" as const,
+      baseline: { success: 222, total: 235 },
+      results: {
+        without: null,
+        with: withHistory,
+      },
+      pairValid: false,
+    };
+    let current = controller(
+      {
+        ...historyState,
+        activeAction: {
+          kind: "reinit",
+          side: "without",
+          seenExecuteSuccess: true,
+          generation: 3,
+        },
+      },
+      "resetting-without",
+    );
+    vi.mocked(useCase3Controller).mockImplementation(() => current);
+
+    const stageElementRef = {
+      current: document.createElement("main"),
+    };
+    const view = render(
+      <SiteEnvWindowContext.Provider
+        value={{ open: vi.fn(), close: vi.fn() }}
+      >
+        <Case3Page config={config} stageElementRef={stageElementRef} />
+      </SiteEnvWindowContext.Provider>,
+    );
+
+    expect(
+      view.getByTestId("side-with").getAttribute("data-point-count"),
+    ).toBe("2");
+    expect(
+      view.container.querySelector(
+        ".case3-cost-gauge--without .case3-cost-value",
+      )?.textContent,
+    ).toBe("--");
+    expect(
+      view.container.querySelector(
+        ".case3-cost-gauge--with .case3-cost-value",
+      )?.textContent,
+    ).toBe("15.0");
+    expect(
+      view.container.querySelector(".case3-cost-delta__value")?.textContent,
+    ).toBe("--");
+    expect(pointCount(view.container, ".case3-thrp-line--wo")).toBe(0);
+    expect(pointCount(view.container, ".case3-thrp-line--w")).toBe(2);
+
+    current = controller(historyState, "with-history-only");
+    view.rerender(
+      <SiteEnvWindowContext.Provider
+        value={{ open: vi.fn(), close: vi.fn() }}
+      >
+        <Case3Page config={config} stageElementRef={stageElementRef} />
+      </SiteEnvWindowContext.Provider>,
+    );
+
+    expect(
+      view.container.querySelector(
+        ".case3-cost-gauge--with .case3-cost-value",
+      )?.textContent,
+    ).toBe("15.0");
+    expect(pointCount(view.container, ".case3-thrp-line--w")).toBe(2);
   });
 });

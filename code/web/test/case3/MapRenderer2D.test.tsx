@@ -35,6 +35,7 @@ describe("MapRenderer2D", () => {
     const view = render(
       <MapRenderer2D
         ref={ref}
+        side="without"
         config={config}
         baseRoute={[]}
         points={[]}
@@ -72,6 +73,7 @@ describe("MapRenderer2D", () => {
     const view = render(
       <MapRenderer2D
         ref={ref}
+        side="without"
         config={config}
         baseRoute={[]}
         points={[]}
@@ -85,5 +87,61 @@ describe("MapRenderer2D", () => {
     const readiness = ref.current!.prepareCapture();
     fireEvent.error(image);
     await expect(readiness).rejects.toThrow("map image failed to load");
+  });
+
+  it("With 实时点按同 no 波束一致/不一致着色（Pencil tYZqa）", () => {
+    const stage = document.createElement("div");
+    const view = render(
+      <MapRenderer2D
+        side="with"
+        config={config}
+        baseRoute={[]}
+        points={[
+          {
+            no: 1,
+            ue: { x: 0, y: 0, z: 0 },
+            selectedBeamId: 4,
+            throughputGbps: 1,
+          },
+          {
+            no: 2,
+            ue: { x: 1, y: 0, z: 0 },
+            selectedBeamId: 9,
+            throughputGbps: 1,
+          },
+        ]}
+        peerPoints={[
+          {
+            no: 1,
+            ue: { x: 0, y: 0, z: 0 },
+            selectedBeamId: 4,
+            throughputGbps: 1,
+          },
+          {
+            no: 2,
+            ue: { x: 1, y: 0, z: 0 },
+            selectedBeamId: 1,
+            throughputGbps: 1,
+          },
+        ]}
+        stageElementRef={{ current: stage }}
+      />,
+    );
+    const image = view.container.querySelector(
+      "img.case3-map-img",
+    ) as HTMLImageElement;
+    setNaturalSize(image);
+    fireEvent.load(image);
+
+    const match = view.container.querySelector(
+      ".case3-ue-dot--match",
+    ) as SVGCircleElement | null;
+    const mismatch = view.container.querySelector(
+      ".case3-ue-dot--mismatch",
+    ) as SVGCircleElement | null;
+    expect(match?.getAttribute("fill")).toBe("#22C55E");
+    expect(match?.getAttribute("stroke")).toBe("#FFFFFF");
+    expect(mismatch?.getAttribute("fill")).toBe("#c44a21");
+    expect(mismatch?.getAttribute("stroke")).toBe("#FFFFFF");
   });
 });

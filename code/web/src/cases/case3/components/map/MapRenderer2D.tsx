@@ -29,12 +29,26 @@ import {
   zoomMapViewAtPointer,
   type MapView,
 } from "../../metrics/mapProjection";
-import type { BaseRoutePoint, Case3Point } from "../../types";
+import type { BaseRoutePoint, Case3Point, Case3Side } from "../../types";
+
+/** Pencil `tYZqa`：预期一致。 */
+const UE_DOT_MATCH = "#22C55E";
+/** Pencil `tYZqa`：预期不一致。 */
+const UE_DOT_MISMATCH = "#c44a21";
+const UE_DOT_RING = "#FFFFFF";
+const UE_DOT_RADIUS = 4;
+const UE_DOT_STROKE = 1.5;
+/** 点与点之间的细实线（置于圆点之下）。 */
+const UE_LIVE_LINE = "#FFFFFF";
+const UE_LIVE_LINE_WIDTH = 1;
 
 type Props = {
+  side: Case3Side;
   config: Case3RuntimeConfig;
   baseRoute: BaseRoutePoint[];
   points: Case3Point[];
+  /** With 侧用于按同 no 比较 selectedBeamId；Without 可省略。 */
+  peerPoints?: Case3Point[] | null;
   stageElementRef: React.RefObject<HTMLElement>;
 };
 
@@ -48,7 +62,10 @@ type CaptureWaiter = {
  */
 export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
   function MapRenderer2D(props, ref) {
-    const { config, baseRoute, points } = props;
+    const { config, baseRoute, points, side, peerPoints } = props;
+    const peerByNo = new Map(
+      (peerPoints ?? []).map((p) => [p.no, p] as const),
+    );
     const rootRef = useRef<HTMLDivElement>(null);
     const [view, setView] = useState<MapView>(IDENTITY_MAP_VIEW);
     const [natural, setNatural] = useState<{ w: number; h: number } | null>(
@@ -165,10 +182,21 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
     const routePts = baseRoute.map((p) =>
       projectPointToMap2D(p.x, p.y, config),
     );
-    const livePts = points.map((p) => ({
-      no: p.no,
-      ...projectPointToMap2D(p.ue.x, p.ue.y, config),
-    }));
+    const livePts = points.map((p) => {
+      const peer = peerByNo.get(p.no);
+      // Without：事实侧一律一致绿；With：同 no 的 selectedBeamId 一致为绿，否则红
+      const matched =
+        side === "without"
+          ? true
+          : peer
+            ? peer.selectedBeamId === p.selectedBeamId
+            : true;
+      return {
+        no: p.no,
+        matched,
+        ...projectPointToMap2D(p.ue.x, p.ue.y, config),
+      };
+    });
 
     return (
       <div
@@ -238,7 +266,7 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
               {routePts.length > 1 ? (
                 <polyline
                   fill="none"
-                  stroke="#94a3b8"
+                  stroke="#ffffff"
                   strokeWidth={2}
                   strokeDasharray="6 4"
                   points={routePts
@@ -248,9 +276,12 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
               ) : null}
               {livePts.length > 1 ? (
                 <polyline
+                  className="case3-ue-live-line"
                   fill="none"
-                  stroke="#22d3ee"
-                  strokeWidth={2.5}
+                  stroke={UE_LIVE_LINE}
+                  strokeWidth={UE_LIVE_LINE_WIDTH}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   points={livePts
                     .map((p) => `${p.mapPixelX},${p.mapPixelY}`)
                     .join(" ")}
@@ -259,10 +290,17 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
               {livePts.map((p) => (
                 <circle
                   key={p.no}
+                  className={
+                    p.matched
+                      ? "case3-ue-dot case3-ue-dot--match"
+                      : "case3-ue-dot case3-ue-dot--mismatch"
+                  }
                   cx={p.mapPixelX}
                   cy={p.mapPixelY}
-                  r={4}
-                  fill="#22d3ee"
+                  r={UE_DOT_RADIUS}
+                  fill={p.matched ? UE_DOT_MATCH : UE_DOT_MISMATCH}
+                  stroke={UE_DOT_RING}
+                  strokeWidth={UE_DOT_STROKE}
                 />
               ))}
             </svg>

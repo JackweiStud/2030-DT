@@ -7,6 +7,7 @@ import {
   isFinalSideReady,
   niceCeilThroughput,
   niceIntegerStep,
+  pointProgressRouteNos,
   pointProgressWindow,
   relativeCostChangePct,
   throughputXDomain,
@@ -87,6 +88,16 @@ describe("case3Metrics", () => {
     const pts = Array.from({ length: 22 }, (_, i) => i + 1);
     expect(pointProgressWindow(pts)).toEqual(
       Array.from({ length: 20 }, (_, i) => i + 3),
+    );
+    const route = Array.from({ length: 32 }, (_, i) => i + 1);
+    expect(pointProgressRouteNos(route, 0)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 1),
+    );
+    expect(pointProgressRouteNos(route, 5)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 1),
+    );
+    expect(pointProgressRouteNos(route, 25)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 6),
     );
     expect(
       isFinalSideReady({

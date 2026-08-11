@@ -19,7 +19,7 @@ type Props = {
   withPoints: Case3Point[] | null;
   /** init baseRoute 点号；用于固定 X 域。 */
   routeNos: ReadonlyArray<number> | null;
-  /** With 运行中显示实时曲线；完成后仍由 pairValid 决定是否显示。 */
+  /** 是否显示传入的 With 曲线；配对/历史策略由页面统一决定。 */
   showWithSeries: boolean;
 };
 
@@ -164,6 +164,7 @@ export function ThroughputChart(props: Props) {
             strokeLinecap="round"
             strokeLinejoin="round"
             points={toPoints(series.without)}
+            style={{ opacity: series.without.length > 0 ? 1 : 0.15 }}
           />
           <polyline
             className="case3-thrp-line case3-thrp-line--w"
@@ -173,6 +174,7 @@ export function ThroughputChart(props: Props) {
             strokeLinecap="round"
             strokeLinejoin="round"
             points={toPoints(withSeries)}
+            style={{ opacity: withSeries.length > 0 ? 1 : 0.15 }}
           />
           <g>
             {series.without.map((p) => (

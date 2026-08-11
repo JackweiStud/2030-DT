@@ -57,7 +57,10 @@ describe("BeamScanCard", () => {
         ?.classList.contains("is-fail"),
     ).toBe(true);
     expect(
-      view.container.querySelectorAll(".case3-scan-path--predict"),
+      view.container.querySelectorAll(".case3-scan-path--predict-fail"),
     ).toHaveLength(1);
+    expect(
+      view.container.querySelectorAll(".case3-scan-path--predict"),
+    ).toHaveLength(0);
   });
 });

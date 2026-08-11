@@ -34,9 +34,11 @@ export const MapStage = forwardRef<MapRendererHandle, Props>(
       <div className="case3-map-stage">
         <MapRenderer2D
           ref={ref}
+          side={props.side}
           config={props.config}
           baseRoute={props.baseRoute}
           points={props.points}
+          peerPoints={props.peerPoints}
           stageElementRef={props.stageElementRef}
         />
         <BeamScanCard
@@ -46,6 +48,7 @@ export const MapStage = forwardRef<MapRendererHandle, Props>(
         />
         <PointProgressWindow
           side={props.side}
+          baseRoute={props.baseRoute}
           points={props.points}
           peerPoints={props.peerPoints}
         />

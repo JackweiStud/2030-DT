@@ -78,6 +78,13 @@ export function BeamScanCard(props: Props) {
     };
   }
 
+  const selectedClass =
+    side === "without"
+      ? "case3-scan-path--best"
+      : legend && !legend.ok
+        ? "case3-scan-path--predict-fail"
+        : "case3-scan-path--predict";
+
   return (
     <div
       className={`case3-beam-card case3-beam-card--scan${side === "with" ? " case3-beam-card--with" : ""}`}
@@ -91,7 +98,10 @@ export function BeamScanCard(props: Props) {
         {point ? (
           <div className="case3-beam-card__point">
             <img src={iconPoint} width={12} height={12} alt="" />
-            <span>点位{point.no}</span>
+            <span className="case3-beam-card__point-label">
+              点位
+              <span className="case3-beam-card__point-no">{point.no}</span>
+            </span>
           </div>
         ) : null}
       </div>
@@ -114,11 +124,7 @@ export function BeamScanCard(props: Props) {
           ) : null}
           {selectedPath ? (
             <path
-              className={`case3-scan-path ${
-                side === "without"
-                  ? "case3-scan-path--best"
-                  : "case3-scan-path--predict"
-              }`}
+              className={`case3-scan-path ${selectedClass}`}
               d={selectedPath}
             />
           ) : null}

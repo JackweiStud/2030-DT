@@ -66,14 +66,22 @@ export function Case3Page(props: Props) {
     activeStartSide === "without"
       ? ctrl.state.live.without
       : ctrl.state.results.without;
+  /*
+   * pairValid 只控制跨侧结论，不能充当 With 单侧结果的显示开关。
+   * 重置 Without 后没有可比较的 Without 快照，此时仍展示保留下来的
+   * With 历史；新 Without 已产生数据后则隐藏旧 With KPI，避免跨代对比。
+   */
+  const showStandaloneWithHistory =
+    activeStartSide !== "without" &&
+    withoutKpiSnapshot === null &&
+    ctrl.state.results.with !== null;
   const withKpiSnapshot =
     activeStartSide === "with"
       ? ctrl.state.live.with
-      : ctrl.state.pairValid
+      : ctrl.state.pairValid || showStandaloneWithHistory
         ? ctrl.state.results.with
         : null;
-  const showWithThroughput =
-    activeStartSide === "with" || ctrl.state.pairValid;
+  const showWithThroughput = withKpiSnapshot !== null;
 
   const dataState =
     ctrl.visible === "unpaired-both" || ctrl.visible === "with-history-only"

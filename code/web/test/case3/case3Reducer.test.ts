@@ -97,7 +97,7 @@ describe("case3Reducer", () => {
     expect(canStartWith(s)).toBe(true);
   });
 
-  it("With 完成后 pairValid=true；新 Without Start 立即使 pairValid=false", () => {
+  it("With 完成后重置 Without，只清 Without 并保留 With 历史", () => {
     let s = createInitialCase3State();
     s = case3Reducer(s, {
       type: "INIT_READY",
@@ -137,6 +137,16 @@ describe("case3Reducer", () => {
     expect(s.pairValid).toBe(false);
     expect(s.results.without).toBeNull();
     expect(s.results.with).not.toBeNull();
+    s = case3Reducer(s, { type: "SEEN_EXECUTE_SUCCESS" });
+    s = case3Reducer(s, {
+      type: "REINIT_COMPLETE",
+      side: "without",
+    });
+    expect(s.results.without).toBeNull();
+    expect(s.results.with).not.toBeNull();
+    expect(s.results.with?.costPct).toBe(15);
+    expect(s.pairValid).toBe(false);
+    expect(deriveVisibleState(s)).toBe("with-history-only");
   });
 
   it("新 Without 完成但保留旧 With 时仍 unpaired", () => {

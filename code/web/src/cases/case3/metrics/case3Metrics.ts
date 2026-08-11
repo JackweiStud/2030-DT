@@ -189,6 +189,27 @@ export function pointProgressWindow<T>(points: T[], windowSize = 20): T[] {
   return points.slice(-windowSize);
 }
 
+/**
+ * 点位进度槽位标签序列：来自 baseRoute 点号。
+ * completeCount≤窗口：固定显示路线前窗，已完成点只填波束值；
+ * 超出后按完成数滑动，始终最多 windowSize 个 Pxx。
+ */
+export function pointProgressRouteNos(
+  routeNos: ReadonlyArray<number>,
+  completeCount: number,
+  windowSize = 20,
+): number[] {
+  if (routeNos.length === 0) return [];
+  const size = Math.max(1, Math.floor(windowSize));
+  const done = Math.max(0, Math.floor(completeCount));
+  if (done <= size) {
+    return routeNos.slice(0, Math.min(size, routeNos.length));
+  }
+  const end = Math.min(done, routeNos.length);
+  const start = Math.max(0, end - size);
+  return routeNos.slice(start, end);
+}
+
 /** 最终快照完整门槛（Web 本地）。 */
 export function isFinalSideReady(snapshot: SideSnapshot | null | undefined): boolean {
   if (!snapshot) return false;
