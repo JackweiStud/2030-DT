@@ -45,6 +45,10 @@ export function Case3Page(props: Props) {
     onBusyChange,
   });
 
+  const thrpRouteNos = useMemo(
+    () => ctrl.state.baseRoute.map((p) => p.no),
+    [ctrl.state.baseRoute],
+  );
   const withoutPoints =
     ctrl.state.live.without?.points ??
     ctrl.state.results.without?.points ??
@@ -54,6 +58,22 @@ export function Case3Page(props: Props) {
   const withPeerPoints = canCompareWithCurrentWithout(ctrl.state)
     ? ctrl.state.results.without?.points
     : null;
+  const activeStartSide =
+    ctrl.state.activeAction?.kind === "start"
+      ? ctrl.state.activeAction.side
+      : null;
+  const withoutKpiSnapshot =
+    activeStartSide === "without"
+      ? ctrl.state.live.without
+      : ctrl.state.results.without;
+  const withKpiSnapshot =
+    activeStartSide === "with"
+      ? ctrl.state.live.with
+      : ctrl.state.pairValid
+        ? ctrl.state.results.with
+        : null;
+  const showWithThroughput =
+    activeStartSide === "with" || ctrl.state.pairValid;
 
   const dataState =
     ctrl.visible === "unpaired-both" || ctrl.visible === "with-history-only"
@@ -111,18 +131,15 @@ export function Case3Page(props: Props) {
         </div>
         <div className="case3-kpi-cols">
           <CostCard
-            withoutCostPct={ctrl.state.results.without?.costPct ?? null}
-            withCostPct={
-              ctrl.state.pairValid
-                ? (ctrl.state.results.with?.costPct ?? null)
-                : null
-            }
+            withoutCostPct={withoutKpiSnapshot?.costPct ?? null}
+            withCostPct={withKpiSnapshot?.costPct ?? null}
             pairValid={ctrl.state.pairValid}
           />
           <ThroughputChart
-            withoutPoints={ctrl.state.results.without?.points ?? null}
-            withPoints={ctrl.state.results.with?.points ?? null}
-            pairValid={ctrl.state.pairValid}
+            withoutPoints={withoutKpiSnapshot?.points ?? null}
+            withPoints={withKpiSnapshot?.points ?? null}
+            routeNos={thrpRouteNos}
+            showWithSeries={showWithThroughput}
           />
           <BeamAccuracyCard
             baseline={ctrl.state.baseline}

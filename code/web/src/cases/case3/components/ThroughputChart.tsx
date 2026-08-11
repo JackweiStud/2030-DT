@@ -1,19 +1,26 @@
 /**
  * Case3 吞吐折线：原生 SVG，DOM 对齐静态 `.case3-thrp-*`。
- * X/Y 域按 WEB-SPEC：无数据时 1～20 / 0～10；有数据时动态扩展。
+ * X 域固定为 init baseRoute 全程点号（无路线时占位 1～20），刻度/竖网格相对该域一次算齐；
+ * Y 域无数据时 0～12，有数据时按 niceCeil 扩展（下限 12 Gbps）。
  */
 
 import { useMemo } from "react";
 import {
   niceCeilThroughput,
+  CASE3_THRP_Y_MAX_DEFAULT,
   throughputSeries,
+  throughputXDomain,
+  throughputXTicks,
 } from "../metrics/case3Metrics";
 import type { Case3Point } from "../types";
 
 type Props = {
   withoutPoints: Case3Point[] | null;
   withPoints: Case3Point[] | null;
-  pairValid: boolean;
+  /** init baseRoute 点号；用于固定 X 域。 */
+  routeNos: ReadonlyArray<number> | null;
+  /** With 运行中显示实时曲线；完成后仍由 pairValid 决定是否显示。 */
+  showWithSeries: boolean;
 };
 
 const VB_W = 596;
@@ -36,14 +43,13 @@ export function ThroughputChart(props: Props) {
     [props.withoutPoints, props.withPoints],
   );
 
-  const withSeries = props.pairValid ? series.with : [];
+  const withSeries = props.showWithSeries ? series.with : [];
   const all = [...series.without, ...withSeries];
   const empty = all.length === 0;
 
-  const minNo = empty ? 1 : Math.min(...all.map((p) => p.no));
-  const maxNo = empty ? 20 : Math.max(...all.map((p) => p.no));
+  const [minNo, maxNo] = throughputXDomain(props.routeNos);
   const maxY = empty
-    ? 10
+    ? CASE3_THRP_Y_MAX_DEFAULT
     : niceCeilThroughput(Math.max(...all.map((p) => p.value)));
 
   const xAt = (no: number) => {
@@ -55,18 +61,16 @@ export function ThroughputChart(props: Props) {
   const toPoints = (pts: Array<{ no: number; value: number }>) =>
     pts.map((p) => `${xAt(p.no)},${yAt(p.value)}`).join(" ");
 
-  const xTickCount = Math.min(20, Math.max(2, maxNo - minNo + 1));
-  const xTicks: number[] = [];
-  if (maxNo === minNo) xTicks.push(minNo);
-  else {
-    for (let i = 0; i < xTickCount; i++) {
-      xTicks.push(
-        Math.round(minNo + ((maxNo - minNo) * i) / (xTickCount - 1)),
-      );
-    }
-  }
-
-  const yTicks = Array.from({ length: 11 }, (_, i) => (maxY / 10) * i);
+  const xTicks = useMemo(
+    () => throughputXTicks(minNo, maxNo),
+    [minNo, maxNo],
+  );
+  // 默认 12：整数刻度 0～12；扩展后仍用 10 等分
+  const yDivisions = maxY === CASE3_THRP_Y_MAX_DEFAULT ? 12 : 10;
+  const yTicks = Array.from(
+    { length: yDivisions + 1 },
+    (_, i) => (maxY / yDivisions) * i,
+  );
 
   return (
     <article className="case3-kpi-card case3-thrp-card">
@@ -97,7 +101,7 @@ export function ThroughputChart(props: Props) {
         >
           <g className="case3-thrp-grid" fill="#ffffff14" stroke="none">
             {yTicks.map((_, i) => {
-              const y = TOP + ((10 - i) / 10) * (BOTTOM - TOP);
+              const y = TOP + ((yDivisions - i) / yDivisions) * (BOTTOM - TOP);
               return (
                 <rect
                   key={`yg-${i}`}
@@ -126,9 +130,12 @@ export function ThroughputChart(props: Props) {
             fontFamily="Inter, sans-serif"
           >
             {yTicks.map((v, i) => {
-              const y = TOP + ((10 - i) / 10) * (BOTTOM - TOP) + 4;
+              const y =
+                TOP + ((yDivisions - i) / yDivisions) * (BOTTOM - TOP) + 4;
               const label =
-                maxY === 10 ? String(i) : String(Math.round(v * 10) / 10);
+                maxY === CASE3_THRP_Y_MAX_DEFAULT
+                  ? String(i)
+                  : String(Math.round(v * 10) / 10);
               return (
                 <text key={`yl-${i}`} x={28} y={y} textAnchor="end">
                   {label}

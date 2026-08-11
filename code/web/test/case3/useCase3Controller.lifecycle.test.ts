@@ -45,18 +45,20 @@ function control(
 }
 
 function finalWithout(): SideSnapshot {
+  return liveWithout(1);
+}
+
+function liveWithout(count: number): SideSnapshot {
   return {
     side: "without",
-    points: [
-      {
-        no: 1,
-        ue: { x: 1, y: 2, z: 0 },
-        selectedBeamId: 1,
-        throughputGbps: 8.5,
-        scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
-      },
-    ],
-    completeCount: 1,
+    points: Array.from({ length: count }, (_, index) => ({
+      no: index + 1,
+      ue: { x: index + 1, y: index + 2, z: 0 },
+      selectedBeamId: index + 1,
+      throughputGbps: 8.5 + index / 10,
+      scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
+    })),
+    completeCount: count,
     pendingTail: false,
     costPct: 25,
   };
@@ -92,6 +94,71 @@ afterEach(() => {
 });
 
 describe("useCase3Controller lifecycle", () => {
+  it("case complete 前按 1→2 点替换 live snapshot，不提前写 result", async () => {
+    const secondSnapshot = deferred<SideSnapshot>();
+    let startPosted = false;
+    let sideReads = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () =>
+        startPosted
+          ? control({
+              command: "start",
+              dt_type: "without dt",
+              status: "execute success",
+            })
+          : control(),
+      ),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          startPosted = true;
+          return control({
+            command: "start",
+            dt_type: "without dt",
+          });
+        }
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => {
+        sideReads += 1;
+        return sideReads === 1 ? liveWithout(1) : secondSnapshot.promise;
+      }),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.startWithoutEnabled).toBe(true),
+    );
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() =>
+      expect(hook.result.current.state.live.without?.points).toHaveLength(1),
+    );
+    expect(hook.result.current.state.results.without).toBeNull();
+
+    await act(async () => {
+      secondSnapshot.resolve(liveWithout(2));
+      await secondSnapshot.promise;
+    });
+    await waitFor(() =>
+      expect(hook.result.current.state.live.without?.points).toHaveLength(2),
+    );
+    expect(hook.result.current.state.results.without).toBeNull();
+    expect(hook.result.current.visible).toBe("without-running");
+    hook.unmount();
+  });
+
   it("截图上传网络失败时复用同一 Base64，不重新生成", async () => {
     vi.mocked(toPng).mockResolvedValue("data:image/png;base64,SAME_FRAME");
     let controlReads = 0;

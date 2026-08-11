@@ -5,9 +5,12 @@ import { describe, expect, it } from "vitest";
 import {
   deriveBeamAccuracy,
   isFinalSideReady,
+  niceCeilThroughput,
+  niceIntegerStep,
   pointProgressWindow,
   relativeCostChangePct,
-  niceCeilThroughput,
+  throughputXDomain,
+  throughputXTicks,
 } from "../../src/cases/case3/metrics/case3Metrics";
 import {
   projectPointToMap2D,
@@ -106,8 +109,32 @@ describe("case3Metrics", () => {
   });
 
   it("niceCeil", () => {
-    expect(niceCeilThroughput(0)).toBe(10);
+    expect(niceCeilThroughput(0)).toBe(12);
+    expect(niceCeilThroughput(8)).toBe(12);
     expect(niceCeilThroughput(12)).toBeGreaterThanOrEqual(13);
+  });
+
+  it("吞吐 X 域固定自 baseRoute，刻度相对域稳定", () => {
+    expect(throughputXDomain(null)).toEqual([1, 20]);
+    expect(throughputXDomain([])).toEqual([1, 20]);
+    expect(throughputXDomain([3, 1, 50])).toEqual([1, 50]);
+    expect(throughputXDomain([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).toEqual([1, 10]);
+
+    expect(niceIntegerStep(1)).toBe(1);
+    expect(niceIntegerStep(3)).toBe(5);
+    expect(niceIntegerStep(6)).toBe(10);
+
+    expect(throughputXTicks(1, 1)).toEqual([1]);
+    expect(throughputXTicks(1, 8)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+
+    const wide = throughputXTicks(1, 100);
+    expect(wide[0]).toBe(1);
+    expect(wide[wide.length - 1]).toBe(100);
+    expect(wide.length).toBeLessThanOrEqual(25);
+    const midSteps = wide.slice(1, -1).map((v, i) => v - wide[i]!);
+    expect(new Set(midSteps).size).toBe(1);
+    const step = midSteps[0]!;
+    expect(wide[wide.length - 1]! - wide[wide.length - 2]!).toBeLessThanOrEqual(step);
   });
 });
 
