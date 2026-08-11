@@ -82,7 +82,7 @@ function isAbortError(err: unknown): boolean {
  */
 export function useCase2Controller(options: Options): Case2Controller {
   const { config, stageElementRef } = options;
-  const apiRef = useRef(options.api ?? createCase2Api({ apiBase: config.apiBase }));
+  const apiRef = useRef(options.api ?? createCase2Api());
   const [state, dispatchBase] = useReducer(
     case2Reducer,
     undefined,

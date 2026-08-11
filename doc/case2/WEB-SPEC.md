@@ -321,7 +321,7 @@ case2 指标模块固定职责（路径可微调，合同不变）：
 
 ## 2. 运行配置与命令
 
-配置写入 Web 根目录 Vite env（如 `.env` / `.env.development` / `.env.production`），与 `VITE_CASE2_API_BASE`、`VITE_CASE2_POLL_MS` **同一套文件**；代码只允许由 `metrics/heatmapConfig.ts` 读取 `import.meta.env.VITE_*`，缺省用下表默认值。`heatmap.ts` 与 React 组件只接收已校验的 `HeatmapConfig`，不得再次读取 env、复制默认值或自行容错。
+配置写入 Web 根目录 Vite env（如 `.env` / `.env.development` / `.env.production`），与 `VITE_CASE2_POLL_MS` 及热力相关 `VITE_*` **同一套文件**；代码只允许由 `metrics/heatmapConfig.ts` 读取 `import.meta.env.VITE_*`，缺省用下表默认值。`heatmap.ts` 与 React 组件只接收已校验的 `HeatmapConfig`，不得再次读取 env、复制默认值或自行容错。Case2 API 前缀写死为同源 `/api/case2`（`case2Api.ts` 常量），不引入 `VITE_CASE2_API_BASE`；开发期由 Vite `/api` 代理到本机适配服务，不得在组件散落 `3102`。
 
 Vite env 是**构建时配置**：修改 `.env.production`、底图资产或以下 `VITE_*` 后必须重新构建 Web；它们不是打包后由 REST 动态下发的运行时参数。
 
@@ -330,7 +330,6 @@ Vite env 是**构建时配置**：修改 `.env.production`、底图资产或以�
 
 | 配置                         | 默认值    | 规则                                                          |
 | -------------------------- | ------ | ----------------------------------------------------------- |
-| `VITE_CASE2_API_BASE`      | 空字符串   | 默认同源 `/api/case2`；开发服务器代理 `/api` 到 `http://127.0.0.1:3102`。 |
 | `VITE_CASE2_POLL_MS`       | `1000` | 只用于控制快照串行轮询；不得被解释为业务超时。                                     |
 | `VITE_CASE2_HEATMAP_X0`    | `750`  | 锚定区左（底图像素）。                                                 |
 | `VITE_CASE2_HEATMAP_Y0`    | `400`  | 锚定区上。                                                       |
@@ -349,7 +348,8 @@ Vite env 是**构建时配置**：修改 `.env.production`、底图资产或以�
 
 | 参数 | 生命周期 / 唯一来源 | 说明 |
 |---|---|---|
-| `API_BASE` / `POLL_MS` | **构建时 Vite env** | 部署与联调；修改后重新构建。 |
+| `POLL_MS` | **构建时 Vite env** | 部署与联调；修改后重新构建。 |
+| API 前缀 `/api/case2` | **代码常量** | `case2Api.ts` 写死；不进 env。 |
 | 锚定 `X0,Y0,X1,Y1` | **构建时 Vite env** | 与具体底图构图绑定；由 `heatmapConfig.ts` 解析。 |
 | `CELL` / `GAP` / `ALPHA` | **构建时 Vite env** | 视觉调参；`PERIOD = CELL + GAP` 在 `heatmapConfig.ts` 派生，不单独配置。 |
 | 底图 URL | **代码 import 的构建时资产** | `assets/case2/maps/heatmap-map-base.png`；不进 env，替换后重新构建。 |
@@ -636,7 +636,7 @@ case-local state 至少包含：
 
 ### 8.0 Vite env（热力相关）
 
-与 `VITE_CASE2_API_BASE`、`VITE_CASE2_POLL_MS` 写入**同一套** Web 根目录 `.env` / `.env.development` / `.env.production`。下列均可省略；省略时由 `metrics/heatmapConfig.ts` 使用默认值。Vite 在构建时注入这些字符串，修改后必须重新构建，不允许把它们误当成 REST 运行时参数。
+与 `VITE_CASE2_POLL_MS` 写入**同一套** Web 根目录 `.env` / `.env.development` / `.env.production`。下列均可省略；省略时由 `metrics/heatmapConfig.ts` 使用默认值。Vite 在构建时注入这些字符串，修改后必须重新构建，不允许把它们误当成 REST 运行时参数。API 前缀不在此列，见 §2。
 
 ```env
 # —— case2 热力图 ——

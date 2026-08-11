@@ -7,6 +7,8 @@
 > **不在本文：** 模拟后端写 `status` / 发布 Calibrated / 置截图 flag 的打桩进程。本地无真实后端时的打桩规格见 [realback_no.md](realback_no.md)。
 >
 > Gate 3 演示向：`start`/`reinit` 写入时强制 `status=""`（见 §4.2），相对契约「请求侧不写业务 status」的放宽；真实联调须后端接受开一轮时空 status（交接文档已于 2026-08-03 同步）。业务终态字面值仍只由后端（或打桩扮演的后端）写出。
+>
+> 2026-08-10 跨 Case 安全增量：Case3 接入同一进程后，Case2/Case3 共用控制 store 和 busy guard；Case2 截图路由必须对称校验 ownership。当前运行代码尚未实现该增量，随 Case3 Node Gate 4 一并落地。
 
 ## 0. 出口条件
 
@@ -16,7 +18,7 @@
 - [ ] 控制文件 GET：结构/类型失败才 `CONTROL_READ_FAILED`；未知 `status` 字面值 200 透传（与契约 / WEB-SPEC 一致，由 Web 保持等待态）。
 - [ ] 动态 `Nx × Ny` 热力矩阵、动态 `N` KPI 样本、超过 2 位小数四舍五入到 2 位，以及热力 `[-200,200]` / KPI `[0,500]` 范围规则有自动测试。
 - [ ] Calibrated 任一文件缺失、变化或非法时整批拒绝：HTTP **不**返回部分业务数据；适配服务**必须**打诊断日志（失败文件名、原因），响应体仍为 `{ok:false,error:{code,message}}`。
-- [ ] 截图请求进程内串行、临时文件原子落盘、递增命名且不覆盖，完整成功后清零；不实现持久事务、SHA-256 去重或进程重启恢复；Web 累计 3 次失败后的放弃清零有自动测试。
+- [ ] 截图请求进程内串行、临时文件原子落盘、递增命名且不覆盖，完整成功后按 Case2 ownership 清零；不能消费 Case3 flag；不实现持久事务、SHA-256 去重或进程重启恢复；Web 累计 3 次失败后的放弃清零有自动测试。
 - [ ] `npm test` 通过；启动命令可独立运行并可用 `Ctrl+C` 正常退出。
 - [ ] 未实现 WebSocket、鉴权、数据库、命令队列、业务超时或业务命令自动重试；截图有限重试不属于业务命令重试。
 - [ ] **未**把模拟后端打桩并入本服务的默认启动路径（打桩见 [realback_no.md](realback_no.md)）。
@@ -100,7 +102,7 @@ code/
 | 变量                   | 默认值         | 要求                                                 |
 | -------------------- | ----------- | -------------------------------------------------- |
 | `CASE2_ADAPTER_HOST` | `127.0.0.1` | 只允许显式配置后改变监听地址。                                    |
-| `CASE2_ADAPTER_PORT` | `3102`      | Web 通过同源代理或 API base 访问，不在组件中散落端口。                 |
+| `CASE2_ADAPTER_PORT` | `3102`      | Web 通过同源 `/api` 代理访问，不在组件中散落端口。                 |
 | `DT_SHARED_DIR`      | 无           | 必填；前端 PC 上共享根的绝对路径（与后端通过该目录交换文件）。由部署注入，代码不得回退到 `01-参考资料/`。 |
 
 
@@ -231,6 +233,8 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 - `save_picture_flag: 0` 路径可由截图成功落盘流程内部调用，或由 Web 在同一截图任务累计 3 次生成/上传失败后调用；两种路径都**不得**改写 `status`。后者必须记录“本张截图已放弃”日志，且不生成 PNG、不占用新序号。
 - 启动与重置是否可点击由 Web 状态机负责；适配服务仍必须防止非法字段写入。
 - 截图接口内部清零必须复用同一控制文件写服务，不另写一套文件算法。
+- Case3 接入后，Case2/Case3 Start/ReInit 共用 `CONTROL_BUSY` guard：空闲允许；同 Case 同动作 `execute fail` 允许重试；活动、未消费终态、其他 Case fail 或未知活动 status 拒绝覆盖；POST init 永远允许。合法 Case2 主线/成功 shape 不变。
+- `{save_picture_flag:0}` 在最新 flag=0 时幂等成功；flag=1 时 Case2 路由只允许清 `case=case2,command=start,dt_type=with dt`，否则返回 `SCREENSHOT_NOT_REQUESTED`。
 
 
 
@@ -309,7 +313,7 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 - 请求体只接受 `{ "image_base64": "..." }`。
 - 允许纯 Base64 或 `data:image/png;base64,` 前缀；解码后必须以 PNG signature `89 50 4E 47 0D 0A 1A 0A` 开头。
 - 空内容、非 PNG 或非法 Base64 返回 `400 INVALID_REQUEST`；请求体超过 `20 MiB` 返回 `413 PAYLOAD_TOO_LARGE`。
-- 新截图开始前必须读取最新控制快照并确认 `save_picture_flag=1`；若当前为 `0`，返回 `409 SCREENSHOT_NOT_REQUESTED`，不得生成额外截图。
+- 新截图开始前必须读取最新控制快照并确认 `case=case2,command=start,dt_type=with dt,save_picture_flag=1`；ownership 不匹配返回 `409 SCREENSHOT_NOT_REQUESTED`，不得生成额外截图或消费 Case3 flag。不额外锁死 status，允许保存期间从 `execute success` 推进到 `case complete`。
 
 
 
@@ -321,7 +325,7 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 4. 无历史文件取 `000`；否则最大序号加一；三位只是最小补零宽度，`1000` 不截断。
 5. 先写同目录临时 PNG，`fsync`、关闭，再 rename 为最终文件。
 6. 目标已存在时重新扫描并取下一号，绝不覆盖。
-7. 最终 PNG 存在并可 stat 后，才调用控制文件服务写 `save_picture_flag=0`。
+7. 最终 PNG 存在并可 stat 后，才调用控制文件服务写 `save_picture_flag=0`；该写入必须在共享队列内重读最新控制并复验 Case2 ownership，不能使用保存前旧快照。
 8. 两步都成功后返回 `{ "ok": true, "path": "out/case2/calibrated-000.png", "seq": 0 }`。API 的 `path` 固定为相对 `DT_SHARED_DIR` 的 POSIX 风格路径；服务日志记录实际绝对路径。
 
 
@@ -343,11 +347,11 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 
 ### 7.1 单元测试
 
-- 控制文件：四种 payload、请求体禁止带 `status`、进页 `init` 写回空闲态、`start`/`reinit` 写后强制 `status=""`、相同 command 在 `execute fail` 后重试仍产生合法命令元组 + 空 status 门沿、截图清零不改 `status`、保留未知字段、并发 POST 串行、临时文件清理；GET 对未知 `status` 字面值 200 透传（不 `CONTROL_READ_FAILED`）；`save_picture_flag` 非 `0`/`1` 才拒读。
+- 控制文件：四种 payload、请求体禁止带 `status`、进页 `init` 写回空闲态、`start`/`reinit` 写后强制 `status=""`、相同 command 在 `execute fail` 后重试仍产生合法命令元组 + 空 status 门沿、截图清零不改 `status`、保留未知字段、并发 POST 串行、临时文件清理；GET 对未知 `status` 字面值 200 透传（不 `CONTROL_READ_FAILED`）；`save_picture_flag` 非 `0`/`1` 才拒读；Case2/Case3 活动、未消费终态、其他 Case fail 和未知活动 status 返回 `CONTROL_BUSY`，POST init 永远允许。
 - 热力图：动态 `2×3`、`1×1`、CRLF、逗号/空白；空矩阵、行宽不一、科学计数、非有限数、归一后越出 `[-200,200]` 拒绝；超过 2 位小数四舍五入（如 `1.235→1.24`、`-1.235→-1.24`），不因小数位过多拒绝。
 - KPI：动态 `N`、不同换行分组展平；空样本、非法 token、负号、归一后越出 `[0,500]` 拒绝；超过 2 位小数同样四舍五入后接受。
 - 批次：六文件齐全；任一缺失、解析失败、读取期间变化、非 `case complete` 均整批拒绝；失败响应无部分 `metrics`；日志含失败文件名。
-- 截图：非法 Base64/PNG；从 `000` 起；已有 `009` 后写 `010`；超过 `999` 自然扩展；并发请求不覆盖。
+- 截图：非法 Base64/PNG；从 `000` 起；已有 `009` 后写 `010`；超过 `999` 自然扩展；并发请求不覆盖；Case2 guard 拒绝 Case3 flag，flag0 清零幂等，高电平清零 ownership 不匹配时拒绝。
 - 截图失败边界：临时写/rename 失败不清零并清理临时文件；最终 PNG 已落盘但清零失败时保留 PNG、返回错误；进程重启只清残留临时 PNG，不删除完成文件、不恢复旧截图任务。
 - 截图放弃：模拟 Web 同一任务累计 3 次失败后 POST `{save_picture_flag:0}`，断言不改 `status`、不生成 PNG、不占用序号并记录丢图日志。
 - 截图响应丢失：Node 已落盘并清零但 Web 未收到成功响应时，后续 control GET 返回 flag=`0`；Web 据此按成功收尾。flag 仍为 `1` 时允许有限重试产生额外新序号，但不得覆盖旧文件。
@@ -363,6 +367,7 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 - Calibrated 在“状态非 complete 且文件缺失”时固定断言 `409 RESULT_BATCH_INCOMPLETE`；状态已 complete 后分别断言缺失为 409、内容非法为 422、非缺失类 I/O 故障为 500；首次/二次控制快照读取失败固定断言 `500 CONTROL_READ_FAILED`。
 - `Cache-Control: no-store` 生效。
 - 任一 POST 请求体超过 20 MiB 均返回 `413 PAYLOAD_TOO_LARGE`；截图路由不得生成文件。
+- 跨 Case 冲突 Start/ReInit 返回 `409 CONTROL_BUSY`；Case2 截图保存/高电平清零不得消费 Case3 flag。
 
 
 

@@ -2,7 +2,7 @@
 
 > 范围：只约束 `DT Calibration`（case2）的文件控制、结果发布、浏览器与前端 PC Node 适配服务之间的**语义**。本文是 Gate 2 的唯一接口真相源；端口、部署目录、挂载路径和控制文件写入算法由 Gate 3 SPEC 具体化。
 >
-> 状态：`APPROVED`（Gate 2，2026-07-31）。P0-1 至 P0-4 已按用户确认口径回填。**2026-08-03 Gate 3 增量回填**：`start`/`reinit` 开一轮清 `status=""`；Web 可见态施工细节以 [WEB-SPEC.md](WEB-SPEC.md) 为准（无独立 result-error/unknown-control UI）；截图 flag 仅启动路径、`execute success` 之后至 `case complete`（含同拍 complete）窗口。Node 与 Web 施工见 [SERVER-SPEC.md](SERVER-SPEC.md) / [WEB-SPEC.md](WEB-SPEC.md)。
+> 状态：`APPROVED`（Gate 2，2026-07-31）。P0-1 至 P0-4 已按用户确认口径回填。**2026-08-03 Gate 3 增量回填**：`start`/`reinit` 开一轮清 `status=""`；Web 可见态施工细节以 [WEB-SPEC.md](WEB-SPEC.md) 为准（无独立 result-error/unknown-control UI）；截图 flag 仅启动路径、`execute success` 之后至 `case complete`（含同拍 complete）窗口。**2026-08-10 跨 Case 安全增量**：Case2/Case3 共用 store 后，非法并发命令返回 `CONTROL_BUSY`，Case2 截图路由对称校验 ownership。Node 与 Web 施工见 [SERVER-SPEC.md](SERVER-SPEC.md) / [WEB-SPEC.md](WEB-SPEC.md)。
 
 ## 0. 契约边界与术语
 
@@ -163,7 +163,9 @@ sequenceDiagram
 5. 启动轮收尾写回：Web 已按 `execute success -> case complete` 读取 Calibrated 六文件并进入 `completed` 后，若本轮截图请求已保存并清零、已累计 3 次失败后放弃清零，或本轮无截图请求，再 `POST {command:"init"}` 写回空闲态。不得在读取 Calibrated 或截图收尾前提前清 `status` / `save_picture_flag`。
 6. 重置轮收尾写回：Web 已按 `execute success -> reinit complete` 清空 Calibrated 并回到 `initial` 后，再 `POST {command:"init"}` 写回空闲态。不得在 UI 消费 `reinit complete` 前提前清 `status`。
 7. `GET /api/case2/control-file` 与 `POST /api/case2/control-file` 是控制文件唯一 REST 口径；进页空闲写回、启动/重置轮收尾写回、启动、重置和截图清零都通过 POST 控制文件表达，不再拆成多个命令专用接口。
-8. 具体原子写、串行化与字段保留算法见 [SERVER-SPEC.md](SERVER-SPEC.md)，其结果必须满足前七条。
+8. 具体原子写、串行化与字段保留算法见 [SERVER-SPEC.md](SERVER-SPEC.md)，其结果必须满足本节全部条款。
+9. Case2/Case3 共用 Node 控制 store 后，Start/ReInit 使用同一 `CONTROL_BUSY` guard：空闲允许；同 Case 同动作 `execute fail` 允许手动重试；活动、未消费完成终态、其他 Case fail 或未知活动 status 拒绝覆盖。POST init 永远允许。Case2 合法主线和成功 shape 不变，非法直接请求收紧为 409。
+10. `{save_picture_flag:0}` 在最新 flag=0 时幂等成功；flag=1 时 Case2 路由只允许清 `case=case2,command=start,dt_type=with dt` 的截图请求，不能清 Case3 高电平。
 
 
 
@@ -300,10 +302,10 @@ Gate 3 本地无真实后端时，模拟后端打桩按 [realback_no.md](realbac
 1. **后端置位窗口（客户对齐）**：仅在本轮 **启动**（`command=start`）路径中，于已写出 `execute success` 之后、写出 `case complete` 之时或之前，将 `save_picture_flag` 从 `0` 置为 `1`。允许与 `case complete` **同一次控制快照**中同时为 `1`；选择同拍时必须把 `status="case complete"` 与 `save_picture_flag=1` 合并为同一次完整控制文件写，不能先写 complete 再补 flag。选择不同拍时顺序必须为先 flag、后 complete。**重置（`reinit`）路径不得置 `1`**；`case complete` 之后的新一轮不得再依赖 Web 继续观察（Web 进 `completed` 后停控制轮询）。
 2. **Web 观察窗口**：仅在可见态 `calibrating` 的控制轮询中检测 `save_picture_flag` 的 **0→1**；`initial` / `completed` / `failed-*` / 纯进页诊断 GET **不**观察。`resetting` 无截图诉求，不因 flag 截图。
 3. **触发**：在观察窗口内发现 0→1 即截图一次；**不因**当前 `status` 仍是 `execute success` 还是已是 `case complete` 而拒绝。**同拍规则**：若本拍同时满足「可认 `case complete`」与「flag 0→1」，须**先开本次截图，再进入 `completed` 并停表**。
-4. 传输：Web 生成 PNG 后经 `POST /api/case2/screenshot` 以 Base64 交给适配服务。
+4. 传输：Web 生成 PNG 后经 `POST /api/case2/screenshot` 以 Base64 交给适配服务；保存前最新控制必须为 `case=case2,command=start,dt_type=with dt,save_picture_flag=1`，不能消费 Case3 截图 flag。
 5. 输出：适配服务写入 `{DT_SHARED_DIR}/out/case2/calibrated-{seq}.png`；`seq` 从 `000` 递增，不覆盖旧文件。成功响应的 `path` 返回相对共享根的 `out/case2/calibrated-{seq}.png`，日志记录实际绝对路径。
 6. 所有权：Web 只生成 Base64；适配服务是截图文件、目录、落盘与标志回写的唯一所有者。
-7. 回写：正常成功路径仅在确认 PNG 完整落盘后，才经 POST 控制文件把 `save_picture_flag` 写回 `0`；累计 3 次失败后的接受丢图清盘是第 11 条唯一例外。
+7. 回写：正常成功路径仅在确认 PNG 完整落盘后，才经 POST 控制文件把 `save_picture_flag` 写回 `0`；清零必须在共享队列内重读并复验 Case2 ownership，不能用保存前旧快照清掉另一个 Case 或后续任务的新 flag；累计 3 次失败后的接受丢图清盘是第 11 条唯一例外。
 8. 序号：保存前扫描已完成 `calibrated-*.png`，最大序号加一；无历史从 `000`；超过三位自然扩展。
 9. **Web 有限重试**：同一 0→1 只创建一个截图任务，最多尝试 3 次（首次 + 2 次重试）。`toPng` 失败时下一次尝试可重新生成；Base64 已生成后的上传失败必须复用同一份 Base64。上传响应不确定时先补一次控制 GET：若 flag 已为 `0`，说明适配服务已完成清零，按成功收尾；仍为 `1` 才计失败并重试。该任务一旦启动，即使同拍进入 `completed` 也继续到成功或第 3 次失败，不随业务控制轮询停止而取消。
 10. **Node 简化落盘**：Node 对截图请求进程内串行，写同目录临时文件并原子 rename 为最终 PNG；只有最终文件完整落盘后才清零。不创建持久事务、SHA-256 去重或进程重启恢复。极端崩溃/响应不确定窗口允许本张截图丢失或重复，但不得覆盖旧文件，也不得改变业务 `status`。

@@ -13,6 +13,7 @@
 | With 四个逐点 txt | 后端 → 共享目录 | With Start 后逐点 append | coordinates、selected beam、throughput、reflection | With 完整点。 |
 | With Cost txt | 后端 → 共享目录 | With 运行中/完成前 | 最新一行百分比 | With 开销。 |
 | Base route / BA baseline | 后端提供的初始化文件 | 页面初始化读取 | 路线坐标、`success,total` | 初始地图路线和准确率基线。 |
+| `save_picture_flag` | 后端 → 前端侧 Node | Start 的 success→complete 窗口 | `0→1`，允许与 complete 同拍 | 请求保存当前 Case3 页面截图。 |
 
 主线时序：
 
@@ -22,7 +23,8 @@
   -> 后端写 execute success，并保持至少 3000ms
   -> Start: append 当前侧多 txt
   -> Start: 完整写完并关闭必需文件和 Cost
-  -> Start: 停止本轮文件写入，最后写 case complete
+  -> Start: 停止本轮文件写入
+  -> Start: 若请求截图，最后同拍写 case complete + save_picture_flag=1；否则只写 case complete
   -> ReInit: 完成重置，写 reinit complete
 
 前端侧 Node 写 init
@@ -50,7 +52,7 @@
 | `command` | `init` / `start` / `reinit` | 前端侧 Node | init 为空闲/撤销旧轮写入权。 |
 | `dt_type` | `""` / `without dt` / `with dt` | 前端侧 Node | start/reinit 指明目标侧。 |
 | `status` | `""` / `execute success` / `execute fail` / `case complete` / `reinit complete` | 后端写业务字面值；前端侧 Node 仅在开轮/init 时清空 | 单值状态，按时间推进。 |
-| `save_picture_flag` | `0` / `1` | 其他 Case 可能使用 | case3 不置 1、不消费截图。 |
+| `save_picture_flag` | `0` / `1` | 后端仅置 `1`；前端侧 Node 清 `0` | 仅 Case3 Start 的 success→complete 窗口请求截图；ReInit 不置 1。 |
 
 `debug_flag`、`scene_type` 或其他未知字段存在时必须保留。
 
@@ -60,7 +62,7 @@
 
 1. 重新读取最新 `case_control.json`。
 2. 确认 `case=case3` 且命令/侧别仍属于当前任务。
-3. 只修改 `status`，保留 command、dt_type、save_picture_flag 和未知字段。
+3. 只修改 `status`；若本轮请求截图，可在最终 complete 写中同时置 `save_picture_flag=1`。保留 command、dt_type 和未知字段。
 4. 使用同目录临时文件、写盘、关闭、原子 rename。
 5. 回读确认写入值。
 
@@ -95,9 +97,16 @@ status=""
 3. 只向 dt_type 指定侧的文件 append 本轮数据。
 4. 完整写完并关闭全部必需文件和 Cost。
 5. 停止本轮文件写入。
-6. 最后写 `case complete`。
+6. 最后写 `case complete`；若本轮请求截图，必须在同一次原子控制写中合并 `save_picture_flag=1`。
 
 若命令失败，写 `execute fail`，并且本轮不再写 `case complete` 或 `reinit complete`。
+
+截图规则：
+
+- 仅 Start 路径可在 `execute success` 之后至 `case complete` 时置 `save_picture_flag=1`。
+- 推荐在最终控制写中同拍写 `status="case complete",save_picture_flag=1`。
+- 禁止先写 `case complete` 再补写 flag；页面完成后会停止控制轮询。
+- 前端侧 Node 在截图成功落盘或三次失败后放弃时清回 `0`；后端不得抢先清零。
 
 ### 2.3 ReInit
 
@@ -151,7 +160,7 @@ status=""
 | `ue_comm_with_dt_coordinates_reflection_point.txt` | `x,y,z,flag` | 第 i 行属于第 i 点，必需。 |
 | `ue_comm_with_dt_cost.txt` | 一个或多个 Cost 数值 | 与点数解耦，取最新非空行。 |
 
-第 i 个完整点必须同时存在前四个文件的第 i 行。`flag=1` 表示 LOS，`flag=0` 表示 NLOS。
+第 i 个完整点必须同时存在前四个文件的第 i 行。`flag=1` 映射为 `los=true`（LOS），`flag=0` 映射为 `los=false`（NLOS）。
 
 `ue_comm_without_dt_mse.txt`、`ue_comm_with_dt_mse.txt` 可以继续存在，但不进入页面数据、完整点或完成发布门槛。
 
@@ -163,8 +172,8 @@ status=""
 | Throughput | 有限且非负；前端侧 Node 四舍五入到 2 位。 |
 | Cost | 有限数；前端侧 Node 四舍五入到 1 位；归一后必须在 `0～100`。 |
 | beam id | 整数 `0～255`。 |
-| Without beam 行 | 恰好 16 个 beam id，selected beam 必须包含在这 16 项中。 |
-| reflection flag | 只能为整数 `0` 或 `1`。 |
+| Without beam 行 | 恰好 16 个互不重复的 beam id，selected beam 必须包含在这 16 项中。 |
+| reflection flag | 只能为整数 `0` 或 `1`；`0→los=false`，`1→los=true`。 |
 
 后端应尽量直接输出符合精度和范围的值；前端侧 Node 会执行最终校验和归一。
 
@@ -190,6 +199,7 @@ status=""
 - [ ] `execute fail` 后不再写其他完成终态。
 - [ ] Start 只写命令目标侧文件。
 - [ ] 所有必需文件和 Cost 完整关闭后，最后写 `case complete`。
+- [ ] 请求截图时在 Start success→complete 窗口置 flag；同拍 complete 时合并为一次原子写；ReInit 不置 1。
 - [ ] `case complete` 后不再修改本轮文件。
 - [ ] status 更新保留控制文件未知字段。
 - [ ] 数值、行数和 reflection flag 符合本文。

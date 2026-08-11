@@ -28,7 +28,6 @@ function control(partial: Partial<ControlSnapshot> = {}): ControlSnapshot {
 }
 
 const config: Case2RuntimeConfig = {
-  apiBase: "",
   pollMs: 1000,
   x0: 0,
   y0: 0,

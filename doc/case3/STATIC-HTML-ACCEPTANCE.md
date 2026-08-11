@@ -51,3 +51,5 @@ status: `ACCEPTED`
 自动检查覆盖文件结构和基础静态渲染；用户人工视觉确认已完成。With `reflection` 仍是完整点必需字段，但 Reflection/LOS 可视化延后至后续独立实现，不属于本 Gate 1.5 已接受的五态范围。
 
 2026-08-10 语义纠正：静态代表值 Without=25、With=15 时，按 `(25-15)/25*100` 将开销变化从错误的 `66.7%` 修正为 `40.0%`；未改变布局、状态范围或运行边界。
+
+Gate 3 Web 增量只参考本静态页的视觉结构，不回改 Gate 1.5 原型：正式 Case3 地图增加滚轮缩放、左键旋转、右键平移和复位，但不增加全屏；地图与轨迹共用 transform。PointProgressWindow 超过 20 点后显示最新 20 个真实点。Cost、Throughput、Beam Accuracy 沿用本页 SVG/DOM 视觉结构，正式实现不引入 ECharts。

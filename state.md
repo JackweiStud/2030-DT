@@ -9,9 +9,14 @@
 - case2 Gate 3：`WEB-SPEC` / `SERVER-SPEC` / Gate 3 演示向放宽已于 2026-08-03 获用户定稿确认。
 - case2 Gate 4：正式 Web、Node 文件适配服务、模拟后端打桩均已实现；2026-08-04 用户确认三者本地测试联调完成，自动 + 人工 check 通过。
 - case2 Gate 5：本地 QA 证据已补齐（`doc/case2/QA-EVIDENCE.md`）；本地打桩演示可进入用户/领导测试。真实后端、真实挂载和真实采集不在本次完成口径内。
-- case3 Gate 0/2：2026-08-06 用户确认首批关键边界；2026-08-10 再确认跨 Case Tab 锁、init 撤销旧轮写入权、最终结果门槛、success 最少 3000ms、REST/错误 shape、ReInit 失败重试、初始化门槛、Node/Web 校验边界和后端交接，并批准冻结 Gate 2 API 契约 v1 与真实后端交接材料。
+- case3 Gate 0/2：2026-08-06 用户确认首批关键边界；2026-08-10 再确认跨 Case Tab 锁、init 撤销旧轮写入权、最终结果门槛、success 最少 3000ms、REST/错误 shape、ReInit 失败重试、初始化门槛、Node/Web 校验边界和后端交接，并批准冻结 Gate 2 API 契约 v1 与真实后端交接材料。同日追加确认 Case3 截图与 Case2 同构、Reflection flag 为 `0→los=false,1→los=true`，以及匹配侧最终读取、Case2/Case3 shared busy、对称截图 ownership、scan 互异和数值边界，已同步契约与施工文档。
 - case3 Gate 1：2026-08-09 用户确认 `03-design/case3/case3-dt-com.pen` 已全部完成并冻结；冻结记录见 `doc/case3/GATE1-FREEZE.md`。
 - case3 Gate 1.5：2026-08-10 用户已人工检查并接受 `web-static/case3/` 的初始、Without 运行/完成、With 运行/完成和现场环境弹窗。该目录只作视觉与假交互验收；正式 Web 可选择性迁移其 `.case3-*` 视觉规则和资源，但不得直接导入静态 CSS/JS、共享目录或假状态逻辑。
+- case3 Gate 3：`doc/case3/WEB-SPEC.md`、`SERVER-SPEC.md`、`realback_no.md` 已创建，当前为 `REVIEW_READY`。Web 增量已补入地图 0.5～5×缩放/±90°旋转/右键平移/复位且不全屏、地图与轨迹同变换、PointProgressWindow 最新 20 点，以及三类 KPI 原生 SVG/DOM 绘制方案（不使用 ECharts）。Node 侧共享 store、`DT_ADAPTER_*` 主变量、截图文件名及 complete/busy/截图 guard 澄清已获用户批准；stub 侧已批准默认 point=1000ms/dwell=3000ms、Start 默认截图、Cost 25/15 本地覆盖、启动恢复全量重放和控制文件容错。三份 SPEC 尚未整体冻结，未进入实现。
+- 2026-08-10 跨 Case 安全文档增量已批准：Case2 合法主线不变，但运行代码当前尚未实现共享 `CONTROL_BUSY` 和 Case2/Case3 对称截图 ownership guard；该实现与回归测试属于 Case3 Node Gate 4 范围。
+- 2026-08-10 Case3 stub 文档澄清已批准：参考原始 Cost 10/5 不复制，fixtures 手工覆盖为 25/15；进程启动遇到匹配侧 `execute success` 时清空目标侧并从第 1 点重放，不断点续写；seed 只创建缺失 base/baseline，运行代码尚未实现。
+- 2026-08-11 Case3 `WEB-SPEC` 审阅修订：去掉过时「抽取共用 API URL」表述；补 `BaseRoutePoint`、冻结文案与 PanelHeader/现场环境接线；修正 Start 步骤编号；地图映射改读配置符号；澄清 ReInit 只清本地 UI、HTTP `RESULT_NOT_READY` 与 Web 日志码区分；§13 将已批准项勾完，仅保留「批准本文交给实现 agent」。
+- 2026-08-10 Case3 Web 轮询默认值调整为 500ms；初始化阶段 Node 不可达时沿用 Case2 的 5000ms 无上限适配器探活，恢复后重新执行 GET control→POST init→GET init-data。`code/web/.env` 按 Case2/Case3 分块保留轮询与地图/热力标定；Case2/Case3 API 前缀分别写死同源 `/api/case2`、`/api/case3`，不引入 `VITE_CASE*_API_BASE`。当前仍实现 2D 地图，仅预留 renderer、原始坐标和截图接口供未来 Three.js 替换，不引入依赖或猜测 3D 参数。运行代码尚未实现。
 - 2026-08-03 用户定稿：失败态按 WEB-SPEC 路径互斥（`failed-start` 只可再启动，`failed-reinit` 只可再重置）；进页一律 `initial`；无 result-error/unknown-control；六文件失败保持 `calibrating`；`start`/`reinit` 强制 `status=""`；真实后端已确认接受开一轮空 `status`。
 - 2026-08-03 分工：本会话只实现正式 Web（`WEB-SPEC`）；Node 适配（`SERVER-SPEC`）与 `realback_no` 打桩由 Codex 交付；本地联调必须同时具备打桩。
 - 2026-08-03 Web SPEC 审阅增量已回填 `WEB-SPEC.md`。
@@ -34,7 +39,7 @@
 - 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run dev`。
 - 2026-08-04 Web 代码检视后补齐主线 E2E：`code/scripts/e2e-case2-stack.sh` 会准备临时共享目录并启动 Web + Node 适配 + case2 打桩；`code/web npm run test:e2e` 覆盖进页 Initial、启动、截图落盘/清 flag、重置回 Initial。
 - 2026-08-04 本轮文档复核自动命令：`code/server npm test` 30/30 通过；`code/back npm test` 28/28 通过（首次复跑曾出现一次陈旧任务测试瞬时失败，立即重跑通过，后续保留观察）；`code/web npm run typecheck` 通过；`code/web npm test` 30/30 通过；`code/web npm run build` 通过；`code/web npm run test:e2e` 1/1 通过。
-- 当前焦点：case2 本地打桩版本已具备测试/演示条件；case3 Gate 1.5 已接受，Gate 2 v1 已于 2026-08-10 批准冻结。下一阶段为 Gate 3 `SERVER-SPEC` / `WEB-SPEC`，本轮尚未创建。
+- 当前焦点：case2 本地打桩版本已具备测试/演示条件；case3 Gate 2 v1 已冻结并补齐截图/Reflection 勘误，Gate 3 三份施工规格已就绪待审。用户批准三份 SPEC 前不进入 Gate 4 实现。
 
 ## 一句话演示承诺
 
@@ -123,9 +128,12 @@
 - [case3 UI 数据来源反向清单](doc/case3/UI-DATA-SOURCE-MAP.md)
 - [case3 UX 状态映射](doc/case3/UX-STATE-MAP.md)
 - [case3 Gate 1 冻结](doc/case3/GATE1-FREEZE.md)
+- [case3 Web 施工规格](doc/case3/WEB-SPEC.md)
+- [case3 Node 文件适配服务施工规格](doc/case3/SERVER-SPEC.md)
+- [case3 模拟后端打桩规格](doc/case3/realback_no.md)
 
 ## 最小下一步与停止条件
 
-下一步：二选一推进。若继续 case2，接真实后端与真实挂载路径，复跑 `QA-EVIDENCE.md` 的验证矩阵；若推进 case3，进入 Gate 3，编写并评审 `SERVER-SPEC` / `WEB-SPEC`。
+下一步：二选一推进。若继续 case2，接真实后端与真实挂载路径，复跑 `QA-EVIDENCE.md` 的验证矩阵；若推进 case3，审阅并批准 `WEB-SPEC.md`、`SERVER-SPEC.md`、`realback_no.md`，批准后再进入 Gate 4，且一次只交给一个实现 agent。
 
 停止条件：不把本地打桩 synthetic/stub 数据表述为真实采集；不把 `code/comdatafiles/out/` 运行输出默认提交为源码；不把 case2 契约直接套用到 case3/4；不把 case3 JSONL 草案当作正式后端协议。

@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_CASE2_API_BASE?: string;
   readonly VITE_CASE2_POLL_MS?: string;
   readonly VITE_CASE2_HEATMAP_X0?: string;
   readonly VITE_CASE2_HEATMAP_Y0?: string;

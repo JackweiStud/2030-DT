@@ -59,22 +59,29 @@ CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
 | 点位进度窗口 | `completeCount`；显示 `points.slice(-20)` | 文案标明窗口≠上限 |
 | 状态徽标/按钮 | 本地 UI 态 + control snapshot | 互斥：一侧 running/resetting 时另一侧禁用 |
 | With Start 启用 | 仅当 without 本轮有效完成 | initial/未完成时 disabled |
+| Stage 截图 | Start 等待态 `save_picture_flag` 0→1 | 同拍 complete 仍触发；最多 3 次；ReInit 不截图 |
 
 ## 4. 动态图形实现契约
 
 | 图层 | 技术 | 参数 | Pencil 角色 |
 |---|---|---|---|
-| 地图底图 | `<img>` / CSS | runtime asset URL | 设计嵌入 UX PNG |
-| UE 轨迹 | canvas/SVG | points[].ue | 代表态圆点折线 |
+| 地图底图 + UE 轨迹 | 同一 `MapTransformLayer` 内的 `<img>` + SVG | runtime asset + points[].ue | 地图和轨迹必须同步缩放、旋转、移动 |
 | Without 扫描波束 | SVG/canvas | scanBeamIds, selectedBeamId | 16 点阵代表态 |
 | With 预测波束 | SVG/canvas | selectedBeamId | 点阵高亮 |
 | Reflection/LOS | 后续阶段 SVG path | reflection.{x,y,z,los} | v1 不渲染；字段仍参与 With 完整点校验。 |
 | 点位进度 | DOM | window of 20, N | 20 槽 |
-| Cost | SVG gauge/bar | costPct | 双环代表态 |
-| Throughput | chart lib/SVG | series by no | 双曲线代表态 |
-| Beam Accuracy 环 | SVG | accPct, ok, er | 环+两侧计数 |
+| Cost | 原生 SVG + DOM | costPct | 双半环 + 中央开销变化 |
+| Throughput | 原生 SVG（不使用 ECharts） | series by no | 双曲线代表态 |
+| Beam Accuracy 环 | 原生 SVG + DOM | accPct, ok, er | 开口环 + 两侧计数 |
 
 禁止：把 UX 样例百分比/次数写死；禁止用坐标相等匹配 BA；禁止 Cost 使用 dB。
+
+### 4.1 地图交互增量
+
+- Case3 双侧地图各自支持：滚轮 0.5×～5×指针中心缩放、左键拖动 ±90° 旋转、右键拖动平移、↺复位。
+- 不提供 Case3 地图全屏入口。
+- 地图图片、base route、实时轨迹、UE/当前点必须位于同一 transform 层；BeamScanCard 与 PointProgressWindow 是固定浮层，不随地图变换。
+- Shell 缩放不为 1 时，pointer delta 必须换算回 1920×1080 Stage 逻辑坐标。
 
 ## 5. 禁用与互斥
 
@@ -84,6 +91,7 @@ CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
 - ReInit 失败：不恢复目标侧旧结果，只保留对应侧 ReInit 重试按钮；另一侧历史结果可保留。
 - 任一 Case 处于 Start/ReInit 等待态：Shell 锁定其他 Case Tab；完成、失败或重置结束后解除。
 - 刷新/切离 Tab：回 initial 语义；停轮询。
+- 截图状态机独立于业务可见态；截图失败不得把 completed 改成 failed，累计 3 次后只清 flag 并记丢图日志。
 
 Web 仅对 REST 响应做 envelope/shape/JSON 类型检查；Node 负责小数归一、范围、行号与多文件一致性。非法响应输出 `CASE3_INVALID_RESPONSE`，不更新页面数据。
 
@@ -104,6 +112,7 @@ Web 仅对 REST 响应做 envelope/shape/JSON 类型检查；Node 负责小数�
 - [ ] BA 仅同 `no` 比 `selectedBeamId`；环内状态文案为 `正常`
 - [ ] v1 正式 Web 不渲染 Reflection/LOS；`reflection` 仍是 With 完整点必需字段，后续作为独立可视化能力实现
 - [ ] 无 case2 指标语义泄漏；CSS case-local
+- [ ] Case3 截图覆盖完整 1920×1080 Stage，写入 `out/case3/`；同拍 complete 不漏拍，ReInit 不截图
 
 ## 8. 波束卡片图层契约（Gate 1 增量）
 
@@ -179,12 +188,12 @@ Web 仅对 REST 响应做 envelope/shape/JSON 类型检查；Node 负责小数�
 
 | 图层 | 类型 | 说明 |
 |---|---|---|
-| `槽位标签` | text | 固定 `P1`…`P20`（窗口内序号，非全局 `no`）；代表态白字 12px |
+| `槽位标签` | text | Pencil 的 `P1`…`P20` 是首窗代表态；运行时已填槽显示真实 `P${point.no}`，白字 12px |
 | `槽位数值` | text | 有数据时显示业务值；代表态可用蓝字 `#2D7CF6` 12px |
 | `槽位空态` | ellipse 8×8 `#1E293B` | 该窗暂无数据（与数值/完成态互斥） |
 | `槽位完成态` | rectangle 6×6 圆角 3 | fill 成功色；该点已完成（与空态/数值互斥） |
 
-数据语义：`points.slice(-20)` 为**最新 20 个完成点**滑动窗口；N 可大于 20。禁止第 21 槽。  
+数据语义：`points.slice(-20)` 为**最新 20 个完成点**滑动窗口；N 可大于 20。第 21 点到达后显示 `P2…P21`，再到达一点显示 `P3…P22`；禁止第 21 个可视槽。
 参考结构：`点位进度窗口（浮层）` > `进度标题` + `进度槽行（20窗）` > `进度槽-0N` > 子图层。  
 同侧 `地图舞台` 内另有 `UE路线层` → `路线折线` + `路线点-01`…`20`（绿点白描边 + 折线串联；供 canvas/SVG 代表态，非 DOM 一一绑定）。
 
@@ -210,8 +219,8 @@ With 预测卡选中格（`selectedBeamId`）代表态为 **绿色点** `#22C55E
 | `曲线层` | none | `曲线无DT` `#6B7280`（次） / `曲线有DT` `#22D3EE`（主，略粗）；`点无DT-*` / `点有DT-*` 各 20 |
 | 图例 | — | `无 DT` / `有 DT`（全中文） |
 
-数据：`points[].throughputGbps` 按 `no` 绘制双系列；缺点不补 0；X 轴长度随样本动态，代表态为 20。  
-**禁止** 1:1 复制 Pencil 内 path/ellipse 为 React 叶子；**禁止** 照抄绘图槽内绝对 x/y；运行时用 chart lib / SVG / canvas。
+数据：`points[].throughputGbps` 按 `no` 绘制双系列；缺点不补 0；X 轴覆盖全部动态 N，N>20 时只抽稀刻度/竖网格，不丢曲线点；Y 轴至少 0～10，超出时动态扩展。
+**禁止** 1:1 复制 Pencil 内 path/ellipse 为 React 叶子；**禁止** 照抄绘图槽内绝对 x/y；运行时固定用原生 SVG 折线，不使用 ECharts、不做平滑。
 
 ### 8.7 波束准确率卡片图层契约
 
@@ -228,8 +237,8 @@ With 预测卡选中格（`selectedBeamId`）代表态为 **绿色点** `#22C55E
 | 状态徽章 | 冻结 `.pen` 五态文案为 `正常` |
 | 样例自洽 | 代表态次数与环 % 一致（如 18/20 → 90%） |
 
-数据：基线/增量由同 `no` 的 `selectedBeamId` 对比累计；环 % 与正确/错误次数为运行时派生，勿写死样例。  
-**禁止** 1:1 复制环 path 为 React 叶子；环可用 SVG/canvas；**禁止** 用坐标相等匹配 BA。
+数据：基线/增量由同 `no` 的 `selectedBeamId` 对比累计；环 % 与正确/错误次数为运行时同一对象派生，勿写死样例。
+实现使用原生 SVG 开口环 + DOM 次数卡，视觉对齐 Pencil/静态页；不使用 ECharts。**禁止** 用坐标相等匹配 BA。
 
 ## 9. 明确禁止
 

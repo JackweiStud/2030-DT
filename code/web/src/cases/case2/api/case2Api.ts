@@ -1,9 +1,9 @@
 /**
  * case2 REST 客户端：原生 fetch，cache: no-store。
  * 浏览器只打本机适配服务，不直读写共享目录。
+ * API 前缀写死同源 `/api/case2`（同机适配 + Vite `/api` 代理）；不读 env。
  */
 
-import { resolveApiUrl } from "../metrics/heatmapConfig";
 import type {
   ApiErrorResponse,
   ControlFileResponse,
@@ -15,6 +15,9 @@ import type {
   ScreenshotResponse,
 } from "../types";
 import { METRIC_KEYS } from "../types";
+
+/** 同源 Case2 API 前缀；不得在组件散落 `3102`。 */
+export const CASE2_API_PREFIX = "/api/case2";
 
 export class Case2ApiError extends Error {
   readonly code: string;
@@ -29,9 +32,13 @@ export class Case2ApiError extends Error {
 }
 
 type ApiClientOptions = {
-  apiBase: string;
   fetchImpl?: typeof fetch;
 };
+
+function resolveApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${CASE2_API_PREFIX}${normalizedPath}`;
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -97,9 +104,8 @@ async function parseJson(res: Response): Promise<unknown> {
 
 /**
  * 创建 case2 API 客户端。
- * @param options.apiBase 空则同源 `/api/case2`
  */
-export function createCase2Api(options: ApiClientOptions) {
+export function createCase2Api(options: ApiClientOptions = {}) {
   const fetchImpl = options.fetchImpl ?? fetch;
 
   async function request<T>(
@@ -107,7 +113,7 @@ export function createCase2Api(options: ApiClientOptions) {
     init: RequestInit,
     mapOk: (body: unknown) => T,
   ): Promise<T> {
-    const url = resolveApiUrl(options.apiBase, path);
+    const url = resolveApiUrl(path);
     const res = await fetchImpl(url, {
       ...init,
       cache: "no-store",

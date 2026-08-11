@@ -20,7 +20,6 @@ function metrics(overrides: Record<string, unknown> = {}) {
 describe("case2Api metrics validation", () => {
   it("接受非空矩形 heatmap 和有限数 KPI", async () => {
     const api = createCase2Api({
-      apiBase: "",
       fetchImpl: async () => okResponse({ ok: true, metrics: metrics() }),
     });
 
@@ -31,7 +30,6 @@ describe("case2Api metrics validation", () => {
 
   it("拒绝非矩形 heatmap", async () => {
     const api = createCase2Api({
-      apiBase: "",
       fetchImpl: async () =>
         okResponse({
           ok: true,
@@ -46,7 +44,6 @@ describe("case2Api metrics validation", () => {
 
   it("拒绝非有限数 KPI", async () => {
     const api = createCase2Api({
-      apiBase: "",
       fetchImpl: async () =>
         okResponse({
           ok: true,

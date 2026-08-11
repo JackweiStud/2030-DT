@@ -18,13 +18,10 @@ export type HeatmapConfig = {
 };
 
 export type Case2RuntimeConfig = HeatmapConfig & {
-  /** 空字符串表示同源 `/api/case2` */
-  apiBase: string;
   pollMs: number;
 };
 
 const DEFAULTS = {
-  apiBase: "",
   pollMs: 1000,
   x0: 750,
   y0: 400,
@@ -81,14 +78,9 @@ function readAlpha(env: EnvLike, key: string, fallback: number): number {
   return value;
 }
 
-function readApiBase(env: EnvLike): string {
-  const raw = env.VITE_CASE2_API_BASE;
-  if (raw === undefined) return DEFAULTS.apiBase;
-  return raw.trim();
-}
-
 /**
- * 解析构建时 env，产出热力锚区与轮询/API 配置。
+ * 解析构建时 env，产出热力锚区与轮询配置。
+ * API 前缀写死为同源 `/api/case2`，不进 env。
  * @param env 通常传入 `import.meta.env`
  */
 export function loadCase2RuntimeConfig(env: EnvLike = import.meta.env): Case2RuntimeConfig {
@@ -105,7 +97,6 @@ export function loadCase2RuntimeConfig(env: EnvLike = import.meta.env): Case2Run
   );
   const pollMs = readOptionalDigits(env, "VITE_CASE2_POLL_MS", DEFAULTS.pollMs);
   const alpha = readAlpha(env, "VITE_CASE2_HEATMAP_ALPHA", DEFAULTS.alpha);
-  const apiBase = readApiBase(env);
 
   if (x0 < 0 || y0 < 0 || gap < 0) {
     throw new HeatmapConfigError("anchor", "X0/Y0/GAP must be >= 0");
@@ -124,7 +115,6 @@ export function loadCase2RuntimeConfig(env: EnvLike = import.meta.env): Case2Run
   }
 
   return {
-    apiBase,
     pollMs,
     x0,
     y0,
@@ -162,12 +152,4 @@ export function assertHeatmapAnchor(
       `anchor (${x0},${y0})-(${x1},${y1}) out of image ${naturalWidth}x${naturalHeight}`,
     );
   }
-}
-
-export function resolveApiUrl(apiBase: string, path: string): string {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  if (!apiBase) {
-    return `/api/case2${normalizedPath}`;
-  }
-  return `${apiBase.replace(/\/$/, "")}${normalizedPath}`;
 }
