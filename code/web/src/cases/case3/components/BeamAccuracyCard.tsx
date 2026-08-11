@@ -102,10 +102,18 @@ export function BeamAccuracyCard(props: Props) {
               />
             </svg>
             <div className="case3-ba-center">
-              <div className="case3-ba-pct">
-                <span>{pctText}</span>
+              <div
+                className={`case3-ba-pct${
+                  pctText.length >= 5
+                    ? " case3-ba-pct--lg"
+                    : pctText.length >= 4
+                      ? " case3-ba-pct--md"
+                      : ""
+                }`}
+              >
+                <span className="case3-ba-pct__value">{pctText}</span>
+                <span className="case3-ba-pct__unit">%</span>
               </div>
-              <span className="case3-ba-pct__unit">%</span>
               <div className="case3-ba-caption">预测准确率</div>
               <div className="case3-ba-badge">正常</div>
             </div>

@@ -1064,32 +1064,61 @@
   width: 152px;
   height: 152px;
   pointer-events: none;
+  /* 开口环视觉圆心约 (97.5, 93.5)，中心文案以此为基准，勿用盒子几何中心 76 */
+  --case3-ba-ring-cx: 97.5px;
 }
 
 .case3-ba-pct {
   position: absolute;
-  left: 53px;
-  top: 49px;
-  width: 90px;
+  left: var(--case3-ba-ring-cx);
+  top: 52px;
+  transform: translateX(-50%);
   margin: 0;
-  font: 700 48px/1 var(--shell-font-ui);
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  max-width: 120px;
+  font: 700 42px/1 var(--shell-font-ui);
   color: #ffffff;
-  text-align: left;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.case3-ba-pct__value {
+  font: inherit;
 }
 
 .case3-ba-pct__unit {
-  position: absolute;
-  left: 133px;
-  top: 78px;
-  font: 600 18px/1 var(--shell-font-ui);
+  position: static;
+  flex-shrink: 0;
+  font: 600 16px/1 var(--shell-font-ui);
   color: #ffffff;
+}
+
+/* 一位小数中等长度，如 94.5 */
+.case3-ba-pct--md {
+  font-size: 36px;
+}
+
+.case3-ba-pct--md .case3-ba-pct__unit {
+  font-size: 14px;
+}
+
+/* 最长值，如 100.0 */
+.case3-ba-pct--lg {
+  font-size: 30px;
+}
+
+.case3-ba-pct--lg .case3-ba-pct__unit {
+  font-size: 13px;
 }
 
 .case3-ba-caption {
   position: absolute;
-  left: 66px;
-  top: 107px;
+  left: var(--case3-ba-ring-cx);
+  top: 100px;
+  transform: translateX(-50%);
   margin: 0;
   font: 400 13px/1 var(--shell-font-ui);
   color: #a1a1aa;
