@@ -540,7 +540,7 @@
 .case3-page[data-state="initial"] .case3-progress,
 .case3-page[data-state="without-running"] [data-side="with"] .case3-progress,
 .case3-page[data-state="without-completed"] [data-side="with"] .case3-progress {
-  opacity: 0.55;
+  opacity: 0.95;
 }
 
 /* KPI panel */
