@@ -29,6 +29,12 @@
 - `web-static/case3/assets/`：从 `03-design/case3/assets/` 复制的 Gate 1.5 静态资源副本。
 - 后续正式运行资源仍应落入 `04-runtime-assets/case3/`，正式 React 不直接引用 `02-ux/` 或 `web-static/`。
 
+## 正式实现复用边界
+
+- `web-static/case3/` 的 `.case3-*` 视觉规则、尺寸关系、SVG/DOM 视觉结构和资源可作为正式前端的复用输入；正式实现应选择性迁移或重写为 case-local CSS Module 和组件。
+- 不得直接导入 `web-static/case3/case3.css` 或 `case3.js`：其中的 `html/body`、舞台/Shell、评审 dock、URL 状态切换和假数据只属于 Gate 1.5 静态页。
+- 正式 Shell 继续拥有顶部导航、1920×1080 缩放和公共 token；Case3 只拥有业务组件和 `.case3-*` 视觉规则。
+
 ## 人工验收步骤
 
 1. 打开 `web-static/case3/index.html`。
@@ -38,8 +44,8 @@
 
 ## 当前结论
 
-status: `READY_FOR_REVIEW`
+status: `ACCEPTED`
 
-已按 `case3-dt-com.pen` 回改静态差异：双侧 16×16 `BS波束` 扫描卡、With 成功/失败图例、`开销(%)`、`点位进度`、BA `正常`、去掉独立 LOS。
+2026-08-10 用户已人工检查并接受：初始、Without DT 运行/完成、With DT 运行/完成和现场环境弹窗。静态页的 20 槽点位窗口仅表达动态 `N` 的最近 20 条窗口，不表示总点位上限。
 
-自动检查只覆盖文件结构和基础静态渲染；最终 Gate 1.5 通过仍需用户人工视觉确认。
+自动检查覆盖文件结构和基础静态渲染；用户人工视觉确认已完成。With `reflection` 仍是完整点必需字段，但 Reflection/LOS 可视化延后至后续独立实现，不属于本 Gate 1.5 已接受的五态范围。

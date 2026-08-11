@@ -237,12 +237,14 @@ setCostPct(snap.costPct);   // 侧级标量
 
 ### 5.2 点位与 Cost 规则
 
-- `no` 从 1 递增，由运行时行号得到，不固定为 12 或 32。
+- `no` 从 1 递增，由运行时行号得到；不受 UI 最近 20 条窗口限制，完整点位总数 `N` 可大于 20。
 - Without 点位必须包含 `scanBeamIds` 和 `selectedBeamId`。
 - With 点位必须包含 `selectedBeamId` 和 `reflection`；反射点文件第 `i` 行是 With 第 `i` 个完整点位的必需字段。
 - 同侧逐点文件按行号对齐。Node 只返回已经具备完整必需字段的连续点位；不完整尾行保留到下次轮询，不向 Web 暴露半点。
 - 坐标与数值非法时，该侧本轮进入数据异常，不拼接旧行或跨侧补齐。
 - Throughput 来自 `points[].throughputGbps`；Cost 来自同包 `costPct`，不再提供独立 `/api/case3/kpis` 主路径。
+- `costPct` 之外不新增 Node 的 delta 字段。两侧 Cost 都有效且 Without Cost 非 0 时，Web 派生相对开销降低率：`(withoutCostPct - withCostPct) / withoutCostPct * 100`；任一输入缺失或除数为 0 时显示 `--`。
+- `reflection` 保持为 With 完整点必需字段；v1 正式 Web 暂不渲染 Reflection/LOS，该延期不改变 Node 的收编和完整点规则。
 
 
 

@@ -31,15 +31,11 @@ Gate 1 设计源覆盖 case3 的核心视觉与状态表达：
 
 - `02-ux/case3/` 只是 UX 输入，不是最终视觉契约。
 - Gate 1.5 静态 HTML 以 `03-design/case3/case3-dt-com.pen` 为唯一参考。
-- 点位进度为动态 `N` 的窗口表达，不把 P1-P12 或 P1-P20 当作点位总上限。
+- 点位进度为动态 `N` 的窗口表达，正式 UI 固定显示最近 20 条；20 是窗口长度，不是点位总上限。
 - Cost 文案固定为 `Cost (%)`，不沿用 dB。
 - Beam Accuracy 在进入 case3 / 刷新 / 切回时显示文件基线；With 完成后由 Web 基于同 `no` 点位 `selectedBeamId` 对比增量刷新。
-- With reflection / LOS 示意依赖完整点 `reflection` 字段。
+- With `reflection` 是完整点必需字段；Reflection/LOS 可视化不在 v1 正式 Web 范围，后续单独实现。
 
 ## 下一步
 
-进入 Gate 1.5 静态 HTML：
-
-- 目录：`web-static/case3/`
-- 共享资源：`web-static/shared/`
-- 边界：只还原视觉和假交互，不接 `/api/case3/*`，不读共享目录，不实现正式状态机，不启动 Node。
+Gate 1.5 静态 HTML 已于 2026-08-10 由用户人工接受。下一步是批准 Gate 2 API 契约 v1，再进入 Gate 3 SPEC；正式 Web 可迁移 case-local 视觉规则和资源，但不得直接导入静态 CSS/JS 或假状态逻辑。

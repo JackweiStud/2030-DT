@@ -10,8 +10,8 @@
 - case2 Gate 4：正式 Web、Node 文件适配服务、模拟后端打桩均已实现；2026-08-04 用户确认三者本地测试联调完成，自动 + 人工 check 通过。
 - case2 Gate 5：本地 QA 证据已补齐（`doc/case2/QA-EVIDENCE.md`）；本地打桩演示可进入用户/领导测试。真实后端、真实挂载和真实采集不在本次完成口径内。
 - case3 Gate 0/2 草案：2026-08-06 用户确认 8 条关键边界，已创建 `doc/case3/MAINLINE.md`、`doc/case3/API-CONTRACT.md`、`doc/case3/UI-DATA-SOURCE-MAP.md`、`doc/case3/UX-STATE-MAP.md`。当前正式 Web/Node 尚未实现，Gate 2 契约 v1 仍待批准。
-- case3 Gate 1：2026-08-09 用户确认 `03-design/case3/case3-dt-com.pen` 已全部完成并可冻结；冻结记录见 `doc/case3/GATE1-FREEZE.md`。下一步进入 Gate 1.5 静态 HTML。
-- case3 Gate 1.5：静态 HTML 正在 `web-static/case3/` 建设；边界为只还原视觉和假交互，不接 `/api/case3/*`，不读共享目录，不实现正式状态机，不启动 Node。
+- case3 Gate 1：2026-08-09 用户确认 `03-design/case3/case3-dt-com.pen` 已全部完成并冻结；冻结记录见 `doc/case3/GATE1-FREEZE.md`。
+- case3 Gate 1.5：2026-08-10 用户已人工检查并接受 `web-static/case3/` 的初始、Without 运行/完成、With 运行/完成和现场环境弹窗。该目录只作视觉与假交互验收；正式 Web 可选择性迁移其 `.case3-*` 视觉规则和资源，但不得直接导入静态 CSS/JS、共享目录或假状态逻辑。
 - 2026-08-03 用户定稿：失败态按 WEB-SPEC 路径互斥（`failed-start` 只可再启动，`failed-reinit` 只可再重置）；进页一律 `initial`；无 result-error/unknown-control；六文件失败保持 `calibrating`；`start`/`reinit` 强制 `status=""`；真实后端已确认接受开一轮空 `status`。
 - 2026-08-03 分工：本会话只实现正式 Web（`WEB-SPEC`）；Node 适配（`SERVER-SPEC`）与 `realback_no` 打桩由 Codex 交付；本地联调必须同时具备打桩。
 - 2026-08-03 Web SPEC 审阅增量已回填 `WEB-SPEC.md`。
@@ -34,7 +34,7 @@
 - 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run dev`。
 - 2026-08-04 Web 代码检视后补齐主线 E2E：`code/scripts/e2e-case2-stack.sh` 会准备临时共享目录并启动 Web + Node 适配 + case2 打桩；`code/web npm run test:e2e` 覆盖进页 Initial、启动、截图落盘/清 flag、重置回 Initial。
 - 2026-08-04 本轮文档复核自动命令：`code/server npm test` 30/30 通过；`code/back npm test` 28/28 通过（首次复跑曾出现一次陈旧任务测试瞬时失败，立即重跑通过，后续保留观察）；`code/web npm run typecheck` 通过；`code/web npm test` 30/30 通过；`code/web npm run build` 通过；`code/web npm run test:e2e` 1/1 通过。
-- 当前焦点：case2 本地打桩版本已具备测试/演示条件；case3 Gate 1 已冻结，正在推进 Gate 1.5 静态 HTML。下一步若继续 case2，应做真实后端/真实挂载验收；若推进 case3，应完成 Gate 1.5 浏览器静态验收，再冻结 Gate 2 契约 v1 和编写 Gate 3 SPEC。
+- 当前焦点：case2 本地打桩版本已具备测试/演示条件；case3 Gate 1.5 静态 HTML 已接受，Gate 2 契约 v1 仍待批准。下一步若继续 case2，应做真实后端/真实挂载验收；若推进 case3，应先批准 Gate 2 契约 v1，再编写 Gate 3 SPEC。
 
 ## 一句话演示承诺
 
@@ -63,8 +63,8 @@
 - 共享根配置：case2/case3 统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 只作为历史兼容或迁移期映射。
 - 控制文件：case3 沿用同一个 `case_control.json` 五字段结构。Start/ReInit 由 Node 写入 `case=case3`、`command=start|reinit`、`dt_type=without dt|with dt` 并强制 `status=""` 开新轮；进页/刷新/切回 case3 的 GET 成功后、单侧 `case complete` 结果被 Web 接收后、单侧 `reinit complete` 被 UI 消费后，Web 经 Node 写回 `command=init,status=""` 空闲态；业务终态仍只由后端写。
 - Reset：单侧重置，路径仍是 `execute success -> reinit complete`。Without 重置后 With 历史结果可保留；With 重置后 Without 历史结果可保留；任意一侧重置都使本次 Beam Accuracy 增量失效并恢复到文件基线。
-- 点位数动态 `N`，由运行时文件解析得到；点位进度显示最新 12 条，超过窗口长度滚动到最新点位。
-- Cost 单位是 `%`；正式 UI 文案统一为 `Cost (%)`，不得沿用 UX 切图里的 dB 或 case2 误差减少语义。
+- 点位数动态 `N`，由运行时文件解析得到；点位进度固定显示最新 20 条，超过窗口长度滚动到最新点位；20 只是窗口长度，不是点位总上限。
+- Cost 单位是 `%`；正式 UI 文案统一为 `Cost (%)`，不得沿用 UX 切图里的 dB 或 case2 误差减少语义。两侧 Cost 都有效且 Without Cost 非 0 时，Web 派生相对开销降低率：`(withoutCostPct - withCostPct) / withoutCostPct * 100`。
 
 ## case2 状态机（Gate 0 语义）
 
@@ -88,7 +88,7 @@
 - 当前参考 Calibrated 文件已存在，不能作为本次任务完成证据；本地打桩默认 random 合成 Calibrated（相对 Initial 改善），可 `copy` 回退参考样本；日志标注 synthetic/stub，不得表述为真实业务采集。
 - 本地自动测试与用户人工联调已通过；截图输出 `code/comdatafiles/out/case2/calibrated-000.png` 至 `calibrated-005.png` 为 3840×2160 PNG 运行证据，但不默认提交。
 - Gate 1 设计源中降幅已改为 `{reductionPct}%` 运行时占位；前端实现不得写死 50%。
-- case3 Gate 1 设计源已冻结；当前 UX PNG 仍只是输入，不是最终视觉契约。Gate 1.5 静态 HTML 唯一参考 `03-design/case3/case3-dt-com.pen`，并仅覆盖用户确认的核心状态。
+- case3 Gate 1 设计源已冻结；当前 UX PNG 仍只是输入，不是最终视觉契约。Gate 1.5 静态 HTML 已由用户接受，仅覆盖用户确认的核心状态；正式 Web 复用其 case-local 视觉规则和资源时必须重构为正式组件，不能直接迁入静态 CSS/JS。
 - case3 多 txt 行号对齐、半写尾行、单侧重置后跨侧历史结果保留等仍未实现自动校验；需在 Gate 3 SPEC 和 Node 测试中覆盖。
 
 ## 关键文档
@@ -118,6 +118,6 @@
 
 ## 最小下一步与停止条件
 
-下一步：二选一推进。若继续 case2，接真实后端与真实挂载路径，复跑 `QA-EVIDENCE.md` 的验证矩阵；若推进 case3，先完成 `web-static/case3/` Gate 1.5 静态 HTML 验收，再审阅并批准 `doc/case3/API-CONTRACT.md` 草案和进入 Gate 3 `SERVER-SPEC` / `WEB-SPEC`。
+下一步：二选一推进。若继续 case2，接真实后端与真实挂载路径，复跑 `QA-EVIDENCE.md` 的验证矩阵；若推进 case3，先审阅并批准 `doc/case3/API-CONTRACT.md` v1，再进入 Gate 3 `SERVER-SPEC` / `WEB-SPEC`。
 
 停止条件：不把本地打桩 synthetic/stub 数据表述为真实采集；不把 `code/comdatafiles/out/` 运行输出默认提交为源码；不把 case2 契约直接套用到 case3/4；不把 case3 JSONL 草案当作正式后端协议。

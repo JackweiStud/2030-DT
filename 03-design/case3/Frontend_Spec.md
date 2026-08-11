@@ -21,26 +21,27 @@
 ## 2. 组件树（实现应对齐）
 
 ```text
-Case3Page (.case3-page)
+Shell
 ├── ShellHeader（Shell；activeTab=DT for Comm）
-├── TestComparePanel
-│   ├── PanelHeader（测试对比 / 现场环境）
-│   └── SidePair
-│       ├── SidePanel side="without"
-│       │   ├── SideHeader（icon, label, StatusBadge, StartBtn, ResetBtn）
-│       │   ├── MapStage
-│       │   │   ├── MapImage（静态）
-│       │   │   ├── BaseRouteLayer（init-data）
-│       │   │   ├── LiveTrackLayer（points[].ue）
-│       │   │   ├── BsMarker / UeMarker
-│       │   │   └── （with only）ReflectionLosLayer（points[].reflection）
-│       │   ├── BeamCard（without: scanBeamIds+selected；with: selected 预测）
-│       │   └── PointProgressWindow（latest 12 of N）
-│       └── SidePanel side="with" …
-└── KpiComparePanel
-    ├── CostCard（costPct 无DT/有DT，文案 `开销(%)`）
-    ├── ThroughputCard（throughputGbps by no，图例 `无 DT` / `有 DT`）
-    └── BeamAccuracyCard（baseline + 增量派生）
+└── Case3Page (.case3-page)
+    ├── TestComparePanel
+    │   ├── PanelHeader（测试对比 / 现场环境）
+    │   └── SidePair
+    │       ├── SidePanel side="without"
+    │       │   ├── SideHeader（icon, label, StatusBadge, StartBtn, ResetBtn）
+    │       │   ├── MapStage
+    │       │   │   ├── MapImage（静态）
+    │       │   │   ├── BaseRouteLayer（init-data）
+    │       │   │   ├── LiveTrackLayer（points[].ue）
+    │       │   │   ├── BsMarker / UeMarker
+    │       │   │   └── （with only，后续阶段）ReflectionLosLayer（points[].reflection）
+    │       │   ├── BeamCard（without: scanBeamIds+selected；with: selected 预测）
+    │       │   └── PointProgressWindow（latest 20 of N）
+    │       └── SidePanel side="with" …
+    └── KpiComparePanel
+        ├── CostCard（costPct 无DT/有DT，文案 `开销(%)`）
+        ├── ThroughputCard（throughputGbps by no，图例 `无 DT` / `有 DT`）
+        └── BeamAccuracyCard（baseline + 增量派生）
 ```
 
 CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
@@ -52,6 +53,7 @@ CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
 | 预置路线 | `GET /api/case3/init-data` → baseRoute | 缺则空路线 |
 | Without/With 点 | `GET /api/case3/side?side=` → `points` 全量替换 | `ok:false` 不更新 |
 | Cost | 同包 `costPct` | `null` → 空，不沿用旧值 |
+| 相对开销降低率 | Web 派生 `(withoutCostPct - withCostPct) / withoutCostPct * 100` | 任一 Cost 缺失或 Without Cost 为 0 → `--`；不显示百分点差。 |
 | Throughput 曲线 | `points[].throughputGbps` 按 `no` | 缺点不补 0 |
 | Beam Accuracy | 基线文件 + 同 `no` 的 `selectedBeamId` 对比 | 任意重置回基线；无 without 有效结果不算增量 |
 | 点位进度窗口 | `completeCount`；显示 `points.slice(-20)` | 文案标明窗口≠上限 |
@@ -66,7 +68,7 @@ CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
 | UE 轨迹 | canvas/SVG | points[].ue | 代表态圆点折线 |
 | Without 扫描波束 | SVG/canvas | scanBeamIds, selectedBeamId | 16 点阵代表态 |
 | With 预测波束 | SVG/canvas | selectedBeamId | 点阵高亮 |
-| Reflection/LOS | SVG path | reflection.{x,y,z,los} | 折线+LOS 标注 |
+| Reflection/LOS | 后续阶段 SVG path | reflection.{x,y,z,los} | v1 不渲染；字段仍参与 With 完整点校验。 |
 | 点位进度 | DOM | window of 20, N | 20 槽 |
 | Cost | SVG gauge/bar | costPct | 双环代表态 |
 | Throughput | chart lib/SVG | series by no | 双曲线代表态 |
@@ -88,18 +90,20 @@ CSS 必须以 `.case3-page` 根作用域或 CSS Modules 隔离。
 | `03-design/case3/assets/*`（来自 `02-ux/case3/`） | 复制到 `04-runtime-assets/case3/` 后再由 Web 引用 |
 | 禁止正式 React 直接读 `02-ux/` | — |
 
+`web-static/case3/` 是 Gate 1.5 视觉实现输入：可选择性迁移其中 `.case3-*` 的视觉规则、尺寸关系、SVG/DOM 结构和资源到正式组件/CSS Module；不得直接导入整份静态 `case3.css` 或 `case3.js`。静态页的 `html/body`、舞台/Shell、评审 dock、URL 状态切换和假数据均不进入正式 Web。
+
 ## 7. 验收条件（前端）
 
 - [ ] 8 业务态视觉与设计源一致（允许动态层运行时差异）
 - [ ] Cost 文案仅为 `开销(%)`；对比标签全中文 `无 DT` / `有 DT` / `开销变化`
 - [ ] 点位进度标题为 `点位进度`（20 槽窗口；N 语义不进标题）
 - [ ] BA 仅同 `no` 比 `selectedBeamId`；环内状态文案为 `正常`
-- [ ] 当前冻结 `.pen` 五态无独立反射 LOS 层；勿额外画 LOS
+- [ ] v1 正式 Web 不渲染 Reflection/LOS；`reflection` 仍是 With 完整点必需字段，后续作为独立可视化能力实现
 - [ ] 无 case2 指标语义泄漏；CSS case-local
 
 ## 8. 波束卡片图层契约（Gate 1 增量）
 
-设计源节点：双侧均为 `波束扫描卡片（浮层）`（如 Without `Igvil` / With `p7APR`）。  
+设计源节点：双侧均为 `波束扫描卡片（浮层）`（如 Without `Igvil` / With `p7APR`）。
 视觉唯一参考：`case3-dt-com.pen`。**禁止** 1:1 复制 Pencil 内 256 个 ellipse DOM；运行时须 **程序化渲染**。
 
 ### 8.1 扫描波束卡片（Without / `scanBeamIds`）
