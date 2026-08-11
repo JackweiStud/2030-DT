@@ -1,6 +1,6 @@
 # case3 模拟后端打桩规格（非真实后端）
 
-> status: `REVIEW_READY`
+> status: `IMPLEMENTED_LOCAL_STUB_AWAITING_E2E`
 >
 > 使用者：Case3 本地模拟后端实现 agent。
 >
@@ -8,17 +8,17 @@
 
 ## 0. 出口条件
 
-- [ ] 独立实现于 `code/back/case3/`，与 Case2 stub 可分别启动/停止/测试。
-- [ ] 只识别 `case3 + start|reinit + 合法 dt_type + status=""` 新轮元组；不依赖 command 变化或 mtime。
-- [ ] 观察到 init、其他 Case 或新命令时，旧任务立即失去写入权。
-- [ ] `execute success` 保持至少 3000ms；失败路径不再写完成终态。
-- [ ] Start 逐点 append 目标侧全部必需文件，完整关闭和停止写入后最后写 complete。
-- [ ] 默认同拍写 `case complete + save_picture_flag=1`；ReInit 不置截图 flag。
-- [ ] 控制写只 patch stub 自有字段，保留 command、`dt_type` 和未知字段，使用原子替换。
-- [ ] 控制文件缺失/短暂半写时等待恢复，不自行创建；进程启动遇到在途 success 时按本文恢复表处理。
-- [ ] Start 恢复固定清空目标侧并从第 1 点重放，不续写未知半轮；撤权允许留下不齐尾部但不回滚。
-- [ ] 数据明确标为 synthetic/reference-derived，不得声称真实采集。
-- [ ] `npm test` 通过；Ctrl+C 停止后不再写共享目录。
+- [x] 独立实现于 `code/back/case3/`，与 Case2 stub 可分别启动/停止/测试。
+- [x] 只识别 `case3 + start|reinit + 合法 dt_type + status=""` 新轮元组；不依赖 command 变化或 mtime。
+- [x] 观察到 init、其他 Case 或新命令时，旧任务立即失去写入权。
+- [x] `execute success` 保持至少 3000ms；失败路径不再写完成终态。
+- [x] Start 逐点 append 目标侧全部必需文件，完整关闭和停止写入后最后写 complete。
+- [x] 默认同拍写 `case complete + save_picture_flag=1`；ReInit 不置截图 flag。
+- [x] 控制写只 patch stub 自有字段，保留 command、`dt_type` 和未知字段，使用原子替换。
+- [x] 控制文件缺失/短暂半写时等待恢复，不自行创建；进程启动遇到在途 success 时按本文恢复表处理。
+- [x] Start 恢复固定清空目标侧并从第 1 点重放，不续写未知半轮；撤权允许留下不齐尾部但不回滚。
+- [x] 数据明确标为 synthetic/reference-derived，不得声称真实采集。
+- [x] `npm test` 通过；Ctrl+C 停止后不再写共享目录。
 
 ## 1. 目录
 

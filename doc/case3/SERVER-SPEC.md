@@ -1,6 +1,6 @@
 # case3 Node 文件适配服务施工规格
 
-> status: `REVIEW_READY`
+> status: `IMPLEMENTED_LOCAL_AWAITING_E2E`
 >
 > 使用者：前端 PC Node 适配服务实现 agent。
 >
@@ -10,15 +10,15 @@
 
 ## 0. 出口条件
 
-- [ ] 同一个 `127.0.0.1:3102` 进程同时注册现有 `/api/case2/*` 和新增 `/api/case3/*`。
-- [ ] 控制文件读取、原子 patch 和串行队列升级为进程级共享原语；Case2 合法 Web 主线、REST shape、数据和截图路径不变，非法并发/跨 Case 直接命令按新规则返回 `CONTROL_BUSY`。
-- [ ] Node 对跨 Case 活动命令执行 `CONTROL_BUSY` 防御，不只依赖 Shell 按钮锁。
-- [ ] Case3 Start/ReInit 在写控制前完整清空目标侧实时文件和调试快照；失败不写命令。
-- [ ] init-data、单侧全量快照、pending tail、稳定读取和最终完成门槛有自动测试。
-- [ ] 数值四舍五入、范围、逐点行号和 Reflection `0→false,1→true` 由 Node 唯一校验。
-- [ ] 截图 Base64/PNG 校验、进程内串行、原子落盘、不覆盖、成功后清零与 Case2 同构，输出隔离到 `out/case3/`。
-- [ ] 结构化日志可区分 case、endpoint、side/command、错误码和原因。
-- [ ] `npm test` 同时通过 shared、case2、case3 测试；`npm start` 可 Ctrl+C 退出。
+- [x] 同一个 `127.0.0.1:3102` 进程同时注册现有 `/api/case2/*` 和新增 `/api/case3/*`。
+- [x] 控制文件读取、原子 patch 和串行队列升级为进程级共享原语；Case2 合法 Web 主线、REST shape、数据和截图路径不变，非法并发/跨 Case 直接命令按新规则返回 `CONTROL_BUSY`。
+- [x] Node 对跨 Case 活动命令执行 `CONTROL_BUSY` 防御，不只依赖 Shell 按钮锁。
+- [x] Case3 Start/ReInit 在写控制前完整清空目标侧实时文件和调试快照；失败不写命令。
+- [x] init-data、单侧全量快照、pending tail、稳定读取和最终完成门槛有自动测试。
+- [x] 数值四舍五入、范围、逐点行号和 Reflection `0→false,1→true` 由 Node 唯一校验。
+- [x] 截图 Base64/PNG 校验、进程内串行、原子落盘、不覆盖、成功后清零与 Case2 同构，输出隔离到 `out/case3/`。
+- [x] 结构化日志可区分 case、endpoint、side/command、错误码和原因。
+- [x] `npm test` 同时通过 shared、case2、case3 测试；`npm start` 可 Ctrl+C 退出。
 
 ## 1. 架构与目录
 
@@ -518,6 +518,7 @@ path 为相对共享根的 POSIX 路径；日志写绝对路径。
 - 临时共享目录，不写 `01-参考资料/`，不覆盖 tracked Case2 样本。
 - 新增 `code/scripts/e2e-case3-stack.sh`：准备 temp shared root、启动 Node + Web + Case3 stub、跑 Case3 Playwright、Ctrl+C/退出清理子进程。
 - `dev-web-server.*` 仍只启动 Web + Node，不默认启动任何 stub；提示 `code/back` 独立启动。
+- 2026-08-11 已完成 Node + Case3 stub 真实进程临时目录联调；浏览器全栈 E2E 由用户下一步执行，未通过前不得宣称 Case3 Gate 5。
 - 验收命令：
 
 ```text
