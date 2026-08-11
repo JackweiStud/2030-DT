@@ -15,6 +15,7 @@ import { SidePanel } from "./components/SidePanel";
 import { CostCard } from "./components/CostCard";
 import { ThroughputChart } from "./components/ThroughputChart";
 import { BeamAccuracyCard } from "./components/BeamAccuracyCard";
+import { canCompareWithCurrentWithout } from "./state/case3Reducer";
 import "./case3.css";
 
 type Props = {
@@ -50,6 +51,9 @@ export function Case3Page(props: Props) {
     [];
   const withPoints =
     ctrl.state.live.with?.points ?? ctrl.state.results.with?.points ?? [];
+  const withPeerPoints = canCompareWithCurrentWithout(ctrl.state)
+    ? ctrl.state.results.without?.points
+    : null;
 
   const dataState =
     ctrl.visible === "unpaired-both" || ctrl.visible === "with-history-only"
@@ -86,7 +90,7 @@ export function Case3Page(props: Props) {
             config={config}
             baseRoute={ctrl.state.baseRoute}
             points={withPoints}
-            peerPoints={ctrl.state.results.without?.points}
+            peerPoints={withPeerPoints}
             badge={ctrl.withBadge}
             startEnabled={ctrl.startWithEnabled}
             resetEnabled={ctrl.reinitWithEnabled}

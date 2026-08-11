@@ -81,7 +81,8 @@ export function clampMapRotation(deg: number): number {
 
 /**
  * 以指针为中心缩放：先算新 scale，再修正 offset，使指针下地图点不动。
- * pointerX/Y 为相对 MapStage 的逻辑像素。
+ * pointerX/Y 须为相对变换原点（center）的逻辑像素，与 Case2 热力图一致；
+ * 调用方在 transform-origin:center 下应传入 (localX - w/2, localY - h/2)。
  */
 export function zoomMapViewAtPointer(
   view: MapView,

@@ -170,8 +170,12 @@ export function useCase3Controller(options: Options) {
     try {
       while (attempt < CASE3_SCREENSHOT_MAX_ATTEMPTS) {
         attempt += 1;
+        let failurePhase: "generate" | "upload" = base64
+          ? "upload"
+          : "generate";
         try {
           if (!base64) {
+            failurePhase = "generate";
             const stage = stageElementRef.current;
             if (!stage) throw new Error("stage missing");
             await mapRendererRefs?.without.current?.prepareCapture();
@@ -189,6 +193,7 @@ export function useCase3Controller(options: Options) {
             base64 = stripDataUrl(png);
             screenshotBase64Ref.current = base64;
           }
+          failurePhase = "upload";
           await api.postScreenshot(base64);
           screenshotPhaseRef.current = stateRef.current.activeAction
             ? "waitClear"
@@ -242,7 +247,7 @@ export function useCase3Controller(options: Options) {
             await maybeFinishAfterScreenshot();
             return;
           }
-          if (!(err instanceof Case3ApiError)) {
+          if (failurePhase === "generate") {
             base64 = null;
             screenshotBase64Ref.current = null;
           }

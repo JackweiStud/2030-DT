@@ -352,3 +352,19 @@ export function canReinit(state: Case3State, side: Case3Side): boolean {
 export function isActionBusy(state: Case3State): boolean {
   return state.activeAction !== null;
 }
+
+/**
+ * With 侧是否可以使用当前 Without 做逐点预测比较。
+ *
+ * 已完成结果必须由 pairValid 证明同代；With 正在基于当前 Without 执行时，
+ * activeAction 本身就是本轮比较上下文。旧 With + 新 Without 的未配对历史
+ * 不得进入该分支。
+ */
+export function canCompareWithCurrentWithout(state: Case3State): boolean {
+  if (state.results.without === null) return false;
+  if (state.pairValid) return true;
+  return (
+    state.activeAction?.kind === "start" &&
+    state.activeAction.side === "with"
+  );
+}

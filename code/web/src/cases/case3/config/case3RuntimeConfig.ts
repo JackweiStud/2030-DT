@@ -114,6 +114,7 @@ export const CASE3_MAP_SCALE_MIN = 0.5;
 export const CASE3_MAP_SCALE_MAX = 5;
 export const CASE3_MAP_ROTATION_MAX_DEG = 90;
 export const CASE3_MAP_ZOOM_STEP = 1.1;
+export const CASE3_MAP_CAPTURE_READY_TIMEOUT_MS = 10_000;
 export const CASE3_SCREENSHOT_MAX_ATTEMPTS = 3;
 export const CASE3_STAGE_WIDTH = 1920;
 export const CASE3_STAGE_HEIGHT = 1080;

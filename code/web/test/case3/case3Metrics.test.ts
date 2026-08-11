@@ -128,4 +128,22 @@ describe("mapProjection", () => {
     expect(clampMapRotation(120)).toBe(90);
     expect(clampMapRotation(-120)).toBe(-90);
   });
+
+  it("指针中心缩放：相对中心坐标下指针点不动", () => {
+    // 模拟 transform-origin:center：指针在中心偏右下 (80, 40)
+    const pointerX = 80;
+    const pointerY = 40;
+    const before = IDENTITY_MAP_VIEW;
+    const after = zoomMapViewAtPointer(before, pointerX, pointerY, true);
+    const ratio = after.scale / before.scale;
+    // 缩放前后「指针处」的内容坐标应一致： (p - offset) / scale
+    const contentBeforeX = (pointerX - before.offsetX) / before.scale;
+    const contentBeforeY = (pointerY - before.offsetY) / before.scale;
+    const contentAfterX = (pointerX - after.offsetX) / after.scale;
+    const contentAfterY = (pointerY - after.offsetY) / after.scale;
+    expect(contentAfterX).toBeCloseTo(contentBeforeX);
+    expect(contentAfterY).toBeCloseTo(contentBeforeY);
+    expect(after.offsetX).toBeCloseTo(pointerX - (pointerX - before.offsetX) * ratio);
+    expect(after.offsetY).toBeCloseTo(pointerY - (pointerY - before.offsetY) * ratio);
+  });
 });

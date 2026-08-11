@@ -12,7 +12,10 @@ import {
 } from "react";
 import mapSrc from "../../../../../assets/case3/ue_comm_map.png";
 import iconReset from "../../../../../assets/case3/icon-rotate-ccw.svg";
-import type { Case3RuntimeConfig } from "../../config/case3RuntimeConfig";
+import {
+  CASE3_MAP_CAPTURE_READY_TIMEOUT_MS,
+  type Case3RuntimeConfig,
+} from "../../config/case3RuntimeConfig";
 import type { MapRendererHandle } from "../../hooks/useCase3Controller";
 import {
   IDENTITY_MAP_VIEW,
@@ -35,6 +38,11 @@ type Props = {
   stageElementRef: React.RefObject<HTMLElement>;
 };
 
+type CaptureWaiter = {
+  resolve: () => void;
+  reject: (error: Error) => void;
+};
+
 /**
  * 地图底图与交互变换层。
  */
@@ -46,7 +54,9 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
     const [natural, setNatural] = useState<{ w: number; h: number } | null>(
       null,
     );
-    const [ready, setReady] = useState(false);
+    const captureReadyRef = useRef(false);
+    const captureErrorRef = useRef<Error | null>(null);
+    const captureWaitersRef = useRef(new Set<CaptureWaiter>());
     const dragRef = useRef<{
       mode: "rotate" | "pan";
       lastX: number;
@@ -60,18 +70,47 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
           setView(IDENTITY_MAP_VIEW);
         },
         async prepareCapture() {
-          if (ready) return;
-          await new Promise<void>((resolve) => {
-            const t = window.setInterval(() => {
-              if (ready) {
-                window.clearInterval(t);
-                resolve();
-              }
-            }, 16);
+          if (captureReadyRef.current) return;
+          if (captureErrorRef.current) throw captureErrorRef.current;
+
+          await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            let waiter: CaptureWaiter;
+            const timer = window.setTimeout(() => {
+              if (settled) return;
+              settled = true;
+              captureWaitersRef.current.delete(waiter);
+              reject(
+                new Error(
+                  `case3 map capture readiness timed out after ${CASE3_MAP_CAPTURE_READY_TIMEOUT_MS}ms`,
+                ),
+              );
+            }, CASE3_MAP_CAPTURE_READY_TIMEOUT_MS);
+            const finish = (callback: () => void) => {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timer);
+              captureWaitersRef.current.delete(waiter);
+              callback();
+            };
+            waiter = {
+              resolve: () => finish(resolve),
+              reject: (error) => finish(() => reject(error)),
+            };
+            captureWaitersRef.current.add(waiter);
           });
         },
       }),
-      [ready],
+      [],
+    );
+
+    useEffect(
+      () => () => {
+        const error = new Error("case3 map renderer unmounted before capture");
+        for (const waiter of captureWaitersRef.current) waiter.reject(error);
+        captureWaitersRef.current.clear();
+      },
+      [],
     );
 
     useEffect(() => {
@@ -79,10 +118,13 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
       if (!el) return;
       const onWheel = (e: WheelEvent) => {
         e.preventDefault();
+        // 与 Case2 一致：transform-origin 为 center，指针须相对地图中心
         const rect = el.getBoundingClientRect();
         const scaleRatio = rect.width / el.clientWidth || 1;
-        const lx = (e.clientX - rect.left) / scaleRatio;
-        const ly = (e.clientY - rect.top) / scaleRatio;
+        const lx =
+          (e.clientX - rect.left) / scaleRatio - el.clientWidth / 2;
+        const ly =
+          (e.clientY - rect.top) / scaleRatio - el.clientHeight / 2;
         setView((v: MapView) => zoomMapViewAtPointer(v, lx, ly, e.deltaY < 0));
       };
       el.addEventListener("wheel", onWheel, { passive: false });
@@ -160,10 +202,31 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
                   img.naturalHeight,
                 );
                 setNatural({ w: img.naturalWidth, h: img.naturalHeight });
-                setReady(true);
+                captureReadyRef.current = true;
+                captureErrorRef.current = null;
+                for (const waiter of captureWaitersRef.current) waiter.resolve();
+                captureWaitersRef.current.clear();
               } catch (err) {
-                console.error("[case3] map calibration error", err);
+                const error =
+                  err instanceof Error
+                    ? err
+                    : new Error("case3 map calibration failed");
+                captureErrorRef.current = error;
+                console.error("[case3] map calibration error", error);
+                for (const waiter of captureWaitersRef.current) {
+                  waiter.reject(error);
+                }
+                captureWaitersRef.current.clear();
               }
+            }}
+            onError={() => {
+              const error = new Error("case3 map image failed to load");
+              captureErrorRef.current = error;
+              console.error("[case3] map image error", error);
+              for (const waiter of captureWaitersRef.current) {
+                waiter.reject(error);
+              }
+              captureWaitersRef.current.clear();
             }}
           />
           {natural ? (

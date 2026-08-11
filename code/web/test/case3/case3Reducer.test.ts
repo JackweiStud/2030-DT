@@ -3,6 +3,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  canCompareWithCurrentWithout,
   canReinit,
   canStartWith,
   canStartWithout,
@@ -134,6 +135,15 @@ describe("case3Reducer", () => {
     expect(s.pairValid).toBe(false);
     expect(deriveVisibleState(s)).toBe("unpaired-both");
     expect(canStartWith(s)).toBe(true);
+    expect(canCompareWithCurrentWithout(s)).toBe(false);
+
+    s = case3Reducer(s, {
+      type: "ACTION_BEGIN",
+      kind: "start",
+      side: "with",
+      generation: 5,
+    });
+    expect(canCompareWithCurrentWithout(s)).toBe(true);
   });
 
   it("execute fail 进入 failed-start 且只允许同侧 Start", () => {
