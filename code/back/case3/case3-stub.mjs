@@ -54,6 +54,10 @@ export async function createCase3Stub(options) {
       logger,
       pointMs: config.pointMs,
       pollMs: config.pollMs,
+      dataMode: config.dataMode,
+      seed: config.seed,
+      throughputJitter: config.throughputJitter,
+      costJitter: config.costJitter,
     });
   const runner = createStubRunner({
     sharedDir: config.sharedDir,
@@ -84,7 +88,14 @@ export async function runMain(env = process.env) {
     outcome: config.outcome,
     requestPicture: config.requestPicture,
     seedInit: config.seedInit,
-    dataSource: stub.fixtureStore.dataSource,
+    dataMode: config.dataMode,
+    seedConfigured: config.seed !== "",
+    throughputJitter: config.throughputJitter,
+    costJitter: config.costJitter,
+    dataSource:
+      config.dataMode === "dynamic"
+        ? "synthetic-kpi+fixture-structure"
+        : "fixture-replay",
   });
 
   await new Promise((resolve) => {
@@ -127,3 +138,7 @@ export {
   validateInitContent,
 } from "./src/fixture-store.mjs";
 export { createSilentLogger } from "./src/logger.mjs";
+export {
+  createRoundDataset,
+  createSeededRng,
+} from "./src/kpi-generator.mjs";

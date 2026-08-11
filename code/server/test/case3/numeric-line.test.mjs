@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   parseCostLine,
+  parseLatestCost,
   parsePhysicalLines,
   parseReflectionLine,
   parseScanBeamLine,
@@ -39,6 +40,13 @@ test("Throughput、Cost、beam id 和 Reflection 执行冻结校验", () => {
   });
   assert.throws(() => parseReflectionLine("1,2,3,2", "reflection"), {
     code: "SIDE_DATA_INVALID",
+  });
+});
+
+test("Cost 多行时读取最新非空值，支持打桩逐点更新", () => {
+  assert.deepEqual(parseLatestCost("25.0\n23.8\n24.1\n", "cost"), {
+    value: 24.1,
+    hasPendingTail: false,
   });
 });
 

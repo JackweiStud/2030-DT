@@ -8,6 +8,7 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { POINT_KEYS, SIDE_FILES } from "./constants.mjs";
 import { StubError } from "./errors.mjs";
+import { createRoundDataset } from "./kpi-generator.mjs";
 
 async function abortableDelay(milliseconds, signal) {
   try {
@@ -73,6 +74,10 @@ export function createPublisher(options) {
   const controlStore = options.controlStore;
   const logger = options.logger;
   const pointMs = options.pointMs;
+  const dataMode = options.dataMode ?? "dynamic";
+  const seed = options.seed ?? "";
+  const throughputJitter = options.throughputJitter ?? 0.1;
+  const costJitter = options.costJitter ?? 0.15;
   const checkEveryMs = Math.max(1, Math.min(options.pollMs ?? 100, 200));
 
   async function clearForRecovery(task) {
@@ -102,18 +107,32 @@ export function createPublisher(options) {
   }
 
   async function publish(task, optionsForPublish = {}) {
-    const fixture = fixtureStore.sides[task.side];
+    const dataset = createRoundDataset({
+      fixtureStore,
+      side: task.side,
+      dataMode,
+      seed,
+      operationId: task.operationId,
+      throughputJitter,
+      costJitter,
+    });
     await fsOps.mkdir(dataDir, { recursive: true });
     if (optionsForPublish.recovery) {
       await clearForRecovery(task);
     }
 
-    for (let index = 0; index < fixture.count; index += 1) {
+    for (let index = 0; index < dataset.count; index += 1) {
       for (const key of POINT_KEYS[task.side]) {
-        await appendFixtureLine(task, key, fixture.rows[key][index]);
+        await appendFixtureLine(task, key, dataset.rows[key][index]);
       }
-      if (index === 0) {
-        await appendFixtureLine(task, "cost", fixture.costLine);
+      const currentCostLine =
+        dataset.dataMode === "dynamic"
+          ? dataset.costLines[index]
+          : index === 0
+            ? dataset.costLine
+            : null;
+      if (currentCostLine !== null) {
+        await appendFixtureLine(task, "cost", currentCostLine);
       }
       logger.debug("point-published", {
         operationId: task.operationId,
@@ -122,8 +141,11 @@ export function createPublisher(options) {
         side: task.side,
         event: "point",
         point: index + 1,
-        total: fixture.count,
-        dataSource: fixtureStore.dataSource,
+        total: dataset.count,
+        dataMode: dataset.dataMode,
+        dataSource: dataset.dataSource,
+        resolvedSeed: dataset.resolvedSeed,
+        cost: currentCostLine === null ? undefined : Number(currentCostLine),
       });
       await waitWhileOwned({
         milliseconds: pointMs,
@@ -134,8 +156,11 @@ export function createPublisher(options) {
     }
 
     return {
-      pointCount: fixture.count,
-      cost: Number(fixture.costLine),
+      pointCount: dataset.count,
+      cost: Number(dataset.costLine),
+      dataMode: dataset.dataMode,
+      dataSource: dataset.dataSource,
+      resolvedSeed: dataset.resolvedSeed,
     };
   }
 

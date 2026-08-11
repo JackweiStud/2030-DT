@@ -44,6 +44,10 @@ export const DEFAULTS = Object.freeze({
   outcome: "success",
   requestPicture: true,
   seedInit: true,
+  dataMode: "dynamic",
+  seed: "",
+  throughputJitter: 0.1,
+  costJitter: 0.15,
   logLevel: "info",
 });
 

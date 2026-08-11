@@ -38,6 +38,16 @@ function booleanFlag(env, name, fallback) {
   return raw === "1";
 }
 
+function unitInterval(env, name, fallback) {
+  const raw = env[name];
+  if (raw === undefined || raw === "") return fallback;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    invalid(`${name} 必须是 0～1 的有限数`);
+  }
+  return value;
+}
+
 export async function loadRuntimeConfig(env = process.env, options = {}) {
   const fsOps = options.fsOps ?? defaultFs;
   const sharedDir = env.DT_SHARED_DIR || env.CASE2_SHARED_DIR;
@@ -93,6 +103,23 @@ export async function loadRuntimeConfig(env = process.env, options = {}) {
       env,
       "CASE3_STUB_SEED_INIT",
       DEFAULTS.seedInit,
+    ),
+    dataMode: enumValue(
+      env,
+      "CASE3_STUB_DATA_MODE",
+      DEFAULTS.dataMode,
+      ["dynamic", "replay"],
+    ),
+    seed: env.CASE3_STUB_SEED ?? DEFAULTS.seed,
+    throughputJitter: unitInterval(
+      env,
+      "CASE3_STUB_THROUGHPUT_JITTER",
+      DEFAULTS.throughputJitter,
+    ),
+    costJitter: unitInterval(
+      env,
+      "CASE3_STUB_COST_JITTER",
+      DEFAULTS.costJitter,
     ),
     logLevel: enumValue(
       env,

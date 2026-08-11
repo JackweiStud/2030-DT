@@ -151,7 +151,9 @@ export function createStubRunner(options) {
     logger.info("start-complete", taskLog(task, "complete", {
       pointCount: published.pointCount,
       cost: published.cost,
-      dataSource: "reference-derived+local-demo-override",
+      dataMode: published.dataMode,
+      dataSource: published.dataSource,
+      resolvedSeed: published.resolvedSeed,
     }));
   }
 

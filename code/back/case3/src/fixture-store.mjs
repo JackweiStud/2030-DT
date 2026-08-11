@@ -26,7 +26,8 @@ function linesOf(text, filename) {
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
     .split("\n");
-  if (lines.at(-1) === "") lines.pop();
+  while (lines.length > 0 && lines[0].trim() === "") lines.shift();
+  while (lines.length > 0 && lines.at(-1).trim() === "") lines.pop();
   if (lines.length === 0 || lines.some((line) => line.trim() === "")) {
     invalid(filename, "必须包含非空连续行");
   }
@@ -122,6 +123,7 @@ async function readFixture(fixtureDir, filename, fsOps) {
 function validateSide(side, contents) {
   const files = SIDE_FILES[side];
   const rows = {};
+  const throughputValues = [];
   for (const key of POINT_KEYS[side]) {
     rows[key] = linesOf(contents[key], files[key]);
   }
@@ -136,7 +138,9 @@ function validateSide(side, contents) {
   for (let index = 0; index < count; index += 1) {
     coordinate(rows.coordinates[index], files.coordinates);
     const selectedBeam = selected(rows.selected[index], files.selected);
-    throughput(rows.throughput[index], files.throughput);
+    throughputValues.push(
+      throughput(rows.throughput[index], files.throughput),
+    );
     if (side === "without") {
       const scanBeams = scan(rows.scans[index], files.scans);
       if (!scanBeams.includes(selectedBeam)) {
@@ -153,7 +157,13 @@ function validateSide(side, contents) {
   if (cost !== LOCAL_COST[side]) {
     invalid(files.cost, `本地 Cost override 必须精确为 ${LOCAL_COST[side]}`);
   }
-  return { rows, costLine: costLines[0], count };
+  return {
+    rows,
+    throughputValues,
+    cost,
+    costLine: costLines[0],
+    count,
+  };
 }
 
 /** 一次性加载并预检全部 fixture，运行中只使用内存快照。 */
@@ -181,7 +191,7 @@ export async function loadFixtureStore(options) {
     fixtureDir,
     init,
     sides,
-    dataSource: "reference-derived+local-demo-override",
+    dataSource: "fixture-template",
   };
 }
 
