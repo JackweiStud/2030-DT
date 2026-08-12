@@ -25,6 +25,7 @@ const IDLE_STATUSES = new Set(["execute fail", "case complete", "reinit complete
 const REQUIRED_FIELDS = ["case", "command", "dt_type", "status", "save_picture_flag"];
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SOURCE_DIR = path.resolve(__dirname, "back");
+const TRANSIENT_RENAME_ERRORS = new Set(["EPERM", "EACCES", "EBUSY"]);
 
 export class StubError extends Error {
   constructor(code, message, details = {}) {
@@ -96,7 +97,7 @@ export async function readControl(controlPath, fsOps = fs) {
   return assertControlShape(JSON.parse(text));
 }
 
-async function atomicReplaceFile(targetPath, content, fsOps = fs) {
+async function atomicReplaceFile(targetPath, content, fsOps = fs, options = {}) {
   const directory = path.dirname(targetPath);
   const temporaryPath = path.join(
     directory,
@@ -117,7 +118,22 @@ async function atomicReplaceFile(targetPath, content, fsOps = fs) {
     await handle.sync();
     await handle.close();
     handle = undefined;
-    await fsOps.rename(temporaryPath, targetPath);
+    const attempts = options.renameAttempts ?? 8;
+    const retryMs = options.renameRetryMs ?? 25;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        await fsOps.rename(temporaryPath, targetPath);
+        break;
+      } catch (error) {
+        if (
+          !TRANSIENT_RENAME_ERRORS.has(error?.code) ||
+          attempt === attempts
+        ) {
+          throw error;
+        }
+        await delay(retryMs);
+      }
+    }
   } catch (error) {
     if (handle) await handle.close().catch(() => undefined);
     await fsOps.unlink(temporaryPath).catch(() => undefined);

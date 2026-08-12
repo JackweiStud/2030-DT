@@ -400,6 +400,47 @@ test("控制 patch 只写 owned 字段、保留未知字段并复验 ownership",
   });
 });
 
+test("控制 patch 遇 Windows 瞬时 rename 锁会重试", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    ...DEFAULT_CONTROL,
+    command: "start",
+    dt_type: "without dt",
+  });
+  const realFs = fs;
+  let renameCalls = 0;
+  const fsOps = {
+    ...realFs,
+    rename: async (...args) => {
+      renameCalls += 1;
+      if (renameCalls <= 2) {
+        const error = new Error("simulated Windows sharing violation");
+        error.code = "EPERM";
+        throw error;
+      }
+      return realFs.rename(...args);
+    },
+  };
+  const store = createControlStore({
+    sharedDir,
+    fsOps,
+    logger: createSilentLogger(),
+    readRetryMs: 1,
+    renameAttempts: 3,
+    renameRetryMs: 0,
+  });
+  const task = {
+    operationId: "windows-rename-lock",
+    command: "start",
+    side: "without",
+    recovery: false,
+    signal: new AbortController().signal,
+  };
+
+  const written = await store.patch({ status: "execute success" }, task, [""]);
+  assert.equal(written.status, "execute success");
+  assert.equal(renameCalls, 3);
+});
+
 test("Without Start 默认动态发布，只写目标侧并同拍 complete+flag", async (t) => {
   const sharedDir = await createSharedDir(t, {
     ...DEFAULT_CONTROL,

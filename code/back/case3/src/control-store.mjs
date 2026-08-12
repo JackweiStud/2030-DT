@@ -102,7 +102,9 @@ export async function readControlFile(controlPath, options = {}) {
   throw new StubError(code, "控制文件当前不可读", { cause: lastError });
 }
 
-async function atomicReplace(targetPath, content, fsOps) {
+const TRANSIENT_RENAME_ERRORS = new Set(["EPERM", "EACCES", "EBUSY"]);
+
+async function atomicReplace(targetPath, content, fsOps, options = {}) {
   const temporaryPath = path.join(
     path.dirname(targetPath),
     `.${path.basename(targetPath)}.${process.pid}.${randomUUID()}.tmp`,
@@ -114,7 +116,22 @@ async function atomicReplace(targetPath, content, fsOps) {
     await handle.sync();
     await handle.close();
     handle = undefined;
-    await fsOps.rename(temporaryPath, targetPath);
+    const attempts = options.renameAttempts ?? 8;
+    const retryMs = options.renameRetryMs ?? 25;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        await fsOps.rename(temporaryPath, targetPath);
+        break;
+      } catch (error) {
+        if (
+          !TRANSIENT_RENAME_ERRORS.has(error?.code) ||
+          attempt === attempts
+        ) {
+          throw error;
+        }
+        await delay(retryMs);
+      }
+    }
   } catch (error) {
     if (handle) await handle.close().catch(() => undefined);
     await fsOps.unlink(temporaryPath).catch(() => undefined);
@@ -196,6 +213,10 @@ export function createControlStore(options) {
     attempts: options.readAttempts ?? 3,
     retryMs: options.readRetryMs ?? 50,
   };
+  const atomicWriteOptions = {
+    renameAttempts: options.renameAttempts,
+    renameRetryMs: options.renameRetryMs,
+  };
 
   const read = () => readControlFile(controlPath, readOptions);
 
@@ -216,6 +237,7 @@ export function createControlStore(options) {
           controlPath,
           `${JSON.stringify(merged, null, 2)}\n`,
           fsOps,
+          atomicWriteOptions,
         );
       } catch (error) {
         throw new StubError(

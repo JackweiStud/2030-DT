@@ -2,6 +2,34 @@ import { promises as defaultFs } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { randomUUID } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
+
+const TRANSIENT_RENAME_ERRORS = new Set(["EPERM", "EACCES", "EBUSY"]);
+
+async function renameWithRetry(temporaryPath, targetPath, fsOps, options) {
+  const attempts = options.renameAttempts ?? 8;
+  const retryMs = options.renameRetryMs ?? 25;
+  const wait = options.sleep ?? delay;
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await fsOps.rename(temporaryPath, targetPath);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (
+        !TRANSIENT_RENAME_ERRORS.has(error?.code) ||
+        attempt === attempts
+      ) {
+        throw error;
+      }
+      await wait(retryMs);
+    }
+  }
+
+  throw lastError;
+}
 
 /**
  * 在目标文件同目录完成临时写入、fsync、关闭和原子替换。
@@ -30,7 +58,7 @@ export async function atomicReplaceFile(targetPath, content, options = {}) {
     await handle.sync();
     await handle.close();
     handle = undefined;
-    await fsOps.rename(temporaryPath, targetPath);
+    await renameWithRetry(temporaryPath, targetPath, fsOps, options);
   } catch (error) {
     if (handle) {
       await handle.close().catch(() => undefined);

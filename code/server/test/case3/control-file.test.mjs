@@ -12,10 +12,11 @@ import {
   writeControl,
 } from "../helpers.mjs";
 
-function service(sharedDir) {
+function service(sharedDir, options = {}) {
   return createCase3ControlFileService({
     sharedDir,
     logger: createSilentLogger(),
+    ...options,
   });
 }
 
@@ -43,6 +44,38 @@ test("Case3 Start 先清目标侧文件，再原子开新轮并保留未知字�
       "",
     );
   }
+});
+
+test("Case3 Start 遇 Windows 瞬时 rename 锁会重试并成功写入控制文件", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  const realFs = fs;
+  let renameCalls = 0;
+  const fsOps = {
+    ...realFs,
+    rename: async (...args) => {
+      renameCalls += 1;
+      if (renameCalls <= 2) {
+        const error = new Error("simulated Windows sharing violation");
+        error.code = "EPERM";
+        throw error;
+      }
+      return realFs.rename(...args);
+    },
+  };
+
+  const written = await service(sharedDir, {
+    fsOps,
+    renameAttempts: 3,
+    renameRetryMs: 0,
+  }).updateFromHttp({
+    case: "case3",
+    command: "start",
+    dt_type: "without dt",
+  });
+
+  assert.equal(written.command, "start");
+  assert.equal(written.status, "");
+  assert.equal(renameCalls, 3);
 });
 
 test("Case3 ReInit 仅清目标侧，不清另一侧", async (t) => {

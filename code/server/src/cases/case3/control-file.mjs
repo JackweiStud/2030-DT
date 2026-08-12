@@ -99,6 +99,8 @@ export function createCase3ControlFileService(options) {
       fsOps,
       logger,
       queue: options.queue,
+      renameAttempts: options.renameAttempts,
+      renameRetryMs: options.renameRetryMs,
     });
   const dataDir = path.join(sharedDir, "case3");
 
