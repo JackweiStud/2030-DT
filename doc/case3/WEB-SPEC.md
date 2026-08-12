@@ -354,10 +354,42 @@ GET /api/case3/control-file
 - 恢复探测只以 `GET control` 唤醒；一旦成功，必须重新执行完整的 `GET control → POST init → GET init-data`，不能从上次失败步骤中段续跑。若完整握手中仍是 transport 错误，继续下一轮 5000ms 探测。
 - 探测使用一个 `setTimeout` 串行调度，不用 `setInterval`，不得与上次请求重叠；卸载时 abort 当前请求并清 timer。
 - 控制链路恢复后若 `GET init-data` 返回 `INIT_DATA_MISSING`、`INIT_DATA_INVALID` 或非法成功 shape，这是初始化数据错误而非“Node 未启动”：`initStatus=error`，记录 `console.error`，停止 5000ms adapter 探测。刷新或重新进入 Case3 才重跑完整初始化。
-- init-data 失败按契约输出 `console.error("case3 init-data failed", {...})`。
+- init-data 失败输出 `console.error("[case3] entry.init_data_fail", {...})`，
+  字段至少包含 `generation/source/endpoint/code/reason`。
 - 不从历史 `case complete`、`execute fail` 或现有文件恢复结果。
 
 5000ms 恢复探测和 500ms Start/ReInit 业务轮询是两个独立 timer：前者只存在于 initial adapter error，后者只存在于 active action，二者不能同时运行。
+
+### 5.1.1 浏览器结构化诊断日志
+
+Case3 成功路径和异常路径都必须能在浏览器控制台对表。统一事件前缀为
+`[case3]`，正常生命周期用 `console.info`，可恢复异常/重试用
+`console.warn`，业务失败或动作失败用 `console.error`。
+
+每轮动作日志统一带 `generation`、`kind`、`side`；控制快照只记录
+`case/command/dtType/status/savePictureFlag` 摘要，不输出未知字段。禁止记录完整
+points、route、scanBeamIds、坐标数组或截图 Base64。
+
+最低事件集：
+
+| 环节 | 必须记录的事件 |
+|---|---|
+| 进页 | `entry.begin`、`entry.control_ok`、`entry.init_reset_ok`、`entry.init_data_ok`、`entry.cleanup` |
+| 适配恢复 | `adapter_probe.start`、`adapter_probe.recovered`；探测失败不得每 5000ms 重复刷屏 |
+| 命令 | `command.start_click/ok/fail`、`command.reinit_click/ok/fail`、`command.control_busy` |
+| 轮询 | `poll.start`、`poll.status_edge`、`poll.stop`；相同 status 的 500ms 快照不得重复打印边沿 |
+| 实时结果 | `side.live_progress`、`side.final_fetch_begin`、`side.final_ready/not_ready/fail`、`round.completed_rendered` |
+| 截图 | `screenshot.requested`、`capture_begin/ok`、`upload_ok/confirmed`、`retry`、`flag_cleared`、`dropped` |
+| 收尾 | `completion.init_begin/ok/fail`、`reinit.ui_applied` |
+
+`side.live_progress` 只在 `completeCount` 变化时判断，并默认采样第
+1、2、每 5 个点以及 base route 最终点。字段至少包括
+`points/completeCount/lastPointNo/pendingTail/costPct`。最终读取持续
+`RESULT_NOT_READY` 时，也只在完整性摘要变化时重复输出。
+
+`screenshot.upload_ok` 必须记录 `attempt/path/seq/toPngMs/uploadMs/totalMs`，
+用于区分 Without/With、轮次和实际落盘文件。ReInit 完成后的
+`reinit.ui_applied` 记录目标侧、保留侧及保留点数，支持检查独立重置没有误清另一侧。
 
 
 
@@ -910,6 +942,18 @@ saving
 - 生成失败重生成；上传失败复用 Base64；最多 3 次。
 - 第三次失败清 flag、不改变结果、不占截图序号。
 - 截图先 await renderer `prepareCapture()`；实际 Canvas 图层完成 clone 后 PNG 含动态图层；原生 SVG/DOM KPI 直接可见；尺寸为 3840×2160。
+- 截图成功日志包含 `side/generation/path/seq` 与生成、上传、总耗时，不记录 Base64。
+
+
+
+### 11.3.1 可观测性回归
+
+- 初始化成功日志按 `control → init reset → init-data` 顺序出现，包含路线点数和 BA baseline 摘要。
+- Start/ReInit POST 成功后出现 `poll.start`；重复相同控制快照只产生一次 `poll.status_edge`。
+- complete 前第 1、2 点产生 `side.live_progress`，With Start 使用同一事件并以 `side=with` 区分。
+- 最终快照、completed 渲染、截图、POST init 和 `poll.stop` 可按同一 generation 串起。
+- 截图上传成功日志包含 Node 返回的 `path/seq`；失败重试区分 generate/upload 阶段。
+- ReInit 完成日志明确目标侧和保留侧，Without/With 独立重置可对表。
 
 
 

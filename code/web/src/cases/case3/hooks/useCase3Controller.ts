@@ -64,6 +64,43 @@ function case3Log(event: string, data?: Record<string, unknown>): void {
   console.info(`[case3] ${event}`, data);
 }
 
+function case3Warn(event: string, data?: Record<string, unknown>): void {
+  if (data === undefined) {
+    console.warn(`[case3] ${event}`);
+    return;
+  }
+  console.warn(`[case3] ${event}`, data);
+}
+
+function case3Error(event: string, data?: Record<string, unknown>): void {
+  if (data === undefined) {
+    console.error(`[case3] ${event}`);
+    return;
+  }
+  console.error(`[case3] ${event}`, data);
+}
+
+/** 控制快照日志只保留状态摘要，避免输出未知字段和大对象。 */
+function controlSummary(control: ControlSnapshot) {
+  return {
+    case: control.case,
+    command: control.command,
+    dtType: control.dt_type,
+    status: control.status,
+    savePictureFlag: control.save_picture_flag,
+  };
+}
+
+/** 实时点按关键里程碑采样；最终点由 base route 长度补充识别。 */
+function shouldLogLiveProgress(count: number, routePoints: number): boolean {
+  return (
+    count === 1 ||
+    count === 2 ||
+    count % 5 === 0 ||
+    (routePoints > 0 && count === routePoints)
+  );
+}
+
 function isAbortError(err: unknown): boolean {
   return (
     (err as { name?: string } | null)?.name === "AbortError" ||
@@ -132,6 +169,13 @@ export function useCase3Controller(options: Options) {
   const screenshotPhaseRef = useRef<ScreenshotPhase>("idle");
   const screenshotBase64Ref = useRef<string | null>(null);
   const lastFlagRef = useRef(0);
+  const lastStatusRef = useRef<string | null>(null);
+  const lastProgressRef = useRef<{ generation: number; count: number } | null>(
+    null,
+  );
+  const lastFinalDiagnosticRef = useRef<string | null>(null);
+  const lastControlMismatchRef = useRef<string | null>(null);
+  const probeStartedLoggedRef = useRef(false);
   const screenshotBusyRef = useRef(false);
   const pendingCompleteSideRef = useRef<Case3Side | null>(null);
   const busyRef = useRef(false);
@@ -176,8 +220,23 @@ export function useCase3Controller(options: Options) {
     pendingCompleteSideRef.current = null;
     const lifecycleGeneration = lifecycleGenerationRef.current;
     const signal = actionAbortRef.current?.signal;
+    const generation = stateRef.current.generation;
+    case3Log("completion.init_begin", {
+      kind: "start",
+      side,
+      generation,
+    });
     try {
-      await apiRef.current.postControl({ command: "init" }, signal);
+      const control = await apiRef.current.postControl(
+        { command: "init" },
+        signal,
+      );
+      case3Log("completion.init_ok", {
+        kind: "start",
+        side,
+        generation,
+        ...controlSummary(control),
+      });
     } catch (err) {
       if (
         isAbortError(err) ||
@@ -185,8 +244,12 @@ export function useCase3Controller(options: Options) {
       ) {
         return;
       }
-      case3Log("completion.init_fail", {
+      case3Error("completion.init_fail", {
+        kind: "start",
         side,
+        generation,
+        endpoint: "/api/case3/control-file",
+        code: err instanceof Case3ApiError ? err.code : undefined,
         reason: err instanceof Error ? err.message : String(err),
       });
       dispatch({ type: "ADAPTER_ERROR", value: true });
@@ -195,6 +258,12 @@ export function useCase3Controller(options: Options) {
     dispatch({ type: "ROUND_CLOSE_COMPLETE" });
     actionAbortRef.current = null;
     setBusy(false);
+    case3Log("poll.stop", {
+      kind: "start",
+      side,
+      generation,
+      reason: "start-complete",
+    });
     stopPolling();
   }, [dispatch, setBusy, stopPolling]);
 
@@ -209,11 +278,15 @@ export function useCase3Controller(options: Options) {
 
     const api = apiRef.current;
     const lifecycleGeneration = lifecycleGenerationRef.current;
+    const action = stateRef.current.activeAction;
+    const side = action?.side ?? pendingCompleteSideRef.current;
+    const generation = action?.generation ?? stateRef.current.generation;
     const ac = new AbortController();
     screenshotAbortRef.current?.abort();
     screenshotAbortRef.current = ac;
     let attempt = 0;
     let base64 = screenshotBase64Ref.current;
+    const taskStartedAt = performance.now();
     const isStale = () =>
       ac.signal.aborted ||
       lifecycleGeneration !== lifecycleGenerationRef.current;
@@ -221,17 +294,29 @@ export function useCase3Controller(options: Options) {
     try {
       while (attempt < CASE3_SCREENSHOT_MAX_ATTEMPTS) {
         attempt += 1;
+        const attemptStartedAt = performance.now();
         let failurePhase: "generate" | "upload" = base64
           ? "upload"
           : "generate";
+        let toPngMs: number | undefined;
+        let uploadMs: number | undefined;
         try {
           if (!base64) {
             failurePhase = "generate";
             const stage = stageElementRef.current;
             if (!stage) throw new Error("stage missing");
+            case3Log("screenshot.capture_begin", {
+              side,
+              generation,
+              attempt,
+              width: CASE3_STAGE_WIDTH,
+              height: CASE3_STAGE_HEIGHT,
+              pixelRatio: CASE3_SCREENSHOT_PIXEL_RATIO,
+            });
             await mapRendererRefs?.without.current?.prepareCapture();
             await mapRendererRefs?.with.current?.prepareCapture();
             if (isStale()) return;
+            const toPngStartedAt = performance.now();
             const png = await toPng(stage, {
               width: CASE3_STAGE_WIDTH,
               height: CASE3_STAGE_HEIGHT,
@@ -242,16 +327,35 @@ export function useCase3Controller(options: Options) {
                 return !node.classList.contains("review-dock");
               },
             });
+            toPngMs = Math.round(performance.now() - toPngStartedAt);
             if (isStale()) return;
             base64 = stripDataUrl(png);
             screenshotBase64Ref.current = base64;
+            case3Log("screenshot.capture_ok", {
+              side,
+              generation,
+              attempt,
+              toPngMs,
+            });
           }
           failurePhase = "upload";
-          await api.postScreenshot(base64, ac.signal);
+          const uploadStartedAt = performance.now();
+          const saved = await api.postScreenshot(base64, ac.signal);
+          uploadMs = Math.round(performance.now() - uploadStartedAt);
           if (isStale()) return;
           screenshotPhaseRef.current = stateRef.current.activeAction
             ? "waitClear"
             : "idle";
+          case3Log("screenshot.upload_ok", {
+            side,
+            generation,
+            attempt,
+            path: saved.path,
+            seq: saved.seq,
+            toPngMs,
+            uploadMs,
+            totalMs: Math.round(performance.now() - taskStartedAt),
+          });
           if (
             !stateRef.current.activeAction &&
             pendingCompleteSideRef.current
@@ -259,13 +363,22 @@ export function useCase3Controller(options: Options) {
             screenshotPhaseRef.current = "idle";
             await maybeFinishAfterScreenshot();
           }
-          case3Log("screenshot.ok", { attempt });
           return;
         } catch (err) {
           if (isAbortError(err)) return;
           if (isStale()) return;
-          case3Log("screenshot.attempt_fail", {
+          case3Warn("screenshot.retry", {
+            side,
+            generation,
             attempt,
+            phase: failurePhase,
+            endpoint:
+              failurePhase === "upload"
+                ? "/api/case3/screenshot"
+                : "browser:stage-capture",
+            toPngMs,
+            uploadMs,
+            durationMs: Math.round(performance.now() - attemptStartedAt),
             reason: err instanceof Error ? err.message : String(err),
             code: err instanceof Case3ApiError ? err.code : undefined,
           });
@@ -283,13 +396,25 @@ export function useCase3Controller(options: Options) {
                   expectedSide !== undefined &&
                   control.dt_type !== dtTypeFor(expectedSide));
               if (control.save_picture_flag === 0 || ownershipLost) {
+                case3Log("screenshot.upload_confirmed", {
+                  side,
+                  generation,
+                  attempt,
+                  source:
+                    control.save_picture_flag === 0
+                      ? "flag-cleared"
+                      : "ownership-lost",
+                });
                 screenshotPhaseRef.current = "idle";
                 await maybeFinishAfterScreenshot();
                 return;
               }
             } catch (confirmErr) {
               if (isAbortError(confirmErr) || isStale()) return;
-              case3Log("screenshot.confirm_fail", {
+              case3Warn("screenshot.confirm_fail", {
+                side,
+                generation,
+                endpoint: "/api/case3/control-file",
                 reason:
                   confirmErr instanceof Error
                     ? confirmErr.message
@@ -305,14 +430,19 @@ export function useCase3Controller(options: Options) {
               );
             } catch (clearErr) {
               if (isAbortError(clearErr) || isStale()) return;
-              case3Log("screenshot.clear_flag_fail", {
+              case3Error("screenshot.clear_flag_fail", {
+                side,
+                generation,
+                endpoint: "/api/case3/control-file",
                 reason:
                   clearErr instanceof Error
                     ? clearErr.message
                     : String(clearErr),
               });
             }
-            console.error("[case3] SCREENSHOT_DROPPED_AFTER_RETRIES", {
+            case3Error("screenshot.dropped", {
+              side,
+              generation,
               attempts: attempt,
             });
             screenshotPhaseRef.current = "idle";
@@ -343,7 +473,7 @@ export function useCase3Controller(options: Options) {
       pendingCompleteSideRef.current !== null &&
       screenshotPhaseRef.current === "waitClear";
     if (!action && !closingScreenshot) return;
-    const generation = action?.generation;
+    const generation = action?.generation ?? stateRef.current.generation;
     const api = apiRef.current;
     const ac = new AbortController();
     pollAbortRef.current = ac;
@@ -362,17 +492,31 @@ export function useCase3Controller(options: Options) {
       }
       if (stateRef.current.activeAction?.generation !== generation) return;
       if (!controlMatchesAction(control, action)) {
-        case3Log("control_context_mismatch", {
-          expectedCase: "case3",
-          expectedCommand: action.kind,
-          expectedDtType: dtTypeFor(action.side),
-          actualCase: control.case,
-          actualCommand: control.command,
-          actualDtType: control.dt_type,
-          status: control.status,
-        });
+        const mismatchKey = [
+          generation,
+          control.case,
+          control.command,
+          control.dt_type,
+          control.status,
+        ].join(":");
+        if (lastControlMismatchRef.current !== mismatchKey) {
+          lastControlMismatchRef.current = mismatchKey;
+          case3Warn("poll.control_context_mismatch", {
+            generation,
+            kind: action.kind,
+            side: action.side,
+            expectedCase: "case3",
+            expectedCommand: action.kind,
+            expectedDtType: dtTypeFor(action.side),
+            actualCase: control.case,
+            actualCommand: control.command,
+            actualDtType: control.dt_type,
+            status: control.status,
+          });
+        }
         return;
       }
+      lastControlMismatchRef.current = null;
 
       const flag = control.save_picture_flag === 1 ? 1 : 0;
       if (
@@ -383,25 +527,54 @@ export function useCase3Controller(options: Options) {
       ) {
         // 这里只登记截图请求。真正生成 PNG 必须等待最终 side 通过门槛并完成 completed 渲染。
         screenshotPhaseRef.current = "pending";
+        case3Log("screenshot.requested", {
+          generation,
+          side: action.side,
+          status: control.status,
+          savePictureFlag: flag,
+        });
       }
       if (screenshotPhaseRef.current === "pending" && flag === 0) {
         screenshotPhaseRef.current = "idle";
-        case3Log("screenshot.request_cleared_before_capture", {
+        case3Warn("screenshot.request_cleared_before_capture", {
+          generation,
           side: action.side,
         });
       }
       if (screenshotPhaseRef.current === "waitClear" && flag === 0) {
         screenshotPhaseRef.current = "idle";
+        case3Log("screenshot.flag_cleared", {
+          generation,
+          side: action.side,
+        });
         void maybeFinishAfterScreenshot();
       }
       lastFlagRef.current = flag;
 
       const status = control.status;
+      const statusChanged = lastStatusRef.current !== status;
+      if (statusChanged) {
+        case3Log("poll.status_edge", {
+          generation,
+          kind: action.kind,
+          side: action.side,
+          from: lastStatusRef.current,
+          to: status,
+          seenExecuteSuccess: action.seenExecuteSuccess,
+          savePictureFlag: flag,
+        });
+        lastStatusRef.current = status;
+      }
       if (status === "execute success") {
         if (!stateRef.current.activeAction?.seenExecuteSuccess) {
           dispatch({ type: "SEEN_EXECUTE_SUCCESS" });
         }
       } else if (status === "execute fail") {
+        case3Error("round.execute_fail", {
+          generation,
+          kind: action.kind,
+          side: action.side,
+        });
         dispatch({ type: "EXECUTE_FAIL" });
         screenshotAbortRef.current?.abort();
         screenshotAbortRef.current = null;
@@ -410,6 +583,12 @@ export function useCase3Controller(options: Options) {
         actionAbortRef.current?.abort();
         actionAbortRef.current = null;
         setBusy(false);
+        case3Log("poll.stop", {
+          generation,
+          kind: action.kind,
+          side: action.side,
+          reason: "execute-fail",
+        });
         stopPolling();
         return;
       }
@@ -420,6 +599,12 @@ export function useCase3Controller(options: Options) {
 
       if (action.kind === "start" && seen) {
         if (status === "case complete") {
+          if (statusChanged) {
+            case3Log("side.final_fetch_begin", {
+              generation,
+              side: action.side,
+            });
+          }
           try {
             const snapshot = await api.getSide(action.side, ac.signal);
             if (
@@ -429,14 +614,35 @@ export function useCase3Controller(options: Options) {
               return;
             }
             if (!isFinalSideReady(snapshot)) {
-              case3Log("CASE3_RESULT_NOT_READY", {
+              const diagnosticKey = [
+                generation,
+                "local-gate",
+                snapshot.pendingTail,
+                snapshot.points.length,
+                snapshot.completeCount,
+                snapshot.costPct,
+              ].join(":");
+              if (lastFinalDiagnosticRef.current !== diagnosticKey) {
+                lastFinalDiagnosticRef.current = diagnosticKey;
+                case3Warn("side.final_not_ready", {
+                  generation,
+                  side: action.side,
+                  source: "local-gate",
+                  pendingTail: snapshot.pendingTail,
+                  points: snapshot.points.length,
+                  completeCount: snapshot.completeCount,
+                  costPct: snapshot.costPct,
+                });
+              }
+            } else {
+              case3Log("side.final_ready", {
+                generation,
                 side: action.side,
-                pendingTail: snapshot.pendingTail,
                 points: snapshot.points.length,
                 completeCount: snapshot.completeCount,
+                pendingTail: snapshot.pendingTail,
                 costPct: snapshot.costPct,
               });
-            } else {
               dispatch({
                 type: "START_COMPLETE",
                 side: action.side,
@@ -444,6 +650,14 @@ export function useCase3Controller(options: Options) {
               });
               pendingCompleteSideRef.current = action.side;
               await waitForNextRender();
+              case3Log("round.completed_rendered", {
+                generation,
+                side: action.side,
+                pairValid: stateRef.current.pairValid,
+                withoutPoints:
+                  stateRef.current.results.without?.points.length ?? 0,
+                withPoints: stateRef.current.results.with?.points.length ?? 0,
+              });
               if (screenshotPhaseRef.current === "pending") {
                 await runScreenshotTask();
               } else if (
@@ -460,13 +674,23 @@ export function useCase3Controller(options: Options) {
               err instanceof Case3ApiError &&
               err.code === "RESULT_NOT_READY"
             ) {
-              case3Log("CASE3_RESULT_NOT_READY", {
-                side: action.side,
-                http: true,
-              });
+              const diagnosticKey = `${generation}:http:${err.code}`;
+              if (lastFinalDiagnosticRef.current !== diagnosticKey) {
+                lastFinalDiagnosticRef.current = diagnosticKey;
+                case3Warn("side.final_not_ready", {
+                  generation,
+                  side: action.side,
+                  source: "http",
+                  endpoint: `/api/case3/side?side=${action.side}`,
+                  code: err.code,
+                });
+              }
             } else {
-              case3Log("final_side_fail", {
+              case3Warn("side.final_fail", {
+                generation,
                 side: action.side,
+                endpoint: `/api/case3/side?side=${action.side}`,
+                code: err instanceof Case3ApiError ? err.code : undefined,
                 reason: err instanceof Error ? err.message : String(err),
               });
             }
@@ -485,10 +709,39 @@ export function useCase3Controller(options: Options) {
               side: action.side,
               snapshot,
             });
+            const progressCount = snapshot.completeCount;
+            const previousProgress = lastProgressRef.current;
+            if (
+              previousProgress?.generation !== generation ||
+              previousProgress.count !== progressCount
+            ) {
+              lastProgressRef.current = {
+                generation,
+                count: progressCount,
+              };
+              if (
+                shouldLogLiveProgress(
+                  progressCount,
+                  stateRef.current.baseRoute.length,
+                )
+              ) {
+                case3Log("side.live_progress", {
+                  generation,
+                  side: action.side,
+                  points: snapshot.points.length,
+                  completeCount: snapshot.completeCount,
+                  lastPointNo: snapshot.points.at(-1)?.no ?? null,
+                  pendingTail: snapshot.pendingTail,
+                  costPct: snapshot.costPct,
+                });
+              }
+            }
           } catch (err) {
             if (isAbortError(err)) return;
-            case3Log("live_side_fail", {
+            case3Warn("side.live_fail", {
+              generation,
               side: action.side,
+              endpoint: `/api/case3/side?side=${action.side}`,
               code: err instanceof Case3ApiError ? err.code : undefined,
               reason: err instanceof Error ? err.message : String(err),
             });
@@ -498,12 +751,32 @@ export function useCase3Controller(options: Options) {
 
       if (action.kind === "reinit" && seen && status === "reinit complete") {
         dispatch({ type: "REINIT_COMPLETE", side: action.side });
+        const retainedSide: Case3Side =
+          action.side === "without" ? "with" : "without";
+        case3Log("reinit.ui_applied", {
+          generation,
+          side: action.side,
+          retainedSide,
+          retainedPoints:
+            stateRef.current.results[retainedSide]?.points.length ?? 0,
+        });
         const lifecycleGeneration = lifecycleGenerationRef.current;
+        case3Log("completion.init_begin", {
+          generation,
+          kind: "reinit",
+          side: action.side,
+        });
         try {
-          await api.postControl(
+          const resetControl = await api.postControl(
             { command: "init" },
             actionAbortRef.current?.signal,
           );
+          case3Log("completion.init_ok", {
+            generation,
+            kind: "reinit",
+            side: action.side,
+            ...controlSummary(resetControl),
+          });
         } catch (err) {
           if (
             isAbortError(err) ||
@@ -511,7 +784,12 @@ export function useCase3Controller(options: Options) {
           ) {
             return;
           }
-          case3Log("reinit.init_fail", {
+          case3Error("completion.init_fail", {
+            generation,
+            kind: "reinit",
+            side: action.side,
+            endpoint: "/api/case3/control-file",
+            code: err instanceof Case3ApiError ? err.code : undefined,
             reason: err instanceof Error ? err.message : String(err),
           });
           dispatch({ type: "ADAPTER_ERROR", value: true });
@@ -520,6 +798,12 @@ export function useCase3Controller(options: Options) {
         dispatch({ type: "ROUND_CLOSE_COMPLETE" });
         actionAbortRef.current = null;
         setBusy(false);
+        case3Log("poll.stop", {
+          generation,
+          kind: "reinit",
+          side: action.side,
+          reason: "reinit-complete",
+        });
         stopPolling();
         return;
       }
@@ -531,11 +815,21 @@ export function useCase3Controller(options: Options) {
         status !== "case complete" &&
         status !== "reinit complete"
       ) {
-        case3Log("unknown_status", { status, side: action.side });
+        case3Warn("poll.unknown_status", {
+          generation,
+          kind: action.kind,
+          status,
+          side: action.side,
+        });
       }
     } catch (err) {
       if (isAbortError(err)) return;
-      case3Log("poll_fail", {
+      case3Warn("poll.fail", {
+        generation,
+        kind: action?.kind,
+        side: action?.side ?? pendingCompleteSideRef.current,
+        endpoint: "/api/case3/control-file",
+        code: err instanceof Case3ApiError ? err.code : undefined,
         reason: err instanceof Error ? err.message : String(err),
       });
     }
@@ -550,6 +844,15 @@ export function useCase3Controller(options: Options) {
   const schedulePollLoop = useCallback(() => {
     stopPolling();
     const lifecycleGeneration = lifecycleGenerationRef.current;
+    const action = stateRef.current.activeAction;
+    if (action) {
+      case3Log("poll.start", {
+        generation: action.generation,
+        kind: action.kind,
+        side: action.side,
+        pollMs: config.pollMs,
+      });
+    }
     const hasPollingWork = () =>
       stateRef.current.activeAction !== null ||
       (pendingCompleteSideRef.current !== null &&
@@ -580,21 +883,35 @@ export function useCase3Controller(options: Options) {
     async (
       generation: number,
       signal: AbortSignal,
+      source: "entry" | "probe",
     ): Promise<"ok" | "transport" | "init-data"> => {
       const api = apiRef.current;
       let phase: "get-control" | "post-init" | "get-init-data" =
         "get-control";
       try {
         dispatch({ type: "INIT_LOADING" });
-        await api.getControl(signal);
+        const initialControl = await api.getControl(signal);
         if (generation !== entryLoadGeneration || signal.aborted) {
           return "transport";
         }
+        case3Log("entry.control_ok", {
+          generation,
+          source,
+          ...controlSummary(initialControl),
+        });
         phase = "post-init";
-        await api.postControl({ command: "init" }, signal);
+        const resetControl = await api.postControl(
+          { command: "init" },
+          signal,
+        );
         if (generation !== entryLoadGeneration || signal.aborted) {
           return "transport";
         }
+        case3Log("entry.init_reset_ok", {
+          generation,
+          source,
+          ...controlSummary(resetControl),
+        });
         phase = "get-init-data";
         const initData = await api.getInitData(signal);
         if (generation !== entryLoadGeneration || signal.aborted) {
@@ -604,6 +921,13 @@ export function useCase3Controller(options: Options) {
           type: "INIT_READY",
           baseRoute: initData.baseRoute,
           baseline: initData.baseline,
+        });
+        case3Log("entry.init_data_ok", {
+          generation,
+          source,
+          routePoints: initData.baseRoute.length,
+          baselineSuccess: initData.baseline.success,
+          baselineTotal: initData.baseline.total,
         });
         return "ok";
       } catch (err) {
@@ -617,7 +941,9 @@ export function useCase3Controller(options: Options) {
             err.code === "DATA_FILE_MISSING" ||
             err.code === "CASE3_INVALID_RESPONSE")
         ) {
-          console.error("case3 init-data failed", {
+          case3Error("entry.init_data_fail", {
+            generation,
+            source,
             endpoint: "/api/case3/init-data",
             code: err.code,
             reason: err.message,
@@ -626,11 +952,19 @@ export function useCase3Controller(options: Options) {
           return "init-data";
         }
         const code = err instanceof Case3ApiError ? err.code : "TRANSPORT";
-        console.error("[case3] adapter unreachable", {
-          endpoint: "/api/case3/control-file",
-          code,
-          reason: err instanceof Error ? err.message : String(err),
-        });
+        if (source === "entry") {
+          const endpoint =
+            phase === "get-init-data"
+              ? "/api/case3/init-data"
+              : "/api/case3/control-file";
+          case3Error("entry.control_fail", {
+            generation,
+            phase,
+            endpoint,
+            code,
+            reason: err instanceof Error ? err.message : String(err),
+          });
+        }
         dispatch({ type: "ADAPTER_ERROR", value: true });
         return "transport";
       }
@@ -642,15 +976,28 @@ export function useCase3Controller(options: Options) {
     lifecycleGenerationRef.current += 1;
     const generation = ++entryLoadGeneration;
     const ac = new AbortController();
+    case3Log("entry.begin", { generation });
     dispatch({ type: "MOUNT_RESET" });
     setBusy(false);
     screenshotPhaseRef.current = "idle";
     lastFlagRef.current = 0;
+    lastStatusRef.current = null;
+    lastProgressRef.current = null;
+    lastFinalDiagnosticRef.current = null;
+    lastControlMismatchRef.current = null;
+    probeStartedLoggedRef.current = false;
     screenshotBase64Ref.current = null;
     pendingCompleteSideRef.current = null;
 
     const scheduleProbe = () => {
       stopProbe();
+      if (!probeStartedLoggedRef.current) {
+        probeStartedLoggedRef.current = true;
+        case3Log("adapter_probe.start", {
+          generation,
+          intervalMs: CASE3_ADAPTER_RECOVERY_PROBE_MS,
+        });
+      }
       probeTimerRef.current = window.setTimeout(async () => {
         if (generation !== entryLoadGeneration) return;
         try {
@@ -660,13 +1007,16 @@ export function useCase3Controller(options: Options) {
           return;
         }
         if (generation !== entryLoadGeneration || ac.signal.aborted) return;
-        const result = await runHandshake(generation, ac.signal);
+        const result = await runHandshake(generation, ac.signal, "probe");
+        if (result === "ok") {
+          case3Log("adapter_probe.recovered", { generation });
+        }
         if (result === "transport") scheduleProbe();
       }, CASE3_ADAPTER_RECOVERY_PROBE_MS);
     };
 
     void (async () => {
-      const result = await runHandshake(generation, ac.signal);
+      const result = await runHandshake(generation, ac.signal, "entry");
       if (generation !== entryLoadGeneration) return;
       if (result === "transport") scheduleProbe();
     })();
@@ -685,6 +1035,7 @@ export function useCase3Controller(options: Options) {
       stopProbe();
       entryLoadGeneration += 1;
       setBusy(false);
+      case3Log("entry.cleanup", { generation });
     };
   }, [dispatch, runHandshake, setBusy, stopPolling, stopProbe]);
 
@@ -697,14 +1048,23 @@ export function useCase3Controller(options: Options) {
       actionAbortRef.current?.abort();
       actionAbortRef.current = actionAbort;
       dispatch({ type: "ACTION_BEGIN", kind, side, generation });
+      case3Log(`command.${kind}_click`, {
+        generation,
+        kind,
+        side,
+      });
       setBusy(true);
       stopProbe();
       lastFlagRef.current = 0;
+      lastStatusRef.current = null;
+      lastProgressRef.current = null;
+      lastFinalDiagnosticRef.current = null;
+      lastControlMismatchRef.current = null;
       screenshotPhaseRef.current = "idle";
       screenshotBase64Ref.current = null;
 
       try {
-        await apiRef.current.postControl(
+        const control = await apiRef.current.postControl(
           {
             case: "case3",
             command: kind,
@@ -712,6 +1072,13 @@ export function useCase3Controller(options: Options) {
           },
           actionAbort.signal,
         );
+        lastStatusRef.current = control.status;
+        case3Log(`command.${kind}_ok`, {
+          generation,
+          kind,
+          side,
+          ...controlSummary(control),
+        });
       } catch (err) {
         if (
           isAbortError(err) ||
@@ -722,7 +1089,13 @@ export function useCase3Controller(options: Options) {
         }
         actionAbortRef.current = null;
         if (err instanceof Case3ApiError && err.code === "CONTROL_BUSY") {
-          case3Log("CONTROL_BUSY", { kind, side });
+          case3Warn("command.control_busy", {
+            generation,
+            kind,
+            side,
+            endpoint: "/api/case3/control-file",
+            code: err.code,
+          });
           dispatch({ type: "CLEAR_ACTIVE" });
           if (kind === "reinit") {
             dispatch({ type: "MARK_FAILED_RETRY", kind, side });
@@ -730,9 +1103,11 @@ export function useCase3Controller(options: Options) {
           setBusy(false);
           return;
         }
-        case3Log("action_post_fail", {
+        case3Error(`command.${kind}_fail`, {
+          generation,
           kind,
           side,
+          endpoint: "/api/case3/control-file",
           code: err instanceof Case3ApiError ? err.code : undefined,
           reason: err instanceof Error ? err.message : String(err),
         });
@@ -778,12 +1153,17 @@ export function useCase3Controller(options: Options) {
 
   useEffect(() => {
     const onHide = () => {
+      case3Log("pagehide.init_begin", {
+        generation: stateRef.current.generation,
+      });
       void apiRef.current
         .postControl({ command: "init" }, undefined, {
           keepalive: true,
         })
         .catch((err) => {
-          case3Log("pagehide.init_fail", {
+          case3Warn("pagehide.init_fail", {
+            generation: stateRef.current.generation,
+            code: err instanceof Case3ApiError ? err.code : undefined,
             reason: err instanceof Error ? err.message : String(err),
           });
         });

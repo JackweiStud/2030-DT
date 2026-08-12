@@ -95,6 +95,9 @@ afterEach(() => {
 
 describe("useCase3Controller lifecycle", () => {
   it("case complete 前按 1→2 点替换 live snapshot，不提前写 result", async () => {
+    const infoLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
     const secondSnapshot = deferred<SideSnapshot>();
     let startPosted = false;
     let sideReads = 0;
@@ -156,7 +159,242 @@ describe("useCase3Controller lifecycle", () => {
     );
     expect(hook.result.current.state.results.without).toBeNull();
     expect(hook.result.current.visible).toBe("without-running");
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] side.live_progress",
+      expect.objectContaining({
+        side: "without",
+        completeCount: 1,
+        lastPointNo: 1,
+      }),
+    );
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] side.live_progress",
+      expect.objectContaining({
+        side: "without",
+        completeCount: 2,
+        lastPointNo: 2,
+      }),
+    );
     hook.unmount();
+    infoLog.mockRestore();
+  });
+
+  it("重复控制快照不重复输出 status 边沿日志", async () => {
+    const infoLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    let startPosted = false;
+    const api: Case3Api = {
+      getControl: vi.fn(async () =>
+        startPosted
+          ? control({
+              command: "start",
+              dt_type: "without dt",
+              status: "execute success",
+            })
+          : control(),
+      ),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          startPosted = true;
+          return control({
+            command: "start",
+            dt_type: "without dt",
+            status: "",
+          });
+        }
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => liveWithout(1)),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        api,
+      }),
+    );
+    await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() => expect(api.getSide).toHaveBeenCalledTimes(2));
+
+    const statusEdges = infoLog.mock.calls.filter(
+      ([event]) => event === "[case3] poll.status_edge",
+    );
+    expect(statusEdges).toHaveLength(1);
+    expect(statusEdges[0]?.[1]).toEqual(
+      expect.objectContaining({
+        side: "without",
+        from: "",
+        to: "execute success",
+      }),
+    );
+
+    hook.unmount();
+    infoLog.mockRestore();
+  });
+
+  it("截图成功日志包含侧别、轮次、路径、序号和耗时", async () => {
+    const infoLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    vi.mocked(toPng).mockResolvedValue(
+      "data:image/png;base64,OBSERVABLE_FRAME",
+    );
+    let controlReads = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        controlReads += 1;
+        if (controlReads === 1) return control();
+        if (controlReads === 2) {
+          return control({
+            command: "start",
+            dt_type: "without dt",
+            status: "execute success",
+          });
+        }
+        return control({
+          command: "start",
+          dt_type: "without dt",
+          status: "case complete",
+          save_picture_flag: 1,
+        });
+      }),
+      postControl: vi.fn(async () => control()),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => finalWithout()),
+      postScreenshot: vi.fn(async () => ({
+        path: "out/case3/case3-007.png",
+        seq: 7,
+      })),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() => expect(api.postScreenshot).toHaveBeenCalledTimes(1));
+
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] screenshot.upload_ok",
+      expect.objectContaining({
+        side: "without",
+        generation: 1,
+        attempt: 1,
+        path: "out/case3/case3-007.png",
+        seq: 7,
+        uploadMs: expect.any(Number),
+        totalMs: expect.any(Number),
+      }),
+    );
+
+    hook.unmount();
+    infoLog.mockRestore();
+  });
+
+  it("ReInit 日志标明目标侧和被保留侧", async () => {
+    const infoLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    let operation: "idle" | "start" | "reinit" = "idle";
+    let operationPoll = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        if (operation === "idle") return control();
+        operationPoll += 1;
+        return control({
+          command: operation,
+          dt_type: "without dt",
+          status:
+            operationPoll === 1
+              ? "execute success"
+              : operation === "start"
+                ? "case complete"
+                : "reinit complete",
+        });
+      }),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          operation = "start";
+          operationPoll = 0;
+          return control({
+            command: "start",
+            dt_type: "without dt",
+          });
+        }
+        if ("command" in payload && payload.command === "reinit") {
+          operation = "reinit";
+          operationPoll = 0;
+          return control({
+            command: "reinit",
+            dt_type: "without dt",
+          });
+        }
+        operation = "idle";
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => finalWithout()),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        api,
+      }),
+    );
+    await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() =>
+      expect(hook.result.current.reinitWithoutEnabled).toBe(true),
+    );
+
+    act(() => hook.result.current.onReinitWithout());
+    await waitFor(() =>
+      expect(hook.result.current.visible).toBe("initial"),
+    );
+
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] reinit.ui_applied",
+      expect.objectContaining({
+        side: "without",
+        retainedSide: "with",
+        retainedPoints: 0,
+      }),
+    );
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] completion.init_ok",
+      expect.objectContaining({
+        kind: "reinit",
+        side: "without",
+      }),
+    );
+
+    hook.unmount();
+    infoLog.mockRestore();
   });
 
   it("截图上传网络失败时复用同一 Base64，不重新生成", async () => {
@@ -577,8 +815,11 @@ describe("useCase3Controller lifecycle", () => {
       expect(hook.result.current.visible).toBe("without-completed"),
     );
     expect(droppedLog).toHaveBeenCalledWith(
-      "[case3] SCREENSHOT_DROPPED_AFTER_RETRIES",
-      { attempts: 3 },
+      "[case3] screenshot.dropped",
+      expect.objectContaining({
+        side: "without",
+        attempts: 3,
+      }),
     );
     hook.unmount();
     droppedLog.mockRestore();

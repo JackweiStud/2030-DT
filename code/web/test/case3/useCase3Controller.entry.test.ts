@@ -138,7 +138,7 @@ describe("useCase3Controller entry", () => {
     expect(api.getControl).toHaveBeenCalledTimes(1);
     expect(hook.result.current.startWithoutEnabled).toBe(false);
     expect(errorLog).toHaveBeenCalledWith(
-      "case3 init-data failed",
+      "[case3] entry.init_data_fail",
       expect.objectContaining({ code: "INIT_DATA_INVALID" }),
     );
     hook.unmount();
@@ -170,7 +170,7 @@ describe("useCase3Controller entry", () => {
     );
     expect(hook.result.current.state.initStatus).toBe("loading");
     expect(errorLog).toHaveBeenCalledWith(
-      "[case3] adapter unreachable",
+      "[case3] entry.control_fail",
       expect.objectContaining({
         endpoint: "/api/case3/control-file",
         code: "CASE3_INVALID_RESPONSE",
@@ -178,6 +178,57 @@ describe("useCase3Controller entry", () => {
     );
     hook.unmount();
     errorLog.mockRestore();
+  });
+
+  it("初始化成功输出可对表的结构化日志", async () => {
+    const infoLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const api: Case3Api = {
+      getControl: vi.fn(async () => control()),
+      postControl: vi.fn(async () => control()),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [
+          { no: 1, x: 1, y: 2, z: 0 },
+          { no: 2, x: 2, y: 3, z: 0 },
+        ],
+        baseline: { success: 8, total: 10 },
+      })),
+      getSide: vi.fn(),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({ config, stageElementRef: stageRef(), api }),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.state.initStatus).toBe("ready"),
+    );
+
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] entry.control_ok",
+      expect.objectContaining({
+        source: "entry",
+        command: "init",
+        status: "",
+      }),
+    );
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] entry.init_reset_ok",
+      expect.objectContaining({ source: "entry" }),
+    );
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] entry.init_data_ok",
+      expect.objectContaining({
+        source: "entry",
+        routePoints: 2,
+        baselineSuccess: 8,
+        baselineTotal: 10,
+      }),
+    );
+
+    hook.unmount();
+    infoLog.mockRestore();
   });
 
   it("控制元组漂移时忽略其他轮终态，等待当前轮 complete", async () => {
