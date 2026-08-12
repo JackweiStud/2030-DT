@@ -342,6 +342,7 @@ Gate 3 本地无真实后端时，模拟后端打桩按 [realback_no.md](realbac
 - P0-3 已确认：Node 适配服务采用最小 REST，控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。
 - P0-4 已确认：启动路径中，后端在 `execute success` 之后至 `case complete`（允许同拍）将 `save_picture_flag` 0→1；重置路径不置 1。Web 仅在 `calibrating` 观察；同拍 `case complete` 仍截一次。同一截图任务最多尝试 3 次；Node 以临时文件 + 原子 rename 落盘并在成功后清零，不做持久事务、SHA-256 去重或进程重启恢复；3 次仍失败允许经适配服务清零并丢失本张截图。
 - Gate 3 增量（2026-08-03）：`start`/`reinit` 时适配服务强制 `status=""`；业务终态字面值仍只由后端写出；Web 可见态施工见 [WEB-SPEC.md](WEB-SPEC.md)（无独立 result-error/unknown-control UI；进页不续接历史 status）；截图观察窗与后端置位窗见 §6。
+- 后续增量：合法 `start`/`reinit` 写控制前，适配服务清空六个 Calibrated 结果文件（与 Case3 单侧清文件对齐）；不清 Initial；清空失败不写命令（`CALIBRATED_CLEAR_FAILED`）。
 - 当前 UI 只消费 RSS、有效路径数、首径时延三项；每项包括动态解析得到的热力矩阵与 KPI 样本集合，不能硬编码为 20×20 或 20 个样本。
 - CDF、均值、降幅都是前端派生，降幅按当前样本计算；浏览器不能直接读写共享目录或截图文件。
 

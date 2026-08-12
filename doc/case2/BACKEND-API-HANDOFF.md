@@ -504,6 +504,7 @@ sequenceDiagram
 - [ ] 重置成功链路为 `execute success -> reinit complete`。
 - [ ] 失败链路只写 `execute fail`，本轮不再写完成状态。
 - [ ] 写 `case complete` 前，六个 Calibrated 文件已经完整写完并关闭。
+- [ ] 接受前端侧适配服务在新一轮 `start`/`reinit` 时先清空六个 Calibrated 文件（可为空）；后端须在本轮重新完整发布，不得依赖磁盘上旧内容。
 - [ ] 热力图文件为动态 `Nx × Ny` 非空矩形矩阵，不固定 20×20。
 - [ ] KPI 文件为动态 `N` 个有限样本，不固定 20 条。
 - [ ] 热力图数值宜最多 2 位小数，范围 \-200～200（含端点，可正可负）；超过 2 位由适配四舍五入。

@@ -1,15 +1,19 @@
 /**
  * Case2 控制 HTTP 语义适配。
- * 实际读写统一委托进程级 ControlFileStore，Case2 只拥有 payload 分类与 route guard。
+ * 实际读写统一委托进程级 ControlFileStore，Case2 只拥有 payload 分类、route guard、
+ * 以及 start/reinit 前清空六个 Calibrated 文件（与 Case3 单侧清文件对齐）。
  */
 
-import { AppError } from "../../shared/errors.mjs";
+import { promises as defaultFs } from "node:fs";
+import path from "node:path";
+import { AppError, isAppError } from "../../shared/errors.mjs";
 import {
   assertCommandAvailable,
   assertScreenshotOwnership,
   createControlFileStore,
 } from "../../shared/control-file-store.mjs";
 import {
+  METRIC_FILES,
   OPTIONAL_CONTROL_FIELDS,
 } from "./constants.mjs";
 
@@ -22,6 +26,14 @@ function exactKeys(payload, expected) {
   );
 }
 
+function calibratedFilenames() {
+  const names = [];
+  for (const phases of Object.values(METRIC_FILES)) {
+    names.push(phases.calibrated.heatmap, phases.calibrated.kpi);
+  }
+  return names;
+}
+
 function classifyPayload(payload) {
   if (
     exactKeys(payload, ["case", "command", "dt_type"]) &&
@@ -31,6 +43,7 @@ function classifyPayload(payload) {
   ) {
     return {
       kind: "start",
+      clearCalibrated: true,
       descriptor: {
         caseId: "case2",
         command: "start",
@@ -49,6 +62,7 @@ function classifyPayload(payload) {
   if (exactKeys(payload, ["command"]) && payload.command === "reinit") {
     return {
       kind: "reinit",
+      clearCalibrated: true,
       descriptor: {
         caseId: "case2",
         command: "reinit",
@@ -94,15 +108,42 @@ function classifyPayload(payload) {
 }
 
 export function createControlFileService(options) {
+  const sharedDir = options.sharedDir;
+  const fsOps = options.fsOps ?? defaultFs;
   const logger = options.logger;
   const store =
     options.store ??
     createControlFileStore({
-      sharedDir: options.sharedDir,
-      fsOps: options.fsOps,
+      sharedDir,
+      fsOps,
       logger,
       queue: options.queue,
     });
+  const dataDir = path.join(sharedDir, "case2");
+
+  /** start/reinit 写控制前：清空六个 Calibrated 结果文件；不清 Initial。 */
+  async function clearCalibrated(kind) {
+    const files = calibratedFilenames();
+    try {
+      await fsOps.mkdir(dataDir, { recursive: true });
+      for (const filename of files) {
+        await fsOps.writeFile(path.join(dataDir, filename), "");
+      }
+      logger.info("case2 calibrated files cleared", {
+        caseId: "case2",
+        kind,
+        files: files.length,
+      });
+    } catch (error) {
+      if (isAppError(error)) throw error;
+      throw new AppError(
+        500,
+        "CALIBRATED_CLEAR_FAILED",
+        "failed to clear calibrated result files",
+        { cause: error },
+      );
+    }
+  }
 
   async function clearPictureFlag(kind) {
     return store.update({
@@ -132,6 +173,11 @@ export function createControlFileService(options) {
       guard: operation.descriptor
         ? (current) => assertCommandAvailable(current, operation.descriptor)
         : undefined,
+      beforeWrite: operation.clearCalibrated
+        ? async () => {
+            await clearCalibrated(operation.kind);
+          }
+        : undefined,
     });
   }
 
@@ -142,6 +188,7 @@ export function createControlFileService(options) {
     clearPictureFlag: () => clearPictureFlag("screenshot-saved"),
     assertScreenshotOwnership: (control) =>
       assertScreenshotOwnership(control, "case2"),
+    clearCalibrated,
     optionalFields: OPTIONAL_CONTROL_FIELDS,
     store,
   };

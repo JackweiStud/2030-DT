@@ -81,3 +81,13 @@ case == "case3"
 1. **控制文件**已是 `case=case2,command=start,dt_type=with dt,status=case complete`。
 2. **Network**：`GET /api/case2/data-files?phase=calibrated` → `200` 为齐批；`409 RESULT_BATCH_INCOMPLETE` 为未齐/读中变化。
 3. **Web 侧**（与 Case3 对齐）：连续失败会 warn「最终 Calibrated 批次未就绪，继续等待」；满 10 次后 error「启动测试结果不完整…」并徽标「结果不完整已自动回退」，随后 POST `init` 撤权。
+
+### start / reinit 清空 Calibrated（与 Case3 对齐）
+
+合法 `POST` start 或 reinit 时，Node 在写控制前将下列六个文件写空（不清 Initial）：
+
+- `heatmap_cali_rss.txt` / `heatmap_cali_kpi_rss.txt`
+- `heatmap_cali_effective_path_num.txt` / `heatmap_cali_kpi_effective_path_num.txt`
+- `heatmap_cali_first_path_delay.txt` / `heatmap_cali_kpi_first_path_delay.txt`
+
+观察：点启动或重置后，上述文件应为空；失败码 `500 CALIBRATED_CLEAR_FAILED` 时控制文件不应已推进到新命令。

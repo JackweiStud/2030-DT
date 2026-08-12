@@ -9,6 +9,7 @@ import {
   DEFAULT_CONTROL,
   readControl,
   writeControl,
+  writePhaseFiles,
 } from "../helpers.mjs";
 
 function service(sharedDir) {
@@ -85,6 +86,66 @@ test("start、reinit 和进页 init 合并最新快照、清空 status 并保留
   assert.equal(idle.status, "");
   assert.equal(idle.save_picture_flag, 0);
   assert.equal(idle.future_field, "keep-me");
+});
+
+test("start 与 reinit 写控制前清空六个 Calibrated 文件，不清 Initial", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  await writePhaseFiles(sharedDir, "initial");
+  await writePhaseFiles(sharedDir, "calibrated", {
+    heatmap: "9,9\n9,9\n",
+    kpi: "9\n8\n",
+  });
+  const controlFile = service(sharedDir);
+  const case2Dir = path.join(sharedDir, "case2");
+
+  await controlFile.updateFromHttp({
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+  });
+  assert.equal(
+    await fs.readFile(path.join(case2Dir, "heatmap_cali_rss.txt"), "utf8"),
+    "",
+  );
+  assert.equal(
+    await fs.readFile(
+      path.join(case2Dir, "heatmap_cali_kpi_first_path_delay.txt"),
+      "utf8",
+    ),
+    "",
+  );
+  assert.match(
+    await fs.readFile(path.join(case2Dir, "heatmap_init_rss.txt"), "utf8"),
+    /1\.235/,
+  );
+
+  await writePhaseFiles(sharedDir, "calibrated", {
+    heatmap: "7,7\n7,7\n",
+    kpi: "7\n",
+  });
+  await controlFile.updateFromHttp({ command: "init" });
+  await controlFile.updateFromHttp({ command: "reinit" });
+  assert.equal(
+    await fs.readFile(
+      path.join(case2Dir, "heatmap_cali_effective_path_num.txt"),
+      "utf8",
+    ),
+    "",
+  );
+  assert.equal(
+    await fs.readFile(
+      path.join(case2Dir, "heatmap_cali_kpi_rss.txt"),
+      "utf8",
+    ),
+    "",
+  );
+  assert.match(
+    await fs.readFile(
+      path.join(case2Dir, "heatmap_init_kpi_rss.txt"),
+      "utf8",
+    ),
+    /1\.235/,
+  );
 });
 
 test("控制写入进程内串行，清 flag 不修改 status", async (t) => {

@@ -168,6 +168,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 | 任一 POST | 请求体超过 `20 MiB` | 413 | `PAYLOAD_TOO_LARGE` |
 | `GET /api/case2/control-file` | 控制文件缺失、不可读、非 UTF-8、JSON/结构/必填字段类型非法 | 500 | `CONTROL_READ_FAILED` |
 | `POST /api/case2/control-file` | 合并前读取最新控制快照失败 | 500 | `CONTROL_READ_FAILED` |
+| `POST /api/case2/control-file` | `start`/`reinit` 写前清空六个 Calibrated 文件失败 | 500 | `CALIBRATED_CLEAR_FAILED` |
 | `POST /api/case2/control-file` | 临时文件写入、`fsync`、关闭、原子替换或写后复读失败 | 500 | `CONTROL_WRITE_FAILED` |
 | `GET ...data-files?phase=initial` | 任一必需 Initial 文件不存在 | 404 | `DATA_FILE_MISSING` |
 | data-files，`phase=initial` 或 `phase=calibrated` | 文件存在，但数值词法、范围、矩阵形状或样本形状非法 | 422 | `DATA_FILE_INVALID` |
@@ -231,6 +232,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 
 - 只接受以上四种完整 shape；请求体混入 `status`、未知字段、`save_picture_flag=1` 或其他枚举一律 `400 INVALID_REQUEST`。
 - **Gate 3 演示向放宽（开一轮清盘）**：处理 `start` / `reinit` 时，适配服务在字段合并步骤**额外强制写入** `status=""`（请求体仍禁止带 `status`）。用于去掉上轮残留终态，供 Web 用「时刻 A 见 `execute success`、之后时刻 B 见完成终态」的规则（见 WEB-SPEC）；同时使合法 `start|reinit` 命令元组 + 空 status 成为后端/打桩唯一的新轮命令门沿，从而覆盖相同 command 的失败后重试。真实后端须接受开一轮时出现空 `status`；业务终态字面值仍只由后端写出。交接口径见 [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)。
+- **Calibrated 文件清空（与 Case3 对齐）**：处理合法 `start` / `reinit` 时，适配服务在写控制文件**之前**将 `case2/` 下六个 `heatmap_cali_*.txt` / `heatmap_cali_kpi_*.txt` 写为空文件（可创建目录）。**不清** Initial 六文件、不删 `out/case2/` 截图。清空失败返回 `500 CALIBRATED_CLEAR_FAILED`，控制文件保持原值（不写命令）。
 - **空闲写回**：Web 进入 / 刷新 / 切回 case2 时，先 `GET control-file` 诊断可读；成功后再 `POST {command:"init"}`。启动轮已读取 Calibrated 六文件并完成截图保存/放弃收尾后、重置轮已消费 `reinit complete` 并回到 Initial 后，也可 `POST {command:"init"}`。适配服务合并为 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`，保留未知字段，用于满足后端侧“控制文件回空闲”的握手诉求。该写回不是业务 start/reinit 门沿，后端不得把 `init,status=""` 当成一次测试命令。
 - `save_picture_flag: 0` 路径可由截图成功落盘流程内部调用，或由 Web 在同一截图任务累计 3 次生成/上传失败后调用；两种路径都**不得**改写 `status`。后者必须记录“本张截图已放弃”日志，且不生成 PNG、不占用新序号。
 - 启动与重置是否可点击由 Web 状态机负责；适配服务仍必须防止非法字段写入。
@@ -245,11 +247,12 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 所有控制文件写入进入适配服务进程内同一串行队列：
 
 1. 读取最新完整 JSON。
-2. 只合并本次 payload 的允许字段；若本次为 `start` 或 `reinit`，再强制 `status=""`；若本次为 `init`，再强制 `case=case2,dt_type="",status="",save_picture_flag=0`。
-3. 将完整合并结果写入共享目录中的唯一临时文件。
-4. `fsync` 并关闭临时文件。
-5. 在同一目录内用原子 `rename` 替换 `case_control.json`。
-6. 重新读取并返回写后快照。
+2. 若本次为合法 `start` / `reinit`：先清空六个 Calibrated 结果文件；失败则中止，不写控制。
+3. 只合并本次 payload 的允许字段；若本次为 `start` 或 `reinit`，再强制 `status=""`；若本次为 `init`，再强制 `case=case2,dt_type="",status="",save_picture_flag=0`。
+4. 将完整合并结果写入共享目录中的唯一临时文件。
+5. `fsync` 并关闭临时文件。
+6. 在同一目录内用原子 `rename` 替换 `case_control.json`。
+7. 重新读取并返回写后快照。
 
 临时文件名必须包含进程号与随机 nonce；异常退出后遗留的临时文件不作为控制文件读取。
 
