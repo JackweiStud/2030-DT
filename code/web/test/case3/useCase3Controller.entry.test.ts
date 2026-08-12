@@ -1,5 +1,5 @@
 /**
- * Case3 进页握手与 generation 门闩（注入 fake API）。
+ * Case3 进页握手与 entryGeneration 门闩（注入 fake API）。
  */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -208,14 +208,21 @@ describe("useCase3Controller entry", () => {
     expect(infoLog).toHaveBeenCalledWith(
       "[case3] entry.control_ok",
       expect.objectContaining({
+        entryGeneration: expect.any(Number),
         source: "entry",
+        historicalCase: "case3",
+        note:
+          "shared control readable; ownership will be reset by case3 init",
         command: "init",
         status: "",
       }),
     );
     expect(infoLog).toHaveBeenCalledWith(
       "[case3] entry.init_reset_ok",
-      expect.objectContaining({ source: "entry" }),
+      expect.objectContaining({
+        entryGeneration: expect.any(Number),
+        source: "entry",
+      }),
     );
     expect(infoLog).toHaveBeenCalledWith(
       "[case3] entry.init_data_ok",

@@ -162,6 +162,7 @@ describe("useCase3Controller lifecycle", () => {
     expect(infoLog).toHaveBeenCalledWith(
       "[case3] side.live_progress",
       expect.objectContaining({
+        roundGeneration: 1,
         side: "without",
         completeCount: 1,
         lastPointNo: 1,
@@ -170,10 +171,15 @@ describe("useCase3Controller lifecycle", () => {
     expect(infoLog).toHaveBeenCalledWith(
       "[case3] side.live_progress",
       expect.objectContaining({
+        roundGeneration: 1,
         side: "without",
         completeCount: 2,
         lastPointNo: 2,
       }),
+    );
+    expect(infoLog).not.toHaveBeenCalledWith(
+      "[case3] side.live_progress",
+      expect.objectContaining({ completeCount: 0 }),
     );
     hook.unmount();
     infoLog.mockRestore();
@@ -184,6 +190,8 @@ describe("useCase3Controller lifecycle", () => {
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
     let startPosted = false;
+    let sideReads = 0;
+    const secondSideRead = deferred<SideSnapshot>();
     const api: Case3Api = {
       getControl: vi.fn(async () =>
         startPosted
@@ -209,7 +217,10 @@ describe("useCase3Controller lifecycle", () => {
         baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
         baseline: { success: 80, total: 100 },
       })),
-      getSide: vi.fn(async () => liveWithout(1)),
+      getSide: vi.fn(async () => {
+        sideReads += 1;
+        return sideReads === 1 ? liveWithout(1) : secondSideRead.promise;
+      }),
       postScreenshot: vi.fn(),
     };
 
@@ -296,7 +307,7 @@ describe("useCase3Controller lifecycle", () => {
       "[case3] screenshot.upload_ok",
       expect.objectContaining({
         side: "without",
-        generation: 1,
+        roundGeneration: 1,
         attempt: 1,
         path: "out/case3/case3-007.png",
         seq: 7,

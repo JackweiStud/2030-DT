@@ -56,28 +56,44 @@ type Options = {
 
 let entryLoadGeneration = 0;
 
+function formatCase3LogData(
+  event: string,
+  data?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (data === undefined || !("generation" in data)) return data;
+  const { generation, ...rest } = data;
+  const generationKey =
+    event.startsWith("entry.") || event.startsWith("adapter_probe.")
+      ? "entryGeneration"
+      : "roundGeneration";
+  return { [generationKey]: generation, ...rest };
+}
+
 function case3Log(event: string, data?: Record<string, unknown>): void {
+  const logData = formatCase3LogData(event, data);
   if (data === undefined) {
     console.info(`[case3] ${event}`);
     return;
   }
-  console.info(`[case3] ${event}`, data);
+  console.info(`[case3] ${event}`, logData);
 }
 
 function case3Warn(event: string, data?: Record<string, unknown>): void {
+  const logData = formatCase3LogData(event, data);
   if (data === undefined) {
     console.warn(`[case3] ${event}`);
     return;
   }
-  console.warn(`[case3] ${event}`, data);
+  console.warn(`[case3] ${event}`, logData);
 }
 
 function case3Error(event: string, data?: Record<string, unknown>): void {
+  const logData = formatCase3LogData(event, data);
   if (data === undefined) {
     console.error(`[case3] ${event}`);
     return;
   }
-  console.error(`[case3] ${event}`, data);
+  console.error(`[case3] ${event}`, logData);
 }
 
 /** 控制快照日志只保留状态摘要，避免输出未知字段和大对象。 */
@@ -94,10 +110,11 @@ function controlSummary(control: ControlSnapshot) {
 /** 实时点按关键里程碑采样；最终点由 base route 长度补充识别。 */
 function shouldLogLiveProgress(count: number, routePoints: number): boolean {
   return (
-    count === 1 ||
-    count === 2 ||
-    count % 5 === 0 ||
-    (routePoints > 0 && count === routePoints)
+    count > 0 &&
+    (count === 1 ||
+      count === 2 ||
+      count % 5 === 0 ||
+      (routePoints > 0 && count === routePoints))
   );
 }
 
@@ -897,6 +914,9 @@ export function useCase3Controller(options: Options) {
         case3Log("entry.control_ok", {
           generation,
           source,
+          historicalCase: initialControl.case,
+          note:
+            "shared control readable; ownership will be reset by case3 init",
           ...controlSummary(initialControl),
         });
         phase = "post-init";
