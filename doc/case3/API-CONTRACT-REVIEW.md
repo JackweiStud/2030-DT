@@ -46,7 +46,7 @@
 
 - [x] 用户批准 `doc/case3/API-CONTRACT.md` 为 Gate 2 v1。
 - [x] 用户批准 `doc/case3/BACKEND-API-HANDOFF.md` 作为真实后端交接材料。
-- [x] `state.md` / `CASE-STORY-MATRIX.md` 已同步为 Gate 2 `APPROVED`；三份 Gate 3 SPEC 已创建并标记 `REVIEW_READY`。
+- [x] `state.md` / `CASE-STORY-MATRIX.md` 已同步为 Gate 2 `APPROVED`；三份 Gate 3 SPEC 已创建，并已进入本地实现完成口径。
 - [x] 用户确认 2026-08-10 Gate 2 勘误：Case3 支持截图且机制与 Case2 同构；Reflection flag 映射补全。
 - [x] 用户确认 2026-08-10 Node 施工澄清：共享 store/busy、最终读取门槛、Case2/Case3 对称截图 ownership 和数值边界。
 - [x] 用户批准共享 `ControlFileStore`、`DT_ADAPTER_HOST/PORT` 主变量及 `out/case3/case3-{seq}.png`。

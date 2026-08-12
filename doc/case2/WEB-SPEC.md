@@ -404,7 +404,7 @@ case-local 弹层、业务反馈不得渲染在 Stage 外。Header 可内嵌于 
 - `ScaledStage` 固定 `1920×1080`。
 - `scale = min(viewportWidth / 1920, viewportHeight / 1080)`，舞台水平、垂直居中。
 - Shell 是唯一缩放所有者；case2 内部保持固定布局，不增加第二套响应式重排或缩放。
-- 切到 case1/3/4 时只渲染“建设中”，必须卸载 `Case2Page`。
+- 本文冻结时切到 case1/3/4 只渲染“建设中”，必须卸载 `Case2Page`；截至 2026-08-11，case3 已接入独立业务页，当前只有 case1/case4 仍为“建设中”，但切离 case2 仍必须卸载 `Case2Page`。
 - Shell 只导入 `web/assets/shell/` 下的 tokens、品牌 Logo 与导航底图。
 
 ### 3.3 case2 规则
@@ -1184,7 +1184,7 @@ saving
 - Calibrated 读失败仅日志、无专用 UI 态；未知 status 保持等待态。
 - 图表外框消费 `tokens.css` 变量；动态 path/柱高由 §9 填入。
 - 1920×1080 1:1；其他窗口只整体缩放居中；分区对照 Gate 1.5，不要求代表态数字逐像素对齐。
-- case1/3/4 只显示建设中，无 case2 API。
+- 本文冻结时 case1/3/4 只显示建设中，无 case2 API；截至 2026-08-11，case3 已接入独立业务页，但不得调用 case2 API。
 - 业务选择器被 CSS Modules 或 `.case2-page` 隔离。
 - 静态资源引用扫描：无指向 `04-runtime-assets/`、`02-ux/`、`03-design/`、`web-static/`、`01-参考资料/` 的 import/alias。
 

@@ -1,5 +1,7 @@
 # Phase 0 范围定义
 
+> 历史说明：本文记录 2026-07-29 启动 case2 时的 Phase 0 原始范围。后续 case3 已按独立 Gate 流程补齐设计、契约、Web、Node 适配服务与本地打桩实现；截至 2026-08-11，当前项目状态以 [state.md](../state.md)、[CASE-STORY-MATRIX.md](CASE-STORY-MATRIX.md)、[DELIVERY-PLAN.md](DELIVERY-PLAN.md) 和 [doc/case3/QA-EVIDENCE.md](case3/QA-EVIDENCE.md) 为准。
+
 ## 一句话演示承诺
 
 在内部团队演示中，case2 以 Initial DT 误差基线为起点；演示者启动 `with dt` 校准，后端先写 `execute success` 表示命令执行成功，再以 `case complete` 表示系统测试完成；只有完成且结果完整时，才用 Calibrated DT 的热力图、CDF 左移和平均误差下降证明校准有效。“重置”操作（`reinit`）同样先经过 `execute success`，再以 `reinit complete` 表示系统重置完成并恢复初始状态。
@@ -26,7 +28,7 @@
 
 ## 不做
 
-- case1、case3、case4 的业务实现、数据契约、视觉实现或后台状态。
+- 在本文原始 case2 Phase 0 范围内，不包含 case1、case3、case4 的业务实现、数据契约、视觉实现或后台状态；其中 case3 已在后续独立流程完成本地开发闭环，见 [doc/case3/QA-EVIDENCE.md](case3/QA-EVIDENCE.md)。
 - 真实后端接入、真实共享目录部署、WebSocket、账户、多用户协作、配置后台。
 - `without dt` 的并行测试、AOA/ZOA 的当前 UI、旧项目的 Socket/指标/业务语义复用。
 - 未经证实的“实时”“真实采集”口径，以及固定 50% 改善结论。
@@ -63,3 +65,4 @@
 
 - 2026-08-04：正式 Web、Node 文件适配服务与本地模拟后端打桩完成本地自动测试和人工联调。
 - 本地联调只证明仓库内共享根与打桩链路可用；真实后端、真实挂载和真实采集仍需单独验收。
+- 2026-08-11：case3 已在独立 Gate 流程中完成正式 Web、Node 文件适配服务与本地模拟后端打桩的本地开发闭环；Case3 证据单独记录在 [doc/case3/QA-EVIDENCE.md](case3/QA-EVIDENCE.md)。

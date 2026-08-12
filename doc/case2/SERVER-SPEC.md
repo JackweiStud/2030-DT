@@ -8,7 +8,7 @@
 >
 > Gate 3 演示向：`start`/`reinit` 写入时强制 `status=""`（见 §4.2），相对契约「请求侧不写业务 status」的放宽；真实联调须后端接受开一轮时空 status（交接文档已于 2026-08-03 同步）。业务终态字面值仍只由后端（或打桩扮演的后端）写出。
 >
-> 2026-08-10 跨 Case 安全增量：Case3 接入同一进程后，Case2/Case3 共用控制 store 和 busy guard；Case2 截图路由必须对称校验 ownership。当前运行代码尚未实现该增量，随 Case3 Node Gate 4 一并落地。
+> 2026-08-10 跨 Case 安全增量：Case3 接入同一进程后，Case2/Case3 共用控制 store 和 busy guard；Case2 截图路由必须对称校验 ownership。2026-08-11 已随 Case3 Node Gate 4 落地；当前运行代码同时提供 `/api/case2/*` 与 `/api/case3/*`，但本文仍只描述 Case2 文件语义。
 
 ## 0. 出口条件
 
@@ -44,7 +44,7 @@
 
 实现根为仓库已建的 `code/`（与 [WEB-SPEC.md](WEB-SPEC.md) 共用）。Gate 4 创建 `code/server/`；本地共享根已存在为 `code/comdatafiles/`。
 
-**规划原则：** 一个 Node 适配进程、一个监听端口；HTTP 与共享目录均按 **case 命名空间** 隔离。本阶段只实现 `case2`；`case3`/`case4` 只占位目录约定，不注册路由、不读其数据。
+**规划原则：** 一个 Node 适配进程、一个监听端口；HTTP 与共享目录均按 **case 命名空间** 隔离。本文冻结时本阶段只实现 `case2`；截至 2026-08-11，`case3` 已按独立规格接入同一适配服务，`case4` 仍只占位。
 
 ```text
 code/
@@ -55,8 +55,8 @@ code/
 │   ├── src/
 │   │   ├── shared/      # 进程级共用：HTTP 工具、串行队列、原子写、配置
 │   │   └── cases/
-│   │       ├── case2/   # 本阶段唯一实现：/api/case2/* 与 case2 文件语义
-│   │       ├── case3/   # 预留（本阶段不实现、不挂路由）
+│   │       ├── case2/   # /api/case2/* 与 case2 文件语义
+│   │       ├── case3/   # /api/case3/* 与 case3 文件语义（见 doc/case3/SERVER-SPEC.md）
 │   │       └── case4/   # 预留（本阶段不实现、不挂路由）
 │   ├── scripts/         # 本阶段仅 case2 联调辅助（如种子共享目录；不含后端状态机）
 │   └── test/
@@ -75,8 +75,9 @@ code/
 | 层 | 放什么 | 禁止 |
 |---|---|---|
 | `src/shared/` | 多 case 可复用的传输与文件原语（响应 JSON、串行队列、`fsync+rename`、env 加载） | case2 字段枚举、六文件名、截图序号规则；后端 status 状态机 |
-| `src/cases/case2/` | case2 控制/数据/截图与路由注册 | 读取 `case3/` 数据或挂 `/api/case3`；模拟后端推进 `status` |
-| `src/cases/case3\|4/` | 仅预留；可放空目录或一句 README | 本阶段任何业务代码或路由 |
+| `src/cases/case2/` | case2 控制/数据/截图与路由注册 | 读取 `case3/` 数据；模拟后端推进 `status` |
+| `src/cases/case3/` | case3 控制/初始化/逐点 side/截图与路由注册，详见 `doc/case3/SERVER-SPEC.md` | 读取 `case2/` 数据；模拟后端推进 `status` |
+| `src/cases/case4/` | 仅预留；可放空目录或一句 README | 当前任何业务代码或路由 |
 | `comdatafiles/caseN/` / `out/caseN/` | 各 case 数据与输出隔离 | case2 代码写到别的 case 目录 |
 
 补充：
@@ -84,13 +85,14 @@ code/
 - `cases/case2/` 内部分文件名由实现自定；对外只保证 `/api/case2/*` 与契约字段。
 - 运行时临时内容放 `server/.runtime/`（加入 `.gitignore`）；测试用系统临时目录，不写 `01-参考资料/`。
 - Chrome **不**读 `comdatafiles/`；只访问本机适配 `127.0.0.1:3102`。
-- 未来加 case3：新增 `src/cases/case3/` + 注册 `/api/case3/*` + 共享目录 `case3/`/`out/case3/`；**不必**新建第二个适配进程。
+- case3 已按“新增 `src/cases/case3/` + 注册 `/api/case3/*` + 共享目录 `case3/`/`out/case3/`”方式接入；**没有**新建第二个适配进程。
 
 ### 1.3 本阶段范围（多 case）
 
-- **做：** `case2` 四个 REST、共享目录 case2 语义（读控制、写允许字段、读六文件、截图落盘与清零）。
-- **不做：** case3/case4 的 API 或文件解析；**不做**模拟后端打桩（见 [realback_no.md](realback_no.md)）。
-- **预留：** 上表目录与 `/api/caseN` 命名空间；host/port 为进程级共享；各 case 业务 env 继续用 `CASE2_*`（未来 `CASE3_*` 等同前缀），互不混用。
+- **本文做：** `case2` 四个 REST、共享目录 case2 语义（读控制、写允许字段、读六文件、截图落盘与清零）。
+- **当前代码已另行做：** case3 API 与文件解析，详见 `doc/case3/API-CONTRACT.md`、`doc/case3/SERVER-SPEC.md` 与 `doc/case3/QA-EVIDENCE.md`。
+- **不做：** case4 的 API 或文件解析；**不做**模拟后端打桩（case2 打桩见 [realback_no.md](realback_no.md)，case3 打桩见 `doc/case3/realback_no.md`）。
+- **预留：** 上表目录与 `/api/caseN` 命名空间；host/port 为进程级共享；各 case 业务 env 使用对应 `CASE*_` 前缀，互不混用。
 
 ## 2. 运行配置与命令
 

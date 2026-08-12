@@ -62,7 +62,7 @@ REM 或 Case3：npm run start:case3
 
 ```bash
 cd code/web
-npm run test:e2e
+npm run test:e2e -- --workers=1
 ```
 
 默认端口：
@@ -71,3 +71,9 @@ npm run test:e2e
 - 适配服务：`127.0.0.1:33102`
 
 结束测试后会关闭全部子进程，不污染 `code/comdatafiles`。
+
+注意：
+
+- 当前仓库没有 `e2e-case3-stack.sh`。
+- Case3 的 Playwright 用例是前端隔离主线，内部 mock `/api/case3/*`；Case3 Web + Node + stub 三进程联调需手工启动 `dev-web-server.*` 与 `code/back npm run start:case3`，或后续补专用脚本。
+- 现有 Playwright webServer 是测试进程共享栈，跑全部 E2E 时必须串行。默认并行 workers 会竞争同一个 Case2 临时共享目录，可能导致 Case2 主线误报 `CONTROL_READ_FAILED` 或卡在重置中。

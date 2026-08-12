@@ -13,7 +13,7 @@
 - case3 Gate 1：2026-08-09 用户确认 `03-design/case3/case3-dt-com.pen` 已全部完成并冻结；冻结记录见 `doc/case3/GATE1-FREEZE.md`。
 - case3 Gate 1.5：2026-08-10 用户已人工检查并接受 `web-static/case3/` 的初始、Without 运行/完成、With 运行/完成和现场环境弹窗。该目录只作视觉与假交互验收；正式 Web 可选择性迁移其 `.case3-*` 视觉规则和资源，但不得直接导入静态 CSS/JS、共享目录或假状态逻辑。
 - case3 Gate 3：`doc/case3/WEB-SPEC.md`、`SERVER-SPEC.md`、`realback_no.md` 已作为 Gate 4 实现基线。Web 地图交互、最新 20 点窗口、原生 SVG/DOM KPI、共享控制、最终结果门槛、截图 ownership、stub 时序和恢复规则均已落入运行代码。
-- case3 Gate 4：2026-08-11 正式 Web、Node 文件适配服务与 Case3 模拟后端均已实现。Web 提交 `dc9d856` 完成截图收尾和状态机竞态修复；Node 提交 `c3e8033` 完成 Case3 REST、共享 control store、跨 Case busy、最终快照和截图隔离；Case3 stub 已完成 31 点逐点发布、25/15 Cost、本地 seed、撤权和启动恢复。Node 49/49、Case2+Case3 stub 44/44 自动测试通过；Node+stub 真实进程临时目录联调通过 Without、With、ReInit。浏览器全栈 E2E 待用户执行，当前不得宣称 Gate 5。
+- case3 Gate 4/本地开发闭环：2026-08-11 正式 Web、Node 文件适配服务与 Case3 模拟后端均已实现。Web 已完成截图收尾、状态机竞态、独立重置、实时 KPI、截图 SVG 兼容和维测日志修复；Node 已完成 Case3 REST、共享 control store、跨 Case busy、最终快照、逐点 Cost 和截图隔离；Case3 stub 已完成 31 点逐点发布、动态 KPI、fixture replay、本地 seed、撤权和启动恢复。最新本地验证：`code/server npm test` 50/50、`code/back npm test` 48/48、`code/web npm run typecheck`、`npm test` 87/87、`npm run build` 通过；`npm run test:e2e -- --workers=1` 通过 Case2 全栈与 Case3 前端隔离 E2E。现有 Playwright 默认并行会共用 Case2 临时共享栈，需串行运行或后续补 per-worker 隔离脚本。真实后端、真实挂载和真实采集仍未验收。
 - 2026-08-10 跨 Case 安全文档增量已批准并于 2026-08-11 实现：Case2 合法主线不变，运行代码已统一共享 `CONTROL_BUSY` 和 Case2/Case3 对称截图 ownership guard。
 - 2026-08-10 Case3 stub 文档澄清已批准并于 2026-08-11 实现：参考原始 Cost 10/5 不复制，fixtures 手工覆盖为 25/15；进程启动遇到匹配侧 `execute success` 时清空目标侧并从第 1 点重放，不断点续写；seed 只创建缺失 base/baseline。
 - 2026-08-11 Case3 `WEB-SPEC` 审阅修订：去掉过时「抽取共用 API URL」表述；补 `BaseRoutePoint`、冻结文案与 PanelHeader/现场环境接线；修正 Start 步骤编号；地图映射改读配置符号；澄清 ReInit 只清本地 UI、HTTP `RESULT_NOT_READY` 与 Web 日志码区分；§13 将已批准项勾完，仅保留「批准本文交给实现 agent」。
@@ -22,7 +22,7 @@
 - 2026-08-03 分工：本会话只实现正式 Web（`WEB-SPEC`）；Node 适配（`SERVER-SPEC`）与 `realback_no` 打桩由 Codex 交付；本地联调必须同时具备打桩。
 - 2026-08-03 Web SPEC 审阅增量已回填 `WEB-SPEC.md`。
 - 2026-08-03 接口文档同步：Gate 3 开一轮清 `status=""`、Web 可见态已回填 `API-CONTRACT.md` 与 `BACKEND-API-HANDOFF.md`。
-- 2026-08-03 SERVER-SPEC：目标目录改为 `shared/` + `cases/case2|3|4` 多 case 规划（本阶段只实现 case2）；与 WEB-SPEC 对齐。
+- 2026-08-03 SERVER-SPEC：当时目标目录改为 `shared/` + `cases/case2|3|4` 多 case 规划（当时仅实现 case2）；与 WEB-SPEC 对齐。2026-08-11 已扩展实现 case3。
 - 2026-08-03 数值词法：热力/KPI 语义精度 **2** 位小数；超过 2 位由适配服务**四舍五入**到 2 位（不拒绝）；热力矩阵 **\-200～200**；KPI **0～500**（非负）；范围按归一后判定。Calibrated 整批拒绝时 HTTP 无部分数据，适配服务必须打诊断日志。
 - 2026-08-03 打桩规格拆出：模拟后端见 `doc/case2/realback_no.md`（含 `CASE2_STUB_STEP_MS=5000`）；`SERVER-SPEC` 仅保留前端文件适配服务。
 - 2026-08-03 SERVER-SPEC GET 控制：未知 `status` 透传（与契约/WEB-SPEC 对齐）；仅结构/类型/`save_picture_flag` 非法才 `CONTROL_READ_FAILED`。
@@ -40,7 +40,7 @@
 - 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run start:case2` 或 `npm run start:case3`。
 - 2026-08-04 Web 代码检视后补齐主线 E2E：`code/scripts/e2e-case2-stack.sh` 会准备临时共享目录并启动 Web + Node 适配 + case2 打桩；`code/web npm run test:e2e` 覆盖进页 Initial、启动、截图落盘/清 flag、重置回 Initial。
 - 2026-08-04 本轮文档复核自动命令：`code/server npm test` 30/30 通过；`code/back npm test` 28/28 通过（首次复跑曾出现一次陈旧任务测试瞬时失败，立即重跑通过，后续保留观察）；`code/web npm run typecheck` 通过；`code/web npm test` 30/30 通过；`code/web npm run build` 通过；`code/web npm run test:e2e` 1/1 通过。
-- 当前焦点：Case3 Gate 4 三端代码已完成本地分层测试和 Node+stub 进程联调；下一步由用户执行浏览器全栈端到端测试并回传结果，未通过前不进入 Gate 5。
+- 当前焦点：case2、case3 开发完成并具备本地打桩/前端隔离验证证据；下一步若面向正式现场交付，应接真实后端和真实挂载路径，分别补充 case2/case3 真实环境 QA 记录。
 
 ## 一句话演示承诺
 
@@ -101,7 +101,7 @@
 - 本地自动测试与用户人工联调已通过；截图输出 `code/comdatafiles/out/case2/calibrated-000.png` 至 `calibrated-005.png` 为 3840×2160 PNG 运行证据，但不默认提交。
 - Gate 1 设计源中降幅已改为 `{reductionPct}%` 运行时占位；前端实现不得写死 50%。
 - case3 Gate 1 设计源已冻结；当前 UX PNG 仍只是输入，不是最终视觉契约。Gate 1.5 静态 HTML 已由用户接受，仅覆盖用户确认的核心状态；正式 Web 复用其 case-local 视觉规则和资源时必须重构为正式组件，不能直接迁入静态 CSS/JS。
-- case3 多 txt 行号对齐、半写尾行、单侧重置和跨侧历史保留已进入分层自动测试；浏览器真实三进程 E2E 仍需用户验收。
+- case3 多 txt 行号对齐、半写尾行、单侧重置、跨侧历史保留、截图收尾和维测日志已进入分层自动测试；现有 Playwright 覆盖 Case3 前端隔离主线，未提供 Case3 三进程一键 E2E 脚本。
 
 ## 关键文档
 
@@ -132,9 +132,10 @@
 - [case3 Web 施工规格](doc/case3/WEB-SPEC.md)
 - [case3 Node 文件适配服务施工规格](doc/case3/SERVER-SPEC.md)
 - [case3 模拟后端打桩规格](doc/case3/realback_no.md)
+- [case3 QA 证据](doc/case3/QA-EVIDENCE.md)
 
 ## 最小下一步与停止条件
 
-下一步：启动 Case3 Web + Node + stub 三进程，按初始化、Without Start/ReInit、With Start/ReInit、截图落盘/清零和跨侧 KPI 执行浏览器端到端测试；通过后再补 Gate 5 QA 证据。Case2 若接真实后端，仍需单独复跑其真实挂载验证矩阵。
+下一步：若目标是继续本地演示，可使用 `code/scripts/dev-web-server.sh` 启动 Web + Node，并另开 `code/back` 的 `start:case2` 或 `start:case3` 打桩；若目标是真实环境交付，必须接真实后端和真实挂载路径，并分别追加 case2/case3 真实环境 QA 记录。
 
 停止条件：不把本地打桩 synthetic/stub 数据表述为真实采集；不把 `code/comdatafiles/out/` 运行输出默认提交为源码；不把 case2 契约直接套用到 case3/4；不把 case3 JSONL 草案当作正式后端协议。

@@ -1,6 +1,6 @@
 # case3 Web 施工规格
 
-> status: `REVIEW_READY`
+> status: `IMPLEMENTED_LOCAL`
 >
 > 使用者：正式 React Web 实现 agent。
 >
@@ -8,16 +8,16 @@
 
 ## 0. 出口条件
 
-- [ ] Case3 在现有 `code/web/` 应用内实现，不创建第二套 Shell、Vite 应用或独立端口。
-- [ ] 进入/刷新/切回固定执行 `GET control → POST init → GET init-data`；不恢复历史结果。
-- [ ] Without → With 顺序、双侧 Start/ReInit 互斥、失败后的同动作重试与契约一致。
-- [ ] 500ms 串行业务轮询不会重叠；初始化阶段 Node 不可达时按独立的 5000ms 探测节奏持续恢复。
-- [ ] `case complete` 后最终快照满足完整门槛才进入 completed；截图保存/放弃收尾后才 POST init。
-- [ ] Case3 截图与 Case2 同构：Start 等待态观察 0→1，同拍 complete 不漏拍，最多 3 次，ReInit 不截图。
-- [ ] Shell 在 Case2 或 Case3 任一 Start/ReInit 等待期间锁定其他 Tab。
-- [ ] 地图、波束、点位窗口、Cost、Throughput、Beam Accuracy 使用运行时数据；不写死静态代表值。
-- [ ] Reflection 是 With 响应必需 shape，v1 不渲染 Reflection/LOS。
-- [ ] `npm test`、`npm run typecheck`、`npm run build`、Case2 回归和 Case3 Playwright 主线通过。
+- [x] Case3 在现有 `code/web/` 应用内实现，不创建第二套 Shell、Vite 应用或独立端口。
+- [x] 进入/刷新/切回固定执行 `GET control → POST init → GET init-data`；不恢复历史结果。
+- [x] Without → With 顺序、双侧 Start/ReInit 互斥、失败后的同动作重试与契约一致。
+- [x] 500ms 串行业务轮询不会重叠；初始化阶段 Node 不可达时按独立的 5000ms 探测节奏持续恢复。
+- [x] `case complete` 后最终快照满足完整门槛才进入 completed；截图保存/放弃收尾后才 POST init。
+- [x] Case3 截图与 Case2 同构：Start 等待态观察 0→1，同拍 complete 不漏拍，最多 3 次，ReInit 不截图。
+- [x] Shell 在 Case2 或 Case3 任一 Start/ReInit 等待期间锁定其他 Tab。
+- [x] 地图、波束、点位窗口、Cost、Throughput、Beam Accuracy 使用运行时数据；不写死静态代表值。
+- [x] Reflection 是 With 响应必需 shape，v1 不渲染 Reflection/LOS。
+- [x] `npm test`、`npm run typecheck`、`npm run build`、Case2 回归和 Case3 Playwright 主线通过。Playwright 须以 `--workers=1` 串行运行；Case3 现有 Playwright 为前端隔离主线，三进程 E2E 另行补证据。
 
 
 
