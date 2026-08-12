@@ -56,6 +56,10 @@ export function Case2Page(props: Props) {
     ui === "resetting" ||
     state.screenshotPhase === "saving" ||
     state.screenshotPhase === "waitClear";
+  const statusBusy =
+    !state.adapterError &&
+    !ui.startsWith("failed") &&
+    (ui === "calibrating" || ui === "resetting");
 
   useEffect(() => {
     onBusyChange?.(busy);
@@ -100,10 +104,15 @@ export function Case2Page(props: Props) {
                       state.adapterError || ui.startsWith("failed")
                         ? " is-error"
                         : ""
-                    }`}
+                    }${statusBusy ? " is-busy" : ""}`}
                   >
                     <span className="status-dot" />
                     <span className="status-text">{statusText}</span>
+                    {statusBusy ? (
+                      <span className="status-ellipsis" aria-hidden>
+                        <span className="status-ellipsis__track" />
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className="calibration-controls">

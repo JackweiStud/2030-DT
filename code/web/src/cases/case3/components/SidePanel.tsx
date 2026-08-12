@@ -26,6 +26,11 @@ type Props = {
   mapRef: React.Ref<MapRendererHandle | null>;
 };
 
+/** 启动/重置进行中：徽标做动态省略号 + 轻脉冲。 */
+function isBusyBadge(badge: string): boolean {
+  return badge === "测试中" || badge === "重置中";
+}
+
 /**
  * Without / With 侧面板。
  */
@@ -33,6 +38,7 @@ export function SidePanel(props: Props) {
   const isWithout = props.side === "without";
   const label = isWithout ? "无 DT" : "有 DT";
   const icon = isWithout ? iconWithout : iconWith;
+  const busy = !props.badgeError && isBusyBadge(props.badge);
 
   return (
     <article className="case3-side" data-side={props.side}>
@@ -41,9 +47,16 @@ export function SidePanel(props: Props) {
           <img className="case3-side-icon" src={icon} width={24} height={24} alt="" />
           <span className="case3-side-label">{label}</span>
           <span
-            className={`case3-status-badge${props.badgeError ? " is-error" : ""}`}
+            className={`case3-status-badge${props.badgeError ? " is-error" : ""}${
+              busy ? " is-busy" : ""
+            }`}
           >
             <span className="case3-status-text">{props.badge}</span>
+            {busy ? (
+              <span className="case3-status-ellipsis" aria-hidden>
+                <span className="case3-status-ellipsis__track" />
+              </span>
+            ) : null}
           </span>
         </div>
         <div className="case3-side-actions">

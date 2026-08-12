@@ -161,6 +161,79 @@
   background: var(--case2-color-success);
 }
 
+/* 与 case3 忙态一致：测试运行中 / 重置中 → 青色 + 脉冲 + 底部对齐省略号 */
+.case2-page .status-feedback.is-busy {
+  align-items: baseline;
+  background: #0ea5e933;
+  color: #0ea5e9;
+  animation: case2-status-pulse 1.6s ease-in-out infinite;
+}
+
+.case2-page .status-feedback.is-busy .status-dot {
+  background: #0ea5e9;
+  align-self: center;
+}
+
+.case2-page .status-ellipsis {
+  display: inline-block;
+  width: 1.15em;
+  overflow: hidden;
+  margin-left: 1px;
+  line-height: 1;
+  vertical-align: baseline;
+  flex-shrink: 0;
+}
+
+.case2-page .status-ellipsis__track {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  vertical-align: baseline;
+  animation: case2-status-ellipsis 1.2s steps(4, end) infinite;
+}
+
+.case2-page .status-ellipsis__track::after {
+  content: "…";
+  display: inline-block;
+  line-height: 1;
+  vertical-align: baseline;
+  transform: translateY(0.18em);
+}
+
+@keyframes case2-status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.78;
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes case2-status-ellipsis {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 1.15em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case2-page .status-feedback.is-busy {
+    animation: none;
+  }
+
+  .case2-page .status-ellipsis__track {
+    animation: none;
+    width: 1.15em;
+  }
+}
+
 .case2-page .status-dot {
   width: 8px;
   height: 8px;

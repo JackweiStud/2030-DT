@@ -179,12 +179,85 @@
   color: #f87171;
 }
 
+/* A：轻脉冲；B：固定宽度省略号槽，避免 … 增减左右抖 */
+.case3-status-badge.is-busy {
+  align-items: baseline;
+  animation: case3-badge-pulse 1.6s ease-in-out infinite;
+}
+
+.case3-status-ellipsis {
+  display: inline-block;
+  width: 1.15em;
+  overflow: hidden;
+  margin-left: 1px;
+  line-height: 1;
+  vertical-align: baseline;
+  flex-shrink: 0;
+}
+
+.case3-status-ellipsis__track {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  vertical-align: baseline;
+  animation: case3-badge-ellipsis 1.2s steps(4, end) infinite;
+}
+
+.case3-status-ellipsis__track::after {
+  /* 用下标点感更强的省略号，贴汉字基线底部 */
+  content: "…";
+  display: inline-block;
+  line-height: 1;
+  vertical-align: baseline;
+  transform: translateY(0.18em);
+}
+
+@keyframes case3-badge-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.78;
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes case3-badge-ellipsis {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 1.15em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case3-status-badge.is-busy {
+    animation: none;
+  }
+
+  .case3-status-ellipsis__track {
+    animation: none;
+    width: 1.15em;
+  }
+}
+
 .case3-page[data-state="without-completed"] [data-side="without"] .case3-status-badge,
 .case3-page[data-state="with-running"] [data-side="without"] .case3-status-badge,
 .case3-page[data-state="with-completed"] [data-side="without"] .case3-status-badge,
 .case3-page[data-state="with-completed"] [data-side="with"] .case3-status-badge {
   background: #22c55e33;
   color: #22c55e;
+}
+
+/* 重置中 data-state 会落在 completed 视觉壳上，busy 强制与「测试中」同色 */
+.case3-page[data-state] [data-side] .case3-status-badge.is-busy {
+  background: #0ea5e933;
+  color: #0ea5e9;
 }
 
 .case3-page[data-state="without-completed"] [data-side="without"] .case3-status-badge.is-error,
