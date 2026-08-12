@@ -578,6 +578,8 @@ Web 只有满足全部条件才进入 completed：
 - 不 POST init；
 - 继续串行轮询并输出 `CASE3_RESULT_NOT_READY` 诊断日志。
 
+连续不过关达到 Web 常量 `CASE3_FINAL_NOT_READY_MAX_ATTEMPTS`（10）后：进入该侧失败态（徽标「结果不完整已自动回退」），解除 busy，并 POST `init` 撤权；仍不得把残缺快照当作 completed。
+
 通过门槛后，Web 先提交本地结果、完成渲染和派生计算；若已观察到截图请求，还要等截图保存或累计 3 次失败后放弃清零，再 POST init。未收到截图请求时可直接收尾。init 写回失败不撤销已完成结果，但必须记录 adapter error。
 
 ### 8.3 截图请求与收尾

@@ -20,6 +20,8 @@ export type Case2State = {
   lastControl: ControlSnapshot | null;
   /** 点击前相，供 POST 失败回退。 */
   phaseBeforeCommand: Case2UiState | null;
+  /** case complete 后六文件连续不过关耗尽：failed-start + 专用徽标。 */
+  resultIncomplete: boolean;
   screenshotPhase: ScreenshotPhase;
   screenshotAttempts: number;
   screenshotLastFlag: 0 | 1;
@@ -42,6 +44,7 @@ export type Case2Action =
   | { type: "CONTROL_POLL_FAIL" }
   | { type: "CALIBRATED_OK"; metrics: MetricsBundle }
   | { type: "CALIBRATED_FAIL"; message: string }
+  | { type: "CALIBRATED_FAIL_EXHAUSTED"; message: string }
   | { type: "SCREENSHOT_ENTER_SAVING" }
   | { type: "SCREENSHOT_SET_BASE64"; base64: string }
   | { type: "SCREENSHOT_ATTEMPT_FAIL" }
@@ -60,6 +63,7 @@ export function createInitialCase2State(): Case2State {
     calibratedData: null,
     lastControl: null,
     phaseBeforeCommand: null,
+    resultIncomplete: false,
     screenshotPhase: "idle",
     screenshotAttempts: 0,
     screenshotLastFlag: 0,
@@ -93,6 +97,9 @@ export function canReset(state: Case2State): boolean {
 /** StatusFeedback 主文案；adapterError 替换相文案。 */
 export function statusFeedbackText(state: Case2State): string {
   if (state.adapterError) return "case2文件服务器连接异常";
+  if (state.resultIncomplete && state.case2UiState === "failed-start") {
+    return "结果不完整已自动回退";
+  }
   switch (state.case2UiState) {
     case "initial":
       return "等待启动测试";
@@ -152,6 +159,7 @@ function reduceControlPoll(
       return {
         ...next,
         case2UiState: "failed-start",
+        resultIncomplete: false,
         seenExecuteSuccess: false,
         calibratedData: null,
         screenshotPhase: "idle",
@@ -162,6 +170,7 @@ function reduceControlPoll(
     return {
       ...next,
       case2UiState: "failed-reinit",
+      resultIncomplete: false,
       seenExecuteSuccess: false,
       calibratedData: null,
       screenshotPhase: "idle",
@@ -240,6 +249,7 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         ...state,
         phaseBeforeCommand: state.case2UiState,
         case2UiState: "calibrating",
+        resultIncomplete: false,
         seenExecuteSuccess: false,
         calibratedData: null,
         screenshotPhase: "idle",
@@ -304,6 +314,7 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
       return {
         ...state,
         case2UiState: "completed",
+        resultIncomplete: false,
         calibratedData: action.metrics,
         seenExecuteSuccess: false,
       };
@@ -311,6 +322,22 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
     case "CALIBRATED_FAIL":
       console.warn("[case2] calibrated batch failed, stay calibrating:", action.message);
       return state;
+
+    case "CALIBRATED_FAIL_EXHAUSTED":
+      console.error(
+        "[case2] calibrated batch failed exhausted:",
+        action.message,
+      );
+      return {
+        ...state,
+        case2UiState: "failed-start",
+        resultIncomplete: true,
+        seenExecuteSuccess: false,
+        calibratedData: null,
+        screenshotPhase: "idle",
+        screenshotAttempts: 0,
+        screenshotBase64: null,
+      };
 
     case "SCREENSHOT_ENTER_SAVING":
       return {

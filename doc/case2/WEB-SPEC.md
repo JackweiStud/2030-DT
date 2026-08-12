@@ -46,7 +46,9 @@
 
  Initial 数据未就绪时启动也禁用。`adapterError=true` 时相不变，两按钮均禁用。
 
-不设 `result-error` / `unknown-control`。六文件失败或未知 `status`：演示主路径假定不发生；若发生只打诊断日志，不另开 UI 态，**保持当前等待态**（`calibrating` / `resetting`），无自动超时；脱身只能刷新或切 Tab。
+不设 `result-error` / `unknown-control`。未知 `status`：只打诊断日志，不另开 UI 态，**保持当前等待态**（`calibrating` / `resetting`），无自动超时；脱身只能刷新或切 Tab。
+
+`case complete` 后 Calibrated 六文件连续失败达到 `CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS`（默认 10）时：进入 `failed-start`，徽标「结果不完整已自动回退」，busy 解除，并 best-effort POST `init` 撤权（与 Case3 对齐）；不提交残缺 Calibrated。单次失败仍保持 `calibrating` 并继续轮询。
 
 
 | 其他层    | 状态                                       | 含义                                  |
@@ -561,8 +563,9 @@ case-local state 至少包含：
 3. **之后**的轮询时刻 B，且 `seenExecuteSuccess===true`：启动路径认 `case complete`（再读六文件）；重置路径认 `reinit complete`。`status` 单值，两拍推进，非同拍并存。
 4. 未见 success 就出现的 complete：忽略并打日志，不停表、不读 Calibrated。
 5. `execute fail`：清盘后即可认 → `failed-start` / `failed-reinit`（不要求先见 success）。
-6. 启动轮只有在 Calibrated 六文件读取成功并进入 `completed` 后，才考虑后置 `POST init`；六文件失败保持 `calibrating`，不得清掉 `status=case complete`。
+6. 启动轮只有在 Calibrated 六文件读取成功并进入 `completed` 后，才考虑后置 `POST init`；六文件**单次**失败保持 `calibrating` 继续轮询，不得因单次失败清掉 `status=case complete`。
 7. 进页不启表、不解释历史 `status`，故残留终态不会在未点按钮时改相。
+8. **失败出口（与 Case3 对齐）**：`case complete` 后 Calibrated 连续不过关达到 `CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS`（10）→ `failed-start` +「结果不完整已自动回退」+ POST `init` 撤权；可再点启动重试。
 
 > Gate 3 演示向放宽：适配服务在 start/reinit 时写入 `status=""`。相对 Gate 2「`status` 仅后端写」；真实联调须与后端确认接受「开一轮时空 status」。业务终态字面值仍只由后端写出。
 
@@ -574,7 +577,8 @@ case-local state 至少包含：
 4. **主路径假定 POST 成功**（演示/联调环境适配可达）。不单独设计 POST 写失败 UI 机。**若 POST 确实失败**：回退到点击前相，置 `adapterError=true`，打诊断日志，**不**启轮询、不自动重发；不得停在「已是 `calibrating` 但未启表」的双禁死锁。
 5. POST 成功后启表。轮询：时刻 A 见 `execute success` → `seenExecuteSuccess=true`，仍 `calibrating`；**之后**时刻 B 见 `case complete`（且已 seen）→ 请求一次 Calibrated；`execute fail` → `failed-start`。
 6. 六文件成功 → `completed`。若截图状态已收尾或本轮无截图请求，随后 `POST {command:"init"}` 写回空闲态；若截图仍在保存/等待清零，等待截图成功或放弃清零后再写回。
-7. 六文件失败：演示主路径假定不发生；若发生 → 保持 `calibrating`，打诊断日志，不另开 UI 态，不写回 init。
+7. 六文件单次失败：保持 `calibrating`，打诊断日志，继续轮询，不写回 init。
+8. 六文件连续失败满 10 次：进入 `failed-start`，文案「结果不完整已自动回退」，POST `init` 撤权，解除 busy；可再启动。
 
 ### 6.2 重置
 
@@ -596,6 +600,7 @@ case-local state 至少包含：
 | completed                         | 已完成                               |
 | resetting                         | 重置中                               |
 | `failed-start` / `failed-reinit`  | 执行命令失败（文案相同；按钮按来源互斥）              |
+| `failed-start` 且结果不完整耗尽     | 结果不完整已自动回退（可再启动；已 POST init 撤权）     |
 | `adapterError`                    | 「case2文件服务器连接异常」：**替换** StatusFeedback 主文案（不另起第二行相文案）；按钮双禁；底层 `case2UiState` 不变 |
 | Initial 文件读取失败                    | Initial 区不可用 + 诊断日志（不另设 UI phase） |
 

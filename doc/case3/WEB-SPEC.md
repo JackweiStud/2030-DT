@@ -466,6 +466,8 @@ ReInit 轮只 GET control，不 GET side。
 
 不满足时保持 running，继续轮询，不 POST init。若 Node 返回 HTTP `RESULT_NOT_READY`，或 Web 本地门槛未过，均记结构化诊断日志（Web 侧日志码可用 `CASE3_RESULT_NOT_READY`，与 HTTP `error.code` 区分，勿混用）。
 
+**失败出口**：`case complete` 后最终快照连续不过关达到 `CASE3_FINAL_NOT_READY_MAX_ATTEMPTS`（默认 10，含 local-gate / `RESULT_NOT_READY` / 其它最终 GET 失败）时，进入该侧 `failed-start`，徽标「结果不完整已自动回退」，丢弃本侧半轮 live、busy=false，并 best-effort POST `init` 撤权（避免控制停在 `case complete` 导致下一轮 `CONTROL_BUSY`）。不提交残缺 completed 结果。
+
 满足时：
 
 1. 原子提交目标侧 result，清 live，计算可用派生 KPI。

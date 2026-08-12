@@ -205,6 +205,32 @@ describe("case3Reducer", () => {
     expect(canReinit(s, "without")).toBe(false);
   });
 
+  it("Start 终态门槛耗尽 → 结果不完整，可重试 Start", () => {
+    let s = createInitialCase3State();
+    s = case3Reducer(s, {
+      type: "INIT_READY",
+      baseRoute: [{ no: 1, x: 0, y: 0, z: 0 }],
+      baseline: { success: 1, total: 2 },
+    });
+    s = case3Reducer(s, {
+      type: "ACTION_BEGIN",
+      kind: "start",
+      side: "without",
+      generation: 1,
+    });
+    s = case3Reducer(s, { type: "SEEN_EXECUTE_SUCCESS" });
+    s = case3Reducer(s, {
+      type: "EXECUTE_FAIL",
+      reason: "result-incomplete",
+    });
+    expect(deriveVisibleState(s)).toBe("failed-start-without");
+    expect(sideStatusBadge(s, "without")).toBe("结果不完整已自动回退");
+    expect(sideStatusBadgeIsError(s, "without")).toBe(true);
+    expect(sideStatusBadgeIsError(s, "with")).toBe(false);
+    expect(canStartWithout(s)).toBe(true);
+    expect(s.failure?.reason).toBe("result-incomplete");
+  });
+
   it("未见 success 的 complete 不提交", () => {
     let s = createInitialCase3State();
     s = case3Reducer(s, {

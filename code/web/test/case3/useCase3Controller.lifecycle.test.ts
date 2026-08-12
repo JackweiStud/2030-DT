@@ -835,4 +835,239 @@ describe("useCase3Controller lifecycle", () => {
     hook.unmount();
     droppedLog.mockRestore();
   });
+
+  it("case complete 后最终门槛连续 10 次不过关 → 结果不完整并 POST init", async () => {
+    const warnLog = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const errorLog = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    let startPosted = false;
+    let seenSuccess = false;
+    let initPosts = 0;
+    const incomplete: SideSnapshot = {
+      ...liveWithout(1),
+      costPct: null,
+    };
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        if (!startPosted) return control();
+        if (!seenSuccess) {
+          seenSuccess = true;
+          return control({
+            command: "start",
+            dt_type: "without dt",
+            status: "execute success",
+          });
+        }
+        return control({
+          command: "start",
+          dt_type: "without dt",
+          status: "case complete",
+        });
+      }),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          startPosted = true;
+          return control({
+            command: "start",
+            dt_type: "without dt",
+          });
+        }
+        if ("command" in payload && payload.command === "init") {
+          initPosts += 1;
+          return control();
+        }
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => incomplete),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.startWithoutEnabled).toBe(true),
+    );
+
+    act(() => hook.result.current.onStartWithout());
+
+    await waitFor(() =>
+      expect(hook.result.current.visible).toBe("failed-start-without"),
+    );
+    expect(hook.result.current.withoutBadge).toBe("结果不完整已自动回退");
+    expect(hook.result.current.withoutBadgeError).toBe(true);
+    expect(hook.result.current.busy).toBe(false);
+    expect(hook.result.current.startWithoutEnabled).toBe(true);
+    expect(initPosts).toBeGreaterThanOrEqual(1);
+    expect(errorLog).toHaveBeenCalledWith(
+      "[case3] 无DT启动测试结果不完整：case complete 后最终快照连续10次未通过门槛，已退出测试中并撤权",
+      expect.objectContaining({
+        side: "without",
+        sideLabel: "无DT",
+        attempts: 10,
+        maxAttempts: 10,
+      }),
+    );
+    expect(warnLog).toHaveBeenCalledWith(
+      "[case3] side.final_not_ready",
+      expect.objectContaining({
+        side: "without",
+        sideLabel: "无DT",
+        source: "local-gate",
+      }),
+    );
+
+    hook.unmount();
+    warnLog.mockRestore();
+    errorLog.mockRestore();
+  });
+
+  it("有DT启动同样支持结果不完整出口，并打中文异常日志", async () => {
+    const errorLog = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    let phase: "boot" | "without-run" | "without-done" | "with-run" = "boot";
+    let withoutSeenSuccess = false;
+    let withSeenSuccess = false;
+    let initPosts = 0;
+    const incompleteWith: SideSnapshot = {
+      side: "with",
+      points: [],
+      completeCount: 0,
+      pendingTail: false,
+      costPct: 10,
+    };
+    const withoutDone: SideSnapshot = {
+      side: "without",
+      points: [
+        {
+          no: 1,
+          ue: { x: 1, y: 2, z: 0 },
+          selectedBeamId: 1,
+          throughputGbps: 8,
+          scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
+        },
+      ],
+      completeCount: 1,
+      pendingTail: false,
+      costPct: 25,
+    };
+
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        if (phase === "boot" || phase === "without-done") return control();
+        if (phase === "without-run") {
+          if (!withoutSeenSuccess) {
+            withoutSeenSuccess = true;
+            return control({
+              command: "start",
+              dt_type: "without dt",
+              status: "execute success",
+            });
+          }
+          return control({
+            command: "start",
+            dt_type: "without dt",
+            status: "case complete",
+          });
+        }
+        // with-run
+        if (!withSeenSuccess) {
+          withSeenSuccess = true;
+          return control({
+            command: "start",
+            dt_type: "with dt",
+            status: "execute success",
+          });
+        }
+        return control({
+          command: "start",
+          dt_type: "with dt",
+          status: "case complete",
+        });
+      }),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          phase =
+            payload.dt_type === "with dt" ? "with-run" : "without-run";
+          return control({
+            command: "start",
+            dt_type: payload.dt_type === "with dt" ? "with dt" : "without dt",
+          });
+        }
+        if ("command" in payload && payload.command === "init") {
+          initPosts += 1;
+          if (phase === "without-run") phase = "without-done";
+          return control();
+        }
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async (side) => {
+        if (side === "without") return withoutDone;
+        return incompleteWith;
+      }),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.startWithoutEnabled).toBe(true),
+    );
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() =>
+      expect(hook.result.current.visible).toBe("without-completed"),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.startWithEnabled).toBe(true),
+    );
+
+    initPosts = 0;
+    errorLog.mockClear();
+
+    act(() => hook.result.current.onStartWith());
+    await waitFor(() =>
+      expect(hook.result.current.visible).toBe("failed-start-with"),
+    );
+    expect(hook.result.current.withBadge).toBe("结果不完整已自动回退");
+    expect(hook.result.current.withBadgeError).toBe(true);
+    expect(hook.result.current.busy).toBe(false);
+    expect(initPosts).toBeGreaterThanOrEqual(1);
+    expect(errorLog).toHaveBeenCalledWith(
+      "[case3] 有DT启动测试结果不完整：case complete 后最终快照连续10次未通过门槛，已退出测试中并撤权",
+      expect.objectContaining({
+        side: "with",
+        sideLabel: "有DT",
+        attempts: 10,
+        maxAttempts: 10,
+      }),
+    );
+
+    hook.unmount();
+    errorLog.mockRestore();
+  });
 });

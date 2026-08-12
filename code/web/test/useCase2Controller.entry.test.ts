@@ -369,4 +369,74 @@ describe("useCase2Controller entry gate", () => {
     expect(result.current.state.lastControl?.status).toBe("");
     expect(order.indexOf("post:reinit")).toBeLessThan(order.lastIndexOf("post:init"));
   });
+
+  it("case complete 后 Calibrated 连续 10 次失败 → 结果不完整已自动回退并 POST init", async () => {
+    const errorLog = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    let startPosted = false;
+    let seenSuccess = false;
+    let initAfterFail = 0;
+    const api: Case2Api = {
+      async getControl() {
+        if (!startPosted) {
+          return control({ command: "init", status: "", dt_type: "" });
+        }
+        if (!seenSuccess) {
+          seenSuccess = true;
+          return control({ status: "execute success" });
+        }
+        return control({ status: "case complete" });
+      },
+      async getDataFiles(phase) {
+        if (phase === "initial") return metrics();
+        throw new Error("RESULT_BATCH_INCOMPLETE");
+      },
+      async postControl(payload) {
+        if ("command" in payload && payload.command === "start") {
+          startPosted = true;
+          return control({ status: "" });
+        }
+        if ("command" in payload && payload.command === "init") {
+          if (startPosted) initAfterFail += 1;
+          return control({ command: "init", status: "", dt_type: "" });
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config: { ...config, pollMs: 1 },
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.startEnabled).toBe(true));
+    act(() => {
+      result.current.onStart();
+    });
+
+    await waitFor(() =>
+      expect(result.current.state.case2UiState).toBe("failed-start"),
+    );
+    expect(result.current.state.resultIncomplete).toBe(true);
+    expect(result.current.statusText).toBe("结果不完整已自动回退");
+    expect(result.current.startEnabled).toBe(true);
+    expect(initAfterFail).toBeGreaterThanOrEqual(1);
+    expect(errorLog).toHaveBeenCalledWith(
+      "[case2] 启动测试结果不完整：case complete 后 Calibrated 六文件连续10次未通过门槛，已退出测试中并撤权",
+      expect.objectContaining({
+        attempts: 10,
+        maxAttempts: 10,
+      }),
+    );
+
+    errorLog.mockRestore();
+  });
 });

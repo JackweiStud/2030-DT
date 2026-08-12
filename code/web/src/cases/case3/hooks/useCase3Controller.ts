@@ -10,6 +10,7 @@ import { toPng } from "html-to-image";
 import { createCase3Api, Case3ApiError, type Case3Api } from "../api/case3Api";
 import {
   CASE3_ADAPTER_RECOVERY_PROBE_MS,
+  CASE3_FINAL_NOT_READY_MAX_ATTEMPTS,
   CASE3_SCREENSHOT_MAX_ATTEMPTS,
   CASE3_SCREENSHOT_PIXEL_RATIO,
   CASE3_STAGE_HEIGHT,
@@ -191,6 +192,7 @@ export function useCase3Controller(options: Options) {
     null,
   );
   const lastFinalDiagnosticRef = useRef<string | null>(null);
+  const finalNotReadyAttemptsRef = useRef(0);
   const lastControlMismatchRef = useRef<string | null>(null);
   const probeStartedLoggedRef = useRef(false);
   const screenshotBusyRef = useRef(false);
@@ -285,8 +287,117 @@ export function useCase3Controller(options: Options) {
   }, [dispatch, setBusy, stopPolling]);
 
   /**
-   * 截图机：截图请求已登记且 completed 结果完成渲染后才执行；最多 3 次。
+   * case complete 后最终快照连续不过关：累计；达上限则进「结果不完整已自动回退」、POST init 撤权并解 busy。
+   * 无 DT / 有 DT 启动共用本出口（按 activeAction.side）。
+   * @returns true 表示本轮已失败退出，调用方应立刻 return。
    */
+  const noteFinalNotReady = useCallback(
+    async (args: {
+      generation: number;
+      side: Case3Side;
+      source: string;
+      detail?: Record<string, unknown>;
+    }): Promise<boolean> => {
+      finalNotReadyAttemptsRef.current += 1;
+      const attempts = finalNotReadyAttemptsRef.current;
+      const sideLabel = args.side === "without" ? "无DT" : "有DT";
+      const diagnosticKey = [
+        args.generation,
+        args.source,
+        JSON.stringify(args.detail ?? {}),
+      ].join(":");
+      if (lastFinalDiagnosticRef.current !== diagnosticKey) {
+        lastFinalDiagnosticRef.current = diagnosticKey;
+        case3Warn(
+          args.source === "final-fetch"
+            ? "side.final_fail"
+            : "side.final_not_ready",
+          {
+            generation: args.generation,
+            side: args.side,
+            sideLabel,
+            source: args.source,
+            attempts,
+            maxAttempts: CASE3_FINAL_NOT_READY_MAX_ATTEMPTS,
+            ...args.detail,
+          },
+        );
+      }
+      if (attempts < CASE3_FINAL_NOT_READY_MAX_ATTEMPTS) {
+        return false;
+      }
+
+      case3Error(
+        `${sideLabel}启动测试结果不完整：case complete 后最终快照连续${CASE3_FINAL_NOT_READY_MAX_ATTEMPTS}次未通过门槛，已退出测试中并撤权`,
+        {
+          generation: args.generation,
+          side: args.side,
+          sideLabel,
+          attempts,
+          maxAttempts: CASE3_FINAL_NOT_READY_MAX_ATTEMPTS,
+          source: args.source,
+          ...args.detail,
+        },
+      );
+      dispatch({ type: "EXECUTE_FAIL", reason: "result-incomplete" });
+      screenshotAbortRef.current?.abort();
+      screenshotAbortRef.current = null;
+      screenshotPhaseRef.current = "idle";
+      pendingCompleteSideRef.current = null;
+      finalNotReadyAttemptsRef.current = 0;
+
+      const lifecycleGeneration = lifecycleGenerationRef.current;
+      const signal = actionAbortRef.current?.signal;
+      try {
+        const control = await apiRef.current.postControl(
+          { command: "init" },
+          signal,
+        );
+        case3Log("completion.init_ok", {
+          kind: "start",
+          side: args.side,
+          sideLabel,
+          generation: args.generation,
+          reason: "result-incomplete",
+          ...controlSummary(control),
+        });
+      } catch (err) {
+        if (
+          !isAbortError(err) &&
+          lifecycleGeneration === lifecycleGenerationRef.current
+        ) {
+          case3Error("结果不完整撤权失败：POST init 未成功", {
+            kind: "start",
+            side: args.side,
+            sideLabel,
+            generation: args.generation,
+            reason: "result-incomplete",
+            endpoint: "/api/case3/control-file",
+            code: err instanceof Case3ApiError ? err.code : undefined,
+            detail: err instanceof Error ? err.message : String(err),
+          });
+          dispatch({ type: "ADAPTER_ERROR", value: true });
+        }
+      }
+
+      if (lifecycleGeneration !== lifecycleGenerationRef.current) {
+        return true;
+      }
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      setBusy(false);
+      case3Log("poll.stop", {
+        generation: args.generation,
+        kind: "start",
+        side: args.side,
+        sideLabel,
+        reason: "result-incomplete",
+      });
+      stopPolling();
+      return true;
+    },
+    [dispatch, setBusy, stopPolling],
+  );
   const runScreenshotTask = useCallback(async () => {
     if (screenshotBusyRef.current) return;
     screenshotBusyRef.current = true;
@@ -631,27 +742,20 @@ export function useCase3Controller(options: Options) {
               return;
             }
             if (!isFinalSideReady(snapshot)) {
-              const diagnosticKey = [
+              const exhausted = await noteFinalNotReady({
                 generation,
-                "local-gate",
-                snapshot.pendingTail,
-                snapshot.points.length,
-                snapshot.completeCount,
-                snapshot.costPct,
-              ].join(":");
-              if (lastFinalDiagnosticRef.current !== diagnosticKey) {
-                lastFinalDiagnosticRef.current = diagnosticKey;
-                case3Warn("side.final_not_ready", {
-                  generation,
-                  side: action.side,
-                  source: "local-gate",
+                side: action.side,
+                source: "local-gate",
+                detail: {
                   pendingTail: snapshot.pendingTail,
                   points: snapshot.points.length,
                   completeCount: snapshot.completeCount,
                   costPct: snapshot.costPct,
-                });
-              }
+                },
+              });
+              if (exhausted) return;
             } else {
+              finalNotReadyAttemptsRef.current = 0;
               case3Log("side.final_ready", {
                 generation,
                 side: action.side,
@@ -691,25 +795,28 @@ export function useCase3Controller(options: Options) {
               err instanceof Case3ApiError &&
               err.code === "RESULT_NOT_READY"
             ) {
-              const diagnosticKey = `${generation}:http:${err.code}`;
-              if (lastFinalDiagnosticRef.current !== diagnosticKey) {
-                lastFinalDiagnosticRef.current = diagnosticKey;
-                case3Warn("side.final_not_ready", {
-                  generation,
-                  side: action.side,
-                  source: "http",
-                  endpoint: `/api/case3/side?side=${action.side}`,
-                  code: err.code,
-                });
-              }
-            } else {
-              case3Warn("side.final_fail", {
+              const exhausted = await noteFinalNotReady({
                 generation,
                 side: action.side,
-                endpoint: `/api/case3/side?side=${action.side}`,
-                code: err instanceof Case3ApiError ? err.code : undefined,
-                reason: err instanceof Error ? err.message : String(err),
+                source: "http",
+                detail: {
+                  endpoint: `/api/case3/side?side=${action.side}`,
+                  code: err.code,
+                },
               });
+              if (exhausted) return;
+            } else {
+              const exhausted = await noteFinalNotReady({
+                generation,
+                side: action.side,
+                source: "final-fetch",
+                detail: {
+                  endpoint: `/api/case3/side?side=${action.side}`,
+                  code: err instanceof Case3ApiError ? err.code : undefined,
+                  reason: err instanceof Error ? err.message : String(err),
+                },
+              });
+              if (exhausted) return;
             }
           }
         } else {
@@ -853,6 +960,7 @@ export function useCase3Controller(options: Options) {
   }, [
     dispatch,
     maybeFinishAfterScreenshot,
+    noteFinalNotReady,
     runScreenshotTask,
     setBusy,
     stopPolling,
@@ -1079,6 +1187,7 @@ export function useCase3Controller(options: Options) {
       lastStatusRef.current = null;
       lastProgressRef.current = null;
       lastFinalDiagnosticRef.current = null;
+      finalNotReadyAttemptsRef.current = 0;
       lastControlMismatchRef.current = null;
       screenshotPhaseRef.current = "idle";
       screenshotBase64Ref.current = null;
@@ -1204,7 +1313,8 @@ export function useCase3Controller(options: Options) {
     reinitWithEnabled: canReinit(state, "with"),
     withoutBadge: sideStatusBadge(state, "without"),
     withBadge: sideStatusBadge(state, "with"),
-    badgeError: sideStatusBadgeIsError(state),
+    withoutBadgeError: sideStatusBadgeIsError(state, "without"),
+    withBadgeError: sideStatusBadgeIsError(state, "with"),
     onStartWithout,
     onStartWith,
     onReinitWithout,

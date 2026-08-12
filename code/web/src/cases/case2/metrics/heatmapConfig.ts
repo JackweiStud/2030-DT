@@ -153,3 +153,6 @@ export function assertHeatmapAnchor(
     );
   }
 }
+
+/** case complete 后 Calibrated 六文件连续不过关次数；耗尽则「结果不完整已自动回退」并 POST init。 */
+export const CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS = 10;

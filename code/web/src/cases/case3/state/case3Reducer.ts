@@ -11,6 +11,7 @@ import type {
   Case3Side,
   Case3VisibleState,
   Failure,
+  FailureReason,
   SideSnapshot,
 } from "../types";
 
@@ -52,7 +53,7 @@ export type Case3Action =
   | { type: "START_COMPLETE"; side: Case3Side; snapshot: SideSnapshot }
   | { type: "REINIT_COMPLETE"; side: Case3Side }
   | { type: "ROUND_CLOSE_COMPLETE" }
-  | { type: "EXECUTE_FAIL" }
+  | { type: "EXECUTE_FAIL"; reason?: FailureReason }
   | { type: "CLEAR_ACTIVE" };
 
 /**
@@ -142,7 +143,11 @@ export function case3Reducer(
       return {
         ...state,
         activeAction: null,
-        failure: { kind: action.kind, side: action.side },
+        failure: {
+          kind: action.kind,
+          side: action.side,
+          reason: "execute-fail",
+        },
       };
 
     case "ACTION_POST_FAILED":
@@ -233,6 +238,7 @@ export function case3Reducer(
       const failure: Failure = {
         kind: state.activeAction.kind,
         side: state.activeAction.side,
+        reason: action.reason ?? "execute-fail",
       };
       const side = state.activeAction.side;
       return {
@@ -334,12 +340,24 @@ export const CASE3_INIT_DATA_ERROR_BADGE = "case3初始化数据异常";
 export function sideStatusBadge(state: Case3State, side: Case3Side): string {
   if (state.adapterError) return CASE3_ADAPTER_ERROR_BADGE;
   if (state.initStatus === "error") return CASE3_INIT_DATA_ERROR_BADGE;
+  if (
+    state.failure?.kind === "start" &&
+    state.failure.side === side &&
+    state.failure.reason === "result-incomplete"
+  ) {
+    return "结果不完整已自动回退";
+  }
   return statusBadgeText(deriveVisibleState(state), side);
 }
 
 /** 徽标是否应使用错误样式。 */
-export function sideStatusBadgeIsError(state: Case3State): boolean {
-  return state.adapterError || state.initStatus === "error";
+export function sideStatusBadgeIsError(
+  state: Case3State,
+  side?: Case3Side,
+): boolean {
+  if (state.adapterError || state.initStatus === "error") return true;
+  if (side === undefined) return false;
+  return state.failure?.side === side;
 }
 
 /** Without Start 是否可点。 */

@@ -15,6 +15,7 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import { toPng } from "html-to-image";
 import { createCase2Api, type Case2Api } from "../api/case2Api";
 import type { Case2RuntimeConfig } from "../metrics/heatmapConfig";
+import { CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS } from "../metrics/heatmapConfig";
 import type { ControlSnapshot } from "../types";
 import {
   canReset,
@@ -58,6 +59,22 @@ function case2Log(event: string, data?: Record<string, unknown>): void {
     return;
   }
   console.info(`[case2] ${event}`, data);
+}
+
+function case2Warn(event: string, data?: Record<string, unknown>): void {
+  if (data === undefined) {
+    console.warn(`[case2] ${event}`);
+    return;
+  }
+  console.warn(`[case2] ${event}`, data);
+}
+
+function case2Error(event: string, data?: Record<string, unknown>): void {
+  if (data === undefined) {
+    console.error(`[case2] ${event}`);
+    return;
+  }
+  console.error(`[case2] ${event}`, data);
 }
 
 function controlSummary(control: ControlSnapshot) {
@@ -106,6 +123,7 @@ export function useCase2Controller(options: Options): Case2Controller {
   const adapterProbingRef = useRef(false);
   const completionIdleResetAbortRef = useRef<AbortController | null>(null);
   const completionIdleResetPostedRef = useRef(false);
+  const calibratedFailAttemptsRef = useRef(0);
 
   const stopPolling = useCallback(() => {
     pollingRef.current = false;
@@ -389,6 +407,7 @@ export function useCase2Controller(options: Options): Case2Controller {
         case2Log("calibrated.fetch_begin", controlSummary(control));
         try {
           const metrics = await api.getDataFiles("calibrated", controller.signal);
+          calibratedFailAttemptsRef.current = 0;
           dispatch({ type: "CALIBRATED_OK", metrics });
           case2Log("calibrated.ok", {
             nx: metrics.rss.heatmap[0]?.length ?? 0,
@@ -398,10 +417,52 @@ export function useCase2Controller(options: Options): Case2Controller {
           stopPolling();
           return;
         } catch (err) {
+          if (isAbortError(err)) return;
           const message = err instanceof Error ? err.message : String(err);
+          calibratedFailAttemptsRef.current += 1;
+          const attempts = calibratedFailAttemptsRef.current;
+          case2Warn("最终 Calibrated 批次未就绪，继续等待", {
+            attempts,
+            maxAttempts: CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS,
+            message,
+          });
+          if (attempts >= CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS) {
+            case2Error(
+              `启动测试结果不完整：case complete 后 Calibrated 六文件连续${CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS}次未通过门槛，已退出测试中并撤权`,
+              {
+                attempts,
+                maxAttempts: CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS,
+                message,
+              },
+            );
+            dispatch({ type: "CALIBRATED_FAIL_EXHAUSTED", message });
+            calibratedFailAttemptsRef.current = 0;
+            screenshotBusyRef.current = false;
+            try {
+              const resetControl = await postEntryInit(api, controller.signal);
+              if (!controller.signal.aborted) {
+                dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control: resetControl });
+                case2Log("completion.init_reset_ok", {
+                  reason: "result-incomplete",
+                  ...controlSummary(resetControl),
+                });
+              }
+            } catch (initErr) {
+              if (!isAbortError(initErr) && !controller.signal.aborted) {
+                case2Error("结果不完整撤权失败：POST init 未成功", {
+                  reason:
+                    initErr instanceof Error ? initErr.message : String(initErr),
+                });
+                dispatch({ type: "CONTROL_POLL_FAIL" });
+              }
+            }
+            case2Log("poll.stop", { ui: "failed-start", reason: "result-incomplete" });
+            stopPolling();
+            return;
+          }
           dispatch({ type: "CALIBRATED_FAIL", message });
-          case2Log("calibrated.fail", { message });
-          // 保持 calibrating，继续轮询
+          case2Log("calibrated.fail", { message, attempts });
+          // 未耗尽：保持 calibrating，继续轮询
         }
       }
 
@@ -425,7 +486,7 @@ export function useCase2Controller(options: Options): Case2Controller {
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [dispatch, runScreenshotTask, stopPolling]);
+  }, [dispatch, postEntryInit, runScreenshotTask, stopPolling]);
 
   const schedulePollLoop = useCallback(() => {
     if (pollingRef.current) return;
@@ -601,6 +662,7 @@ export function useCase2Controller(options: Options): Case2Controller {
     if (!canStart(snap)) return;
     completionIdleResetPostedRef.current = false;
     stopCompletionIdleReset();
+    calibratedFailAttemptsRef.current = 0;
     dispatch({ type: "START_CLICK" });
     case2Log("command.start_click");
     void (async () => {

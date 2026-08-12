@@ -162,8 +162,9 @@ describe("case2Reducer", () => {
     ).toBe(false);
   });
 
-  it("六文件失败保持 calibrating", () => {
+  it("六文件失败保持 calibrating；耗尽后结果不完整已自动回退", () => {
     let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "INITIAL_DATA_OK", metrics: metrics() });
     s = case2Reducer(s, { type: "START_CLICK" });
     s = case2Reducer(s, {
       type: "CONTROL_POLL_OK",
@@ -174,6 +175,15 @@ describe("case2Reducer", () => {
       message: "batch incomplete",
     });
     expect(next.case2UiState).toBe("calibrating");
+
+    const exhausted = case2Reducer(s, {
+      type: "CALIBRATED_FAIL_EXHAUSTED",
+      message: "batch incomplete",
+    });
+    expect(exhausted.case2UiState).toBe("failed-start");
+    expect(exhausted.resultIncomplete).toBe(true);
+    expect(statusFeedbackText(exhausted)).toBe("结果不完整已自动回退");
+    expect(canStart(exhausted)).toBe(true);
   });
 
   it("截图 3 次失败后 DROPPED 回 idle", () => {

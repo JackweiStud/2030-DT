@@ -116,6 +116,8 @@ export const CASE3_MAP_ROTATION_MAX_DEG = 90;
 export const CASE3_MAP_ZOOM_STEP = 1.1;
 export const CASE3_MAP_CAPTURE_READY_TIMEOUT_MS = 10_000;
 export const CASE3_SCREENSHOT_MAX_ATTEMPTS = 3;
+/** case complete 后最终快照连续不过关次数；耗尽则进「结果不完整已自动回退」并 POST init 撤权。 */
+export const CASE3_FINAL_NOT_READY_MAX_ATTEMPTS = 10;
 export const CASE3_STAGE_WIDTH = 1920;
 export const CASE3_STAGE_HEIGHT = 1080;
 export const CASE3_SCREENSHOT_PIXEL_RATIO = 2;

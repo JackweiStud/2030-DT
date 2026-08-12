@@ -54,9 +54,13 @@ export type ActiveAction = {
   generation: number;
 };
 
+/** Start/ReInit 失败原因；result-incomplete 仅 Start 终态门槛耗尽。 */
+export type FailureReason = "execute-fail" | "result-incomplete";
+
 export type Failure = {
   kind: ActionKind;
   side: Case3Side;
+  reason: FailureReason;
 } | null;
 
 export type Case3VisibleState =
