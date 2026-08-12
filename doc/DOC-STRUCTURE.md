@@ -7,6 +7,7 @@
 | `doc/PHASE0-SCOPE.md` | 范围、主线、数据真实性、状态权属、明确不做 | Gate 1 视觉细节或 Gate 2 字段表 |
 | `doc/DELIVERY-PLAN.md` | case 开发顺序、项目级阶段与跨 case 验收 | 单个 case 的字段或视觉细节 |
 | `doc/ARCHITECTURE-DRAFT.md` | Shell/适配服务/后端的责任边界 | 端口、代码目录、锁实现、REST 实现细节 |
+| `doc/CASE2-CASE3-TECHNICAL-PRIMER.md` | 面向负责人/演示/联调的 case2/case3 技术掌握讲义、状态机速记、排障入口 | 逐行代码解释、替代 API 契约、真实后端未验收结论 |
 | `doc/CASE-STORY-MATRIX.md` | case 顺序、简短故事、Gate 索引 | 未启动 case 的假想业务语义 |
 | `doc/case2/`（已启动） | case2 主线、UX 状态、设计分析/计划、设计冻结、静态验收、API 契约、UI 数据来源反查、SPEC、QA、复盘 | 其他 case 的业务细节 |
 | `doc/case3/`（已完成本地开发） | case3 主线、UX 状态、设计冻结、静态验收、API 契约、UI 数据来源反查、SPEC、QA、真实后端交接 | case2 指标语义、JSONL 草案冒充正式协议、打桩结果冒充真实采集 |
@@ -29,6 +30,7 @@
 
 - 范围与主线：`doc/PHASE0-SCOPE.md`
 - 共享边界：`doc/ARCHITECTURE-DRAFT.md`
+- 技术掌握讲义：`doc/CASE2-CASE3-TECHNICAL-PRIMER.md`
 - case 排期：`doc/CASE-STORY-MATRIX.md`
 - 当前事实与风险：`state.md`
 - case2 业务入口：`doc/case2/MAINLINE.md`

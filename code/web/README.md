@@ -34,6 +34,25 @@ npm run build
 - 静态资源在 `assets/shell/`、`assets/case2/`、`assets/case3/`；构建不依赖仓库外路径。
 - 「现场环境」弹窗为 Shell 级共用：case 页只调 `useSiteEnvWindow().open()`。
 
+## 排查：启动/重置后徽标无动态省略号
+
+Case2 / Case3 忙态徽标（「测试中」「重置中」等）的省略号与轻脉冲是纯 CSS 动画；仅当文案进入忙态时挂 `is-busy` 并渲染省略号节点。空闲文案（如「等待启动测试」）本身没有动态省略号。
+
+若本机正常、同事 Windows Chrome 看不到跳动：
+
+1. 在出问题的 Chrome 打开业务页，F12 → Console，执行：
+
+   ```js
+   matchMedia('(prefers-reduced-motion: reduce)').matches
+   ```
+
+2. 结果为 `true`：系统开了「减少动画」，页面会关闭脉冲与省略号步进，只留静态 `…`。  
+   **Windows 11**：设置 → 辅助功能 → 视觉效果 → 打开 **动画效果**。  
+   **Windows 10**：设置 → 轻松使用 → 显示 → 打开 **在 Windows 中显示动画**。  
+   改完后完全退出并重开 Chrome，再跑上面的命令应变为 `false`。
+
+3. 结果为 `false` 仍无动态：先确认启动/重置后徽标是否已变成忙态文案，再在 Elements 中查是否存在 `.case3-status-ellipsis` / `.status-ellipsis`（无节点 = 未进入忙态，不是动效问题）。
+
 ## 规格
 
 - Case2：[../../doc/case2/WEB-SPEC.md](../../doc/case2/WEB-SPEC.md)
