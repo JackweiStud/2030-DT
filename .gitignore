@@ -1,3 +1,11 @@
 .DS_Store
 code/.tmp/
 
+# 共享目录运行产物（保留 Initial / Case3 基线；打桩或真实后端写出）
+
+code/comdatafiles/case2/heatmap_cali_*
+code/comdatafiles/case3/ue_comm_without_dt_*
+code/comdatafiles/case3/ue_comm_with_dt_*
+!code/comdatafiles/case3/ue_comm_with_dt_beam_accuracy_rate.txt
+code/comdatafiles/out/
+
