@@ -6,16 +6,17 @@ synthetic/fixture 数据。它不提供 REST，不能与真实后端同时运行
 
 ## 启动
 
+在 `code/back` 根目录：
+
 ```bash
-cd code/back
-npm run dev:case3
+npm run start:case3
 ```
 
 `scripts/run.mjs` 在本地默认使用 `code/comdatafiles`。真实挂载或临时
 联调目录应显式传入绝对路径：
 
 ```bash
-DT_SHARED_DIR=/absolute/shared/root npm run dev:case3
+DT_SHARED_DIR=/absolute/shared/root npm run start:case3
 ```
 
 默认参数：
@@ -33,19 +34,20 @@ DT_SHARED_DIR=/absolute/shared/root npm run dev:case3
 
 ```bash
 # 默认：仅动态生成 Throughput / Cost
-npm run dev:case3
+npm run start:case3
 
 # 固定 seed，复现同一套动态 KPI
-CASE3_STUB_SEED=demo-1 npm run dev:case3
+CASE3_STUB_SEED=demo-1 npm run start:case3
 
 # 完整回放 fixtures（Cost 固定 25/15）
-CASE3_STUB_DATA_MODE=replay npm run dev:case3
+CASE3_STUB_DATA_MODE=replay npm run start:case3
 ```
 
-不请求截图的旁路验证：
+关闭截图 / 调试日志用环境变量：
 
 ```bash
-npm run dev:case3:no-picture
+CASE3_STUB_REQUEST_PICTURE=0 npm run start:case3
+CASE3_STUB_LOG_LEVEL=debug npm run start:case3
 ```
 
 ## 数据边界

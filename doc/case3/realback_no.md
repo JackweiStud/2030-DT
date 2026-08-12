@@ -85,24 +85,15 @@ code/back/
 
 ### 2.2 命令
 
-Case3 包：
+在 `code/back` 根目录：
 
 | 命令 | 用途 |
 |---|---|
-| `npm start` | 默认本地 stub。 |
-| `npm run dev` | debug 日志。 |
-| `npm run dev:no-picture` | 不请求截图，用于旁路验证。 |
-| `npm test` | stub 单元/文件集成测试。 |
+| `npm run start:case2` | 启动 Case2 本地 stub。 |
+| `npm run start:case3` | 启动 Case3 本地 stub。 |
+| `npm test` | 串行运行 Case2 + Case3 stub 测试，避免并发共享测试目录。 |
 
-`code/back/package.json` 增加：
-
-- `start:case3`
-- `dev:case3`
-- `dev:case3:no-picture`
-- `test:case3`
-- 根 `test` 串行运行 Case2 + Case3，避免并发共享测试目录。
-
-不得改变现有 Case2 script 的含义。
+子包仅保留 `start` / `test`；调试日志与关闭截图用环境变量（如 `CASE3_STUB_LOG_LEVEL=debug`、`CASE3_STUB_REQUEST_PICTURE=0`），不再提供 `dev*` / `*:no-picture` npm 脚本。Case2 与 Case3 stub **分开启停**，不得并行抢同一控制文件。
 
 ## 3. 控制文件所有权
 
@@ -399,7 +390,7 @@ seed=1 时还要按初始化接口语义校验共享目录中已存在的 base/b
 
 ```text
 1. code/server  -> npm start
-2. code/back    -> npm run dev:case3
+2. code/back    -> npm run start:case3
 3. code/web     -> npm run dev
 ```
 

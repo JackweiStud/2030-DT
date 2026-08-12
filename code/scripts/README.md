@@ -44,14 +44,16 @@ cd <repo>\code\scripts
 需要打桩时另开终端：
 
 ```bash
-cd code/back && npm run dev
+cd code/back && npm run start:case2
+# 或 Case3：npm run start:case3
 ```
 
 Windows：
 
 ```bat
 cd code\back
-npm run dev
+npm run start:case2
+REM 或 Case3：npm run start:case3
 ```
 
 ## `e2e-case2-stack.sh`

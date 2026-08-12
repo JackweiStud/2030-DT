@@ -18,7 +18,7 @@ npm run build
 
 - 开发时 Vite 把 `/api` 代理到 `DT_ADAPTER_HOST`:`DT_ADAPTER_PORT`（默认 `127.0.0.1:3102`）；旧 `CASE2_ADAPTER_*` 仅 fallback。
 - Case2 API 前缀写死 `/api/case2`；Case3 写死 `/api/case3`。
-- 推荐一键：`./code/scripts/dev-web-server.sh`（或 Windows 的 `dev-web-server.bat`）同时起 Web + Node 适配服务；打桩另开 `cd code/back && npm run dev`。
+- 推荐一键：`./code/scripts/dev-web-server.sh`（或 Windows 的 `dev-web-server.bat`）同时起 Web + Node 适配服务；打桩另开 `cd code/back && npm run start:case2` 或 `npm run start:case3`。
 
 ## 配置
 

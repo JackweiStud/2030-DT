@@ -37,7 +37,7 @@
   - 重置：`status="" → execute success → reinit complete`；重置路径不置 flag；回 `initial` 并清空 Calibrated 后，再 `POST {command:"init"}` 写回空闲态。
   - 可观测：Node 请求摘要/截图 accepted+saved；打桩接单带 `requestPicture`；Web 成功边沿结构化 console log。
   - 用户反复实机验证：初始化 / 启动 / 重置功能正常。
-- 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run dev`。
+- 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run start:case2` 或 `npm run start:case3`。
 - 2026-08-04 Web 代码检视后补齐主线 E2E：`code/scripts/e2e-case2-stack.sh` 会准备临时共享目录并启动 Web + Node 适配 + case2 打桩；`code/web npm run test:e2e` 覆盖进页 Initial、启动、截图落盘/清 flag、重置回 Initial。
 - 2026-08-04 本轮文档复核自动命令：`code/server npm test` 30/30 通过；`code/back npm test` 28/28 通过（首次复跑曾出现一次陈旧任务测试瞬时失败，立即重跑通过，后续保留观察）；`code/web npm run typecheck` 通过；`code/web npm test` 30/30 通过；`code/web npm run build` 通过；`code/web npm run test:e2e` 1/1 通过。
 - 当前焦点：Case3 Gate 4 三端代码已完成本地分层测试和 Node+stub 进程联调；下一步由用户执行浏览器全栈端到端测试并回传结果，未通过前不进入 Gate 5。

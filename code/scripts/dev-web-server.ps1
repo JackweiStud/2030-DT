@@ -111,7 +111,7 @@ Write-DevLog "sharedDir=$SharedDir"
 Write-DevLog "adapter=http://${ServerHostName}:${ServerPort}"
 Write-DevLog "web Local=http://127.0.0.1:${WebPort}  (proxy /api -> adapter)"
 Write-DevLog 'web Network：见下方 Vite 打印的 Network 行（host 已开）'
-Write-DevLog 'stub is NOT started; run code/back separately if needed'
+Write-DevLog 'stub is NOT started; run code/back separately (npm run start:case2|start:case3) if needed'
 Write-Host ''
 
 # Pass env into child processes (same as bash export)

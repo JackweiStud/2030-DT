@@ -56,7 +56,7 @@ echo "[dev-web-server] sharedDir=$SHARED_DIR"
 echo "[dev-web-server] adapter=http://${SERVER_HOST}:${SERVER_PORT}"
 echo "[dev-web-server] web Local=http://127.0.0.1:${WEB_PORT}  (proxy /api -> adapter)"
 echo "[dev-web-server] web Network：见下方 Vite 打印的 Network 行（host 已开）"
-echo "[dev-web-server] stub is NOT started; run code/back separately if needed"
+echo "[dev-web-server] stub is NOT started; run code/back separately (npm run start:case2|start:case3) if needed"
 echo
 
 (

@@ -37,13 +37,13 @@
 
 ## 2. 运行方式
 
-| 命令（示例名，实现自定） | 用途 |
+| 命令 | 用途 |
 |---|---|
-| 单独启动打桩进程（`code/back/case2`：`npm start`） | 只模拟后端；假定适配服务已在跑且共享目录就绪。**演示默认开截图**（`CASE2_STUB_REQUEST_PICTURE=1`）。 |
-| 关闭截图的打桩（`npm run start:no-picture` 或 `CASE2_STUB_REQUEST_PICTURE=0`） | 只推进 status / 发布六文件，不置 flag。 |
+| `npm run start:case2`（在 `code/back`） | 只模拟 Case2 后端；假定适配服务已在跑且共享目录就绪。**演示默认开截图**（`CASE2_STUB_REQUEST_PICTURE=1`）。 |
+| `CASE2_STUB_REQUEST_PICTURE=0 npm run start:case2` | 只推进 status / 发布六文件，不置 flag。 |
 | 与适配服务一并拉起（如历史名 `dev:stub`） | 可选编排：先准备沙箱共享根，再同时起适配服务 + 打桩；`SIGINT`/`SIGTERM` 时子进程一并退出。 |
 
-默认 **`npm start`（适配服务）不得启动打桩**。
+默认 **`code/server` 的 `npm start` 不得启动打桩**。
 
 ## 3. 行为规格
 

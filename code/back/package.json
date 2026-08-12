@@ -4,13 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "npm --prefix case2 start",
-    "dev": "npm --prefix case2 run dev",
-    "dev:picture": "npm --prefix case2 run dev:picture",
+    "start:case2": "npm --prefix case2 start",
     "start:case3": "npm --prefix case3 start",
-    "dev:case3": "npm --prefix case3 run dev",
-    "dev:case3:no-picture": "npm --prefix case3 run dev:no-picture",
-    "test:case3": "npm --prefix case3 test",
     "test": "npm --prefix case2 test && npm --prefix case3 test"
   }
 }
