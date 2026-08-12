@@ -12,10 +12,11 @@ import {
   writePhaseFiles,
 } from "../helpers.mjs";
 
-function service(sharedDir) {
+function service(sharedDir, options = {}) {
   return createControlFileService({
     sharedDir,
     logger: createSilentLogger(),
+    ...options,
   });
 }
 
@@ -86,6 +87,38 @@ test("start、reinit 和进页 init 合并最新快照、清空 status 并保留
   assert.equal(idle.status, "");
   assert.equal(idle.save_picture_flag, 0);
   assert.equal(idle.future_field, "keep-me");
+});
+
+test("Case2 Start 遇 Windows 瞬时 rename 锁会重试并成功写入控制文件", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  const realFs = fs;
+  let renameCalls = 0;
+  const fsOps = {
+    ...realFs,
+    rename: async (...args) => {
+      renameCalls += 1;
+      if (renameCalls <= 2) {
+        const error = new Error("simulated Windows sharing violation");
+        error.code = "EPERM";
+        throw error;
+      }
+      return realFs.rename(...args);
+    },
+  };
+
+  const written = await service(sharedDir, {
+    fsOps,
+    renameAttempts: 3,
+    renameRetryMs: 0,
+  }).updateFromHttp({
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+  });
+
+  assert.equal(written.command, "start");
+  assert.equal(written.status, "");
+  assert.equal(renameCalls, 3);
 });
 
 test("start 与 reinit 写控制前清空六个 Calibrated 文件，不清 Initial", async (t) => {

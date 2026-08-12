@@ -251,7 +251,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 3. 只合并本次 payload 的允许字段；若本次为 `start` 或 `reinit`，再强制 `status=""`；若本次为 `init`，再强制 `case=case2,dt_type="",status="",save_picture_flag=0`。
 4. 将完整合并结果写入共享目录中的唯一临时文件。
 5. `fsync` 并关闭临时文件。
-6. 在同一目录内用原子 `rename` 替换 `case_control.json`。
+6. 在同一目录内用原子 `rename` 替换 `case_control.json`。对 Windows 瞬时文件锁（`EPERM` / `EACCES` / `EBUSY`）做有限次 rename 重试（默认最多 8 次、间隔 25ms；与 Case3 / `atomic-write` 共用）。这是 I/O 防抖，不是业务命令重试。
 7. 重新读取并返回写后快照。
 
 临时文件名必须包含进程号与随机 nonce；异常退出后遗留的临时文件不作为控制文件读取。

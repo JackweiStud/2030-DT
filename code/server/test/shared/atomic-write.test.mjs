@@ -12,6 +12,7 @@ test("atomicReplaceFile retries transient Windows rename locks", async (t) => {
   await fs.writeFile(targetPath, "old\n");
 
   let renameCalls = 0;
+  const warnings = [];
   const fsOps = {
     ...fs,
     rename: async (...args) => {
@@ -30,10 +31,20 @@ test("atomicReplaceFile retries transient Windows rename locks", async (t) => {
     renameAttempts: 3,
     renameRetryMs: 0,
     sleep: async () => {},
+    logger: {
+      warn(event, data) {
+        warnings.push({ event, data });
+      },
+    },
   });
 
   assert.equal(renameCalls, 3);
   assert.equal(await fs.readFile(targetPath, "utf8"), "new\n");
+  assert.equal(warnings.length, 2);
+  assert.equal(warnings[0].event, "atomic rename transient failure; retrying");
+  assert.equal(warnings[0].data.code, "EPERM");
+  assert.equal(warnings[0].data.attempt, 1);
+  assert.equal(warnings[1].data.attempt, 2);
 });
 
 test("atomicReplaceFile does not retry non-lock rename errors", async () => {

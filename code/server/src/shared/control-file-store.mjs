@@ -147,6 +147,9 @@ export function createControlFileStore(options) {
   const logger = options.logger;
   const queue = options.queue ?? new SerialQueue();
   const controlPath = path.join(sharedDir, "case_control.json");
+  const renameAttempts = options.renameAttempts;
+  const renameRetryMs = options.renameRetryMs;
+  const sleep = options.sleep;
 
   async function read() {
     try {
@@ -183,7 +186,13 @@ export function createControlFileStore(options) {
       const merged = { ...current, ...patch };
       const serialized = `${JSON.stringify(merged, null, 2)}\n`;
       try {
-        await atomicReplaceFile(controlPath, serialized, { fsOps });
+        await atomicReplaceFile(controlPath, serialized, {
+          fsOps,
+          logger,
+          renameAttempts,
+          renameRetryMs,
+          sleep,
+        });
       } catch (error) {
         throw new AppError(
           500,

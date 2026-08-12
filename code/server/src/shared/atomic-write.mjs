@@ -10,6 +10,7 @@ async function renameWithRetry(temporaryPath, targetPath, fsOps, options) {
   const attempts = options.renameAttempts ?? 8;
   const retryMs = options.renameRetryMs ?? 25;
   const wait = options.sleep ?? delay;
+  const logger = options.logger;
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -24,6 +25,14 @@ async function renameWithRetry(temporaryPath, targetPath, fsOps, options) {
       ) {
         throw error;
       }
+      logger?.warn("atomic rename transient failure; retrying", {
+        target: path.basename(targetPath),
+        code: error?.code,
+        attempt,
+        maxAttempts: attempts,
+        retryMs,
+        reason: error instanceof Error ? error.message : String(error),
+      });
       await wait(retryMs);
     }
   }
@@ -34,6 +43,7 @@ async function renameWithRetry(temporaryPath, targetPath, fsOps, options) {
 /**
  * 在目标文件同目录完成临时写入、fsync、关闭和原子替换。
  * 同目录是关键约束：跨目录 rename 可能退化或直接失败。
+ * 可选 `logger`：瞬时锁触发重试时打 warn。
  */
 export async function atomicReplaceFile(targetPath, content, options = {}) {
   const fsOps = options.fsOps ?? defaultFs;

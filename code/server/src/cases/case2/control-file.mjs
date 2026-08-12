@@ -118,6 +118,9 @@ export function createControlFileService(options) {
       fsOps,
       logger,
       queue: options.queue,
+      renameAttempts: options.renameAttempts,
+      renameRetryMs: options.renameRetryMs,
+      sleep: options.sleep,
     });
   const dataDir = path.join(sharedDir, "case2");
 
