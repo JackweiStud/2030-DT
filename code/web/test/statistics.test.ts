@@ -3,9 +3,13 @@ import {
   buildCdfStairPath,
   buildEmpiricalCdfPoints,
   formatReductionLabel,
+  meanChangeMarker,
+  meanChangeStackTops,
   meanOf,
-  reductionPercent,
+  relativeChangePercent,
   resolveXDomain,
+  buildCdfXAxis,
+  cdfXTickCount,
 } from "../src/cases/case2/metrics/statistics";
 
 describe("statistics", () => {
@@ -35,17 +39,41 @@ describe("statistics", () => {
     expect(d).toContain(" L ");
   });
 
-  it("降幅按样本计算，Initial=0 不可计算", () => {
-    expect(reductionPercent(10, 5)).toBe(50);
-    expect(formatReductionLabel(reductionPercent(0, 1))).toBe("不可计算");
+  it("相对变化 (Cali-Init)/Init，Initial=0 不可计算", () => {
+    expect(relativeChangePercent(10, 5)).toBe(-50);
+    expect(relativeChangePercent(5, 311.5)).toBe(6130);
+    expect(formatReductionLabel(relativeChangePercent(0, 1))).toBe("不可计算");
     expect(meanOf([1, 2, 3])).toBe(2);
   });
 
-  it("降幅与均值文案四舍五入为整数，不保留小数", () => {
+  it("徽章文案只显示幅度，不带正负号", () => {
     expect(formatReductionLabel(40)).toBe("40%");
-    expect(formatReductionLabel(50)).toBe("50%");
+    expect(formatReductionLabel(-6130)).toBe("6130%");
     expect(formatReductionLabel(44.44)).toBe("44%");
     expect(formatReductionLabel(50.55)).toBe("51%");
+  });
+
+  it("升高时箭头旋转 180°、虚线对齐 Initial 柱顶；降低时箭头朝下、虚线对齐 Calibrated 柱顶", () => {
+    const up = meanChangeMarker(5, 311.5, 148, 40);
+    expect(up.increased).toBe(true);
+    expect(up.arrowRotationDeg).toBe(180);
+    expect(up.guideTop).toBe(148);
+
+    const down = meanChangeMarker(10, 5, 80, 120);
+    expect(down.increased).toBe(false);
+    expect(down.arrowRotationDeg).toBe(0);
+    expect(down.guideTop).toBe(120);
+  });
+
+  it("气泡叠在 Calibrated 均值上方，不与 311.5 抢同一行", () => {
+    const stacked = meanChangeStackTops(109, 26);
+    expect(stacked.caliMeanTop).toBe(83);
+    expect(stacked.badgeTop).toBe(83 - 47 - 4);
+    expect(stacked.badgeTop + 47).toBeLessThanOrEqual(stacked.caliMeanTop);
+
+    const cramped = meanChangeStackTops(20, 26);
+    expect(cramped.badgeTop).toBe(4);
+    expect(cramped.caliMeanTop).toBe(4 + 47 + 4);
   });
 
   it("允许 Initial/Calibrated 不等长", () => {
@@ -53,5 +81,23 @@ describe("statistics", () => {
     const b = buildEmpiricalCdfPoints([1, 2], 256);
     expect(a).toHaveLength(4);
     expect(b).toHaveLength(2);
+  });
+
+  it("CDF x 轴：MAX 小时保持 16 档居中；五位数减少档数且首左末右", () => {
+    expect(cdfXTickCount(0.5, 689)).toBe(16);
+    const narrow = buildCdfXAxis(0.5, 689);
+    expect(narrow).toHaveLength(16);
+    expect(narrow[0]?.align).toBe("center");
+    expect(narrow.at(-1)?.align).toBe("center");
+    expect(narrow.at(-1)?.text).toBe("689");
+
+    expect(cdfXTickCount(3, 45796)).toBeLessThan(16);
+    const wide = buildCdfXAxis(3, 45796);
+    expect(wide[0]?.align).toBe("start");
+    expect(wide.at(-1)?.align).toBe("end");
+    expect(wide.at(-1)?.text).toBe("45796");
+    const lastGap = wide.at(-1)!.x - wide.at(-2)!.x;
+    const denseGap = (374 - 26) / 15;
+    expect(lastGap).toBeGreaterThan(denseGap);
   });
 });

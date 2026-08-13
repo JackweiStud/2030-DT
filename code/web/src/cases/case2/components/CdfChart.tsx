@@ -6,6 +6,7 @@
 
 import {
   buildCdfStairPath,
+  buildCdfXAxis,
   buildEmpiricalCdfPoints,
   resolveXDomain,
 } from "../metrics/statistics";
@@ -41,9 +42,6 @@ const Y_LABELS = [
 ];
 
 const H_GRID = [4, 24, 44, 65, 85, 105, 125, 145, 166, 186, 206];
-const V_GRID = [
-  26, 49, 72, 96, 119, 142, 165, 188, 212, 235, 258, 281, 304, 328, 351, 374,
-];
 
 function pctX(x: number): string {
   return `${(x / VB.w) * 100}%`;
@@ -51,22 +49,6 @@ function pctX(x: number): string {
 
 function pctY(y: number): string {
   return `${(y / VB.h) * 100}%`;
-}
-
-/** 生成与静态接近的 x 轴刻度文案（按当前 domain 均匀取点）。 */
-function buildXTickLabels(xMin: number, xMax: number): { x: number; text: string }[] {
-  const count = V_GRID.length;
-  const labels: { x: number; text: string }[] = [];
-  for (let i = 0; i < count; i += 1) {
-    const t = count === 1 ? 0 : i / (count - 1);
-    const value = xMin + (xMax - xMin) * t;
-    const text =
-      Math.abs(value) >= 10 || Number.isInteger(value)
-        ? String(Math.round(value))
-        : (Math.round(value * 10) / 10).toFixed(1);
-    labels.push({ x: V_GRID[i]!, text });
-  }
-  return labels;
 }
 
 export function CdfChart(props: Props) {
@@ -86,7 +68,7 @@ export function CdfChart(props: Props) {
     : [...initialKpi];
   const domain =
     domainValues.length > 0 ? resolveXDomain(domainValues) : EMPTY_X_DOMAIN;
-  const xTicks = buildXTickLabels(domain.xMin, domain.xMax);
+  const xTicks = buildCdfXAxis(domain.xMin, domain.xMax);
 
   const initPath = initPoints
     ? buildCdfStairPath(initPoints, domain, PLOT)
@@ -115,8 +97,8 @@ export function CdfChart(props: Props) {
             {H_GRID.map((y) => (
               <line key={`h-${y}`} x1={26} y1={y} x2={374} y2={y} />
             ))}
-            {V_GRID.map((x) => (
-              <line key={`v-${x}`} x1={x} y1={4} x2={x} y2={206} />
+            {xTicks.map((tick) => (
+              <line key={`v-${tick.x}`} x1={tick.x} y1={4} x2={tick.x} y2={206} />
             ))}
           </g>
           {initPath ? (
@@ -153,7 +135,7 @@ export function CdfChart(props: Props) {
           {xTicks.map((item) => (
             <span
               key={`x-${item.x}`}
-              className="cdf-axis-label cdf-axis-label--x"
+              className={`cdf-axis-label cdf-axis-label--x is-${item.align}`}
               style={{ left: pctX(item.x), top: pctY(X_TICK_Y) }}
             >
               {item.text}

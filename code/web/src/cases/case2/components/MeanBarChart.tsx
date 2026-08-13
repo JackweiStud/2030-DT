@@ -9,8 +9,10 @@ import badgeBgUrl from "../../../../assets/case2/icons/reduction-badge-bg.png";
 import arrowUrl from "../../../../assets/case2/icons/reduction-arrow-icon.png";
 import {
   formatReductionLabel,
+  meanChangeMarker,
+  meanChangeStackTops,
   meanOf,
-  reductionPercent,
+  relativeChangePercent,
 } from "../metrics/statistics";
 
 type Props = {
@@ -30,8 +32,6 @@ const BAR_LEFT_INIT = 8;
 const BAR_LEFT_CALI = 10;
 const BAR_WIDTH = 40;
 const MEAN_OFFSET_ABOVE = 26;
-/** 降幅徽章相对 Initial 均值文案再上移，避免盖住 Calibrated 均值 */
-const REDUCTION_BADGE_LIFT = 15;
 /** 最高柱相对 BAR_MAX_HEIGHT 的目标占比 */
 const Y_MAX_FILL_RATIO = 0.8;
 /** 无样本时的占位 y 上界（仅轴刻度 chrome，对齐 Gate 1.5 默认刻度）。 */
@@ -83,10 +83,21 @@ export function MeanBarChart(props: Props) {
     hasInit && meanInit !== null ? barGeometry(meanInit, yMax) : null;
   const caliBar = showCali ? barGeometry(meanCali, yMax) : null;
 
-  const reduction =
+  const changePct =
     showReduction && showCali && meanInit !== null
-      ? reductionPercent(meanInit, meanCali)
+      ? relativeChangePercent(meanInit, meanCali)
       : null;
+  const changeMarker =
+    showReduction && showCali && initBar && caliBar && meanInit !== null
+      ? meanChangeMarker(meanInit, meanCali, initBar.top, caliBar.top)
+      : null;
+  const stackTops =
+    showReduction && caliBar ? meanChangeStackTops(caliBar.top, MEAN_OFFSET_ABOVE) : null;
+  const caliMeanTop = stackTops
+    ? stackTops.caliMeanTop
+    : caliBar
+      ? Math.max(4, caliBar.top - MEAN_OFFSET_ABOVE)
+      : 4;
 
   return (
     <div className="bar-area">
@@ -132,10 +143,7 @@ export function MeanBarChart(props: Props) {
         <div className="bar-group bar-group--calibrated">
           {showCali && caliBar ? (
             <>
-              <span
-                className="mean-value"
-                style={{ top: Math.max(4, caliBar.top - MEAN_OFFSET_ABOVE) }}
-              >
+              <span className="mean-value" style={{ top: caliMeanTop }}>
                 {formatBarMean(meanCali)}
               </span>
               <div
@@ -157,7 +165,7 @@ export function MeanBarChart(props: Props) {
         {showCali && caliBar ? (
           <svg
             className="bar-guide-dash"
-            style={{ top: caliBar.top }}
+            style={{ top: changeMarker?.guideTop ?? caliBar.top }}
             viewBox="0 0 200 2"
             preserveAspectRatio="none"
             aria-hidden
@@ -166,19 +174,27 @@ export function MeanBarChart(props: Props) {
           </svg>
         ) : null}
 
-        {showReduction && showCali && initBar ? (
+        {showReduction && showCali && caliBar && changeMarker ? (
           <div
             className="reduction-badge"
             style={{
               backgroundImage: `url(${badgeBgUrl})`,
-              top: Math.max(
-                4,
-                initBar.top - MEAN_OFFSET_ABOVE - REDUCTION_BADGE_LIFT,
-              ),
+              top: stackTops?.badgeTop ?? 4,
             }}
           >
-            <img src={arrowUrl} width={24} height={24} alt="" />
-            <span>{formatReductionLabel(reduction)}</span>
+            <img
+              src={arrowUrl}
+              width={24}
+              height={24}
+              alt={changeMarker.increased ? "相对 Initial 增加" : "相对 Initial 减少"}
+              className={
+                changeMarker.increased
+                  ? "reduction-badge__arrow is-up"
+                  : "reduction-badge__arrow"
+              }
+              style={{ transform: `rotate(${changeMarker.arrowRotationDeg}deg)` }}
+            />
+            <span>{formatReductionLabel(changePct)}</span>
           </div>
         ) : null}
       </div>

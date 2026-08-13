@@ -978,6 +978,7 @@ for i = 0 .. CAP - 1:
 | 条数 | `initial` / `calibrating` / `failed-*`：仅 Initial；`completed` 与 `resetting`（暂留）：两条 |
 | y-domain | 固定 `[0, 1]` |
 | x-domain | 仅 Initial：用 Initial 样本 min/max；双曲线：用两组 **联合** min/max（必须共用 x 轴才能看左移） |
+| x 轴刻度/竖网格 | 默认最多 16 档（MAX 小、两三位数时与静态一致，标签居中）。MAX 大到四～五位时减少档数，刻度与竖网格共用同一组 x；此时首标签左对齐、末标签右对齐，避免末两档数字重叠。 |
 | min=max | x-domain 两侧扩 `max(1, abs(value)*0.05)` |
 | 外框尺寸 | 以 `web/assets/case2/tokens.css` 的 `--case2-cdf-width` / `--case2-cdf-height` 等为准；`plotLeft/Top/Width/Height` 从该框内布局派生，不必在本文重抄 SVG viewBox 数字 |
 
@@ -1036,23 +1037,27 @@ mean = sum(samples) / N
 
 Initial-only 状态只用 Initial 均值参与 `yMax`；`completed` 与 `resetting`（暂留双柱）用 Initial / Calibrated 两个均值联合取 max。有效路径数/时延 KPI 默认非负，柱在 0 上方；RSS KPI 允许负值，现有柱高几何对负均值按 0 高度处理。
 
-### 9.4 降幅
+### 9.4 相对变化（原「降幅」徽章）
 
-在 **`completed` 与 `resetting`（暂留对比）** 且该项已展示 Calibrated、Initial / Calibrated 均值均有效时尝试计算（与 §9.0「暂留含降幅」一致）：
+在 **`completed` 与 `resetting`（暂留对比）** 且该项已展示 Calibrated、Initial / Calibrated 均值均有效时尝试计算：
 
 ```text
 若 meanInitial > 0 且两均值有限:
-  reductionPct = (meanInitial - meanCalibrated) / meanInitial * 100
+  changePct = (meanCalibrated - meanInitial) / meanInitial * 100
 否则:
   显示「不可计算」（不写假百分比）
 ```
 
+含义：**Calibrated 相对 Initial 增加或减少多少**。正值升高，负值降低。徽章文案只显示幅度整数 `%`（不带正负号）；方向由箭头表示。
+
 | 项 | 规则 |
 |---|---|
-| 禁止 | 写死 `50%` / `40%` 或任何与当前样本无关的降幅 |
-| 显示 | **四舍五入为整数百分比**（`formatReductionLabel` → `44%`）；不保留一位小数 |
-| 符号 | 负降幅保留负号（Calibrated 均值更大 = 误差变差） |
-| `meanInitial<=0` | 仅当 Initial 均值恰为 0 或非正时分母无效，显示「不可计算」 |
+| 禁止 | 写死 `50%` / `40%` 或任何与当前样本无关的百分比 |
+| 显示 | **四舍五入为整数百分比绝对值**（`formatReductionLabel` → `44%` / `6130%`） |
+| 箭头 | 现成下降箭头图：升高时 `rotate(180deg)` 朝上；降低时 0° 朝下 |
+| 气泡位置 | 相对 **Calibrated 柱顶**上移，且整块在柱顶均值文案之上，避免与均值叠字 |
+| 水平虚线 | 升高：对齐 **Initial 柱顶**；降低：对齐 **Calibrated 柱顶** |
+| `meanInitial<=0` | 分母无效，显示「不可计算」 |
 
 ### 9.5 与参考 / 契约的关系
 
@@ -1172,7 +1177,7 @@ saving
 - CDF 配置：`VITE_CASE2_CDF_POINT_CAP` 缺失使用默认 `256`；存在但为空、非 `^\d+$`、非安全整数或 `<2` 时明确失败；禁止 `parseInt` 部分接受、钳制或回退默认值。
 - CDF 点集：覆盖 `N=1`、重复 x（允许合并或不合并连续同 x）、无序输入排序、Initial / Calibrated 不等长；`N≤CAP` 不下采样，`N>CAP` 按端点公式取 `CAP` 点。
 - CDF SVG：断言 path 从 `(xMin,0)` 起笔，逐点先水平后垂直，最后延伸到 `(xMax,1)`；双曲线共用联合 x-domain；`min=max` 使用指定 padding；禁止平滑曲线。
-- 均值/柱图/降幅：覆盖正均值、零均值、0 基线、正/负降幅、`meanInitial=0` 不可计算；柱高跟 Gate 1.5 几何（`Y_MAX_FILL_RATIO`）。
+- 均值/柱图/降幅：覆盖正均值、零均值、0 基线、Cali 相对 Init 升高/降低、`meanInitial=0` 不可计算；柱高跟 Gate 1.5 几何（`Y_MAX_FILL_RATIO`）。
 - 热力配置：env 缺失使用唯一默认值；存在但为空/非法词法/非安全整数/越界时明确失败；底图加载失败或 decode 后锚区越界时显示固定配置错误、双禁且不创建 Canvas。
 - 热力插值：用 `2×2` 已知矩阵断言离屏四角精确等于矩阵四角；覆盖动态 `Ny×Nx`、`1×N`、`N×1`、`1×1` 和常量矩阵。
 - 热力方向：非对称矩阵断言第一行在上、第一列在左，且无转置、上下翻转或左右翻转。

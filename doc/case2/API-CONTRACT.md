@@ -292,7 +292,7 @@ Gate 3 本地无真实后端时，模拟后端打桩按 [realback_no.md](realbac
 | Initial / Calibrated 热力色场 | 对应 `Nx × Ny` 矩阵 + `04-runtime-assets/case2/maps/heatmap-map-base.png` | 运行时按已提供热力图说明进行插值、配色和马赛克叠加；静态代表图 `heatmap-calibrated-represent.png` 不得进入正式运行路径。                 |
 | CDF                       | 每项对应的 `N` 个 KPI 样本                                                    | **经验 CDF**：排序后点 \((x_{(k)},\,k/N)\)（`k=1..N`），点数随 `N`；仅当 `N` 超过 Web 配置的显示上限（默认 256）时才下采样。不以固定 51 点为接口要求。画法见 [WEB-SPEC.md](WEB-SPEC.md) §9。 |
 | 平均误差                      | 每项对应的 `N` 个 KPI 样本                                                    | 算术平均；显示精度按 [WEB-SPEC.md](WEB-SPEC.md) 执行。                                                                 |
-| 降幅                        | Initial / Calibrated 平均误差                                             | `(meanInitial - meanCalibrated) / meanInitial × 100%`，仅当 `meanInitial > 0` 且两者均有效时显示。不得写死 50%。 |
+| 降幅                        | Initial / Calibrated 平均误差                                             | `(meanCalibrated - meanInitial) / meanInitial × 100%`（Cali 相对 Init 增减）；仅当 `meanInitial > 0` 且两者均有效时显示。徽章显示幅度，箭头区分升高/降低。不得写死 50%。 |
 
 
 “校准有效”只能基于当前已展示批次的三项误差 CDF 左移与平均误差下降来解释；UI 不得把参考样本、单一指标或固定数字包装成真实执行结论。

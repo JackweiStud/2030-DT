@@ -720,6 +720,14 @@
   transform: translate(-50%, -50%);
 }
 
+.case2-page .cdf-axis-label--x.is-start {
+  transform: translate(0, -50%);
+}
+
+.case2-page .cdf-axis-label--x.is-end {
+  transform: translate(-100%, -50%);
+}
+
 .case2-page .bar-group {
   position: absolute;
   top: 0;
@@ -801,7 +809,7 @@
 .case2-page .bar-guide-dash {
   position: absolute;
   left: 24px;
-  /* top 由 MeanBarChart 按 Calibrated 柱顶动态写入，与柱顶水平对齐 */
+  /* top 由 MeanBarChart 写入：升高对齐 Initial 柱顶，降低对齐 Calibrated 柱顶 */
   width: 200px;
   height: 2px;
   overflow: visible;
@@ -842,8 +850,7 @@
 .case2-page .reduction-badge {
   position: absolute;
   left: 139px;
-  /* top 由 MeanBarChart 写入：相对 Initial 均值再上移，避开 Calibrated 均值 */
-  /* 设计基线 85；一位小数百分比比「40%」更宽，按内容伸展 */
+  /* top 由 MeanBarChart 写入：相对 Calibrated 柱顶上移 */
   min-width: 85px;
   width: max-content;
   height: 47px;
@@ -872,6 +879,7 @@
   width: 24px;
   height: 24px;
   display: block;
+  transform-origin: center;
 }
 
 .case2-page .reduction-badge span {

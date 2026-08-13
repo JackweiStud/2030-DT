@@ -58,6 +58,65 @@ export function resolveXDomain(values: number[]): XDomain {
   return { xMin: xMinRaw, xMax: xMaxRaw };
 }
 
+/** 与 CdfChart viewBox 绘图区对齐：x=26～374。 */
+export const CDF_X_AXIS = Object.freeze({
+  left: 26,
+  right: 374,
+  width: 348,
+  maxTicks: 16,
+  minTicks: 5,
+});
+
+export function formatCdfXTick(value: number): string {
+  if (Math.abs(value) >= 10 || Number.isInteger(value)) {
+    return String(Math.round(value));
+  }
+  return (Math.round(value * 10) / 10).toFixed(1);
+}
+
+/**
+ * MAX 小时（标签 ≤3 字符）保持 16 档；MAX 大到四～五位时减少档数，避免末两档重叠。
+ */
+export function cdfXTickCount(xMin: number, xMax: number): number {
+  const samples = [xMin, xMax, (xMin + xMax) / 2];
+  const chars = Math.max(1, ...samples.map((value) => formatCdfXTick(value).length));
+  if (chars <= 3) return CDF_X_AXIS.maxTicks;
+  const minStep = chars * 6 + 10;
+  const fitted = Math.floor(CDF_X_AXIS.width / minStep) + 1;
+  return Math.max(CDF_X_AXIS.minTicks, Math.min(CDF_X_AXIS.maxTicks, fitted));
+}
+
+export type CdfXTick = {
+  x: number;
+  text: string;
+  align: "start" | "center" | "end";
+};
+
+/** 刻度与竖网格共用同一组 x。小 MAX 全居中（与静态 16 档一致）；大 MAX 减少档数后首左末右，避免贴边裁切。 */
+export function buildCdfXAxis(xMin: number, xMax: number): CdfXTick[] {
+  const count = cdfXTickCount(xMin, xMax);
+  const { left, width, maxTicks } = CDF_X_AXIS;
+  const edgeAlign = count < maxTicks;
+  const ticks: CdfXTick[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0 : i / (count - 1);
+    const value = xMin + (xMax - xMin) * t;
+    const align = edgeAlign
+      ? i === 0
+        ? "start"
+        : i === count - 1
+          ? "end"
+          : "center"
+      : "center";
+    ticks.push({
+      x: left + t * width,
+      text: formatCdfXTick(value),
+      align,
+    });
+  }
+  return ticks;
+}
+
 /**
  * 阶梯 path：从 (xMin,0) 起笔，逐点先水平后垂直，最后延伸到 (xMax,1)。
  */
@@ -120,17 +179,66 @@ export function layoutMeanBar(
 }
 
 /**
- * 降幅百分比；Initial 均值非正时不可计算。
- * 返回 null 表示 UI 显示「不可计算」。
+ * Calibrated 相对 Initial 的变化百分比：`(Cali - Init) / Init × 100`。
+ * 正值 = 升高，负值 = 降低。Initial 均值非正时不可计算，返回 null。
  */
-export function reductionPercent(
+export function relativeChangePercent(
   meanInitial: number,
   meanCalibrated: number,
 ): number | null {
   if (!(meanInitial > 0) || !Number.isFinite(meanInitial) || !Number.isFinite(meanCalibrated)) {
     return null;
   }
-  return ((meanInitial - meanCalibrated) / meanInitial) * 100;
+  return ((meanCalibrated - meanInitial) / meanInitial) * 100;
+}
+
+/** 下降箭头图转到朝上所需角度。 */
+export const CHANGE_ARROW_INCREASE_DEG = 180;
+/** 与 `.reduction-badge` 高度一致，用于把气泡接到均值上方。 */
+export const REDUCTION_BADGE_HEIGHT = 47;
+const REDUCTION_BADGE_STACK_GAP = 4;
+const STACK_MIN_TOP = 4;
+
+export type MeanChangeMarker = {
+  increased: boolean;
+  arrowRotationDeg: number;
+  guideTop: number;
+};
+
+/**
+ * 气泡跟 Calibrated 柱顶；虚线：升高对齐 Initial 柱顶，降低对齐 Calibrated 柱顶。
+ */
+export function meanChangeMarker(
+  meanInitial: number,
+  meanCalibrated: number,
+  initBarTop: number,
+  caliBarTop: number,
+): MeanChangeMarker {
+  const increased = meanCalibrated > meanInitial;
+  return {
+    increased,
+    arrowRotationDeg: increased ? CHANGE_ARROW_INCREASE_DEG : 0,
+    guideTop: increased ? initBarTop : caliBarTop,
+  };
+}
+
+/**
+ * 气泡在 Calibrated 均值之上，避免 311.5 与 6130% 叠成乱码。
+ * 顶部空间不够时气泡贴顶，均值下移到气泡下方。
+ */
+export function meanChangeStackTops(
+  caliBarTop: number,
+  meanOffsetAbove: number,
+): { badgeTop: number; caliMeanTop: number } {
+  const caliMeanTop = Math.max(STACK_MIN_TOP, caliBarTop - meanOffsetAbove);
+  const badgeTop = caliMeanTop - REDUCTION_BADGE_HEIGHT - REDUCTION_BADGE_STACK_GAP;
+  if (badgeTop >= STACK_MIN_TOP) {
+    return { badgeTop, caliMeanTop };
+  }
+  return {
+    badgeTop: STACK_MIN_TOP,
+    caliMeanTop: STACK_MIN_TOP + REDUCTION_BADGE_HEIGHT + REDUCTION_BADGE_STACK_GAP,
+  };
 }
 
 /** 四舍五入为整数文案（不保留小数）。 */
@@ -138,7 +246,8 @@ export function formatOneDecimal(value: number): string {
   return String(Math.round(value));
 }
 
+/** 徽章只显示变化幅度；方向由箭头承担，不带正负号。 */
 export function formatReductionLabel(pct: number | null): string {
   if (pct === null) return "不可计算";
-  return `${formatOneDecimal(pct)}%`;
+  return `${Math.abs(Math.round(pct))}%`;
 }
