@@ -185,7 +185,6 @@ export function useCase3Controller(options: Options) {
   const probeTimerRef = useRef<number | null>(null);
   const pollAbortRef = useRef<AbortController | null>(null);
   const screenshotPhaseRef = useRef<ScreenshotPhase>("idle");
-  const screenshotBase64Ref = useRef<string | null>(null);
   const lastFlagRef = useRef(0);
   const lastStatusRef = useRef<string | null>(null);
   const lastProgressRef = useRef<{ generation: number; count: number } | null>(
@@ -414,7 +413,7 @@ export function useCase3Controller(options: Options) {
     screenshotAbortRef.current?.abort();
     screenshotAbortRef.current = ac;
     let attempt = 0;
-    let base64 = screenshotBase64Ref.current;
+    let base64: string | null = null;
     const taskStartedAt = performance.now();
     const isStale = () =>
       ac.signal.aborted ||
@@ -459,7 +458,6 @@ export function useCase3Controller(options: Options) {
             toPngMs = Math.round(performance.now() - toPngStartedAt);
             if (isStale()) return;
             base64 = stripDataUrl(png);
-            screenshotBase64Ref.current = base64;
             case3Log("screenshot.capture_ok", {
               side,
               generation,
@@ -580,7 +578,6 @@ export function useCase3Controller(options: Options) {
           }
           if (failurePhase === "generate") {
             base64 = null;
-            screenshotBase64Ref.current = null;
           }
         }
       }
@@ -1135,7 +1132,6 @@ export function useCase3Controller(options: Options) {
     lastFinalDiagnosticRef.current = null;
     lastControlMismatchRef.current = null;
     probeStartedLoggedRef.current = false;
-    screenshotBase64Ref.current = null;
     pendingCompleteSideRef.current = null;
 
     const scheduleProbe = () => {
@@ -1211,7 +1207,6 @@ export function useCase3Controller(options: Options) {
       finalNotReadyAttemptsRef.current = 0;
       lastControlMismatchRef.current = null;
       screenshotPhaseRef.current = "idle";
-      screenshotBase64Ref.current = null;
 
       try {
         const control = await apiRef.current.postControl(

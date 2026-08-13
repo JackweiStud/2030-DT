@@ -720,15 +720,16 @@ describe("useCase3Controller lifecycle", () => {
   });
 
   it("success 截图成功后立刻可认 complete 再 0→1，不卡 waitClear，完成态再截一张后才 POST init", async () => {
-    vi.mocked(toPng).mockResolvedValue(
-      "data:image/png;base64,SECOND_EDGE_FRAME",
-    );
+    vi.mocked(toPng)
+      .mockResolvedValueOnce("data:image/png;base64,SUCCESS_FRAME")
+      .mockResolvedValueOnce("data:image/png;base64,COMPLETE_FRAME");
     const infoLog = vi
       .spyOn(console, "info")
       .mockImplementation(() => undefined);
     let phase: "idle" | "success" | "complete" = "idle";
     let screenshots = 0;
     let initPosts = 0;
+    const uploadedFrames: string[] = [];
     const api: Case3Api = {
       getControl: vi.fn(async () => {
         if (phase === "idle") return control();
@@ -763,7 +764,8 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
-      postScreenshot: vi.fn(async () => {
+      postScreenshot: vi.fn(async (base64) => {
+        uploadedFrames.push(base64);
         screenshots += 1;
         return { path: `out/case3/case3-00${screenshots - 1}.png`, seq: screenshots - 1 };
       }),
@@ -790,6 +792,8 @@ describe("useCase3Controller lifecycle", () => {
     );
     await waitFor(() => expect(api.postScreenshot).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(initPosts).toBe(2));
+    expect(toPng).toHaveBeenCalledTimes(2);
+    expect(uploadedFrames).toEqual(["SUCCESS_FRAME", "COMPLETE_FRAME"]);
     expect(infoLog).toHaveBeenCalledWith(
       "[case3] screenshot.triggered",
       expect.objectContaining({ boundary: "success" }),
