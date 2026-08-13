@@ -11,6 +11,7 @@ import {
   shouldFetchCalibrated,
   shouldResetCommandAfterCommandCompletion,
   shouldStartScreenshot,
+  shouldKeepPollingForWaitClear,
   statusFeedbackText,
   shouldShowCalibrated,
 } from "../src/cases/case2/state/case2Reducer";
@@ -278,5 +279,29 @@ describe("case2Reducer", () => {
       lastControl: control({ command: "init", status: "", dt_type: "" }),
     };
     expect(canReset(s)).toBe(true);
+  });
+
+  it("completed + waitClear 必须继续轮询；flag 清零后才 idle", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "START_CLICK" });
+    s = case2Reducer(s, { type: "SCREENSHOT_ENTER_SAVING" });
+    s = case2Reducer(s, { type: "SCREENSHOT_UPLOAD_OK", stayInCalibrating: true });
+    expect(s.screenshotPhase).toBe("waitClear");
+
+    s = {
+      ...s,
+      case2UiState: "completed",
+      calibratedData: metrics(),
+      lastControl: control({ command: "start", status: "case complete", save_picture_flag: 1 }),
+    };
+    expect(shouldKeepPollingForWaitClear(s)).toBe(true);
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(false);
+    expect(canReset(s)).toBe(false);
+
+    s = case2Reducer(s, { type: "SCREENSHOT_FLAG_CLEARED" });
+    expect(s.screenshotPhase).toBe("idle");
+    expect(shouldKeepPollingForWaitClear(s)).toBe(false);
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
+    expect(canReset(s)).toBe(false);
   });
 });

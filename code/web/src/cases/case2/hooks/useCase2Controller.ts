@@ -23,6 +23,7 @@ import {
   case2Reducer,
   createInitialCase2State,
   shouldFetchCalibrated,
+  shouldKeepPollingForWaitClear,
   shouldResetCommandAfterCommandCompletion,
   shouldStartScreenshot,
   statusFeedbackText,
@@ -457,6 +458,10 @@ export function useCase2Controller(options: Options): Case2Controller {
             screenshotBusy: screenshotBusyRef.current,
             ...controlGateSummary(stateRef.current),
           });
+          if (shouldKeepPollingForWaitClear(stateRef.current)) {
+            case2Log("poll.keep_for_waitClear", controlGateSummary(stateRef.current));
+            return;
+          }
           stopPolling();
           return;
         } catch (err) {
@@ -509,7 +514,11 @@ export function useCase2Controller(options: Options): Case2Controller {
         }
       }
 
-      const ui = stateRef.current.case2UiState;
+      const snap = stateRef.current;
+      const ui = snap.case2UiState;
+      if (shouldKeepPollingForWaitClear(snap)) {
+        return;
+      }
       if (
         ui === "failed-start" ||
         ui === "failed-reinit" ||
@@ -540,8 +549,13 @@ export function useCase2Controller(options: Options): Case2Controller {
       if (!pollingRef.current) return;
       await pollOnce();
       if (!pollingRef.current) return;
-      const ui = stateRef.current.case2UiState;
-      if (ui !== "calibrating" && ui !== "resetting") {
+      const snap = stateRef.current;
+      const ui = snap.case2UiState;
+      if (
+        ui !== "calibrating" &&
+        ui !== "resetting" &&
+        !shouldKeepPollingForWaitClear(snap)
+      ) {
         pollingRef.current = false;
         return;
       }

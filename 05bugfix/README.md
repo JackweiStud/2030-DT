@@ -25,7 +25,7 @@
 
 | 顺序 | ID | 严重度 | 区域 | 标题 | 状态 |
 |---|---|---|---|---|---|
-| 1 | [BF-001](BF-001-case2-waitclear-tab-lock.md) | P0 | web/case2 | 截图 `waitClear` + 停轮询 → Tab 永久锁 | open |
+| 1 | [BF-001](BF-001-case2-waitclear-tab-lock.md) | P0 | web/case2 | 截图 `waitClear` + 停轮询 → Tab 永久锁 | ✅ done |
 | 2 | [BF-023](BF-023-case2-reset-before-idle.md) | P0 | web/case2 | 完成瞬间重置可点，立即点击后报连接异常并卡死（用户复现） | ✅ done |
 | 3 | [BF-002](BF-002-control-rmw-overwrite-complete.md) | P0 | server | 清 flag 的整文件写可能盖掉 `case complete` | open |
 | 4 | [BF-003](BF-003-case2-calibrated-ownership.md) | P0 | server/case2 | Calibrated 读取只认 `status`、不认 case 归属 | open |

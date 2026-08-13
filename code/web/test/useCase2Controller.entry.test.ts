@@ -8,6 +8,10 @@ import type { Case2Api } from "../src/cases/case2/api/case2Api";
 import type { Case2RuntimeConfig } from "../src/cases/case2/metrics/heatmapConfig";
 import type { ControlSnapshot, MetricsBundle } from "../src/cases/case2/types";
 
+vi.mock("html-to-image", () => ({
+  toPng: vi.fn(async () => "data:image/png;base64,QQ=="),
+}));
+
 function metrics(): MetricsBundle {
   return {
     rss: { heatmap: [[1, 2], [3, 4]], kpi: [1, 2, 3] },
@@ -524,5 +528,89 @@ describe("useCase2Controller entry gate", () => {
     );
 
     errorLog.mockRestore();
+  });
+
+  it("completed + waitClear 继续轮询，flag 清零后写回 init", async () => {
+    const order: string[] = [];
+    let started = false;
+    let seenSuccess = false;
+    let screenshotPosted = false;
+    let releaseCalibrated: () => void = () => undefined;
+    const calibratedHold = new Promise<void>((resolve) => {
+      releaseCalibrated = resolve;
+    });
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        if (!started) return control({ command: "init", status: "", dt_type: "" });
+        if (!seenSuccess) {
+          seenSuccess = true;
+          return control({ command: "start", status: "execute success" });
+        }
+        return control({
+          command: "start",
+          status: "case complete",
+          save_picture_flag: screenshotPosted ? 0 : 1,
+        });
+      },
+      async getDataFiles(phase) {
+        order.push(`data:${phase}`);
+        if (phase === "calibrated") await calibratedHold;
+        return metrics();
+      },
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        if ("command" in payload && payload.command === "start") {
+          started = true;
+          return control({ command: "start", status: "" });
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        order.push("screenshot");
+        screenshotPosted = true;
+        return { ok: true, path: "out/case2/calibrated-000.png", seq: 0 };
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config: { ...config, pollMs: 1 },
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.startEnabled).toBe(true);
+    });
+    act(() => {
+      result.current.onStart();
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.screenshotPhase).toBe("waitClear");
+    });
+    expect(result.current.state.case2UiState).toBe("calibrating");
+    expect(order).toContain("screenshot");
+    expect(order.filter((x) => x === "post:init")).toHaveLength(1);
+
+    await act(async () => {
+      releaseCalibrated();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("completed");
+    });
+    expect(result.current.state.screenshotPhase).toBe("waitClear");
+    expect(result.current.resetEnabled).toBe(false);
+
+    await waitFor(() => {
+      expect(result.current.state.screenshotPhase).toBe("idle");
+      expect(result.current.state.lastControl?.command).toBe("init");
+      expect(result.current.resetEnabled).toBe(true);
+    });
+    expect(order.filter((x) => x === "post:init")).toHaveLength(2);
   });
 });

@@ -440,3 +440,11 @@ export function shouldResetCommandAfterCommandCompletion(state: Case2State): boo
 
   return startComplete || reinitComplete;
 }
+
+/** completed 后仍 waitClear 时必须继续轮询，否则看不到 flag 清零。 */
+export function shouldKeepPollingForWaitClear(state: Case2State): boolean {
+  return (
+    state.case2UiState === "completed" &&
+    state.screenshotPhase === "waitClear"
+  );
+}
