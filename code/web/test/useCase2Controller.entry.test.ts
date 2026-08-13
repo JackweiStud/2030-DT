@@ -530,15 +530,91 @@ describe("useCase2Controller entry gate", () => {
     errorLog.mockRestore();
   });
 
-  it("completed + waitClear 继续轮询，flag 清零后写回 init", async () => {
+  it("success 左边界截图成功后立刻 idle，complete 再 0→1 截完成态再 init", async () => {
+    const order: string[] = [];
+    let started = false;
+    let phase: "success" | "complete" = "success";
+    let screenshots = 0;
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        if (!started) return control({ command: "init", status: "", dt_type: "" });
+        if (phase === "success") {
+          return control({
+            command: "start",
+            status: "execute success",
+            save_picture_flag: screenshots > 0 ? 0 : 1,
+          });
+        }
+        return control({
+          command: "start",
+          status: "case complete",
+          save_picture_flag: screenshots >= 2 ? 0 : 1,
+        });
+      },
+      async getDataFiles(phaseName) {
+        order.push(`data:${phaseName}`);
+        return metrics();
+      },
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        if ("command" in payload && payload.command === "start") {
+          started = true;
+          return control({ command: "start", status: "" });
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        order.push("screenshot");
+        screenshots += 1;
+        return { ok: true, path: `out/case2/calibrated-00${screenshots - 1}.png`, seq: screenshots - 1 };
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config: { ...config, pollMs: 1 },
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.startEnabled).toBe(true);
+    });
+    act(() => {
+      result.current.onStart();
+    });
+
+    await waitFor(() => {
+      expect(screenshots).toBe(1);
+      expect(result.current.state.screenshotPhase).toBe("idle");
+      expect(result.current.state.screenshotLastFlag).toBe(0);
+    });
+    expect(result.current.state.case2UiState).toBe("calibrating");
+    expect(order.filter((x) => x === "post:init")).toHaveLength(1);
+
+    phase = "complete";
+    await waitFor(() => {
+      expect(screenshots).toBe(2);
+    });
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("completed");
+      expect(result.current.state.lastControl?.command).toBe("init");
+      expect(result.current.resetEnabled).toBe(true);
+    });
+    expect(order.filter((x) => x === "screenshot")).toHaveLength(2);
+    expect(order.filter((x) => x === "post:init")).toHaveLength(2);
+    expect(order.indexOf("data:calibrated")).toBeGreaterThan(-1);
+    const secondShot = order.lastIndexOf("screenshot");
+    expect(order.indexOf("data:calibrated")).toBeLessThan(secondShot);
+  });
+
+  it("同拍 complete+flag=1 先拉六文件再截图", async () => {
     const order: string[] = [];
     let started = false;
     let seenSuccess = false;
     let screenshotPosted = false;
-    let releaseCalibrated: () => void = () => undefined;
-    const calibratedHold = new Promise<void>((resolve) => {
-      releaseCalibrated = resolve;
-    });
     const api: Case2Api = {
       async getControl() {
         order.push("control");
@@ -555,7 +631,6 @@ describe("useCase2Controller entry gate", () => {
       },
       async getDataFiles(phase) {
         order.push(`data:${phase}`);
-        if (phase === "calibrated") await calibratedHold;
         return metrics();
       },
       async postControl(payload) {
@@ -589,28 +664,13 @@ describe("useCase2Controller entry gate", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.state.screenshotPhase).toBe("waitClear");
+      expect(order).toContain("screenshot");
     });
-    expect(result.current.state.case2UiState).toBe("calibrating");
-    expect(order).toContain("screenshot");
-    expect(order.filter((x) => x === "post:init")).toHaveLength(1);
-
-    await act(async () => {
-      releaseCalibrated();
-      await Promise.resolve();
-    });
-
+    expect(order.indexOf("data:calibrated")).toBeGreaterThan(-1);
+    expect(order.indexOf("data:calibrated")).toBeLessThan(order.indexOf("screenshot"));
     await waitFor(() => {
-      expect(result.current.state.case2UiState).toBe("completed");
-    });
-    expect(result.current.state.screenshotPhase).toBe("waitClear");
-    expect(result.current.resetEnabled).toBe(false);
-
-    await waitFor(() => {
-      expect(result.current.state.screenshotPhase).toBe("idle");
       expect(result.current.state.lastControl?.command).toBe("init");
       expect(result.current.resetEnabled).toBe(true);
     });
-    expect(order.filter((x) => x === "post:init")).toHaveLength(2);
   });
 });

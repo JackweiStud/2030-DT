@@ -45,10 +45,11 @@ export type Case2Action =
   | { type: "CALIBRATED_OK"; metrics: MetricsBundle }
   | { type: "CALIBRATED_FAIL"; message: string }
   | { type: "CALIBRATED_FAIL_EXHAUSTED"; message: string }
+  | { type: "SCREENSHOT_LATCH_PENDING" }
   | { type: "SCREENSHOT_ENTER_SAVING" }
   | { type: "SCREENSHOT_SET_BASE64"; base64: string }
   | { type: "SCREENSHOT_ATTEMPT_FAIL" }
-  | { type: "SCREENSHOT_UPLOAD_OK"; stayInCalibrating: boolean }
+  | { type: "SCREENSHOT_UPLOAD_OK" }
   | { type: "SCREENSHOT_FLAG_CLEARED" }
   | { type: "SCREENSHOT_DROPPED" }
   | { type: "LOG_UNKNOWN_STATUS"; status: string };
@@ -136,7 +137,7 @@ export function shouldShowCalibrated(state: Case2State): boolean {
 
 /**
  * 轮询快照推进业务相。
- * 同拍：调用方须先处理 flag 0→1 开截图，再 dispatch 本动作认 complete。
+ * 截图 0→1：左边界（success）由控制器立刻开拍；右边界（complete）先 latch pending，再拉六文件。
  */
 function reduceControlPoll(
   state: Case2State,
@@ -175,6 +176,7 @@ function reduceControlPoll(
         screenshotPhase: "idle",
         screenshotAttempts: 0,
         screenshotBase64: null,
+        screenshotLastFlag: 0,
       };
     }
     return {
@@ -186,6 +188,7 @@ function reduceControlPoll(
       screenshotPhase: "idle",
       screenshotAttempts: 0,
       screenshotBase64: null,
+      screenshotLastFlag: 0,
     };
   }
 
@@ -347,6 +350,14 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         screenshotPhase: "idle",
         screenshotAttempts: 0,
         screenshotBase64: null,
+        screenshotLastFlag: 0,
+      };
+
+    case "SCREENSHOT_LATCH_PENDING":
+      return {
+        ...state,
+        screenshotPhase: "pending",
+        screenshotLastFlag: 1,
       };
 
     case "SCREENSHOT_ENTER_SAVING":
@@ -368,11 +379,14 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
       };
 
     case "SCREENSHOT_UPLOAD_OK":
+      // POST 成功（或 GET 已确认 flag=0）视为本拍已观察到清零：立刻 idle + lastFlag=0，
+      // 才能认随后 complete 的新 0→1。success 期间不得靠 waitClear 拖到下一轮 poll。
       return {
         ...state,
-        screenshotPhase: action.stayInCalibrating ? "waitClear" : "idle",
+        screenshotPhase: "idle",
         screenshotAttempts: 0,
         screenshotBase64: null,
+        screenshotLastFlag: 0,
       };
 
     case "SCREENSHOT_FLAG_CLEARED":
@@ -413,14 +427,47 @@ export function shouldFetchCalibrated(
   );
 }
 
-/** calibrating 内是否出现 flag 0→1。 */
-export function shouldStartScreenshot(
+/** Start 等待内，flag 0→1 是否落在客户窗口 [execute success, case complete]。 */
+export function isScreenshotCaptureWindow(
+  state: Case2State,
+  control: ControlSnapshot,
+): boolean {
+  if (control.status === "execute success") return true;
+  return control.status === "case complete" && state.seenExecuteSuccess;
+}
+
+function isScreenshotFlagRise(
   state: Case2State,
   control: ControlSnapshot,
 ): boolean {
   if (state.case2UiState !== "calibrating") return false;
   if (state.screenshotPhase !== "idle") return false;
-  return state.screenshotLastFlag === 0 && control.save_picture_flag === 1;
+  if (state.screenshotLastFlag !== 0 || control.save_picture_flag !== 1) {
+    return false;
+  }
+  return isScreenshotCaptureWindow(state, control);
+}
+
+/** success 左边界：立刻 toPng。 */
+export function shouldStartScreenshot(
+  state: Case2State,
+  control: ControlSnapshot,
+): boolean {
+  return (
+    isScreenshotFlagRise(state, control) &&
+    control.status === "execute success"
+  );
+}
+
+/** complete 右边界（含同拍）：先 latch，拉六文件并渲染后再拍。 */
+export function shouldLatchCompleteScreenshot(
+  state: Case2State,
+  control: ControlSnapshot,
+): boolean {
+  return (
+    isScreenshotFlagRise(state, control) &&
+    control.status === "case complete"
+  );
 }
 
 /** 启动/重置轮完整收尾后，是否可以把控制文件写回 init 空闲态。 */
@@ -441,10 +488,11 @@ export function shouldResetCommandAfterCommandCompletion(state: Case2State): boo
   return startComplete || reinitComplete;
 }
 
-/** completed 后仍 waitClear 时必须继续轮询，否则看不到 flag 清零。 */
+/** completed 后仍 waitClear/pending 时必须继续轮询。 */
 export function shouldKeepPollingForWaitClear(state: Case2State): boolean {
   return (
     state.case2UiState === "completed" &&
-    state.screenshotPhase === "waitClear"
+    (state.screenshotPhase === "waitClear" ||
+      state.screenshotPhase === "pending")
   );
 }

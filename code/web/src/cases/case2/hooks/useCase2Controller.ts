@@ -24,6 +24,7 @@ import {
   createInitialCase2State,
   shouldFetchCalibrated,
   shouldKeepPollingForWaitClear,
+  shouldLatchCompleteScreenshot,
   shouldResetCommandAfterCommandCompletion,
   shouldStartScreenshot,
   statusFeedbackText,
@@ -129,6 +130,16 @@ function isAbortError(err: unknown): boolean {
       err instanceof DOMException &&
       err.name === "AbortError")
   );
+}
+
+function waitForNextRender(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(() => resolve());
+      return;
+    }
+    window.setTimeout(resolve, 0);
+  });
 }
 
 /**
@@ -340,10 +351,7 @@ export function useCase2Controller(options: Options): Case2Controller {
           await api.postScreenshot(base64);
           uploadMs = Math.round(performance.now() - uploadStartedAt);
           const stillCalibrating = stateRef.current.case2UiState === "calibrating";
-          dispatch({
-            type: "SCREENSHOT_UPLOAD_OK",
-            stayInCalibrating: stillCalibrating,
-          });
+          dispatch({ type: "SCREENSHOT_UPLOAD_OK" });
           case2Log("screenshot.ok", {
             attempt: attempts,
             stayInCalibrating: stillCalibrating,
@@ -368,10 +376,7 @@ export function useCase2Controller(options: Options): Case2Controller {
             const snap = await api.getControl();
             if (snap.save_picture_flag === 0) {
               const stillCalibrating = stateRef.current.case2UiState === "calibrating";
-              dispatch({
-                type: "SCREENSHOT_UPLOAD_OK",
-                stayInCalibrating: stillCalibrating,
-              });
+              dispatch({ type: "SCREENSHOT_UPLOAD_OK" });
               case2Log("screenshot.ok_via_flag_probe", {
                 attempt: attempts,
                 stayInCalibrating: stillCalibrating,
@@ -416,14 +421,24 @@ export function useCase2Controller(options: Options): Case2Controller {
       const prevStatus = before.lastControl?.status;
       const prevFlag = before.screenshotLastFlag;
 
-      // 同拍顺序：先 flag 0→1 开截图，再认 complete
-      if (shouldStartScreenshot(before, control)) {
+      const startNow = shouldStartScreenshot(before, control);
+      const latchComplete = shouldLatchCompleteScreenshot(before, control);
+      if (startNow) {
         case2Log("poll.flag_rise", {
+          boundary: "success",
           from: prevFlag,
           to: control.save_picture_flag,
           status: control.status,
         });
         void runScreenshotTask();
+      } else if (latchComplete) {
+        dispatch({ type: "SCREENSHOT_LATCH_PENDING" });
+        case2Log("poll.flag_rise", {
+          boundary: "complete",
+          from: prevFlag,
+          to: control.save_picture_flag,
+          status: control.status,
+        });
       } else if (
         before.screenshotPhase === "waitClear" &&
         control.save_picture_flag === 0
@@ -458,6 +473,16 @@ export function useCase2Controller(options: Options): Case2Controller {
             screenshotBusy: screenshotBusyRef.current,
             ...controlGateSummary(stateRef.current),
           });
+          if (stateRef.current.screenshotPhase === "pending") {
+            await waitForNextRender();
+            if (controller.signal.aborted) return;
+            if (stateRef.current.screenshotPhase === "pending") {
+              case2Log("screenshot.complete_boundary_capture", {
+                ...controlGateSummary(stateRef.current),
+              });
+              void runScreenshotTask();
+            }
+          }
           if (shouldKeepPollingForWaitClear(stateRef.current)) {
             case2Log("poll.keep_for_waitClear", controlGateSummary(stateRef.current));
             return;

@@ -54,6 +54,7 @@ export function Case2Page(props: Props) {
   const busy =
     ui === "calibrating" ||
     ui === "resetting" ||
+    state.screenshotPhase === "pending" ||
     state.screenshotPhase === "saving" ||
     state.screenshotPhase === "waitClear";
   const statusBusy =

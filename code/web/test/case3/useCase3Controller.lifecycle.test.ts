@@ -424,7 +424,6 @@ describe("useCase3Controller lifecycle", () => {
             command: "start",
             dt_type: "without dt",
             status: "execute success",
-            save_picture_flag: 1,
           });
         }
         if (controlReads === 3) {
@@ -432,7 +431,6 @@ describe("useCase3Controller lifecycle", () => {
             command: "start",
             dt_type: "without dt",
             status: "execute success",
-            save_picture_flag: 1,
           });
         }
         return control({
@@ -642,6 +640,168 @@ describe("useCase3Controller lifecycle", () => {
     hook.unmount();
   });
 
+  it("success 左边界 0→1 立刻截图，complete 前不 POST init", async () => {
+    vi.mocked(toPng).mockResolvedValue(
+      "data:image/png;base64,RUNNING_FRAME",
+    );
+    const infoLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    let phase: "idle" | "success" | "complete" = "idle";
+    let screenshotPosted = false;
+    let initPosts = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        if (phase === "idle") return control();
+        if (phase === "success") {
+          return control({
+            command: "start",
+            dt_type: "without dt",
+            status: "execute success",
+            save_picture_flag: screenshotPosted ? 0 : 1,
+          });
+        }
+        return control({
+          command: "start",
+          dt_type: "without dt",
+          status: "case complete",
+          save_picture_flag: 0,
+        });
+      }),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          phase = "success";
+          return control({
+            command: "start",
+            dt_type: "without dt",
+          });
+        }
+        if ("command" in payload && payload.command === "init") initPosts += 1;
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => finalWithout()),
+      postScreenshot: vi.fn(async () => {
+        screenshotPosted = true;
+        return { path: "out/case3/case3-000.png", seq: 0 };
+      }),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() => expect(api.postScreenshot).toHaveBeenCalledTimes(1));
+    expect(hook.result.current.visible).toBe("without-running");
+    expect(initPosts).toBe(1);
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] screenshot.triggered",
+      expect.objectContaining({ boundary: "success" }),
+    );
+
+    phase = "complete";
+    await waitFor(() =>
+      expect(hook.result.current.visible).toBe("without-completed"),
+    );
+    await waitFor(() => expect(initPosts).toBe(2));
+    expect(api.postScreenshot).toHaveBeenCalledTimes(1);
+    hook.unmount();
+    infoLog.mockRestore();
+  });
+
+  it("success 截图成功后立刻可认 complete 再 0→1，不卡 waitClear，完成态再截一张后才 POST init", async () => {
+    vi.mocked(toPng).mockResolvedValue(
+      "data:image/png;base64,SECOND_EDGE_FRAME",
+    );
+    const infoLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    let phase: "idle" | "success" | "complete" = "idle";
+    let screenshots = 0;
+    let initPosts = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        if (phase === "idle") return control();
+        if (phase === "success") {
+          return control({
+            command: "start",
+            dt_type: "without dt",
+            status: "execute success",
+            save_picture_flag: screenshots > 0 ? 0 : 1,
+          });
+        }
+        return control({
+          command: "start",
+          dt_type: "without dt",
+          status: "case complete",
+          save_picture_flag: screenshots >= 2 ? 0 : 1,
+        });
+      }),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          phase = "success";
+          return control({
+            command: "start",
+            dt_type: "without dt",
+          });
+        }
+        if ("command" in payload && payload.command === "init") initPosts += 1;
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => finalWithout()),
+      postScreenshot: vi.fn(async () => {
+        screenshots += 1;
+        return { path: `out/case3/case3-00${screenshots - 1}.png`, seq: screenshots - 1 };
+      }),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() => expect(hook.result.current.startWithoutEnabled).toBe(true));
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() => expect(api.postScreenshot).toHaveBeenCalledTimes(1));
+    expect(hook.result.current.visible).toBe("without-running");
+    expect(initPosts).toBe(1);
+
+    phase = "complete";
+    await waitFor(() =>
+      expect(hook.result.current.visible).toBe("without-completed"),
+    );
+    await waitFor(() => expect(api.postScreenshot).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(initPosts).toBe(2));
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] screenshot.triggered",
+      expect.objectContaining({ boundary: "success" }),
+    );
+    expect(infoLog).toHaveBeenCalledWith(
+      "[case3] screenshot.requested",
+      expect.objectContaining({ boundary: "complete" }),
+    );
+    hook.unmount();
+    infoLog.mockRestore();
+  });
+
   it("截图上传响应不确定但 flag 已清零时不重复上传", async () => {
     vi.mocked(toPng).mockResolvedValue(
       "data:image/png;base64,UNCERTAIN_FRAME",
@@ -783,7 +943,6 @@ describe("useCase3Controller lifecycle", () => {
             command: "start",
             dt_type: "without dt",
             status: "execute success",
-            save_picture_flag: 1,
           });
         }
         return control({

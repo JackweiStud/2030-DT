@@ -9,6 +9,7 @@ import {
   case2Reducer,
   createInitialCase2State,
   shouldFetchCalibrated,
+  shouldLatchCompleteScreenshot,
   shouldResetCommandAfterCommandCompletion,
   shouldStartScreenshot,
   shouldKeepPollingForWaitClear,
@@ -157,16 +158,75 @@ describe("case2Reducer", () => {
     expect(canStart(s)).toBe(false);
   });
 
-  it("同拍 flag 上升沿在 idle 时触发截图", () => {
+  it("success 左边界 0→1 立刻截图；同一高电平不重复", () => {
     let s = createInitialCase2State();
     s = case2Reducer(s, { type: "START_CLICK" });
     expect(
       shouldStartScreenshot(s, control({ save_picture_flag: 1, status: "execute success" })),
     ).toBe(true);
+    expect(
+      shouldLatchCompleteScreenshot(s, control({ save_picture_flag: 1, status: "execute success" })),
+    ).toBe(false);
     s = case2Reducer(s, { type: "SCREENSHOT_ENTER_SAVING" });
     expect(
-      shouldStartScreenshot(s, control({ save_picture_flag: 1 })),
+      shouldStartScreenshot(s, control({ save_picture_flag: 1, status: "execute success" })),
     ).toBe(false);
+  });
+
+  it("窗口外 flag=1 不截、不消费边沿；进入 success 后仍可截", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "START_CLICK" });
+    const emptyFlag = control({ save_picture_flag: 1, status: "" });
+    expect(shouldStartScreenshot(s, emptyFlag)).toBe(false);
+    expect(shouldLatchCompleteScreenshot(s, emptyFlag)).toBe(false);
+    expect(s.screenshotLastFlag).toBe(0);
+
+    const completeWithoutSeen = control({
+      save_picture_flag: 1,
+      status: "case complete",
+    });
+    expect(shouldStartScreenshot(s, completeWithoutSeen)).toBe(false);
+    expect(shouldLatchCompleteScreenshot(s, completeWithoutSeen)).toBe(false);
+
+    s = case2Reducer(s, {
+      type: "CONTROL_POLL_OK",
+      control: control({ status: "execute success", save_picture_flag: 1 }),
+    });
+    expect(s.seenExecuteSuccess).toBe(true);
+    expect(s.screenshotLastFlag).toBe(0);
+    expect(
+      shouldStartScreenshot(s, control({ save_picture_flag: 1, status: "execute success" })),
+    ).toBe(true);
+  });
+
+  it("complete 右边界 0→1 只 latch pending，渲染前不立刻拍", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "START_CLICK" });
+    s = case2Reducer(s, {
+      type: "CONTROL_POLL_OK",
+      control: control({ status: "execute success" }),
+    });
+    const completeFlag = control({
+      status: "case complete",
+      save_picture_flag: 1,
+    });
+    expect(shouldStartScreenshot(s, completeFlag)).toBe(false);
+    expect(shouldLatchCompleteScreenshot(s, completeFlag)).toBe(true);
+
+    s = case2Reducer(s, { type: "SCREENSHOT_LATCH_PENDING" });
+    expect(s.screenshotPhase).toBe("pending");
+    expect(s.screenshotLastFlag).toBe(1);
+    expect(shouldLatchCompleteScreenshot(s, completeFlag)).toBe(false);
+
+    s = {
+      ...s,
+      case2UiState: "completed",
+      calibratedData: metrics(),
+      lastControl: completeFlag,
+    };
+    expect(canReset(s)).toBe(false);
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(false);
+    expect(shouldKeepPollingForWaitClear(s)).toBe(true);
   });
 
   it("六文件失败保持 calibrating；耗尽后结果不完整已自动回退", () => {
@@ -266,6 +326,9 @@ describe("case2Reducer", () => {
     s = { ...s, screenshotPhase: "waitClear" };
     expect(canReset(s)).toBe(false);
 
+    s = { ...s, screenshotPhase: "pending" };
+    expect(canReset(s)).toBe(false);
+
     s = { ...s, screenshotPhase: "idle" };
     expect(canReset(s)).toBe(false);
   });
@@ -281,18 +344,38 @@ describe("case2Reducer", () => {
     expect(canReset(s)).toBe(true);
   });
 
+  it("success 上传成功立刻 lastFlag=0 且 idle，可认 complete 右边界 0→1，且不 POST init", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "START_CLICK" });
+    s = case2Reducer(s, {
+      type: "CONTROL_POLL_OK",
+      control: control({ status: "execute success" }),
+    });
+    s = case2Reducer(s, { type: "SCREENSHOT_ENTER_SAVING" });
+    s = case2Reducer(s, { type: "SCREENSHOT_UPLOAD_OK" });
+    expect(s.screenshotPhase).toBe("idle");
+    expect(s.screenshotLastFlag).toBe(0);
+    expect(s.case2UiState).toBe("calibrating");
+    expect(shouldResetCommandAfterCommandCompletion(s)).toBe(false);
+
+    const completeFlag = control({
+      status: "case complete",
+      save_picture_flag: 1,
+    });
+    expect(shouldStartScreenshot(s, completeFlag)).toBe(false);
+    expect(shouldLatchCompleteScreenshot(s, completeFlag)).toBe(true);
+  });
+
   it("completed + waitClear 必须继续轮询；flag 清零后才 idle", () => {
     let s = createInitialCase2State();
     s = case2Reducer(s, { type: "START_CLICK" });
-    s = case2Reducer(s, { type: "SCREENSHOT_ENTER_SAVING" });
-    s = case2Reducer(s, { type: "SCREENSHOT_UPLOAD_OK", stayInCalibrating: true });
-    expect(s.screenshotPhase).toBe("waitClear");
-
     s = {
       ...s,
       case2UiState: "completed",
       calibratedData: metrics(),
       lastControl: control({ command: "start", status: "case complete", save_picture_flag: 1 }),
+      screenshotPhase: "waitClear",
+      screenshotLastFlag: 1,
     };
     expect(shouldKeepPollingForWaitClear(s)).toBe(true);
     expect(shouldResetCommandAfterCommandCompletion(s)).toBe(false);
@@ -300,6 +383,7 @@ describe("case2Reducer", () => {
 
     s = case2Reducer(s, { type: "SCREENSHOT_FLAG_CLEARED" });
     expect(s.screenshotPhase).toBe("idle");
+    expect(s.screenshotLastFlag).toBe(0);
     expect(shouldKeepPollingForWaitClear(s)).toBe(false);
     expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
     expect(canReset(s)).toBe(false);

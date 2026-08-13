@@ -60,7 +60,7 @@ export type ApiErrorResponse = {
   error: { code: string; message: string };
 };
 
-export type ScreenshotPhase = "idle" | "saving" | "waitClear";
+export type ScreenshotPhase = "idle" | "pending" | "saving" | "waitClear";
 
 export const METRIC_KEYS: readonly MetricKey[] = [
   "rss",

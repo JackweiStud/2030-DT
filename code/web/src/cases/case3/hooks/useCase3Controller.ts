@@ -344,6 +344,7 @@ export function useCase3Controller(options: Options) {
       screenshotAbortRef.current = null;
       screenshotPhaseRef.current = "idle";
       pendingCompleteSideRef.current = null;
+      lastFlagRef.current = 0;
       finalNotReadyAttemptsRef.current = 0;
 
       const lifecycleGeneration = lifecycleGenerationRef.current;
@@ -471,9 +472,8 @@ export function useCase3Controller(options: Options) {
           const saved = await api.postScreenshot(base64, ac.signal);
           uploadMs = Math.round(performance.now() - uploadStartedAt);
           if (isStale()) return;
-          screenshotPhaseRef.current = stateRef.current.activeAction
-            ? "waitClear"
-            : "idle";
+          lastFlagRef.current = 0;
+          screenshotPhaseRef.current = "idle";
           case3Log("screenshot.upload_ok", {
             side,
             generation,
@@ -488,7 +488,6 @@ export function useCase3Controller(options: Options) {
             !stateRef.current.activeAction &&
             pendingCompleteSideRef.current
           ) {
-            screenshotPhaseRef.current = "idle";
             await maybeFinishAfterScreenshot();
           }
           return;
@@ -533,6 +532,7 @@ export function useCase3Controller(options: Options) {
                       ? "flag-cleared"
                       : "ownership-lost",
                 });
+                lastFlagRef.current = 0;
                 screenshotPhaseRef.current = "idle";
                 await maybeFinishAfterScreenshot();
                 return;
@@ -574,6 +574,7 @@ export function useCase3Controller(options: Options) {
               attempts: attempt,
             });
             screenshotPhaseRef.current = "idle";
+            lastFlagRef.current = 0;
             await maybeFinishAfterScreenshot();
             return;
           }
@@ -647,39 +648,58 @@ export function useCase3Controller(options: Options) {
       lastControlMismatchRef.current = null;
 
       const flag = control.save_picture_flag === 1 ? 1 : 0;
+      const status = control.status;
+      const inCaptureWindow =
+        action.kind === "start" &&
+        (status === "execute success" ||
+          (status === "case complete" &&
+            Boolean(action.seenExecuteSuccess)));
       if (
         action.kind === "start" &&
         screenshotPhaseRef.current === "idle" &&
         lastFlagRef.current === 0 &&
-        flag === 1
+        flag === 1 &&
+        inCaptureWindow
       ) {
-        // 这里只登记截图请求。真正生成 PNG 必须等待最终 side 通过门槛并完成 completed 渲染。
-        screenshotPhaseRef.current = "pending";
-        case3Log("screenshot.requested", {
-          generation,
-          side: action.side,
-          status: control.status,
-          savePictureFlag: flag,
-        });
-      }
-      if (screenshotPhaseRef.current === "pending" && flag === 0) {
+        lastFlagRef.current = 1;
+        if (status === "execute success") {
+          case3Log("screenshot.triggered", {
+            generation,
+            side: action.side,
+            boundary: "success",
+            status,
+            savePictureFlag: flag,
+          });
+          void runScreenshotTask();
+        } else {
+          screenshotPhaseRef.current = "pending";
+          case3Log("screenshot.requested", {
+            generation,
+            side: action.side,
+            boundary: "complete",
+            status,
+            savePictureFlag: flag,
+          });
+        }
+      } else if (screenshotPhaseRef.current === "pending" && flag === 0) {
         screenshotPhaseRef.current = "idle";
+        lastFlagRef.current = 0;
         case3Warn("screenshot.request_cleared_before_capture", {
           generation,
           side: action.side,
         });
-      }
-      if (screenshotPhaseRef.current === "waitClear" && flag === 0) {
+      } else if (screenshotPhaseRef.current === "waitClear" && flag === 0) {
         screenshotPhaseRef.current = "idle";
+        lastFlagRef.current = 0;
         case3Log("screenshot.flag_cleared", {
           generation,
           side: action.side,
         });
         void maybeFinishAfterScreenshot();
+      } else if (flag === 0 && screenshotPhaseRef.current === "idle") {
+        lastFlagRef.current = 0;
       }
-      lastFlagRef.current = flag;
 
-      const status = control.status;
       const statusChanged = lastStatusRef.current !== status;
       if (statusChanged) {
         case3Log("poll.status_edge", {
@@ -707,6 +727,7 @@ export function useCase3Controller(options: Options) {
         screenshotAbortRef.current?.abort();
         screenshotAbortRef.current = null;
         screenshotPhaseRef.current = "idle";
+        lastFlagRef.current = 0;
         pendingCompleteSideRef.current = null;
         actionAbortRef.current?.abort();
         actionAbortRef.current = null;
