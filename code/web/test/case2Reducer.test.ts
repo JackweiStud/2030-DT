@@ -7,6 +7,7 @@ import {
   canReset,
   canStart,
   case2Reducer,
+  CASE2_INIT_DATA_ERROR_BADGE,
   createInitialCase2State,
   shouldFetchCalibrated,
   shouldLatchCompleteScreenshot,
@@ -156,6 +157,30 @@ describe("case2Reducer", () => {
     expect(s.adapterError).toBe(true);
     expect(statusFeedbackText(s)).toBe("case2文件服务器连接异常");
     expect(canStart(s)).toBe(false);
+  });
+
+  it("Initial 六文件失败显示初始化数据异常，不是连接异常或执行失败", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, {
+      type: "INITIAL_DATA_FAIL",
+      message: "heatmap_init_rss.txt is missing",
+    });
+    expect(s.initialError).toBe("heatmap_init_rss.txt is missing");
+    expect(statusFeedbackText(s)).toBe(CASE2_INIT_DATA_ERROR_BADGE);
+    expect(canStart(s)).toBe(false);
+    expect(s.adapterError).toBe(false);
+    expect(s.case2UiState).toBe("initial");
+
+    s = { ...s, adapterError: true };
+    expect(statusFeedbackText(s)).toBe("case2文件服务器连接异常");
+
+    s = case2Reducer(
+      { ...s, adapterError: false },
+      { type: "INITIAL_DATA_OK", metrics: metrics() },
+    );
+    expect(s.initialError).toBeNull();
+    expect(statusFeedbackText(s)).toBe("等待启动测试");
+    expect(canStart(s)).toBe(true);
   });
 
   it("success 左边界 0→1 立刻截图；同一高电平不重复", () => {

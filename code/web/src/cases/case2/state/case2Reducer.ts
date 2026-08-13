@@ -105,9 +105,13 @@ export function canReset(state: Case2State): boolean {
   );
 }
 
-/** StatusFeedback 主文案；adapterError 替换相文案。 */
+/** 与 Case3「case3初始化数据异常」对齐：Initial 六文件失败，不是连接异常。 */
+export const CASE2_INIT_DATA_ERROR_BADGE = "case2初始化数据异常";
+
+/** StatusFeedback 主文案；adapterError 优先于 Initial 文件失败。 */
 export function statusFeedbackText(state: Case2State): string {
   if (state.adapterError) return "case2文件服务器连接异常";
+  if (state.initialError) return CASE2_INIT_DATA_ERROR_BADGE;
   if (state.resultIncomplete && state.case2UiState === "failed-start") {
     return "结果不完整已自动回退";
   }

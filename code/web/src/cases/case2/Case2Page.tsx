@@ -102,7 +102,9 @@ export function Case2Page(props: Props) {
                   </div>
                   <div
                     className={`status-feedback${ui === "completed" ? " is-done" : ""}${
-                      state.adapterError || ui.startsWith("failed")
+                      state.adapterError ||
+                      Boolean(state.initialError) ||
+                      ui.startsWith("failed")
                         ? " is-error"
                         : ""
                     }${statusBusy ? " is-busy" : ""}`}

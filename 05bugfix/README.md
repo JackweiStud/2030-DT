@@ -44,8 +44,8 @@
 | 2   | [BF-023](BF-023-case2-reset-before-idle.md)              | P0  | web/case2    | 完成瞬间重置可点，立即点击后报连接异常并卡死（用户复现）        | ✅ done |
 | 3   | [BF-002](BF-002-control-rmw-overwrite-complete.md)       | P0  | server       | 清 flag 的整文件写可能盖掉 `case complete`    | ✅ done |
 | 4   | [BF-003](BF-003-case2-calibrated-ownership.md)           | P2  | server/case2 | Calibrated 读取只认 `status`、不认 case 归属 | ✅ done |
-| 5   | [BF-004](BF-004-case3-optimistic-invalidate.md)          | P0  | web/case3    | POST 失败前已清空本侧结果；连接异常仍可点按钮           | open   |
-| 6   | [BF-005](BF-005-case2-initial-error-ui.md)               | P1  | web/case2    | Initial 加载失败无界面说明                   | open   |
+| 5   | [BF-004](BF-004-case3-optimistic-invalidate.md)          | P2  | web/case3    | POST 失败前已清空本侧结果；连接异常仍可点按钮           | ⏸ deferred |
+| 6   | [BF-005](BF-005-case2-initial-error-ui.md)               | P1  | web/case2    | Initial 加载失败无界面说明                   | ✅ done |
 | 7   | [BF-006](BF-006-case2-adapter-probe-idle.md)             | P1  | web/case2    | 连接探活只覆盖 `initial`，失败态会锁死按钮          | open   |
 | 8   | [BF-007](BF-007-screenshot-rename-retry.md)              | P1  | server       | 截图 `rename` 无瞬时锁重试                  | open   |
 | 9   | [BF-008](BF-008-http-timeout.md)                         | P1  | web          | Case2 无请求超时；Case3 截图共用 5s           | open   |

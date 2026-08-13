@@ -142,6 +142,51 @@ describe("useCase2Controller entry gate", () => {
     expect(result.current.state.case2UiState).toBe("initial");
   });
 
+  it("Initial 六文件失败显示初始化数据异常，不置 adapterError、不开探活", async () => {
+    const order: string[] = [];
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async getDataFiles(phase) {
+        order.push(`data:${phase}`);
+        throw new Error("heatmap_init_rss.txt is missing");
+      },
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config,
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.state.initialError).toBe(
+        "heatmap_init_rss.txt is missing",
+      );
+    });
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+
+    expect(order).toEqual(["control", "post:init", "data:initial"]);
+    expect(result.current.state.adapterError).toBe(false);
+    expect(result.current.statusText).toBe("case2初始化数据异常");
+    expect(result.current.startEnabled).toBe(false);
+    expect(result.current.state.case2UiState).toBe("initial");
+  });
+
   it("adapterError 时每 5s 探活，恢复后清 error 并拉 initial", async () => {
     vi.useFakeTimers();
     let failControl = true;
