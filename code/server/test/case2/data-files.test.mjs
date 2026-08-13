@@ -45,15 +45,25 @@ test("Initial 整批返回动态矩阵和动态 KPI", async (t) => {
   assert.deepEqual(result.metrics.first_path_delay.kpi, [1.24, 2, 3]);
 });
 
-test("Calibrated 六文件稳定且 status complete 时整批成功", async (t) => {
-  const sharedDir = await createSharedDir(t, { status: "case complete" });
+test("Calibrated 六文件稳定且 Case2 start complete 时整批成功", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
   await writePhaseFiles(sharedDir, "calibrated");
   const result = await services(sharedDir).dataFiles.readPhase("calibrated");
   assert.equal(Object.keys(result.metrics).length, 3);
 });
 
 test("Calibrated 缺失、非法或读取期间变化时整批拒绝并记录诊断", async (t) => {
-  const sharedDir = await createSharedDir(t, { status: "case complete" });
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
   await writePhaseFiles(sharedDir, "calibrated");
   const target = path.join(sharedDir, "case2", "heatmap_cali_rss.txt");
   const logs = createLogCollector();
@@ -91,6 +101,76 @@ test("Calibrated 缺失、非法或读取期间变化时整批拒绝并记录诊
       fsOps: changingFs,
       logger: logs.logger,
     }).dataFiles.readPhase("calibrated"),
+    { code: "RESULT_BATCH_INCOMPLETE", status: 409 },
+  );
+});
+
+test("Calibrated 不接受 Case3 的 case complete 控制归属", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case3",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
+  await writePhaseFiles(sharedDir, "calibrated");
+  await assert.rejects(
+    services(sharedDir).dataFiles.readPhase("calibrated"),
+    { code: "RESULT_BATCH_INCOMPLETE", status: 409 },
+  );
+});
+
+test("Calibrated 不接受 init 叠加 case complete 的控制状态", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "init",
+    dt_type: "",
+    status: "case complete",
+  });
+  await writePhaseFiles(sharedDir, "calibrated");
+  await assert.rejects(
+    services(sharedDir).dataFiles.readPhase("calibrated"),
+    { code: "RESULT_BATCH_INCOMPLETE", status: 409 },
+  );
+});
+
+test("Calibrated 读取期间控制归属变化即使 status 仍 complete 也拒绝", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
+  await writePhaseFiles(sharedDir, "calibrated");
+  let reads = 0;
+  const controlFile = {
+    read: async () => {
+      reads += 1;
+      if (reads === 1) {
+        return {
+          ...DEFAULT_CONTROL,
+          case: "case2",
+          command: "start",
+          dt_type: "with dt",
+          status: "case complete",
+        };
+      }
+      return {
+        ...DEFAULT_CONTROL,
+        case: "case3",
+        command: "start",
+        dt_type: "with dt",
+        status: "case complete",
+      };
+    },
+  };
+  const dataFiles = createDataFilesService({
+    sharedDir,
+    controlFile,
+    logger: createSilentLogger(),
+  });
+
+  await assert.rejects(
+    dataFiles.readPhase("calibrated"),
     { code: "RESULT_BATCH_INCOMPLETE", status: 409 },
   );
 });

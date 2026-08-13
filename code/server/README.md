@@ -72,7 +72,7 @@ case == "case3"
 
 ## 特别注意：Case2 `GET /api/case2/data-files?phase=calibrated` 终态门槛
 
-仅当控制快照 `status == "case complete"` 时才允许返回 Calibrated 六文件批次；否则 **`409 RESULT_BATCH_INCOMPLETE`**。读批期间文件变化或二次控制快照不再是 `case complete`，同样 `409`。缺文件 / 内容非法另有 `DATA_FILE_MISSING` / `DATA_FILE_INVALID` 等码。
+仅当控制快照同时满足 `case == "case2"`、`command == "start"`、`dt_type == "with dt"`、`status == "case complete"` 时，才允许返回 Calibrated 六文件批次；否则 **`409 RESULT_BATCH_INCOMPLETE`**。读批期间文件变化，或二次控制快照不再满足该四元组，同样 `409`。缺文件 / 内容非法另有 `DATA_FILE_MISSING` / `DATA_FILE_INVALID` 等码。
 
 实现：`src/cases/case2/data-files.mjs`。细则见 [../../doc/case2/SERVER-SPEC.md](../../doc/case2/SERVER-SPEC.md)。
 

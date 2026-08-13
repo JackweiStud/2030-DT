@@ -77,7 +77,12 @@ test("未知 status 通过 HTTP 200 原样透传，非法控制文件返回固�
 });
 
 test("Calibrated 非法时 HTTP 整批拒绝且不返回部分 metrics", async (t) => {
-  const sharedDir = await createSharedDir(t, { status: "case complete" });
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
   await writePhaseFiles(sharedDir, "calibrated");
   await fs.writeFile(
     `${sharedDir}/case2/heatmap_cali_rss.txt`,
@@ -91,6 +96,25 @@ test("Calibrated 非法时 HTTP 整批拒绝且不返回部分 metrics", async (
   );
   assert.equal(response.status, 422);
   assert.equal(response.body.error.code, "DATA_FILE_INVALID");
+  assert.equal(Object.hasOwn(response.body, "metrics"), false);
+});
+
+test("Case2 Calibrated HTTP 不接受 Case3 complete 控制归属", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case3",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
+  await writePhaseFiles(sharedDir, "calibrated");
+  const { baseUrl } = await startTestServer(t, { sharedDir });
+
+  const response = await jsonRequest(
+    baseUrl,
+    "/api/case2/data-files?phase=calibrated",
+  );
+  assert.equal(response.status, 409);
+  assert.equal(response.body.error.code, "RESULT_BATCH_INCOMPLETE");
   assert.equal(Object.hasOwn(response.body, "metrics"), false);
 });
 

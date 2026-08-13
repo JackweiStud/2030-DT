@@ -173,9 +173,9 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 | `GET ...data-files?phase=initial` | 任一必需 Initial 文件不存在 | 404 | `DATA_FILE_MISSING` |
 | data-files，`phase=initial` 或 `phase=calibrated` | 文件存在，但数值词法、范围、矩阵形状或样本形状非法 | 422 | `DATA_FILE_INVALID` |
 | `GET ...data-files?phase=calibrated` | 首次或二次控制快照读取/结构校验失败 | 500 | `CONTROL_READ_FAILED` |
-| `GET ...data-files?phase=calibrated` | 首次控制快照不是 `status="case complete"` | 409 | `RESULT_BATCH_INCOMPLETE` |
-| `GET ...data-files?phase=calibrated` | 首次快照已 complete，但任一 Calibrated 文件不存在 | 409 | `RESULT_BATCH_INCOMPLETE` |
-| `GET ...data-files?phase=calibrated` | 读取期间文件 stat 变化，或二次控制快照不再是 `case complete` | 409 | `RESULT_BATCH_INCOMPLETE` |
+| `GET ...data-files?phase=calibrated` | 首次控制快照不是 `case=case2,command=start,dt_type=with dt,status="case complete"` | 409 | `RESULT_BATCH_INCOMPLETE` |
+| `GET ...data-files?phase=calibrated` | 首次快照已满足上述四元组，但任一 Calibrated 文件不存在 | 409 | `RESULT_BATCH_INCOMPLETE` |
+| `GET ...data-files?phase=calibrated` | 读取期间文件 stat 变化，或二次控制快照不再满足上述四元组 | 409 | `RESULT_BATCH_INCOMPLETE` |
 | data-files，`phase=initial` 或 `phase=calibrated` | 文件存在但因权限、挂载或其它非“文件不存在”I/O 原因无法读取/stat | 500 | `DATA_FILE_READ_FAILED` |
 | `POST /api/case2/screenshot` | 最新控制快照读取/结构校验失败 | 500 | `CONTROL_READ_FAILED` |
 | `POST /api/case2/screenshot` | `save_picture_flag=0` | 409 | `SCREENSHOT_NOT_REQUESTED` |
@@ -184,8 +184,8 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 同一请求同时命中多个条件时，按以下优先级裁决，保证实现和测试结果唯一：
 
 1. 先做 HTTP 请求大小、JSON、query、payload shape、Base64 和 PNG signature 校验；超限固定为 `413 PAYLOAD_TOO_LARGE`，其它请求输入错误固定为 `400 INVALID_REQUEST`。
-2. Calibrated 先读控制快照；快照读取/结构校验失败为 `500 CONTROL_READ_FAILED`；成功读到但尚未 `case complete` 时直接返回 `409 RESULT_BATCH_INCOMPLETE`，不再用文件缺失覆盖该结果。
-3. 首次快照已 complete 后：文件缺失为 `409 RESULT_BATCH_INCOMPLETE`；文件存在但内容非法为 `422 DATA_FILE_INVALID`；非缺失类 I/O 故障为 `500 DATA_FILE_READ_FAILED`；读取期间变化或二次快照成功读到但 status 改变为 `409 RESULT_BATCH_INCOMPLETE`；二次快照读取/结构校验失败为 `500 CONTROL_READ_FAILED`。
+2. Calibrated 先读控制快照；快照读取/结构校验失败为 `500 CONTROL_READ_FAILED`；成功读到但尚未满足 `case=case2,command=start,dt_type=with dt,status="case complete"` 四元组时直接返回 `409 RESULT_BATCH_INCOMPLETE`，不再用文件缺失覆盖该结果。
+3. 首次快照已满足上述四元组后：文件缺失为 `409 RESULT_BATCH_INCOMPLETE`；文件存在但内容非法为 `422 DATA_FILE_INVALID`；非缺失类 I/O 故障为 `500 DATA_FILE_READ_FAILED`；读取期间文件变化或二次快照成功读到但四元组不再匹配为 `409 RESULT_BATCH_INCOMPLETE`；二次快照读取/结构校验失败为 `500 CONTROL_READ_FAILED`。
 4. Initial 不检查业务 status：文件缺失为 `404 DATA_FILE_MISSING`，文件内容非法为 `422 DATA_FILE_INVALID`，非缺失类 I/O 故障为 `500 DATA_FILE_READ_FAILED`。
 5. 截图请求先校验输入，再读取控制快照判断当前 flag：控制快照读取/结构校验失败为 `500 CONTROL_READ_FAILED`，成功读到且 flag 为 `0` 时固定为 `409 SCREENSHOT_NOT_REQUESTED`。
 
@@ -298,11 +298,11 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 
 Initial 六文件只做单批完整校验。Calibrated 额外执行：
 
-1. 读取控制快照，确认当前 `status="case complete"`。
+1. 读取控制快照，确认当前 `case=case2,command=start,dt_type=with dt,status="case complete"`。
 2. 记录六文件的路径、大小和高精度修改时间。
 3. 读取并解析六文件。
 4. 再次读取六文件 stat 与控制快照。
-5. 失败 HTTP 与 `error.code` 严格按 §3.1：控制快照读取/结构校验失败 → `500 CONTROL_READ_FAILED`；文件缺失或读取期间变化、成功读到的状态不再是 `case complete` → `409 RESULT_BATCH_INCOMPLETE`；文件存在但内容非法 → `422 DATA_FILE_INVALID`；非缺失类 I/O 故障 → `500 DATA_FILE_READ_FAILED`。
+5. 失败 HTTP 与 `error.code` 严格按 §3.1：控制快照读取/结构校验失败 → `500 CONTROL_READ_FAILED`；文件缺失或读取期间变化、成功读到的控制四元组不再匹配 Case2 start with dt complete → `409 RESULT_BATCH_INCOMPLETE`；文件存在但内容非法 → `422 DATA_FILE_INVALID`；非缺失类 I/O 故障 → `500 DATA_FILE_READ_FAILED`。
 6. 失败时：响应体**不得**含任何已成功解析的指标子集；服务端打诊断日志，至少包含 `phase`、失败文件名、错误码/原因；不把参考样本或旧批次塞进响应。
 
 服务不缓存上一批 Calibrated；失败时不得返回旧数据或参考样本。
@@ -355,7 +355,7 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 - 控制文件：四种 payload、请求体禁止带 `status`、进页 `init` 写回空闲态、`start`/`reinit` 写后强制 `status=""`、相同 command 在 `execute fail` 后重试仍产生合法命令元组 + 空 status 门沿、截图清零不改 `status`、保留未知字段、并发 POST 串行、临时文件清理；GET 对未知 `status` 字面值 200 透传（不 `CONTROL_READ_FAILED`）；`save_picture_flag` 非 `0`/`1` 才拒读；Case2/Case3 活动、未消费终态、其他 Case fail 和未知活动 status 返回 `CONTROL_BUSY`，POST init 永远允许。
 - 热力图：动态 `2×3`、`1×1`、CRLF、逗号/空白；空矩阵、行宽不一、科学计数、非有限数、归一后越出 `[-200,200]` 拒绝；超过 2 位小数四舍五入（如 `1.235→1.24`、`-1.235→-1.24`），不因小数位过多拒绝。
 - KPI：动态 `N`、不同换行分组展平；空样本、非法 token、负号、归一后越出 `[0,500]` 拒绝；超过 2 位小数同样四舍五入后接受。
-- 批次：六文件齐全；任一缺失、解析失败、读取期间变化、非 `case complete` 均整批拒绝；失败响应无部分 `metrics`；日志含失败文件名。
+- 批次：六文件齐全；任一缺失、解析失败、读取期间变化、控制四元组非 Case2 start with dt complete 均整批拒绝；失败响应无部分 `metrics`；日志含失败文件名。
 - 截图：非法 Base64/PNG；从 `000` 起；已有 `009` 后写 `010`；超过 `999` 自然扩展；并发请求不覆盖；Case2 guard 拒绝 Case3 flag，flag0 清零幂等，高电平清零 ownership 不匹配时拒绝。
 - 截图失败边界：临时写/rename 失败不清零并清理临时文件；最终 PNG 已落盘但清零失败时保留 PNG、返回错误；进程重启只清残留临时 PNG，不删除完成文件、不恢复旧截图任务。
 - 截图放弃：模拟 Web 同一任务累计 3 次失败后 POST `{save_picture_flag:0}`，断言不改 `status`、不生成 PNG、不占用序号并记录丢图日志。
@@ -369,7 +369,7 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 
 - 每个成功响应与 [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md) 示例 shape 一致。
 - 每类错误都为 `{ok:false,error:{code,message}}`，且 HTTP 状态符合 §3.1；至少逐项覆盖 `400 INVALID_REQUEST`、两条 POST 路由的 `413 PAYLOAD_TOO_LARGE`、`404 DATA_FILE_MISSING`、`409 RESULT_BATCH_INCOMPLETE`、`409 SCREENSHOT_NOT_REQUESTED`、`422 DATA_FILE_INVALID` 以及四类 `500 *_FAILED`。
-- Calibrated 在“状态非 complete 且文件缺失”时固定断言 `409 RESULT_BATCH_INCOMPLETE`；状态已 complete 后分别断言缺失为 409、内容非法为 422、非缺失类 I/O 故障为 500；首次/二次控制快照读取失败固定断言 `500 CONTROL_READ_FAILED`。
+- Calibrated 在“控制四元组未满足 Case2 start with dt complete 且文件缺失”时固定断言 `409 RESULT_BATCH_INCOMPLETE`；四元组已满足后分别断言缺失为 409、内容非法为 422、非缺失类 I/O 故障为 500；首次/二次控制快照读取失败固定断言 `500 CONTROL_READ_FAILED`。
 - `Cache-Control: no-store` 生效。
 - 任一 POST 请求体超过 20 MiB 均返回 `413 PAYLOAD_TOO_LARGE`；截图路由不得生成文件。
 - 跨 Case 冲突 Start/ReInit 返回 `409 CONTROL_BUSY`；Case2 截图保存/高电平清零不得消费 Case3 flag。

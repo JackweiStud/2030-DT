@@ -39,6 +39,15 @@ function sameSnapshot(left, right) {
   return left.size === right.size && left.mtimeNs === right.mtimeNs;
 }
 
+function isCase2CalibratedControl(control) {
+  return (
+    control.case === "case2" &&
+    control.command === "start" &&
+    control.dt_type === "with dt" &&
+    control.status === "case complete"
+  );
+}
+
 // Calibrated 批次缺文件时不能按普通 404 处理，必须统一视为批次未完成。
 function missingError(phase, filename, cause) {
   if (phase === "calibrated") {
@@ -136,13 +145,13 @@ export function createDataFilesService(options) {
     const files = fileDefinitions(phase, sharedDir);
     try {
       if (phase === "calibrated") {
-        // Calibrated 先看控制文件；没到 case complete，直接判定批次未完成。
+        // Calibrated 先看控制文件；不是本 Case 本轮完成批次，直接判定批次未完成。
         const firstControl = await controlFile.read();
-        if (firstControl.status !== "case complete") {
+        if (!isCase2CalibratedControl(firstControl)) {
           throw new AppError(
             409,
             "RESULT_BATCH_INCOMPLETE",
-            'calibrated batch is unavailable before status="case complete"',
+            "calibrated batch is unavailable before case2 start with dt completes",
           );
         }
       }
@@ -176,13 +185,13 @@ export function createDataFilesService(options) {
           );
         }
 
-        // 再读一次控制文件，确认整批读取期间状态仍然是 case complete。
+        // 再读一次控制文件，确认整批读取期间仍然归属 Case2 本轮完成批次。
         const secondControl = await controlFile.read();
-        if (secondControl.status !== "case complete") {
+        if (!isCase2CalibratedControl(secondControl)) {
           throw new AppError(
             409,
             "RESULT_BATCH_INCOMPLETE",
-            "control status changed while the calibrated batch was read",
+            "control tuple changed while the calibrated batch was read",
           );
         }
       }
