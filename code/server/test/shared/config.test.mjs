@@ -15,6 +15,27 @@ test("DT_SHARED_DIR 必填且必须为绝对目录", async (t) => {
   assert.equal(config.sharedDir, sharedDir);
   assert.equal(config.host, "127.0.0.1");
   assert.equal(config.port, 3102);
+  assert.equal(config.case2Ranges.rss.heatmap.min, -500);
+  assert.equal(config.case2Ranges.first_path_delay.kpi.max, 10000);
+});
+
+test("CASE2_RANGE_* 覆盖默认范围，非法格式启动失败", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  const config = await loadRuntimeConfig({
+    DT_SHARED_DIR: sharedDir,
+    CASE2_RANGE_HEATMAP_RSS: "-10~10",
+    CASE2_RANGE_KPI_FIRST_PATH_DELAY: "0,20",
+  });
+  assert.deepEqual(config.case2Ranges.rss.heatmap, { min: -10, max: 10 });
+  assert.deepEqual(config.case2Ranges.first_path_delay.kpi, { min: 0, max: 20 });
+
+  await assert.rejects(
+    loadRuntimeConfig({
+      DT_SHARED_DIR: sharedDir,
+      CASE2_RANGE_HEATMAP_RSS: "500,-500",
+    }),
+    /min 不能大于 max/,
+  );
 });
 
 test("CASE2_SHARED_DIR 仅作为旧脚本兼容 fallback", async (t) => {

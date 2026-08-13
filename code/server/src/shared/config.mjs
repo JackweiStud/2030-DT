@@ -1,5 +1,6 @@
 import { promises as defaultFs } from "node:fs";
 import path from "node:path";
+import { loadCase2ValueRanges } from "../cases/case2/value-ranges.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3102;
@@ -56,5 +57,6 @@ export async function loadRuntimeConfig(env = process.env, options = {}) {
     host: env.DT_ADAPTER_HOST || env.CASE2_ADAPTER_HOST || DEFAULT_HOST,
     port: parsePort(env.DT_ADAPTER_PORT || env.CASE2_ADAPTER_PORT, portEnvName),
     sharedDir: resolvedSharedDir,
+    case2Ranges: loadCase2ValueRanges(env),
   };
 }

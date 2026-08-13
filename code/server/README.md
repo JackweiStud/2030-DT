@@ -18,6 +18,19 @@ DT_SHARED_DIR=/absolute/path/to/shared npm start
 
 默认监听 `127.0.0.1:3102`。可通过 `CASE2_ADAPTER_HOST`、`CASE2_ADAPTER_PORT` 覆盖。
 
+数值范围从 `code/server/.env` 读取（模板见 `.env.example`）。Case2 默认：
+
+| 环境变量 | 默认 |
+|---|---|
+| `CASE2_RANGE_HEATMAP_RSS` | `-500,500` |
+| `CASE2_RANGE_HEATMAP_EFFECTIVE_PATH_NUM` | `0,500` |
+| `CASE2_RANGE_HEATMAP_FIRST_PATH_DELAY` | `0,1000` |
+| `CASE2_RANGE_KPI_RSS` | `-1000,1000` |
+| `CASE2_RANGE_KPI_EFFECTIVE_PATH_NUM` | `0,50000` |
+| `CASE2_RANGE_KPI_FIRST_PATH_DELAY` | `0,10000` |
+
+热力越界双边掐位（格子保留）；KPI 越界丢弃该样本。两种情况都打 `case2 data values out of range` 日志，带该文件 `invalidCount`。Case3/Case4 范围键目前只在 `.env.example` 占位，未改变 Case3 现有拒绝逻辑。
+
 ## 测试
 
 ```bash

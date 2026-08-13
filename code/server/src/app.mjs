@@ -38,6 +38,7 @@ export function createAdapterApp(options) {
     controlFile: case2ControlFile,
     fsOps,
     logger,
+    ranges: options.case2Ranges,
   });
   const case2Screenshot = createCase2ScreenshotService({
     sharedDir: options.sharedDir,

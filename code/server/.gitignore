@@ -1,3 +1,4 @@
 .runtime/
 coverage/
 *.log
+.env

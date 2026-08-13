@@ -23,7 +23,8 @@
 - 2026-08-03 Web SPEC 审阅增量已回填 `WEB-SPEC.md`。
 - 2026-08-03 接口文档同步：Gate 3 开一轮清 `status=""`、Web 可见态已回填 `API-CONTRACT.md` 与 `BACKEND-API-HANDOFF.md`。
 - 2026-08-03 SERVER-SPEC：当时目标目录改为 `shared/` + `cases/case2|3|4` 多 case 规划（当时仅实现 case2）；与 WEB-SPEC 对齐。2026-08-11 已扩展实现 case3。
-- 2026-08-03 数值词法：热力/KPI 语义精度 **2** 位小数；超过 2 位由适配服务**四舍五入**到 2 位（不拒绝）；热力矩阵 **\-200～200**；KPI **0～500**（非负）；范围按归一后判定。Calibrated 整批拒绝时 HTTP 无部分数据，适配服务必须打诊断日志。
+- 2026-08-13 Case2 数值范围改为按指标可配（`code/server/.env` 的 `CASE2_RANGE_*`）：热力越界双边掐位且不删格，KPI 越界丢弃样本，均记该文件 `invalidCount`。默认 RSS 热力 \-500～500 / KPI \-1000～1000，有效路径数热力 0～500 / KPI 0～50000，首径时延热力 0～1000 / KPI 0～10000。词法仍拒绝科学计数与非矩形；行内空格不当无效。
+- 2026-08-03 数值词法：热力/KPI 语义精度 **2** 位小数；超过 2 位由适配服务**四舍五入**到 2 位（不拒绝）。Calibrated 整批拒绝时 HTTP 无部分数据，适配服务必须打诊断日志。范围规则以 2026-08-13 条目为准。
 - 2026-08-03 打桩规格拆出：模拟后端见 `doc/case2/realback_no.md`（含 `CASE2_STUB_STEP_MS=5000`）；`SERVER-SPEC` 仅保留前端文件适配服务。
 - 2026-08-03 SERVER-SPEC GET 控制：未知 `status` 透传（与契约/WEB-SPEC 对齐）；仅结构/类型/`save_picture_flag` 非法才 `CONTROL_READ_FAILED`。
 - 2026-08-03 截图窗口：后端仅启动路径 success→complete（含同拍）置 flag；Web 仅 calibrating 观察；同拍 `case complete` 仍截一次；重置不截。

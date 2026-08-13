@@ -25,6 +25,7 @@ function services(sharedDir, options = {}) {
     controlFile,
     fsOps: options.fsOps,
     logger,
+    ranges: options.ranges,
   });
   return { controlFile, dataFiles };
 }
@@ -181,6 +182,41 @@ test("Calibrated 非 complete 时先返回批次未完成，不被文件缺失�
   await assert.rejects(
     services(sharedDir).dataFiles.readPhase("calibrated"),
     { code: "RESULT_BATCH_INCOMPLETE", status: 409 },
+  );
+});
+
+test("热力越界掐位、KPI 越界丢弃并记无效个数", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  await writePhaseFiles(sharedDir, "initial");
+  await fs.writeFile(
+    path.join(sharedDir, "case2", "heatmap_init_first_path_delay.txt"),
+    "-4166.67, 10\n20, 1200\n",
+  );
+  await fs.writeFile(
+    path.join(sharedDir, "case2", "heatmap_init_kpi_first_path_delay.txt"),
+    "157\n11184743.81\n308\n",
+  );
+  const logs = createLogCollector();
+  const result = await services(sharedDir, {
+    logger: logs.logger,
+  }).dataFiles.readPhase("initial");
+
+  assert.deepEqual(result.metrics.first_path_delay.heatmap, [
+    [0, 10],
+    [20, 1000],
+  ]);
+  assert.deepEqual(result.metrics.first_path_delay.kpi, [157, 308]);
+  const rangeLogs = logs.entries.filter(
+    (entry) => entry.message === "case2 data values out of range",
+  );
+  assert.equal(rangeLogs.length, 2);
+  assert.equal(
+    rangeLogs.find((entry) => entry.context.kind === "heatmap").context.invalidCount,
+    2,
+  );
+  assert.equal(
+    rangeLogs.find((entry) => entry.context.kind === "kpi").context.invalidCount,
+    1,
   );
 });
 

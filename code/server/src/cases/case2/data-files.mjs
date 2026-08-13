@@ -4,6 +4,7 @@ import { TextDecoder } from "node:util";
 import { AppError, isAppError } from "../../shared/errors.mjs";
 import { METRIC_FILES } from "./constants.mjs";
 import { parseHeatmap, parseKpi } from "./numeric-file.mjs";
+import { DEFAULT_CASE2_RANGES, rangeForFile } from "./value-ranges.mjs";
 
 // case2 的 data-files 服务只负责读取共享目录中的数据文件并做整批校验。
 // Initial 只校验文件本身；Calibrated 额外要做控制快照 A/B 对比，
@@ -85,7 +86,7 @@ async function statRequired(file, phase, fsOps) {
   }
 }
 
-async function readParsed(file, phase, fsOps) {
+async function readParsed(file, phase, fsOps, ranges, logger) {
   let bytes;
   try {
     bytes = await fsOps.readFile(file.path);
@@ -107,9 +108,15 @@ async function readParsed(file, phase, fsOps) {
       { cause: error, details: { filename: file.filename } },
     );
   }
+  const range = rangeForFile(ranges, file.metric, file.kind);
+  const parseOptions = {
+    onOutOfRange(info) {
+      logger.warn("case2 data values out of range", info);
+    },
+  };
   return file.kind === "heatmap"
-    ? parseHeatmap(text, file.filename)
-    : parseKpi(text, file.filename);
+    ? parseHeatmap(text, file.filename, range, parseOptions)
+    : parseKpi(text, file.filename, range, parseOptions);
 }
 
 // 把 6 个文件的解析结果重新组装回每个指标对应的 heatmap/kpi 结构。
@@ -131,6 +138,7 @@ export function createDataFilesService(options) {
   const controlFile = options.controlFile;
   const fsOps = options.fsOps ?? defaultFs;
   const logger = options.logger;
+  const ranges = options.ranges ?? DEFAULT_CASE2_RANGES;
 
   async function readPhase(phase) {
     // 先拦住非法 phase，避免把错误参数带进文件读逻辑。
@@ -165,7 +173,7 @@ export function createDataFilesService(options) {
       // 逐个读取并解析 6 个文件；任何读/解析错误都会进入统一错误处理。
       const values = [];
       for (const file of files) {
-        values.push(await readParsed(file, phase, fsOps));
+        values.push(await readParsed(file, phase, fsOps, ranges, logger));
       }
 
       if (phase === "calibrated") {
