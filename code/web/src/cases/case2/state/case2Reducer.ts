@@ -87,11 +87,21 @@ export function canStart(state: Case2State): boolean {
   return s === "initial" || s === "failed-start";
 }
 
-/** 重置是否可点。 */
+/**
+ * 重置是否可点。
+ * 启动完成路径必须截图 idle 且控制文件已写回 init（与适配层开轮条件对齐）。
+ * failed-reinit 仍可点：同动作 execute fail 允许重试。
+ */
 export function canReset(state: Case2State): boolean {
   if (state.adapterError) return false;
   const s = state.case2UiState;
-  return s === "completed" || s === "failed-reinit";
+  if (s === "failed-reinit") return true;
+  if (s !== "completed") return false;
+  return (
+    state.screenshotPhase === "idle" &&
+    state.lastControl?.command === "init" &&
+    state.lastControl.status === ""
+  );
 }
 
 /** StatusFeedback 主文案；adapterError 替换相文案。 */

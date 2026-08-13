@@ -72,6 +72,12 @@ describe("case2Reducer", () => {
     expect(s.case2UiState).toBe("completed");
     expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
     expect(canStart(s)).toBe(false);
+    expect(canReset(s)).toBe(false);
+
+    s = case2Reducer(s, {
+      type: "DIAGNOSTIC_CONTROL_OK",
+      control: control({ command: "init", status: "", dt_type: "" }),
+    });
     expect(canReset(s)).toBe(true);
   });
 
@@ -243,5 +249,34 @@ describe("case2Reducer", () => {
     expect(s.case2UiState).toBe("initial");
     expect(s.calibratedData).toBeNull();
     expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
+  });
+
+  it("completed 且截图未 idle 时不可重置", () => {
+    let s = createInitialCase2State();
+    s = {
+      ...s,
+      case2UiState: "completed",
+      calibratedData: metrics(),
+      lastControl: control({ command: "start", status: "case complete" }),
+      screenshotPhase: "saving",
+    };
+    expect(canReset(s)).toBe(false);
+
+    s = { ...s, screenshotPhase: "waitClear" };
+    expect(canReset(s)).toBe(false);
+
+    s = { ...s, screenshotPhase: "idle" };
+    expect(canReset(s)).toBe(false);
+  });
+
+  it("completed 且控制文件已写回 init 后可重置", () => {
+    const s = {
+      ...createInitialCase2State(),
+      case2UiState: "completed" as const,
+      calibratedData: metrics(),
+      screenshotPhase: "idle" as const,
+      lastControl: control({ command: "init", status: "", dt_type: "" }),
+    };
+    expect(canReset(s)).toBe(true);
   });
 });

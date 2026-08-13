@@ -53,7 +53,7 @@ test.describe("case2 mainline", () => {
       { timeout: 20_000 },
     );
     await expect(page.getByText("已完成")).toBeVisible();
-    await expect(reset).toBeEnabled();
+    await expect(reset).toBeEnabled({ timeout: 20_000 });
 
     await expect.poll(screenshotCount, { timeout: 15_000 }).toBeGreaterThan(0);
     await expect.poll(controlFlag, { timeout: 5_000 }).toBe(0);

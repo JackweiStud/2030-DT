@@ -289,6 +289,92 @@ describe("useCase2Controller entry gate", () => {
     expect(order.indexOf("data:calibrated")).toBeLessThan(
       order.lastIndexOf("post:init"),
     );
+    expect(result.current.resetEnabled).toBe(true);
+  });
+
+  it("completed 但 init 未写回时重置不可点，onReset 不发出 reinit", async () => {
+    const order: string[] = [];
+    let started = false;
+    let pollCount = 0;
+    let releaseInit: () => void = () => undefined;
+    const completionInitHold = new Promise<void>((resolve) => {
+      releaseInit = resolve;
+    });
+    const api: Case2Api = {
+      async getControl() {
+        order.push("control");
+        if (!started) return control({ command: "init", status: "", dt_type: "" });
+        pollCount += 1;
+        if (pollCount === 1) {
+          return control({ command: "start", status: "execute success" });
+        }
+        return control({ command: "start", status: "case complete" });
+      },
+      async getDataFiles(phase) {
+        order.push(`data:${phase}`);
+        return metrics();
+      },
+      async postControl(payload) {
+        order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        if ("command" in payload && payload.command === "start") {
+          started = true;
+          return control({ command: "start", status: "" });
+        }
+        if ("command" in payload && payload.command === "init" && started) {
+          await completionInitHold;
+          return control({ command: "init", status: "", dt_type: "" });
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config: { ...config, pollMs: 1 },
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.startEnabled).toBe(true);
+    });
+    act(() => {
+      result.current.onStart();
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("completed");
+      expect(order.filter((x) => x === "post:init")).toHaveLength(2);
+    });
+    expect(result.current.resetEnabled).toBe(false);
+    expect(result.current.state.lastControl?.command).toBe("start");
+    expect(result.current.state.lastControl?.status).toBe("case complete");
+
+    act(() => {
+      result.current.onReset();
+    });
+    expect(order.filter((x) => x === "post:reinit")).toHaveLength(0);
+
+    await act(async () => {
+      releaseInit();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(result.current.resetEnabled).toBe(true);
+      expect(result.current.state.lastControl?.command).toBe("init");
+    });
+
+    act(() => {
+      result.current.onReset();
+    });
+    await waitFor(() => {
+      expect(order).toContain("post:reinit");
+    });
   });
 
   it("重置完成 UI 回 initial 后，再写回 init", async () => {

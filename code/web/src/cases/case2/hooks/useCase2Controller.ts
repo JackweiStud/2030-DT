@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { toPng } from "html-to-image";
-import { createCase2Api, type Case2Api } from "../api/case2Api";
+import { Case2ApiError, createCase2Api, type Case2Api } from "../api/case2Api";
 import type { Case2RuntimeConfig } from "../metrics/heatmapConfig";
 import { CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS } from "../metrics/heatmapConfig";
 import type { ControlSnapshot } from "../types";
@@ -85,6 +85,42 @@ function controlSummary(control: ControlSnapshot) {
   };
 }
 
+function controlGateSummary(
+  state: Case2State,
+  extra?: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ui: state.case2UiState,
+    screenshotPhase: state.screenshotPhase,
+    canReset: canReset(state),
+    lastCommand: state.lastControl?.command ?? null,
+    lastStatus: state.lastControl?.status ?? null,
+    savePictureFlag: state.lastControl?.save_picture_flag ?? null,
+    ...extra,
+  };
+}
+
+function apiErrorFields(err: unknown): Record<string, unknown> {
+  if (err instanceof Case2ApiError) {
+    return {
+      code: err.code,
+      httpStatus: err.httpStatus,
+      endpoint: "/api/case2/control-file",
+      reason: err.message,
+    };
+  }
+  return { reason: err instanceof Error ? err.message : String(err) };
+}
+
+function isStartCompleteAwaitingScreenshot(state: Case2State): boolean {
+  return (
+    state.case2UiState === "completed" &&
+    state.calibratedData !== null &&
+    state.lastControl?.command === "start" &&
+    state.lastControl.status === "case complete"
+  );
+}
+
 function isAbortError(err: unknown): boolean {
   return (
     (err as { name?: string } | null)?.name === "AbortError" ||
@@ -123,6 +159,7 @@ export function useCase2Controller(options: Options): Case2Controller {
   const adapterProbingRef = useRef(false);
   const completionIdleResetAbortRef = useRef<AbortController | null>(null);
   const completionIdleResetPostedRef = useRef(false);
+  const completionInitSkipLoggedRef = useRef(false);
   const calibratedFailAttemptsRef = useRef(0);
 
   const stopPolling = useCallback(() => {
@@ -312,6 +349,8 @@ export function useCase2Controller(options: Options): Case2Controller {
             toPngMs,
             uploadMs,
             totalMs: Math.round(performance.now() - taskStartedAt),
+            screenshotBusy: true,
+            ...controlGateSummary(stateRef.current),
           });
           return;
         } catch (err) {
@@ -335,6 +374,8 @@ export function useCase2Controller(options: Options): Case2Controller {
               case2Log("screenshot.ok_via_flag_probe", {
                 attempt: attempts,
                 stayInCalibrating: stillCalibrating,
+                screenshotBusy: true,
+                ...controlGateSummary(stateRef.current),
               });
               return;
             }
@@ -413,6 +454,8 @@ export function useCase2Controller(options: Options): Case2Controller {
             nx: metrics.rss.heatmap[0]?.length ?? 0,
             ny: metrics.rss.heatmap.length,
             kpiN: metrics.rss.kpi.length,
+            screenshotBusy: screenshotBusyRef.current,
+            ...controlGateSummary(stateRef.current),
           });
           stopPolling();
           return;
@@ -607,11 +650,25 @@ export function useCase2Controller(options: Options): Case2Controller {
   ]);
 
   useEffect(() => {
-    if (
-      completionIdleResetPostedRef.current ||
-      screenshotBusyRef.current ||
-      !shouldResetCommandAfterCommandCompletion(state)
-    ) {
+    if (completionIdleResetPostedRef.current) {
+      return undefined;
+    }
+
+    const screenshotBusy = screenshotBusyRef.current;
+    const readyForInit = shouldResetCommandAfterCommandCompletion(state);
+    if (screenshotBusy || !readyForInit) {
+      if (
+        isStartCompleteAwaitingScreenshot(state) &&
+        (screenshotBusy || state.screenshotPhase !== "idle") &&
+        !completionInitSkipLoggedRef.current
+      ) {
+        completionInitSkipLoggedRef.current = true;
+        case2Log("completion.init_reset_skip", {
+          reason: screenshotBusy ? "screenshot-busy" : "screenshot-phase",
+          screenshotBusy,
+          ...controlGateSummary(state),
+        });
+      }
       return undefined;
     }
 
@@ -642,12 +699,7 @@ export function useCase2Controller(options: Options): Case2Controller {
       }
     })();
 
-    return () => {
-      if (completionIdleResetAbortRef.current === ac) {
-        completionIdleResetAbortRef.current = null;
-      }
-      ac.abort();
-    };
+    return undefined;
   }, [
     dispatch,
     postEntryInit,
@@ -661,6 +713,7 @@ export function useCase2Controller(options: Options): Case2Controller {
     const snap = stateRef.current;
     if (!canStart(snap)) return;
     completionIdleResetPostedRef.current = false;
+    completionInitSkipLoggedRef.current = false;
     stopCompletionIdleReset();
     calibratedFailAttemptsRef.current = 0;
     dispatch({ type: "START_CLICK" });
@@ -687,11 +740,22 @@ export function useCase2Controller(options: Options): Case2Controller {
 
   const onReset = useCallback(() => {
     const snap = stateRef.current;
-    if (!canReset(snap)) return;
+    if (!canReset(snap)) {
+      case2Log("command.reset_click_ignored", {
+        screenshotBusy: screenshotBusyRef.current,
+        completionInitPosted: completionIdleResetPostedRef.current,
+        ...controlGateSummary(snap),
+      });
+      return;
+    }
+    case2Log("command.reset_click", {
+      screenshotBusy: screenshotBusyRef.current,
+      completionInitPosted: completionIdleResetPostedRef.current,
+      ...controlGateSummary(snap),
+    });
     completionIdleResetPostedRef.current = false;
-    stopCompletionIdleReset();
+    completionInitSkipLoggedRef.current = false;
     dispatch({ type: "RESET_CLICK" });
-    case2Log("command.reset_click");
     void (async () => {
       try {
         const control = await apiRef.current.postControl({ command: "reinit" });
@@ -702,11 +766,13 @@ export function useCase2Controller(options: Options): Case2Controller {
         console.warn("[case2] reset POST failed", err);
         dispatch({ type: "RESET_POST_FAIL" });
         case2Log("command.reset_fail", {
-          reason: err instanceof Error ? err.message : String(err),
+          screenshotBusy: screenshotBusyRef.current,
+          ...apiErrorFields(err),
+          ...controlGateSummary(stateRef.current),
         });
       }
     })();
-  }, [dispatch, schedulePollLoop, stopCompletionIdleReset]);
+  }, [dispatch, schedulePollLoop]);
 
   return {
     state,
