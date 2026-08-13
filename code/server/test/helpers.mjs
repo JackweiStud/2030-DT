@@ -49,6 +49,35 @@ export async function readControl(sharedDir) {
   );
 }
 
+/** 拦截控制文件读/rename，用于模拟真实后端在适配层 RMW 窗口里改文件。 */
+export function interceptControlFileFs(realFs, hooks = {}) {
+  let controlReads = 0;
+  let controlRenames = 0;
+  const fsOps = {
+    ...realFs,
+    readFile: async (filePath, ...args) => {
+      const result = await realFs.readFile(filePath, ...args);
+      if (String(filePath).endsWith("case_control.json")) {
+        controlReads += 1;
+        await hooks.afterControlRead?.(controlReads, result);
+      }
+      return result;
+    },
+    rename: async (from, to, ...args) => {
+      const result = await realFs.rename(from, to, ...args);
+      if (String(to).endsWith("case_control.json")) {
+        controlRenames += 1;
+        await hooks.afterControlRename?.(controlRenames);
+      }
+      return result;
+    },
+  };
+  return {
+    fsOps,
+    getCounts: () => ({ controlReads, controlRenames }),
+  };
+}
+
 export async function writePhaseFiles(sharedDir, phase, options = {}) {
   const heatmap = options.heatmap ?? "1.235, 2, 3\n4, 5, 6\n";
   const kpi = options.kpi ?? "1.235\n2\n3\n";

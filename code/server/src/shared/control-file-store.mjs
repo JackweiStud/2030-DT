@@ -96,6 +96,36 @@ function verifyWrittenDocument(current, written, patch) {
   }
 }
 
+/** 清 flag 时比较写前/写后业务元组；不含 save_picture_flag。 */
+export const FLAG_CLEAR_CONFLICT_ATTEMPTS = 3;
+
+function controlTuple(control) {
+  return {
+    case: control.case,
+    command: control.command,
+    dt_type: control.dt_type,
+    status: control.status,
+  };
+}
+
+function sameControlTuple(left, right) {
+  return (
+    left.case === right.case &&
+    left.command === right.command &&
+    left.dt_type === right.dt_type &&
+    left.status === right.status
+  );
+}
+
+function isFlagClearPatch(patch) {
+  const keys = Object.keys(patch);
+  return (
+    keys.length === 1 &&
+    keys[0] === "save_picture_flag" &&
+    patch.save_picture_flag === 0
+  );
+}
+
 /**
  * Start/ReInit 的共享 busy 判定。只有干净 init 或同动作 execute fail 重试可开轮。
  */
@@ -171,59 +201,99 @@ export function createControlFileStore(options) {
       beforeWrite,
       kind = "patch",
       caseId = "shared",
+      rereadBeforeWrite = false,
+      tupleConflictRetries = 1,
     } = optionsForUpdate;
+    const attempts = rereadBeforeWrite
+      ? Math.max(1, tupleConflictRetries)
+      : 1;
 
     return queue.run(async () => {
-      let current = await read();
-      guard?.(current);
-
-      if (beforeWrite) {
-        await beforeWrite(current);
-        current = await read();
+      for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        let current = await read();
         guard?.(current);
-      }
 
-      const merged = { ...current, ...patch };
-      const serialized = `${JSON.stringify(merged, null, 2)}\n`;
-      try {
-        await atomicReplaceFile(controlPath, serialized, {
-          fsOps,
-          logger,
-          renameAttempts,
-          renameRetryMs,
-          sleep,
+        if (beforeWrite) {
+          await beforeWrite(current);
+          current = await read();
+          guard?.(current);
+        }
+
+        if (rereadBeforeWrite) {
+          current = await read();
+          guard?.(current);
+        }
+
+        if (isFlagClearPatch(patch) && current.save_picture_flag === 0) {
+          return current;
+        }
+
+        const merged = { ...current, ...patch };
+        const serialized = `${JSON.stringify(merged, null, 2)}\n`;
+        try {
+          await atomicReplaceFile(controlPath, serialized, {
+            fsOps,
+            logger,
+            renameAttempts,
+            renameRetryMs,
+            sleep,
+          });
+        } catch (error) {
+          throw new AppError(
+            500,
+            "CONTROL_WRITE_FAILED",
+            "failed to atomically write case_control.json",
+            { cause: error },
+          );
+        }
+
+        let written;
+        try {
+          written = await readControlDocument(controlPath, fsOps);
+        } catch (error) {
+          throw new AppError(
+            500,
+            "CONTROL_WRITE_FAILED",
+            "case_control.json failed post-write verification",
+            { cause: error },
+          );
+        }
+
+        if (rereadBeforeWrite && !sameControlTuple(current, written)) {
+          logger?.warn("control flag clear tuple conflict, retrying", {
+            caseId,
+            kind,
+            attempt,
+            attempts,
+            expected: controlTuple(current),
+            actual: controlTuple(written),
+          });
+          if (attempt < attempts) continue;
+          throw new AppError(
+            500,
+            "CONTROL_WRITE_FAILED",
+            "case_control.json flag clear lost the race after retries",
+          );
+        }
+
+        verifyWrittenDocument(current, written, patch);
+
+        logger?.info("control file updated", {
+          caseId,
+          kind,
+          fields: Object.keys(patch),
+          command: written.command,
+          status: written.status,
+          save_picture_flag: written.save_picture_flag,
         });
-      } catch (error) {
-        throw new AppError(
-          500,
-          "CONTROL_WRITE_FAILED",
-          "failed to atomically write case_control.json",
-          { cause: error },
-        );
+        return written;
       }
 
-      let written;
-      try {
-        written = await readControlDocument(controlPath, fsOps);
-      } catch (error) {
-        throw new AppError(
-          500,
-          "CONTROL_WRITE_FAILED",
-          "case_control.json failed post-write verification",
-          { cause: error },
-        );
-      }
-      verifyWrittenDocument(current, written, patch);
-
-      logger?.info("control file updated", {
-        caseId,
-        kind,
-        fields: Object.keys(patch),
-        command: written.command,
-        status: written.status,
-        save_picture_flag: written.save_picture_flag,
-      });
-      return written;
+      throw new AppError(
+        500,
+        "CONTROL_WRITE_FAILED",
+        "case_control.json flag clear lost the race after retries",
+      );
     });
   }
 

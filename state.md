@@ -40,6 +40,7 @@
 - 2026-08-04 一键联调脚本：`code/scripts/dev-web-server.sh` 同时启动 Web + Node 适配（**不**启打桩）；`Ctrl+C` 结束全部子进程。打桩仍独立：`code/back && npm run start:case2` 或 `npm run start:case3`。
 - 2026-08-04 Web 代码检视后补齐主线 E2E：`code/scripts/e2e-case2-stack.sh` 会准备临时共享目录并启动 Web + Node 适配 + case2 打桩；`code/web npm run test:e2e` 覆盖进页 Initial、启动、截图落盘/清 flag、重置回 Initial。
 - 2026-08-04 本轮文档复核自动命令：`code/server npm test` 30/30 通过；`code/back npm test` 28/28 通过（首次复跑曾出现一次陈旧任务测试瞬时失败，立即重跑通过，后续保留观察）；`code/web npm run typecheck` 通过；`code/web npm test` 30/30 通过；`code/web npm run build` 通过；`code/web npm run test:e2e` 1/1 通过。
+- 2026-08-12 BF-002：截图清 `save_picture_flag` 在共享队列内写前再读最新控制、只合并 flag；写后 `(case,command,dt_type,status)` 冲突最多再试 3 次（I/O 冲突，不是业务命令重试）。`code/server npm test` 61/61。
 - 当前焦点：case2、case3 开发完成并具备本地打桩/前端隔离验证证据；下一步若面向正式现场交付，应接真实后端和真实挂载路径，分别补充 case2/case3 真实环境 QA 记录。
 
 ## 一句话演示承诺

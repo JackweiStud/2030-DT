@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createControlFileService } from "../../src/cases/case2/control-file.mjs";
+import { FLAG_CLEAR_CONFLICT_ATTEMPTS } from "../../src/shared/control-file-store.mjs";
 import { createSilentLogger } from "../../src/shared/logger.mjs";
 import {
+  createLogCollector,
   createSharedDir,
   DEFAULT_CONTROL,
+  interceptControlFileFs,
   readControl,
   writeControl,
   writePhaseFiles,
@@ -215,6 +218,154 @@ test("控制写入进程内串行，清 flag 不修改 status", async (t) => {
     name.startsWith(".case_control.json."),
   );
   assert.deepEqual(leftovers, []);
+});
+
+test("清 flag 写前再读：第一次仍是 execute success 时保留已写入的 case complete", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "execute success",
+    save_picture_flag: 1,
+    future_field: "keep-me",
+  });
+  const { fsOps } = interceptControlFileFs(fs, {
+    afterControlRead: async (controlReads) => {
+      if (controlReads !== 1) return;
+      await writeControl(sharedDir, {
+        ...(await readControl(sharedDir)),
+        status: "case complete",
+        save_picture_flag: 1,
+      });
+    },
+  });
+  const cleared = await service(sharedDir, { fsOps }).updateFromHttp({
+    save_picture_flag: 0,
+  });
+  assert.equal(cleared.status, "case complete");
+  assert.equal(cleared.save_picture_flag, 0);
+  assert.equal(cleared.command, "start");
+  assert.equal(cleared.case, "case2");
+  assert.equal(cleared.dt_type, "with dt");
+  assert.equal(cleared.future_field, "keep-me");
+  const disk = await readControl(sharedDir);
+  assert.equal(disk.status, "case complete");
+  assert.equal(disk.save_picture_flag, 0);
+  assert.equal(disk.future_field, "keep-me");
+});
+
+test("清 flag 再读后 ownership 已变则 409 且不写脏快照", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "execute success",
+    save_picture_flag: 1,
+  });
+  const foreign = {
+    case: "case3",
+    command: "start",
+    dt_type: "without dt",
+    status: "execute success",
+    save_picture_flag: 1,
+    debug_flag: 0,
+    scene_type: "U6G",
+  };
+  const { fsOps, getCounts } = interceptControlFileFs(fs, {
+    afterControlRead: async (controlReads) => {
+      if (controlReads !== 1) return;
+      await writeControl(sharedDir, foreign);
+    },
+  });
+  await assert.rejects(
+    service(sharedDir, { fsOps }).updateFromHttp({ save_picture_flag: 0 }),
+    { code: "SCREENSHOT_NOT_REQUESTED", status: 409 },
+  );
+  assert.equal(getCounts().controlRenames, 0);
+  assert.deepEqual(await readControl(sharedDir), foreign);
+});
+
+test("清 flag 写后业务元组被后端改掉则短重试，最终仍是 case complete + flag=0", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "execute success",
+    save_picture_flag: 1,
+    future_field: "keep-me",
+  });
+  const logs = createLogCollector();
+  const { fsOps, getCounts } = interceptControlFileFs(fs, {
+    afterControlRename: async (controlRenames) => {
+      if (controlRenames !== 1) return;
+      await writeControl(sharedDir, {
+        ...(await readControl(sharedDir)),
+        status: "case complete",
+        save_picture_flag: 1,
+      });
+    },
+  });
+  const cleared = await service(sharedDir, {
+    fsOps,
+    logger: logs.logger,
+  }).clearPictureFlag();
+  assert.equal(cleared.status, "case complete");
+  assert.equal(cleared.save_picture_flag, 0);
+  assert.equal(cleared.future_field, "keep-me");
+  assert.equal(getCounts().controlRenames, 2);
+  assert.equal(
+    logs.entries.some(
+      (item) => item.message === "control flag clear tuple conflict, retrying",
+    ),
+    true,
+  );
+});
+
+test("清 flag 冲突重试耗尽后失败，不把过期 status 留在磁盘上冒充成功", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "execute success",
+    save_picture_flag: 1,
+  });
+  const { fsOps, getCounts } = interceptControlFileFs(fs, {
+    afterControlRename: async () => {
+      const latest = await readControl(sharedDir);
+      await writeControl(sharedDir, {
+        ...latest,
+        status:
+          latest.status === "case complete"
+            ? "execute success"
+            : "case complete",
+        save_picture_flag: 1,
+      });
+    },
+  });
+  await assert.rejects(
+    service(sharedDir, { fsOps }).updateFromHttp({ save_picture_flag: 0 }),
+    { code: "CONTROL_WRITE_FAILED", status: 500 },
+  );
+  assert.equal(getCounts().controlRenames, FLAG_CLEAR_CONFLICT_ATTEMPTS);
+  const disk = await readControl(sharedDir);
+  assert.equal(disk.save_picture_flag, 1);
+  assert.notEqual(disk.status, "");
+});
+
+test("清 flag 在 flag 已是 0 时幂等且不写文件", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    status: "case complete",
+    save_picture_flag: 0,
+    future_field: "keep-me",
+  });
+  const { fsOps, getCounts } = interceptControlFileFs(fs);
+  const unchanged = await service(sharedDir, { fsOps }).updateFromHttp({
+    save_picture_flag: 0,
+  });
+  assert.equal(unchanged.status, "case complete");
+  assert.equal(unchanged.save_picture_flag, 0);
+  assert.equal(unchanged.future_field, "keep-me");
+  assert.equal(getCounts().controlRenames, 0);
 });
 
 test("POST 控制 payload 必须严格匹配四种 shape", async (t) => {

@@ -8,6 +8,7 @@ import { promises as defaultFs } from "node:fs";
 import path from "node:path";
 import { AppError, isAppError } from "../../shared/errors.mjs";
 import {
+  FLAG_CLEAR_CONFLICT_ATTEMPTS,
   assertCommandAvailable,
   assertScreenshotOwnership,
   createControlFileStore,
@@ -153,6 +154,8 @@ export function createControlFileService(options) {
       caseId: "case2",
       kind,
       patch: { save_picture_flag: 0 },
+      rereadBeforeWrite: true,
+      tupleConflictRetries: FLAG_CLEAR_CONFLICT_ATTEMPTS,
       guard(current) {
         if (current.save_picture_flag === 0) return;
         assertScreenshotOwnership(current, "case2");

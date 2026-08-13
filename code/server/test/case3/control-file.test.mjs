@@ -7,6 +7,7 @@ import { CASE3_SIDE_FILES } from "../../src/cases/case3/constants.mjs";
 import { createSilentLogger } from "../../src/shared/logger.mjs";
 import {
   createSharedDir,
+  interceptControlFileFs,
   readControl,
   writeCase3SideFiles,
   writeControl,
@@ -153,4 +154,32 @@ test("Case3 截图清零对 flag=0 幂等，对错误 owner 拒绝", async (t) =
     controlFile.updateFromHttp({ save_picture_flag: 0 }),
     { code: "SCREENSHOT_NOT_REQUESTED", status: 409 },
   );
+});
+
+test("Case3 清 flag 写前再读：保留窗口里写入的 case complete 与未知字段", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case3",
+    command: "start",
+    dt_type: "without dt",
+    status: "execute success",
+    save_picture_flag: 1,
+    future_field: "keep-me",
+  });
+  const { fsOps } = interceptControlFileFs(fs, {
+    afterControlRead: async (controlReads) => {
+      if (controlReads !== 1) return;
+      await writeControl(sharedDir, {
+        ...(await readControl(sharedDir)),
+        status: "case complete",
+        save_picture_flag: 1,
+      });
+    },
+  });
+  const cleared = await service(sharedDir, { fsOps }).clearPictureFlag();
+  assert.equal(cleared.case, "case3");
+  assert.equal(cleared.command, "start");
+  assert.equal(cleared.dt_type, "without dt");
+  assert.equal(cleared.status, "case complete");
+  assert.equal(cleared.save_picture_flag, 0);
+  assert.equal(cleared.future_field, "keep-me");
 });
