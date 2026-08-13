@@ -214,24 +214,49 @@ export function pointProgressWindow<T>(points: T[], windowSize = 20): T[] {
 }
 
 /**
+ * 点位进度窗口可滑动范围。
+ * completeCount≤窗口：只能看路线前窗（start=0）；超出后默认可滑到最新 20 点。
+ */
+export function pointProgressWindowRange(
+  routeLength: number,
+  completeCount: number,
+  windowSize = 20,
+): { maxStart: number; defaultStart: number } {
+  const size = Math.max(1, Math.floor(windowSize));
+  const done = Math.max(0, Math.floor(completeCount));
+  const length = Math.max(0, Math.floor(routeLength));
+  const covered =
+    done <= size ? Math.min(size, length) : Math.min(done, length);
+  const maxStart = Math.max(0, covered - size);
+  return {
+    maxStart,
+    defaultStart: done <= size ? 0 : maxStart,
+  };
+}
+
+/**
  * 点位进度槽位标签序列：来自 baseRoute 点号。
  * completeCount≤窗口：固定显示路线前窗，已完成点只填波束值；
- * 超出后按完成数滑动，始终最多 windowSize 个 Pxx。
+ * 超出后默认显示最新 windowSize 个；windowStart 可把窗口拖回更早点号。
  */
 export function pointProgressRouteNos(
   routeNos: ReadonlyArray<number>,
   completeCount: number,
   windowSize = 20,
+  windowStart?: number,
 ): number[] {
   if (routeNos.length === 0) return [];
   const size = Math.max(1, Math.floor(windowSize));
-  const done = Math.max(0, Math.floor(completeCount));
-  if (done <= size) {
-    return routeNos.slice(0, Math.min(size, routeNos.length));
-  }
-  const end = Math.min(done, routeNos.length);
-  const start = Math.max(0, end - size);
-  return routeNos.slice(start, end);
+  const { maxStart, defaultStart } = pointProgressWindowRange(
+    routeNos.length,
+    completeCount,
+    size,
+  );
+  const start =
+    windowStart == null
+      ? defaultStart
+      : Math.max(0, Math.min(maxStart, Math.floor(windowStart)));
+  return routeNos.slice(start, start + size);
 }
 
 /** 最终快照完整门槛（Web 本地）。 */

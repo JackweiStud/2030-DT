@@ -596,6 +596,17 @@
   justify-content: center;
   gap: 5px;
   height: 36px;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+.case3-progress__slots.is-scrollable {
+  cursor: grab;
+}
+
+.case3-progress__slots.is-dragging {
+  cursor: grabbing;
 }
 
 .case3-slot {

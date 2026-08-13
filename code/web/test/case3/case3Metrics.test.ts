@@ -10,6 +10,7 @@ import {
   pointBeamSlotView,
   pointProgressRouteNos,
   pointProgressWindow,
+  pointProgressWindowRange,
   relativeCostChangePct,
   throughputXDomain,
   throughputXTicks,
@@ -173,6 +174,16 @@ describe("case3Metrics", () => {
     expect(pointProgressRouteNos(route, 25)).toEqual(
       Array.from({ length: 20 }, (_, i) => i + 6),
     );
+    expect(pointProgressRouteNos(route, 31, 20, 0)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 1),
+    );
+    expect(pointProgressRouteNos(route, 31, 20, 11)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 12),
+    );
+    expect(pointProgressWindowRange(32, 9).maxStart).toBe(0);
+    expect(pointProgressWindowRange(32, 25).maxStart).toBe(5);
+    expect(pointProgressWindowRange(32, 25).defaultStart).toBe(5);
+    expect(pointProgressWindowRange(32, 31).maxStart).toBe(11);
     expect(
       isFinalSideReady({
         side: "without",

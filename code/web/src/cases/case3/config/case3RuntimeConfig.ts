@@ -110,6 +110,8 @@ export function loadCase3RuntimeConfig(
 
 export const CASE3_ADAPTER_RECOVERY_PROBE_MS = 5000;
 export const CASE3_POINT_WINDOW = 20;
+/** 槽宽 24 + gap 5，拖动换窗步长。 */
+export const CASE3_POINT_SLOT_PITCH = 29;
 export const CASE3_MAP_SCALE_MIN = 0.5;
 export const CASE3_MAP_SCALE_MAX = 5;
 export const CASE3_MAP_ROTATION_MAX_DEG = 90;
