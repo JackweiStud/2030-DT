@@ -768,10 +768,18 @@ export function useCase2Controller(options: Options): Case2Controller {
         case2Log("command.start_ok", controlSummary(control));
         schedulePollLoop();
       } catch (err) {
+        if (err instanceof Case2ApiError && err.code === "CONTROL_BUSY") {
+          case2Warn("command.control_busy", {
+            kind: "start",
+            ...apiErrorFields(err),
+          });
+          dispatch({ type: "COMMAND_CONTROL_BUSY" });
+          return;
+        }
         console.warn("[case2] start POST failed", err);
         dispatch({ type: "START_POST_FAIL" });
         case2Log("command.start_fail", {
-          reason: err instanceof Error ? err.message : String(err),
+          ...apiErrorFields(err),
         });
       }
     })();
@@ -802,6 +810,16 @@ export function useCase2Controller(options: Options): Case2Controller {
         case2Log("command.reset_ok", controlSummary(control));
         schedulePollLoop();
       } catch (err) {
+        if (err instanceof Case2ApiError && err.code === "CONTROL_BUSY") {
+          case2Warn("command.control_busy", {
+            kind: "reinit",
+            screenshotBusy: screenshotBusyRef.current,
+            ...apiErrorFields(err),
+            ...controlGateSummary(stateRef.current),
+          });
+          dispatch({ type: "COMMAND_CONTROL_BUSY" });
+          return;
+        }
         console.warn("[case2] reset POST failed", err);
         dispatch({ type: "RESET_POST_FAIL" });
         case2Log("command.reset_fail", {

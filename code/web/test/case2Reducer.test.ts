@@ -159,6 +159,42 @@ describe("case2Reducer", () => {
     expect(canStart(s)).toBe(false);
   });
 
+  it("COMMAND_CONTROL_BUSY 回滚点击前相且不置 adapterError", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "INITIAL_DATA_OK", metrics: metrics() });
+    s = case2Reducer(s, { type: "START_CLICK" });
+    s = case2Reducer(s, { type: "COMMAND_CONTROL_BUSY" });
+    expect(s.case2UiState).toBe("initial");
+    expect(s.phaseBeforeCommand).toBeNull();
+    expect(s.adapterError).toBe(false);
+    expect(s.seenExecuteSuccess).toBe(false);
+    expect(statusFeedbackText(s)).toBe("等待启动测试");
+    expect(canStart(s)).toBe(true);
+
+    s = case2Reducer(s, { type: "START_CLICK" });
+    s = case2Reducer(s, {
+      type: "START_POST_OK",
+      control: control({ command: "start", status: "" }),
+    });
+    s = case2Reducer(s, {
+      type: "CALIBRATED_OK",
+      metrics: metrics(),
+    });
+    s = case2Reducer(s, {
+      type: "DIAGNOSTIC_CONTROL_OK",
+      control: control({ command: "init", status: "", dt_type: "" }),
+    });
+    expect(s.case2UiState).toBe("completed");
+    expect(s.calibratedData).not.toBeNull();
+    s = case2Reducer(s, { type: "RESET_CLICK" });
+    const kept = s.calibratedData;
+    s = case2Reducer(s, { type: "COMMAND_CONTROL_BUSY" });
+    expect(s.case2UiState).toBe("completed");
+    expect(s.adapterError).toBe(false);
+    expect(s.calibratedData).toBe(kept);
+    expect(canReset(s)).toBe(true);
+  });
+
   it("Initial 六文件失败显示初始化数据异常，不是连接异常或执行失败", () => {
     let s = createInitialCase2State();
     s = case2Reducer(s, {

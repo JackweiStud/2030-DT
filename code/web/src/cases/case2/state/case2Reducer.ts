@@ -40,6 +40,8 @@ export type Case2Action =
   | { type: "RESET_CLICK" }
   | { type: "RESET_POST_OK"; control: ControlSnapshot }
   | { type: "RESET_POST_FAIL" }
+  /** 共享控制忙：回滚点击前相，不进 adapterError。 */
+  | { type: "COMMAND_CONTROL_BUSY" }
   | { type: "CONTROL_POLL_OK"; control: ControlSnapshot }
   | { type: "CONTROL_POLL_FAIL" }
   | { type: "CALIBRATED_OK"; metrics: MetricsBundle }
@@ -318,6 +320,17 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         case2UiState: state.phaseBeforeCommand ?? "completed",
         phaseBeforeCommand: null,
         adapterError: true,
+        seenExecuteSuccess: false,
+      };
+
+    case "COMMAND_CONTROL_BUSY":
+      return {
+        ...state,
+        case2UiState:
+          state.phaseBeforeCommand ??
+          (state.case2UiState === "resetting" ? "completed" : "initial"),
+        phaseBeforeCommand: null,
+        adapterError: false,
         seenExecuteSuccess: false,
       };
 

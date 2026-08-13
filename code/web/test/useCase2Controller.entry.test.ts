@@ -4,7 +4,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useCase2Controller } from "../src/cases/case2/hooks/useCase2Controller";
-import type { Case2Api } from "../src/cases/case2/api/case2Api";
+import { Case2ApiError, type Case2Api } from "../src/cases/case2/api/case2Api";
 import type { Case2RuntimeConfig } from "../src/cases/case2/metrics/heatmapConfig";
 import type { ControlSnapshot, MetricsBundle } from "../src/cases/case2/types";
 
@@ -717,5 +717,150 @@ describe("useCase2Controller entry gate", () => {
       expect(result.current.state.lastControl?.command).toBe("init");
       expect(result.current.resetEnabled).toBe(true);
     });
+  });
+
+  it("Start 遇 CONTROL_BUSY：回 initial，不进 adapterError，可再点", async () => {
+    const api: Case2Api = {
+      async getControl() {
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async getDataFiles() {
+        return metrics();
+      },
+      async postControl(payload) {
+        if ("command" in payload && payload.command === "start") {
+          throw new Case2ApiError("CONTROL_BUSY", "busy", 409);
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config,
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.startEnabled).toBe(true);
+    });
+    act(() => {
+      result.current.onStart();
+    });
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("initial");
+      expect(result.current.state.adapterError).toBe(false);
+    });
+    expect(result.current.statusText).not.toBe("case2文件服务器连接异常");
+    expect(result.current.startEnabled).toBe(true);
+  });
+
+  it("Reset 遇 CONTROL_BUSY：回 completed，不进 adapterError", async () => {
+    let started = false;
+    let pollCount = 0;
+    const api: Case2Api = {
+      async getControl() {
+        if (!started) {
+          return control({ command: "init", status: "", dt_type: "" });
+        }
+        pollCount += 1;
+        if (pollCount === 1) {
+          return control({ command: "start", status: "execute success" });
+        }
+        return control({ command: "start", status: "case complete" });
+      },
+      async getDataFiles() {
+        return metrics();
+      },
+      async postControl(payload) {
+        if ("command" in payload && payload.command === "start") {
+          started = true;
+          return control({ command: "start", status: "" });
+        }
+        if ("command" in payload && payload.command === "reinit") {
+          throw new Case2ApiError("CONTROL_BUSY", "busy", 409);
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config: { ...config, pollMs: 1 },
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.startEnabled).toBe(true);
+    });
+    act(() => {
+      result.current.onStart();
+    });
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("completed");
+      expect(result.current.resetEnabled).toBe(true);
+    });
+
+    act(() => {
+      result.current.onReset();
+    });
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("completed");
+      expect(result.current.state.adapterError).toBe(false);
+    });
+    expect(result.current.statusText).not.toBe("case2文件服务器连接异常");
+    expect(result.current.state.calibratedData).not.toBeNull();
+    expect(result.current.resetEnabled).toBe(true);
+  });
+
+  it("Start POST 真连接失败仍进 adapterError", async () => {
+    const api: Case2Api = {
+      async getControl() {
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async getDataFiles() {
+        return metrics();
+      },
+      async postControl(payload) {
+        if ("command" in payload && payload.command === "start") {
+          throw new TypeError("adapter down");
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config,
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.startEnabled).toBe(true);
+    });
+    act(() => {
+      result.current.onStart();
+    });
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("initial");
+      expect(result.current.state.adapterError).toBe(true);
+    });
+    expect(result.current.statusText).toBe("case2文件服务器连接异常");
+    expect(result.current.startEnabled).toBe(false);
   });
 });

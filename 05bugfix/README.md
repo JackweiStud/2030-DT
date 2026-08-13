@@ -52,7 +52,7 @@ BF-025：真实算法数据不再因统一 `\-200～200` / `0～500` 整批 422�
 | 7   | [BF-006](BF-006-case2-adapter-probe-idle.md)             | P1  | web/case2    | 连接探活只覆盖 `initial`，失败态会锁死按钮          | open   |
 | 8   | [BF-007](BF-007-screenshot-rename-retry.md)              | P1  | server       | 截图 `rename` 无瞬时锁重试                  | open   |
 | 9   | [BF-008](BF-008-http-timeout.md)                         | P1  | web          | Case2 无请求超时；Case3 截图共用 5s           | open   |
-| 10  | [BF-009](BF-009-control-busy-vs-adapter.md)              | P1  | web/case2    | `CONTROL_BUSY` 被当成连接异常              | open   |
+| 10  | [BF-009](BF-009-control-busy-vs-adapter.md)              | P1  | web/case2    | `CONTROL_BUSY` 被当成连接异常              | ✅ done |
 | 11  | [BF-010](BF-010-case2-abort-screenshot-on-incomplete.md) | P1  | web/case2    | 结果不完整回退时未真正取消截图                     | open   |
 | 12  | [BF-011](BF-011-busy-adapter-error-badge.md)             | P1  | web          | 忙态中连接失败盖住「测试中」                      | open   |
 | 13  | [BF-012](BF-012-case2-poll-control-ownership.md)         | P1  | web/case2    | 轮询不校验控制文件归属                         | open   |
