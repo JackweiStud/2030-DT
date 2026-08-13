@@ -171,7 +171,7 @@ type SideSnapshot = {
 };
 ```
 
-Without 的 `scanBeamIds` 必需、With 的 `reflection` 必需属于响应 shape；Web 检查存在性和 JSON 类型，但不重复 Node 的范围、精度、行号或包含关系校验。
+Without 的 `scanBeamIds` 必需、With 的 `reflection` 必需属于响应 shape；Web 检查存在性和 JSON 类型，但不重复 Node 的范围、精度、行号、列数、互异或包含关系校验。
 
 ### 3.2 reducer 状态
 
@@ -799,8 +799,9 @@ type MapRendererHandle = {
 - `N<=20` 时按 `no` 升序从左到右显示已有点，其余为空槽。
 - `N>20` 时每个新点到达后整体滑动，例如 `1..20 → 2..21 → 3..22`，始终展示最新 20 个真实点。
 - 已填槽标签显示真实业务编号 `P${point.no}`；Pencil/静态页的 P1～P20 是首窗代表态，不得在第 21 点后继续假装为全局 P1～P20。
-- Without 显示最近完成点；With 在有 Without 同 `no` 时显示预测正确/错误图标。
-- 空槽补足到 20 个，但不伪造业务 no 或数值。
+- Without 显示该点 `selectedBeamId`；该点尚无 Without 数据时显示 `NA`（不依赖有 DT 是否已有同 `no`）。
+- With 在有 Without 同 `no` 时显示预测正确/错误图标；有 With 点但无 Without 对照时显示 `NA`，且不计入 Beam Accuracy。
+- 无路线号的垫槽保持空圆，补足到 20 个，但不伪造业务 no 或数值。
 - 组件 key 使用 `point.no`，不能用窗口数组 index；窗口更新只移动视觉项，不改变 result 数据。
 
 
@@ -821,9 +822,9 @@ type MapRendererHandle = {
 - 左右各用原生 SVG 半环：`viewBox="0 0 132 132"`、半径 58、圆头；左侧镜像白色渐变，右侧紫色渐变。
 - 可用 `pathLength="100"`：`strokeDasharray=100`，`strokeDashoffset=100-costPct`。`costPct=null` 时只显示底轨，值为 `--`。
 - 数值统一一位小数并带 `%`；Node 已保证 0～100，Web 不再钳制或四舍五入业务值。
-- 中间「开销变化」按契约在 `metrics/case3Metrics.ts` 计算并显示一位小数（仅 `pairValid=true` 且双侧 Cost 有效）：
-  - 正数：绿色向下箭头，表示 With 开销下降；
-  - 负数：红色向上箭头，保留负号，表示 With 开销上升；
+- 中间「开销变化」按契约在 `metrics/case3Metrics.ts` 计算并显示一位小数（仅 `pairValid=true` 且双侧 Cost 有效），公式为 `(withCostPct - withoutCostPct) / withoutCostPct * 100`：
+  - 正数：红色向上箭头 + `X%`，表示有 DT 相对无 DT 开销增加；
+  - 负数：绿色向下箭头 + `-X%`，表示开销减少；
   - 0：中性颜色，无方向箭头；
   - 任一 Cost 缺失或 Without=0：`--`，隐藏箭头。
 - 环进度只做约 250ms CSS transition，不用 JS 逐帧动画。
@@ -844,7 +845,7 @@ type MapRendererHandle = {
 
 - 使用原生 SVG 开口环 + DOM 次数卡，结构对齐 Pencil `波束准确率卡片/i1nWz` 和静态 `.case3-ba-*`；标题 `波束预测准确率`。
 - 中央环复用已接受静态页的开口 path；设置 `pathLength="100"`，值环 `strokeDashoffset=100-displayPct`，底环 `#3A4048`，值环 `#22C55E`，12px 圆头并保留轻微绿光。
-- BA 增量公式集中在 `metrics/case3Metrics.ts`，只按相同 `no` 比较 `selectedBeamId`，不以坐标匹配。
+- BA 增量公式集中在 `metrics/case3Metrics.ts`，只按相同 `no` 比较 `selectedBeamId`，不以坐标匹配；缺一侧的 `no` 不计入 `roundTotal`。
 - 左侧显示 `displaySuccess`，右侧显示 `displayError=displayTotal-displaySuccess`，均带 `(次)` 与正确/错误图标及「正确次数」/「错误次数」。
 - 中央 `displayPct` 按契约保留一位小数，使用 tabular numbers；`100.0` 等长值允许降低字号但不得溢出。
 - baseline ready 时初始即显示文件基线；With 完成且 `pairValid=true` 后叠加当前轮匹配；任一侧新 Start/ReInit/失效立即回 baseline。
@@ -964,7 +965,7 @@ saving
 1. Node 已启动时进入 Case3 初始化成功，Without 可用、With 禁用。
 2. 先打开 Case3、后启动 Node：Web 保持 initial 并在探测恢复后自动完成初始化，不需刷新页面。
 3. Without Start 主线逐点更新并完成，截图落盘/清 flag，With 可用。
-4. With Start 主线完成，显示 40.0% 示例开销变化、双曲线与 BA 增量，截图递增。
+4. With Start 主线完成，显示 `-40.0%` 示例开销变化（有 DT 相对无 DT 减少）、双曲线与 BA 增量，截图递增。
 5. 双侧任意 ReInit：等待态锁 Tab，完成后目标侧清空、BA 回 baseline。
 6. Start/ReInit `execute fail` 的同动作重试。
 7. complete 后文件仍 pending：保持 running，修复后才完成。

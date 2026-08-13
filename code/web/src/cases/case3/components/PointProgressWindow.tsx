@@ -1,12 +1,16 @@
 /**
  * Case3 点位进度：最新最多 20 槽；DOM 对齐静态 `.case3-slot*`。
- * Pxx 标签来自 baseRoute（先出现）；Without 波束 ID / With 对错图标仅在点到达后填入。
+ * Pxx 标签来自 baseRoute。无 DT 显示该点 selectedBeamId，没数据则 NA；
+ * 有 DT 有对照才显示对错，无对照 NA。
  */
 
 import iconOk from "../../../../assets/case3/icon-ok.png";
 import iconErr from "../../../../assets/case3/icon-err.png";
 import { CASE3_POINT_WINDOW } from "../config/case3RuntimeConfig";
-import { pointProgressRouteNos } from "../metrics/case3Metrics";
+import {
+  pointBeamSlotView,
+  pointProgressRouteNos,
+} from "../metrics/case3Metrics";
 import type { BaseRoutePoint, Case3Point, Case3Side } from "../types";
 
 type Props = {
@@ -15,6 +19,39 @@ type Props = {
   points: Case3Point[];
   peerPoints?: Case3Point[] | null;
 };
+
+function SlotValue(props: {
+  side: Case3Side;
+  point: Case3Point | null;
+  peer: Case3Point | undefined;
+}) {
+  const view = pointBeamSlotView(props.side, props.point, props.peer);
+  if (view.kind === "na") {
+    return (
+      <span
+        className="case3-slot__na"
+        title={props.side === "without" ? "该点无数据" : "无对照点"}
+      >
+        NA
+      </span>
+    );
+  }
+  if (view.kind === "beam") {
+    return <span className="case3-slot__value">{view.beamId}</span>;
+  }
+  if (view.kind === "predict") {
+    return (
+      <img
+        className="case3-slot__icon"
+        src={view.ok ? iconOk : iconErr}
+        width={12}
+        height={12}
+        alt={view.ok ? "预测正确" : "预测错误"}
+      />
+    );
+  }
+  return <span className="case3-slot__empty" />;
+}
 
 /**
  * 点位进度窗口。
@@ -57,47 +94,13 @@ export function PointProgressWindow(props: Props) {
           }
 
           const point = pointByNo.get(no) ?? null;
-
-          if (props.side === "without") {
-            return (
-              <div key={no} className="case3-slot">
-                <span className="case3-slot__label">P{no}</span>
-                <span className="case3-slot__value-slot">
-                  {point ? (
-                    <span className="case3-slot__value">
-                      {point.selectedBeamId}
-                    </span>
-                  ) : (
-                    <span className="case3-slot__empty" />
-                  )}
-                </span>
-              </div>
-            );
-          }
-
           const peer = peerByNo.get(no);
-          const predict =
-            point && peer && peer.selectedBeamId === point.selectedBeamId
-              ? "ok"
-              : point && peer
-                ? "err"
-                : null;
 
           return (
             <div key={no} className="case3-slot">
               <span className="case3-slot__label">P{no}</span>
               <span className="case3-slot__value-slot">
-                {predict ? (
-                  <img
-                    className="case3-slot__icon"
-                    src={predict === "ok" ? iconOk : iconErr}
-                    width={12}
-                    height={12}
-                    alt={predict === "ok" ? "预测正确" : "预测错误"}
-                  />
-                ) : (
-                  <span className="case3-slot__empty" />
-                )}
+                <SlotValue side={props.side} point={point} peer={peer} />
               </span>
             </div>
           );

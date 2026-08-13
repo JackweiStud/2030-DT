@@ -50,20 +50,26 @@ test("Cost 多行时读取最新非空值，支持打桩逐点更新", () => {
   });
 });
 
-test("Without 扫描 beam 必须恰好 16 个互不重复整数", () => {
-  const valid = parseScanBeamLine(
-    "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
-    "scan",
+test("Without 扫描 beam 至少 1 个 [0,255] 整数，允许重复、不要求 16 列", () => {
+  assert.deepEqual(parseScanBeamLine("16, 17", "scan"), [16, 17]);
+  assert.deepEqual(parseScanBeamLine("17", "scan"), [17]);
+  assert.deepEqual(parseScanBeamLine("16,16,17", "scan"), [16, 16, 17]);
+  assert.equal(
+    parseScanBeamLine(
+      "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
+      "scan",
+    ).length,
+    16,
   );
-  assert.equal(valid.length, 16);
-  assert.throws(
-    () =>
-      parseScanBeamLine(
-        "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14",
-        "scan",
-      ),
-    { code: "SIDE_DATA_INVALID" },
-  );
+  assert.throws(() => parseScanBeamLine("16,", "scan"), {
+    code: "SIDE_DATA_INVALID",
+  });
+  assert.throws(() => parseScanBeamLine("256", "scan"), {
+    code: "SIDE_DATA_INVALID",
+  });
+  assert.throws(() => parseScanBeamLine("-1", "scan"), {
+    code: "SIDE_DATA_INVALID",
+  });
 });
 
 test("已提交非法行返回 422，无换行非法尾段只标 pending", () => {

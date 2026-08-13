@@ -75,20 +75,16 @@ export function parseSelectedBeamLine(line, filename) {
 
 export function parseScanBeamLine(line, filename) {
   const tokens = splitCsv(line);
-  if (tokens.length !== 16 || tokens.some((token) => token === "")) {
-    throw invalid(filename, "scan beam row must contain exactly 16 integers");
+  if (tokens.length < 1 || tokens.some((token) => token === "")) {
+    throw invalid(filename, "scan beam row must contain at least one integer");
   }
-  const values = tokens.map((token, index) => {
+  return tokens.map((token, index) => {
     const value = parseIntegerToken(token, filename, `scan beam ${index}`);
     if (value < 0 || value > 255) {
       throw invalid(filename, "scan beams must be in [0,255]");
     }
     return value;
   });
-  if (new Set(values).size !== 16) {
-    throw invalid(filename, "scan beams must be unique");
-  }
-  return values;
 }
 
 export function parseThroughputLine(line, filename) {

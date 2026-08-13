@@ -79,8 +79,8 @@
 - 初始化：base route 必须非空，Beam Accuracy 基线必须满足 `0 <= success <= total` 且 `total > 0`；失败时双侧 Start 禁用，Web 输出结构化 `console.error`。
 - 点位数动态 `N`，由运行时文件解析得到；点位进度固定显示最新 20 条，超过窗口长度滚动到最新点位；20 只是窗口长度，不是点位总上限。
 - Node/Web 校验：Node 权威校验共享文件和归一数值；Web 只防御 REST envelope/shape/JSON 类型，非法响应记 `CASE3_INVALID_RESPONSE`，不重复业务数值校验。
-- 数值：坐标/Reflection 2 位、Throughput 非负且 2 位、Cost `0～100` 且 1 位、beam id `0～255`、Without scan 恰好 16 项且包含 selected、reflection flag 仅 `0/1`。
-- Cost 单位是 `%`；正式 UI 标题为 `开销(%)`。两侧 Cost 有效且 Without Cost 非 0 时，Web 派生相对开销变化：`(withoutCostPct - withCostPct) / withoutCostPct * 100`。
+- 数值：坐标/Reflection 2 位、Throughput 非负且 2 位、Cost `0～100` 且 1 位、beam id `0～255`、Without scan 至少 1 项且包含 selected（不要求 16 列、允许重复）、reflection flag 仅 `0/1`。
+- Cost 单位是 `%`；正式 UI 标题为 `开销(%)`。两侧 Cost 有效且 Without Cost 非 0 时，Web 派生相对开销变化：`(withCostPct - withoutCostPct) / withoutCostPct * 100`。增加显示向上箭头与 `X%`，减少显示向下箭头与 `-X%`。
 
 ## case2 状态机（Gate 0 语义）
 

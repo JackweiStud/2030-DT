@@ -184,15 +184,17 @@ export function CostCard(props: Props) {
   let deltaText = "--";
   let pillMod = "";
   if (delta != null) {
-    deltaText = formatOneDecimal(delta);
     if (delta > 0) {
-      arrow = "↓";
-      pillMod = " is-down";
-    } else if (delta < 0) {
       arrow = "↑";
       pillMod = " is-up";
+      deltaText = formatOneDecimal(delta);
+    } else if (delta < 0) {
+      arrow = "↓";
+      pillMod = " is-down";
+      deltaText = formatOneDecimal(delta);
     } else {
       pillMod = " is-zero";
+      deltaText = formatOneDecimal(delta);
     }
   }
 

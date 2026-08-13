@@ -151,7 +151,7 @@ test.describe("case3 mainline (frontend-isolated)", () => {
 
     await withSide.locator(".case3-btn--start").click();
     await expect(withStatus).toHaveText("已完成", { timeout: 10000 });
-    await expect(page.locator(".case3-cost-delta__value")).toHaveText("40.0");
+    await expect(page.locator(".case3-cost-delta__value")).toHaveText("-40.0");
 
     await without.locator(".case3-btn--reset").click();
     await expect(withoutStatus).toHaveText("等待启动测试", {
@@ -167,7 +167,7 @@ test.describe("case3 mainline (frontend-isolated)", () => {
 
     await withSide.locator(".case3-btn--start").click();
     await expect(withStatus).toHaveText("已完成", { timeout: 10000 });
-    await expect(page.locator(".case3-cost-delta__value")).toHaveText("40.0");
+    await expect(page.locator(".case3-cost-delta__value")).toHaveText("-40.0");
 
     await withSide.locator(".case3-btn--reset").click();
     await expect(withoutStatus).toHaveText("已完成", { timeout: 10000 });

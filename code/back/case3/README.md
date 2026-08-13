@@ -60,7 +60,7 @@ CASE3_STUB_LOG_LEVEL=debug npm run start:case3
   因此仪表可按点实时变化。
 - With Throughput 在自身 ±10% 范围内还会高于对应 Without 的理论上限；
   Cost 25/15 各自 ±15% 后仍保证 With 更低。
-- `replay` 原样发布 fixture，Cost 固定 25/15，对应 40.0% 相对下降。
+- `replay` 原样发布 fixture，Cost 固定 25/15，对应 `-40.0%` 相对变化（有 DT 低于无 DT）。
 - 日志分别标记 `synthetic-kpi+fixture-structure` / `fixture-replay`，
   不得表述为真实采集。
 - 真实后端联调必须设置 `CASE3_STUB_SEED_INIT=0` 并停止本进程。

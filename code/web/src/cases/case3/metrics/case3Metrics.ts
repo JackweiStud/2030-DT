@@ -15,8 +15,8 @@ export function formatOneDecimal(value: number): string {
 }
 
 /**
- * 相对开销变化。仅双方 Cost 有效且 Without≠0 时可算。
- * 正数 = With 开销下降；负数 = 上升。
+ * 相对开销变化：有 DT 相对无 DT。仅双方 Cost 有效且 Without≠0 时可算。
+ * 正数 = With 开销升高；负数 = With 开销降低。
  */
 export function relativeCostChangePct(
   withoutCostPct: number | null | undefined,
@@ -33,7 +33,7 @@ export function relativeCostChangePct(
   ) {
     return null;
   }
-  return ((withoutCostPct - withCostPct) / withoutCostPct) * 100;
+  return ((withCostPct - withoutCostPct) / withoutCostPct) * 100;
 }
 
 export type BeamAccuracyDisplay = {
@@ -45,6 +45,7 @@ export type BeamAccuracyDisplay = {
 
 /**
  * Beam Accuracy：文件基线 +（pairValid 时）同 no 的 selectedBeamId 增量。
+ * 只有两侧都存在的 no 才计入 roundTotal；缺一侧的点显示 NA，不进准确率。
  */
 export function deriveBeamAccuracy(
   baseline: BeamAccuracyBaseline | null,
@@ -181,6 +182,29 @@ export function throughputXTicks(
   }
   if (ticks[ticks.length - 1] !== hi) ticks.push(hi);
   return ticks;
+}
+
+/** 点位-波束槽：无 DT 只看本侧波束；有 DT 无对照点为 NA。 */
+export type PointBeamSlotView =
+  | { kind: "empty" }
+  | { kind: "na" }
+  | { kind: "beam"; beamId: number }
+  | { kind: "predict"; ok: boolean };
+
+export function pointBeamSlotView(
+  side: "without" | "with",
+  point: Case3Point | null | undefined,
+  peer: Case3Point | null | undefined,
+): PointBeamSlotView {
+  if (side === "without") {
+    if (point == null) return { kind: "na" };
+    return { kind: "beam", beamId: point.selectedBeamId };
+  }
+  if (point == null || peer == null) return { kind: "na" };
+  return {
+    kind: "predict",
+    ok: point.selectedBeamId === peer.selectedBeamId,
+  };
 }
 
 /** 点位进度窗口：最新最多 20 个真实点。 */

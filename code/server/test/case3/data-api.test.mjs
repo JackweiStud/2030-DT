@@ -47,6 +47,8 @@ test("Without/With side 返回全量完整前缀和冻结映射", async (t) => {
   assert.equal(without.body.costPct, 25);
   assert.equal(without.body.points[0].throughputGbps, 8.56);
   assert.equal(without.body.points[0].scanBeamIds.length, 16);
+  assert.equal(without.body.points[0].selectedBeamId, 4);
+  assert.equal(without.body.points[0].scanBeamIds.includes(4), true);
 
   const withDt = await jsonRequest(baseUrl, "/api/case3/side?side=with");
   assert.equal(withDt.status, 200);
@@ -128,6 +130,35 @@ test("非目标侧读取不套最终门槛，已提交非法行整次 422", asyn
   );
   assert.equal(invalid.status, 422);
   assert.equal(invalid.body.error.code, "SIDE_DATA_INVALID");
+});
+
+test("Without scan 可变长度且允许重复，但必须包含该行 selected", async (t) => {
+  const sharedDir = await createSharedDir(t);
+  await writeCase3SideFiles(sharedDir, "without", {
+    scans: "16, 17\n18, 18, 19\n",
+    selected: "17\n18\n",
+  });
+  const { baseUrl } = await startTestServer(t, { sharedDir });
+  const accepted = await jsonRequest(
+    baseUrl,
+    "/api/case3/side?side=without",
+  );
+  assert.equal(accepted.status, 200);
+  assert.deepEqual(accepted.body.points[0].scanBeamIds, [16, 17]);
+  assert.equal(accepted.body.points[0].selectedBeamId, 17);
+  assert.deepEqual(accepted.body.points[1].scanBeamIds, [18, 18, 19]);
+  assert.equal(accepted.body.points[1].selectedBeamId, 18);
+
+  await writeCase3SideFiles(sharedDir, "without", {
+    scans: "16, 17\n18, 19\n",
+    selected: "17\n4\n",
+  });
+  const rejected = await jsonRequest(
+    baseUrl,
+    "/api/case3/side?side=without",
+  );
+  assert.equal(rejected.status, 422);
+  assert.equal(rejected.body.error.code, "SIDE_DATA_INVALID");
 });
 
 test("缺失必需文件返回 DATA_FILE_MISSING，query 严格校验", async (t) => {

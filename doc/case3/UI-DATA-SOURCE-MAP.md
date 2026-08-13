@@ -20,9 +20,9 @@
 | Without BS 波束扫描 | 是 | 结构化点位 `scanBeamIds` + `selectedBeamId` | Without 逐点播放 | 扫描集合来自 `ue_comm_without_dt_beams.txt`；选择波束来自 `ue_comm_without_dt_sel_beam.txt`。 |
 | With BS 波束预测 | 是 | 结构化点位 `selectedBeamId` | With 逐点播放 | 来自 `ue_comm_with_dt_sel_beam.txt`。 |
 | With 反射/LOS 示意 | 后续阶段 | 结构化点位 `reflection` | v1 不渲染 | 来自 `ue_comm_with_dt_coordinates_reflection_point.txt`；reflection 仍是 With 完整点必需字段，缺第 `i` 行时不返回第 `i` 个半点。 |
-| 点位进度 | 是 | 结构化点位 `no` 与运行时 `N` | 逐点播放 | `points.slice(-20)`；超过 20 后显示最新 20 个真实 `P${no}`，20 不是总点位上限。 |
+| 点位进度 | 是 | 结构化点位 `no` 与运行时 `N` | 逐点播放 | 无 DT 显示本侧波束，没数据则 `NA`；有 DT 无对照点显示 `NA`。 |
 | Cost Comparison | 是 | `/api/case3/side` 同包侧级字段 `costPct` | 对应侧运行后 | 原生 SVG 双半环；正式标题 `开销(%)`；Node 四舍五入到 1 位且校验 `0～100`。 |
-| 相对开销变化 | 是 | Web 基于双方 `costPct` 派生 | 两侧 Cost 有效且 Without Cost 非 0 | `(withoutCostPct - withCostPct) / withoutCostPct * 100`；正数表示降低、负数表示上升，无法计算时显示 `--`。 |
+| 相对开销变化 | 是 | Web 基于双方 `costPct` 派生 | 两侧 Cost 有效且 Without Cost 非 0 | `(withCostPct - withoutCostPct) / withoutCostPct * 100`；正数增加（↑ `X%`），负数减少（↓ `-X%`），无法计算时显示 `--`。 |
 | Throughput Comparison | 是 | 结构化点位 `throughputGbps` | 对应侧逐点数据有效 | 原生 SVG 双折线；绘制全部动态 N，N>20 仅抽稀刻度，不引入 ECharts。 |
 | Beam Accuracy | 是 | 文件基线 + Web 本轮点位派生 | 进 Tab 显示基线；With 完成后且 Without 有效时显示基线+增量 | 原生 SVG 开口环 + DOM 次数卡；任意一侧重置后增量失效，回到基线。 |
 | 运行/失败/完成反馈 | 是 | `case_control.status` + Web 本轮动作来源 | 本轮等待态内 | success 至少保持 3000ms；case complete 后最终快照通过、渲染且截图保存/放弃收尾才写 init。ReInit 失败不恢复旧结果，只显示同侧 ReInit 重试。 |
@@ -34,7 +34,7 @@
 |---|---|---|
 | `ue_comm_coordinates_base.txt` | `baseRoute[]` | 双侧地图预置 UE 路线。 |
 | `ue_comm_without_dt_coordinates.txt` | `point.ue` | Without UE 实时轨迹。 |
-| `ue_comm_without_dt_beams.txt` | `point.scanBeamIds` | Without 16 个扫描波束。 |
+| `ue_comm_without_dt_beams.txt` | `point.scanBeamIds` | Without 扫描波束集合（至少 1 个 id，在 16×16 网格上高亮）。 |
 | `ue_comm_without_dt_sel_beam.txt` | `point.selectedBeamId` | Without 当前选择波束、Beam Accuracy 对比输入。 |
 | `ue_comm_without_dt_thrp.txt` | `point.throughputGbps` | Throughput without 曲线。 |
 | `ue_comm_without_dt_cost.txt` | `withoutCostPct` | Cost 左柱。 |
@@ -52,7 +52,7 @@
 | 动态点位数 `N` | `/side` 返回的 `completeCount` / `points.length`；完整 N 可随后端 append 增长 | 只显示已有点位的最近 20 条窗口；20 不代表 N 的上限。 |
 | 点位进度窗口 | `points.slice(-20)`；按 no 升序显示，已填槽标签为真实 `P${point.no}` | 不压缩到不可读文字，不创建第 21 个可视槽。 |
 | Cost | 对应 cost 文件最新非空行，Node 四舍五入到 1 位并校验 `0～100` | 运行中可为 `null`；完成门槛要求非空，不沿用旧值冒充本轮。 |
-| 相对开销变化 | `(withoutCostPct - withCostPct) / withoutCostPct * 100` | 任一侧 Cost 缺失或 Without Cost 为 0 时显示 `--`；正数表示降低、负数表示上升。 |
+| 相对开销变化 | `(withCostPct - withoutCostPct) / withoutCostPct * 100` | 任一侧 Cost 缺失或 Without Cost 为 0 时显示 `--`；正数增加（↑ `X%`），负数减少（↓ `-X%`）。 |
 | Throughput | 每个结构化点位的 `throughputGbps` 按 `no` 入曲线 | 缺点不补 0，不跨侧对齐。 |
 | Beam Accuracy 增量 | With 完成后，用相同 `no` 的 Without/With 点位比较 `selectedBeamId`；坐标只做可选诊断，不做匹配主键 | Without 缺失、同 `no` 点位不完整或任意侧重置后，仅显示基线。 |
 | 调试 JSONL 快照 | Node 在 `completeCount` 变化时，将当前完整点全量以整文件原子替换写入 `{DT_SHARED_DIR}/out/case3/points/{side}.jsonl`，side 为 without 或 with | 仅作 QA/定位证据，Web 不回读；不写 cost 行；不写入 `out/case2/`。 |

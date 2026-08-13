@@ -4,7 +4,7 @@
 >
 > approved_at: `2026-08-10`
 >
-> amended_at: `2026-08-10`（用户确认 Case3 截图与 Case2 同构、补全 Reflection flag 映射，并冻结跨 Case busy、最终读取、截图 ownership、数值边界及 Gate 3 Web 500ms 轮询）
+> amended_at: `2026-08-13`（Without `scanBeamIds` 改为至少 1 个 `[0,255]` 整数，允许重复；开销变化改为有 DT 相对无 DT；点位不对齐显示 NA 且不计入 Beam Accuracy）
 >
 > 本文已由用户确认冻结，是 `DT for Comm`（case3）前端、Node 本地适配服务与真实后端共享文件交互的唯一语义真相源。后续行为变更必须先修改本文并重新评审，再修改 SPEC 或代码。
 
@@ -400,7 +400,7 @@ type Case3Point = {
   ue: { x: number; y: number; z: number };
   selectedBeamId: number;
   throughputGbps: number;
-  scanBeamIds?: number[]; // Without 必需，恰好 16 个且互不重复
+  scanBeamIds?: number[]; // Without 必需；至少 1 个 [0,255]，允许重复，必须包含 selectedBeamId
   reflection?: {
     x: number;
     y: number;
@@ -517,7 +517,7 @@ Node 对共享文件内容做唯一权威业务校验：
 | Throughput            | 必须为有限非负数；四舍五入到两位。                                   |
 | Cost                  | 必须为有限数；先四舍五入到一位再检查 `0～100`；越界拒绝，禁止 clamp。          |
 | `selectedBeamId`      | 整数 `0～255`。                                         |
-| Without `scanBeamIds` | 恰好 16 个互不重复的整数，每个 `0～255`；`selectedBeamId` 必须包含在该 16 项中。 |
+| Without `scanBeamIds` | 至少 1 个整数，每个 `0～255`，允许重复；`selectedBeamId` 必须包含在该行中。 |
 | Reflection 坐标         | 必须为有限数；超过两位小数四舍五入到两位。                               |
 | Reflection flag       | 只能为整数 `0` 或 `1`；`0 → los=false`，`1 → los=true`。       |
 | Beam Accuracy 基线      | 整数，`0 <= success <= total` 且 `total > 0`。           |
@@ -655,11 +655,13 @@ Node 行为：
 
 ```text
 relativeCostChangePct =
-  (withoutCostPct - withCostPct) / withoutCostPct * 100
+  (withCostPct - withoutCostPct) / withoutCostPct * 100
 ```
 
 - Web 按一位小数展示。
-- 正数表示 With 相对 Without 降低；负数表示开销上升。
+- 正数表示有 DT 相对无 DT **增加**：向上箭头 + `X%`（不带正号）。
+- 负数表示有 DT 相对无 DT **减少**：向下箭头 + `-X%`。
+- 0：无箭头，显示 `0.0%`。
 - 任一输入缺失或 Without Cost 为 0 时显示 `--`。
 - Node 不返回 delta 字段。
 
@@ -670,7 +672,7 @@ relativeCostChangePct =
 输入：
 
 - 基线：`ue_comm_with_dt_beam_accuracy_rate.txt` 的 `success,total`。
-- 增量：当前配对的 Without/With 完整点，按相同 `no` 比较 `selectedBeamId`。
+- 增量：当前配对的 Without/With 完整点，按相同 `no` 比较 `selectedBeamId`。只有两侧都存在的 `no` 才计入 `roundTotal`；缺一侧的点在「点位和波束关系」显示 `NA`，不进入准确率。
 
 ```text
 roundSuccess = count(matching no where selectedBeamId equal)

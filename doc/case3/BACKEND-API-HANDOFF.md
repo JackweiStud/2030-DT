@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | `case_control.json` 命令字段 | 前端侧 Node → 后端 | init/start/reinit | `case`、`command`、`dt_type`、`status=""` | 发起或结束一轮控制。 |
 | `case_control.json.status` | 后端 → 前端侧 Node | 接单、失败、完成 | `execute success`、`execute fail`、`case complete`、`reinit complete` | 唯一业务状态。 |
-| Without 四个逐点 txt | 后端 → 共享目录 | Without Start 后逐点 append | coordinates、16 beams、selected beam、throughput | Without 完整点。 |
+| Without 四个逐点 txt | 后端 → 共享目录 | Without Start 后逐点 append | coordinates、scan beams（至少 1 个）、selected beam、throughput | Without 完整点。 |
 | Without Cost txt | 后端 → 共享目录 | Without 运行中/完成前 | 最新一行百分比 | Without 开销。 |
 | With 四个逐点 txt | 后端 → 共享目录 | With Start 后逐点 append | coordinates、selected beam、throughput、reflection | With 完整点。 |
 | With Cost txt | 后端 → 共享目录 | With 运行中/完成前 | 最新一行百分比 | With 开销。 |
@@ -143,7 +143,7 @@ status=""
 | 文件 | 每行格式 | 点位对齐 |
 |---|---|---|
 | `ue_comm_without_dt_coordinates.txt` | `x,y,z` | 第 i 行属于第 i 点。 |
-| `ue_comm_without_dt_beams.txt` | 16 个逗号分隔 beam id | 第 i 行属于第 i 点。 |
+| `ue_comm_without_dt_beams.txt` | 至少 1 个逗号分隔 beam id | 第 i 行属于第 i 点。 |
 | `ue_comm_without_dt_sel_beam.txt` | 一个 beam id | 第 i 行属于第 i 点。 |
 | `ue_comm_without_dt_thrp.txt` | 一个 Throughput 数值 | 第 i 行属于第 i 点。 |
 | `ue_comm_without_dt_cost.txt` | 一个或多个 Cost 数值 | 与点数解耦，取最新非空行。 |
@@ -172,7 +172,7 @@ status=""
 | Throughput | 有限且非负；前端侧 Node 四舍五入到 2 位。 |
 | Cost | 有限数；前端侧 Node 四舍五入到 1 位；归一后必须在 `0～100`。 |
 | beam id | 整数 `0～255`。 |
-| Without beam 行 | 恰好 16 个互不重复的 beam id，selected beam 必须包含在这 16 项中。 |
+| Without beam 行 | 至少 1 个 `[0,255]` 的 beam id，允许重复；selected beam 必须包含在该行中。 |
 | reflection flag | 只能为整数 `0` 或 `1`；`0→los=false`，`1→los=true`。 |
 
 后端应尽量直接输出符合精度和范围的值；前端侧 Node 会执行最终校验和归一。

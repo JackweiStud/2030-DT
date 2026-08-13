@@ -357,7 +357,7 @@ type ParsedLines<T> = {
 | Throughput | 有限、非负，四舍五入 2 位。 |
 | Cost | 最新非空行；有限，先四舍五入 1 位再检查 0～100；越界拒绝，禁止 clamp。 |
 | selected beam | 十进制整数 0～255。 |
-| scan beams | 恰好 16 个互不重复的十进制整数 0～255；必须包含 selected。 |
+| scan beams | 至少 1 个十进制整数 0～255，允许重复；组装时该行必须包含 selected。 |
 | reflection flag | 十进制整数 0/1；0→`los:false`，1→`los:true`。 |
 
 数值 token 必须被完整消费并解析为有限数；接受普通小数或科学计数法，不接受 `NaN`、`Infinity`、尾随字符或部分 token。负零归一为 0。
@@ -491,7 +491,7 @@ path 为相对共享根的 POSIX 路径；日志写绝对路径。
 
 - CRLF、无换行完整末行、空文件、缺文件。
 - 坐标、Throughput、Cost、beam、scan、reflection、baseline 的有效/非法边界和四舍五入。
-- scan 16 项互异；Cost 归一后越界 422 且不 clamp；正负半值进位与负零归一。
+- scan 至少 1 项且 ∈[0,255]，允许重复；组装时必须包含 selected；Cost 归一后越界 422 且不 clamp；正负半值进位与负零归一。
 - 0/1 Reflection 映射。
 - 多文件等长、不同长、半行、提交非法行、文件读取中变化。
 - running/非目标侧返回完整前缀 + pending；只有匹配侧 Start complete 时 pending/空点/null Cost/漂移返回 RESULT_NOT_READY。
@@ -543,4 +543,4 @@ code/web: npm run test:e2e
 
 - [x] 用户于 2026-08-10 批准同一 Node 进程共享一个控制 store 和串行队列。
 - [x] 用户于 2026-08-10 批准 `DT_ADAPTER_HOST/PORT` 为主变量、旧 `CASE2_*` 为 fallback。
-- [x] 用户于 2026-08-10 批准 Case3 截图输出 `out/case3/case3-{seq}.png`。
+- [x] 用户于 2026-08-13 批准 Without scan 行至少 1 个 `[0,255]` 整数、允许重复、不要求 16 列；组装时仍必须包含该行 selected。

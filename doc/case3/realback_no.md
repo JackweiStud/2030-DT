@@ -55,7 +55,7 @@ code/back/
 
 - Without Cost：`25`
 - With Cost：`15`
-- 因而 `replay`、静态页和固定 mock E2E 可断言相对开销变化 `40.0%`
+- 因而 `replay`、静态页和固定 mock E2E 可断言相对开销变化 `-40.0`（有 DT 相对无 DT 减少）
 - Beam Accuracy baseline 可使用参考 `222,235`
 
 参考目录原始 Cost 为 Without=`10`、With=`5`；不得把它们误复制进 stub fixtures 后仍断言 40.0%。`dynamic` 日志标记 `dataSource:"synthetic-kpi+fixture-structure"`，`replay` 标记 `fixture-replay`；seed 日志仅用 `reference-derived`（见 §4）。这些值只用于本地演示和测试，不改变 API 契约或真实后端数据要求。
@@ -215,7 +215,7 @@ ReInit 日志省略 `requestPicture`，避免把截图配置误解为 ReInit 业
 Without 每点按同一索引写：
 
 1. coordinates
-2. beams（16 IDs）
+2. beams（≥1 个 id；本地 fixture 仍写 16 列）
 3. selected beam
 4. throughput
 
@@ -313,7 +313,7 @@ stub 启动时先验证 fixtures，失败则快速退出：
 - BA baseline 两整数，`0<=success<=total,total>0`。
 - Without 四个逐点文件行数一致且大于 0。
 - With 四个逐点文件行数一致且大于 0。
-- scan 每行 16 个 0～255 整数，并包含**同索引行**的 selected；stub fixture 额外要求同行 16 项互不重复（fixture 质量约束，**不是** Gate 2 / Node / 真实后端合同）。
+- scan 每行至少 1 个 0～255 整数，并包含**同索引行**的 selected；允许重复，不要求 16 列。stub 自带 fixture 仍写 16 个互不重复 id（演示数据质量，不是 Node / 真实后端合同）。
 - selected 0～255；Throughput 非负；Reflection flag 0/1。
 - Cost 在 0～100，且本地 override 必须精确为 Without=`25`、With=`15`。
 - 允许首尾空行、CRLF 和无换行完整末行；数据中间空行仍非法。
@@ -380,7 +380,7 @@ seed=1 时还要按初始化接口语义校验共享目录中已存在的 base/b
 
 - 全部有效 fixture 通过。
 - 行数不同、scan 数量/同索引包含关系、beam 范围、负 Throughput、非法 Cost/flag 分别失败；scan 同行重复仅作为 stub fixture 质量失败，不声称契约也会拒绝。
-- 参考原始 Cost 10/5 不复制；本地 override 25/15 作为 dynamic 模板和 replay 固定值，replay/静态 mock 导出 40.0% 的 E2E 预期。
+- 参考原始 Cost 10/5 不复制；本地 override 25/15 作为 dynamic 模板和 replay 固定值，replay mock 导出 `-40.0` 的 E2E 预期。
 - seed 只创建缺失 base/baseline；已存在合法文件保留，非法文件快速失败；逐点/Cost 文件永不被 seed 改写。
 - 每个 append（含 Cost）后内容对读者立即可见；持有未刷盘缓冲导致点位成批出现视为失败。
 

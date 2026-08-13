@@ -7,6 +7,7 @@ import {
   isFinalSideReady,
   niceCeilThroughput,
   niceIntegerStep,
+  pointBeamSlotView,
   pointProgressRouteNos,
   pointProgressWindow,
   relativeCostChangePct,
@@ -22,8 +23,9 @@ import {
 import type { SideSnapshot } from "../../src/cases/case3/types";
 
 describe("case3Metrics", () => {
-  it("开销变化公式与缺值", () => {
-    expect(relativeCostChangePct(25, 15, true)).toBeCloseTo(40);
+  it("开销变化是有 DT 相对无 DT", () => {
+    expect(relativeCostChangePct(25, 15, true)).toBeCloseTo(-40);
+    expect(relativeCostChangePct(13, 13.7, true)).toBeCloseTo(5.3846, 3);
     expect(relativeCostChangePct(25, 15, false)).toBeNull();
     expect(relativeCostChangePct(0, 15, true)).toBeNull();
   });
@@ -82,6 +84,78 @@ describe("case3Metrics", () => {
     expect(d?.displaySuccess).toBe(81);
     expect(d?.displayTotal).toBe(102);
     expect(d?.displayError).toBe(21);
+  });
+
+  it("BA 不计入缺一侧的点；点位槽缺对照显示 NA", () => {
+    const without: SideSnapshot = {
+      side: "without",
+      points: [
+        {
+          no: 1,
+          ue: { x: 0, y: 0, z: 0 },
+          selectedBeamId: 2,
+          throughputGbps: 1,
+        },
+      ],
+      completeCount: 1,
+      pendingTail: false,
+      costPct: 13,
+    };
+    const withSide: SideSnapshot = {
+      side: "with",
+      points: [
+        {
+          no: 1,
+          ue: { x: 0, y: 0, z: 0 },
+          selectedBeamId: 2,
+          throughputGbps: 1,
+          reflection: { x: 0, y: 0, z: 0, los: true },
+        },
+        {
+          no: 2,
+          ue: { x: 0, y: 0, z: 0 },
+          selectedBeamId: 9,
+          throughputGbps: 1,
+          reflection: { x: 0, y: 0, z: 0, los: false },
+        },
+      ],
+      completeCount: 2,
+      pendingTail: false,
+      costPct: 14,
+    };
+    const d = deriveBeamAccuracy(
+      { success: 222, total: 235 },
+      without,
+      withSide,
+      true,
+    );
+    expect(d?.displaySuccess).toBe(223);
+    expect(d?.displayTotal).toBe(236);
+    expect(d?.displayError).toBe(13);
+
+    expect(pointBeamSlotView("with", withSide.points[1], undefined)).toEqual({
+      kind: "na",
+    });
+    expect(pointBeamSlotView("without", undefined, withSide.points[1])).toEqual({
+      kind: "na",
+    });
+    expect(
+      pointBeamSlotView("without", without.points[0], undefined),
+    ).toEqual({
+      kind: "beam",
+      beamId: 2,
+    });
+    expect(pointBeamSlotView("without", without.points[0], withSide.points[0])).toEqual({
+      kind: "beam",
+      beamId: 2,
+    });
+    expect(pointBeamSlotView("with", withSide.points[0], without.points[0])).toEqual({
+      kind: "predict",
+      ok: true,
+    });
+    expect(pointBeamSlotView("without", undefined, undefined)).toEqual({
+      kind: "na",
+    });
   });
 
   it("点位窗口与最终门槛", () => {

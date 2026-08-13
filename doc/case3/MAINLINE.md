@@ -18,7 +18,7 @@
 - 跨 Case：任一 Case 处于 Start/ReInit 等待态时，Shell 锁定其他 Case Tab；不增加取消、队列或自动业务超时。
 - 初始化门槛：base route 必须非空，Beam Accuracy 基线必须满足 `0 <= success <= total` 且 `total > 0`。失败时两侧 Start 禁用，Web 输出结构化 `console.error`。
 - 点位数：动态 `N`，由运行时数据解析得到。顶部点位进度固定窗口显示最新 20 条；超过窗口长度时滚动到最新点位；20 只是窗口长度，不是点位总上限。
-- Cost：单位为 `%`，正式 UI 标题为 `开销(%)`；Node 校验 `0～100` 并四舍五入到 1 位。两侧 Cost 都有效且 Without Cost 非 0 时，Web 显示相对开销变化：`(withoutCostPct - withCostPct) / withoutCostPct * 100`。
+- Cost：单位为 `%`，正式 UI 标题为 `开销(%)`；Node 校验 `0～100` 并四舍五入到 1 位。两侧 Cost 都有效且 Without Cost 非 0 时，Web 显示有 DT 相对无 DT 的开销变化：`(withCostPct - withoutCostPct) / withoutCostPct * 100`。增加为向上箭头 + `X%`，减少为向下箭头 + `-X%`。
 - 截图：与 case2 同构。后端仅在 Start 的 `execute success -> case complete` 窗口置 `save_picture_flag=1`；Web 最多尝试 3 次，Node 原子保存到 `out/case3/` 后清零；ReInit 不截图。
 
 ## 主线状态
