@@ -65,7 +65,7 @@ function testConfig(sharedDir, overrides = {}) {
     outcome: "success",
     requestPicture: true,
     seedInit: false,
-    dataMode: "dynamic",
+    dataMode: "random",
     seed: "",
     throughputJitter: 0.1,
     costJitter: 0.15,
@@ -131,7 +131,7 @@ test("正式配置锁定默认值与绝对共享根", async (t) => {
       outcome: "success",
       requestPicture: true,
       seedInit: true,
-      dataMode: "dynamic",
+      dataMode: "random",
       seed: "",
       throughputJitter: 0.1,
       costJitter: 0.15,
@@ -150,6 +150,7 @@ test("正式配置拒绝短 dwell、非正间隔和非法枚举/flag", async (t)
     { CASE3_STUB_REQUEST_PICTURE: "yes" },
     { CASE3_STUB_SEED_INIT: "2" },
     { CASE3_STUB_DATA_MODE: "copy" },
+    { CASE3_STUB_DATA_MODE: "dynamic" },
     { CASE3_STUB_THROUGHPUT_JITTER: "1.1" },
     { CASE3_STUB_COST_JITTER: "-0.1" },
     { CASE3_STUB_LOG_LEVEL: "trace" },
@@ -173,14 +174,14 @@ test("fixture 独立预检得到两侧各 31 点和本地 Cost override", async 
   assert.equal(fixtureStore.sides.with.throughputValues[0], 9.1);
 });
 
-test("dynamic KPI：固定 seed 可复现，非 KPI 行保持 fixture 原值", async () => {
+test("random KPI：固定 seed 可复现，非 KPI 行保持 fixture 原值", async () => {
   const fixtureStore = await loadFixtureStore({
     fixtureDir: DEFAULT_FIXTURE_DIR,
   });
   const options = {
     fixtureStore,
     side: "without",
-    dataMode: "dynamic",
+    dataMode: "random",
     seed: "demo-seed",
     operationId: "ignored-with-fixed-seed",
     throughputJitter: 0.1,
@@ -214,14 +215,14 @@ test("dynamic KPI：固定 seed 可复现，非 KPI 行保持 fixture 原值", a
   assert.equal(first.dataSource, "synthetic-kpi+fixture-structure");
 });
 
-test("dynamic KPI：Throughput/Cost 在冻结抖动内且 With 始终更优", async () => {
+test("random KPI：Throughput/Cost 在冻结抖动内且 With 始终更优", async () => {
   const fixtureStore = await loadFixtureStore({
     fixtureDir: DEFAULT_FIXTURE_DIR,
   });
   const without = createRoundDataset({
     fixtureStore,
     side: "without",
-    dataMode: "dynamic",
+    dataMode: "random",
     seed: "range-seed",
     operationId: "without",
     throughputJitter: 0.1,
@@ -230,7 +231,7 @@ test("dynamic KPI：Throughput/Cost 在冻结抖动内且 With 始终更优", as
   const withDt = createRoundDataset({
     fixtureStore,
     side: "with",
-    dataMode: "dynamic",
+    dataMode: "random",
     seed: "range-seed",
     operationId: "with",
     throughputJitter: 0.1,
@@ -441,7 +442,7 @@ test("控制 patch 遇 Windows 瞬时 rename 锁会重试", async (t) => {
   assert.equal(renameCalls, 3);
 });
 
-test("Without Start 默认动态发布，只写目标侧并同拍 complete+flag", async (t) => {
+test("Without Start 默认 random 发布，只写目标侧并同拍 complete+flag", async (t) => {
   const sharedDir = await createSharedDir(t, {
     ...DEFAULT_CONTROL,
     command: "start",

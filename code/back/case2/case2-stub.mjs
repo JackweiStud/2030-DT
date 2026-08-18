@@ -356,7 +356,7 @@ function mean(values) {
 
 /**
  * Calibrated 发布器。
- * - copy：从 reference 目录复制（回归/可复现样本）
+ * - replay：从 reference 目录复制（回归/可复现样本）
  * - random：相对共享目录 Initial 做可控改善随机生成（演示默认）
  * 日志必须标明 stub/synthetic，不得表述为真实业务采集。
  */
@@ -365,14 +365,14 @@ export function createPublisher(options) {
   const sourceDir = path.resolve(options.sourceDir);
   const fsOps = options.fsOps ?? fs;
   const logger = options.logger ?? createLogger("info");
-  const dataMode = options.dataMode ?? "random";
+  const dataMode = parseDataMode(options.dataMode);
   const seed = options.seed;
   const improveMin = options.improveMin ?? 0.45;
   const improveMax = options.improveMax ?? 0.65;
   const noise = options.noise ?? 0.05;
   const targetDir = path.join(sharedDir, "case2");
 
-  async function publishByCopy() {
+  async function publishByReplay() {
     const published = [];
     for (const fileName of CALIBRATED_FILES) {
       const sourcePath = path.join(sourceDir, fileName);
@@ -383,7 +383,7 @@ export function createPublisher(options) {
       published.push(targetPath);
     }
     logger.info("published calibrated stub/reference files", {
-      mode: "copy",
+      mode: "replay",
       sourceDir,
       targetDir,
       count: published.length,
@@ -461,7 +461,7 @@ export function createPublisher(options) {
   async function publishCalibratedFiles() {
     await fsOps.mkdir(targetDir, { recursive: true });
     const published =
-      dataMode === "copy" ? await publishByCopy() : await publishByRandom();
+      dataMode === "replay" ? await publishByReplay() : await publishByRandom();
     for (const fileName of CALIBRATED_FILES) {
       await fsOps.stat(path.join(targetDir, fileName));
     }
@@ -727,8 +727,8 @@ function positiveInteger(value, name) {
 
 function parseDataMode(rawValue) {
   const value = rawValue === undefined || rawValue === "" ? "random" : rawValue;
-  if (value !== "random" && value !== "copy") {
-    throw new StubError("CONFIG_INVALID", "CASE2_STUB_DATA_MODE must be random or copy");
+  if (value !== "random" && value !== "replay") {
+    throw new StubError("CONFIG_INVALID", "CASE2_STUB_DATA_MODE must be random or replay");
   }
   return value;
 }
@@ -743,7 +743,7 @@ function parseUnitInterval(rawValue, fallback, name) {
 }
 
 export function loadConfig(env = process.env) {
-  const sharedDir = env.DT_SHARED_DIR || env.CASE2_SHARED_DIR;
+  const sharedDir = env.DT_SHARED_DIR;
   if (!sharedDir) {
     throw new StubError("CONFIG_INVALID", "DT_SHARED_DIR is required");
   }
@@ -830,8 +830,8 @@ export function createCase2Stub(config, options = {}) {
   });
 }
 
-async function main() {
-  const config = loadConfig();
+export async function runMain(env = process.env) {
+  const config = loadConfig(env);
   const logger = createLogger(config.logLevel);
   const runner = createCase2Stub(config, { logger });
   await runner.start();
@@ -845,7 +845,7 @@ async function main() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  main().catch((error) => {
+  runMain().catch((error) => {
     console.error("[case2-stub] fatal", error?.message ?? String(error));
     process.exitCode = 1;
   });

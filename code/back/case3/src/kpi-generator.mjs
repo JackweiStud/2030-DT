@@ -1,6 +1,6 @@
 /**
  * Case3 打桩 KPI 数据集生成器。
- * 只生成 Throughput 与 Cost；坐标、波束和 Reflection 始终沿用 fixture。
+ * random 只生成 Throughput 与 Cost；坐标、波束和 Reflection 始终沿用 fixture。
  */
 
 import { StubError } from "./errors.mjs";
@@ -47,13 +47,17 @@ export function createRoundDataset(options) {
   const {
     fixtureStore,
     side,
-    dataMode = "dynamic",
+    dataMode = "random",
     seed = "",
     operationId,
     throughputJitter = 0.1,
     costJitter = 0.15,
   } = options;
   const fixture = fixtureStore.sides[side];
+
+  if (dataMode !== "random" && dataMode !== "replay") {
+    throw new StubError("CONFIG_INVALID", "CASE3_STUB_DATA_MODE 必须是 random / replay");
+  }
 
   if (dataMode === "replay") {
     return {

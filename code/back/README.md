@@ -14,18 +14,25 @@ npm run start:case3   # Case3 打桩
 npm test              # case2 + case3 单元测试
 ```
 
-默认共享根为仓库内 `../comdatafiles`；覆盖：
+默认只读取 `code/back/.env` 作为外部配置源；缺省值由代码提供。默认
+共享根为仓库内 `../comdatafiles`；覆盖时修改 `code/back/.env`：
 
-```bash
-DT_SHARED_DIR=/absolute/path/to/shared npm run start:case2
-# 或 start:case3
+```dotenv
+DT_SHARED_DIR=/absolute/path/to/shared
+CASE2_STUB_DATA_MODE=random
+CASE3_STUB_DATA_MODE=random
 ```
 
-截图 / 日志用环境变量（无 npm 别名）：
+`CASE2_STUB_DATA_MODE` 与 `CASE3_STUB_DATA_MODE` 统一只支持
+`random` / `replay`。修改 `.env` 后重启对应 stub。
 
-```bash
-CASE2_STUB_REQUEST_PICTURE=0 CASE2_STUB_LOG_LEVEL=debug npm run start:case2
-CASE3_STUB_REQUEST_PICTURE=0 CASE3_STUB_LOG_LEVEL=debug npm run start:case3
+截图 / 日志也写入同一个 `.env`：
+
+```dotenv
+CASE2_STUB_REQUEST_PICTURE=0
+CASE2_STUB_LOG_LEVEL=debug
+CASE3_STUB_REQUEST_PICTURE=0
+CASE3_STUB_LOG_LEVEL=debug
 ```
 
 
@@ -42,4 +49,3 @@ CASE3_STUB_REQUEST_PICTURE=0 CASE3_STUB_LOG_LEVEL=debug npm run start:case3
 
 - Case2：[case2/README.md](case2/README.md) · [../../doc/case2/realback_no.md](../../doc/case2/realback_no.md)
 - Case3：[case3/README.md](case3/README.md) · [../../doc/case3/realback_no.md](../../doc/case3/realback_no.md)
-

@@ -74,7 +74,7 @@ export function createPublisher(options) {
   const controlStore = options.controlStore;
   const logger = options.logger;
   const pointMs = options.pointMs;
-  const dataMode = options.dataMode ?? "dynamic";
+  const dataMode = options.dataMode ?? "random";
   const seed = options.seed ?? "";
   const throughputJitter = options.throughputJitter ?? 0.1;
   const costJitter = options.costJitter ?? 0.15;
@@ -126,7 +126,7 @@ export function createPublisher(options) {
         await appendFixtureLine(task, key, dataset.rows[key][index]);
       }
       const currentCostLine =
-        dataset.dataMode === "dynamic"
+        dataset.dataMode === "random"
           ? dataset.costLines[index]
           : index === 0
             ? dataset.costLine

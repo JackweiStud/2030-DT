@@ -17,22 +17,23 @@ npm run start:case2
 默认：
 
 - 共享根：`../../comdatafiles`（`/Users/jackwl/Code/2030-DT/code/comdatafiles`）
+- 外部配置源：只读取 `code/back/.env`，缺省值由代码提供
 - **`CASE2_STUB_REQUEST_PICTURE=1`（演示默认开截图）**
 - **`CASE2_STUB_DATA_MODE=random`（相对 Initial 可控改善随机生成 Calibrated）**
 - start 终态同拍写 `status=case complete` + `save_picture_flag=1`
 - reinit 路径仍不置 flag
 
-数据模式：
+数据模式写在 `code/back/.env`：
 
-```bash
+```dotenv
 # 默认：random（读共享目录 Initial，生成改善后的 Calibrated）
-npm run start:case2
+CASE2_STUB_DATA_MODE=random
 
-# 回退到参考样本 copy
-CASE2_STUB_DATA_MODE=copy npm run start:case2
+# 若要回放参考样本，改为：
+# CASE2_STUB_DATA_MODE=replay
 
 # 固定 seed，便于复现同一套 synthetic 结果
-CASE2_STUB_DATA_MODE=random CASE2_STUB_SEED=demo-1 npm run start:case2
+CASE2_STUB_SEED=demo-1
 ```
 
 random 模式说明：
@@ -42,20 +43,18 @@ random 模式说明：
 - 默认 improve ratio ∈ [0.45, 0.65]，使误差整体下降（演示 CDF/降幅好看）
 - 日志标注 `synthetic ... not real backend acquisition`
 
-关闭截图 / 调试日志用环境变量：
+关闭截图 / 调试日志也写在 `code/back/.env`：
 
-```bash
-CASE2_STUB_REQUEST_PICTURE=0 npm run start:case2
-CASE2_STUB_LOG_LEVEL=debug npm run start:case2
+```dotenv
+CASE2_STUB_REQUEST_PICTURE=0
+CASE2_STUB_LOG_LEVEL=debug
 ```
 
 覆盖共享根：
 
-```bash
-DT_SHARED_DIR=/absolute/path/to/comdatafiles npm run start:case2
+```dotenv
+DT_SHARED_DIR=/absolute/path/to/comdatafiles
 ```
-
-`CASE2_SHARED_DIR` 仅作为旧脚本兼容 fallback；新配置使用 `DT_SHARED_DIR`。
 
 ## 验收（与适配服务联调）
 

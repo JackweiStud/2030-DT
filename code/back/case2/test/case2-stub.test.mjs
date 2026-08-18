@@ -21,6 +21,7 @@ import {
   readControl,
   runOperation,
 } from "../case2-stub.mjs";
+import { loadBackEnv, parseEnvFile } from "../../src/env-file.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CASE2_STUB_DIR = path.resolve(__dirname, "..");
@@ -84,7 +85,7 @@ function createContext(sharedDir, sourceDir, overrides = {}) {
       sharedDir,
       sourceDir,
       logger: silentLogger,
-      dataMode: overrides.dataMode ?? "copy",
+      dataMode: overrides.dataMode ?? "replay",
       seed: overrides.seed,
       improveMin: overrides.improveMin,
       improveMax: overrides.improveMax,
@@ -116,7 +117,43 @@ async function writeInitialFiles(sharedDir, options = {}) {
   }
 }
 
-test("loadConfig 要求 DT_SHARED_DIR，并兼容 CASE2_SHARED_DIR", () => {
+test("code/back .env 解析为唯一外部配置源", async () => {
+  assert.deepEqual(
+    parseEnvFile(`
+      # defaults
+      CASE2_STUB_DATA_MODE=random
+      CASE3_STUB_DATA_MODE='replay'
+    `),
+    {
+      CASE2_STUB_DATA_MODE: "random",
+      CASE3_STUB_DATA_MODE: "replay",
+    },
+  );
+  assert.throws(() => parseEnvFile("1BAD=value"), /invalid .env key/);
+
+  const env = await loadBackEnv("/ignored", {
+    fsOps: {
+      async readFile(filePath) {
+        assert.equal(filePath, path.join("/ignored", ".env"));
+        return "CASE2_STUB_DATA_MODE=replay\n";
+      },
+    },
+  });
+  assert.deepEqual(env, { CASE2_STUB_DATA_MODE: "replay" });
+
+  const missing = await loadBackEnv("/missing", {
+    fsOps: {
+      async readFile() {
+        const error = new Error("missing");
+        error.code = "ENOENT";
+        throw error;
+      },
+    },
+  });
+  assert.deepEqual(missing, {});
+});
+
+test("loadConfig 要求 DT_SHARED_DIR，并锁定默认枚举", () => {
   assert.throws(() => loadConfig({}), /DT_SHARED_DIR is required/);
   assert.throws(
     () =>
@@ -135,13 +172,20 @@ test("loadConfig 要求 DT_SHARED_DIR，并兼容 CASE2_SHARED_DIR", () => {
   assert.equal(config.improveMax, 0.65);
   assert.equal(config.noise, 0.05);
   assert.equal(config.sourceDir, path.join(CASE2_STUB_DIR, "back"));
-  assert.equal(loadConfig({ CASE2_SHARED_DIR: "/tmp/legacy" }).sharedDir, "/tmp/legacy");
   assert.equal(
     loadConfig({
       DT_SHARED_DIR: "/tmp/shared",
-      CASE2_STUB_DATA_MODE: "copy",
+      CASE2_STUB_DATA_MODE: "replay",
     }).dataMode,
-    "copy",
+    "replay",
+  );
+  assert.throws(
+    () =>
+      loadConfig({
+        DT_SHARED_DIR: "/tmp/shared",
+        CASE2_STUB_DATA_MODE: "copy",
+      }),
+    /CASE2_STUB_DATA_MODE must be random or replay/,
   );
 
   assert.equal(
@@ -386,7 +430,7 @@ test("相同 command 在 execute fail 后只要 status 再清空即可重新触�
   const sourceDir = await createSourceDir(t);
   const runner = createStubRunner({
     controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
+    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "replay" }),
     stepMs: 0,
     pollMs: 1000,
     outcome: "fail",
@@ -415,7 +459,7 @@ test("自己写出的 status 引发 evaluate 不会重复接单", async (t) => {
   const sourceDir = await createSourceDir(t);
   const runner = createStubRunner({
     controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
+    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "replay" }),
     stepMs: 0,
     pollMs: 1000,
     outcome: "success",
@@ -442,7 +486,7 @@ test("重启恢复：execute success 的 start/reinit 按成功路径收尾", as
       const sourceDir = await createSourceDir(st);
       const runner = createStubRunner({
         controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
+        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "replay" }),
         stepMs: 0,
         pollMs: 1000,
         outcome: "fail",
@@ -479,7 +523,7 @@ test("重启恢复：idle、已失败、已完成、未知状态均不动作", a
       const sourceDir = await createSourceDir(st);
       const runner = createStubRunner({
         controlStore: createControlStore({ sharedDir, logger: silentLogger }),
-        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
+        publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "replay" }),
         stepMs: 0,
         pollMs: 1000,
         outcome: "success",
@@ -515,7 +559,7 @@ test("接单日志包含本轮 requestPicture 与 outcome", async (t) => {
   };
   const runner = createStubRunner({
     controlStore: createControlStore({ sharedDir, logger }),
-    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "copy" }),
+    publisher: createPublisher({ sharedDir, sourceDir, logger: silentLogger, dataMode: "replay" }),
     stepMs: 0,
     pollMs: 1000,
     outcome: "success",
@@ -536,7 +580,7 @@ test("random 模式：相对 Initial 改善生成且 seed 可复现", async (t) 
     heatmap: "10 20\n30 40\n",
     kpi: "100\n200\n300\n",
   });
-  const sourceDir = await createSourceDir(t); // copy fallback unused
+  const sourceDir = await createSourceDir(t); // replay source unused
   const first = createPublisher({
     sharedDir,
     sourceDir,

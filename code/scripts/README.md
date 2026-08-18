@@ -35,13 +35,13 @@ cd <repo>\code\scripts
 
 默认：
 
-- 共享根：`code/comdatafiles`（可用 `DT_SHARED_DIR` 覆盖；`CASE2_SHARED_DIR` 仅兼容旧脚本）
+- 共享根：`code/comdatafiles`（适配服务可用 `DT_SHARED_DIR` 覆盖；back stub 改 `code/back/.env`）
 - 适配服务：`127.0.0.1:3102`
 - Web：`http://127.0.0.1:5173`（Vite `host:true`，启动时另打印局域网 Network 地址；代理 `/api` → 3102）
 
 `Ctrl+C` 会结束两个子进程（Windows 上通过 `taskkill /T` 清 npm/node 树）。
 
-需要打桩时另开终端：
+需要打桩时先按需修改 `code/back/.env`，再另开终端：
 
 ```bash
 cd code/back && npm run start:case2

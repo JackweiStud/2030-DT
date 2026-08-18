@@ -18,6 +18,7 @@
 - 2026-08-10 Case3 stub 文档澄清已批准并于 2026-08-11 实现：参考原始 Cost 10/5 不复制，fixtures 手工覆盖为 25/15；进程启动遇到匹配侧 `execute success` 时清空目标侧并从第 1 点重放，不断点续写；seed 只创建缺失 base/baseline。
 - 2026-08-11 Case3 `WEB-SPEC` 审阅修订：去掉过时「抽取共用 API URL」表述；补 `BaseRoutePoint`、冻结文案与 PanelHeader/现场环境接线；修正 Start 步骤编号；地图映射改读配置符号；澄清 ReInit 只清本地 UI、HTTP `RESULT_NOT_READY` 与 Web 日志码区分；§13 将已批准项勾完，仅保留「批准本文交给实现 agent」。
 - 2026-08-10 Case3 Web 轮询默认值调整为 500ms；初始化阶段 Node 不可达时沿用 Case2 的 5000ms 无上限适配器探活，恢复后重新执行 GET control→POST init→GET init-data。`code/web/.env` 按 Case2/Case3 分块保留轮询与地图/热力标定；Case2/Case3 API 前缀分别写死同源 `/api/case2`、`/api/case3`，不引入 `VITE_CASE*_API_BASE`。当前运行代码实现 2D 地图，并保留 renderer、原始坐标和截图接口供未来 Three.js 替换，不引入依赖或猜测 3D 参数。
+- 2026-08-18 `code/back` 本地 stub 启动配置收敛：运行入口只读取 `code/back/.env` 作为外部配置源，缺省值由代码提供；`CASE2_STUB_DATA_MODE` 与 `CASE3_STUB_DATA_MODE` 统一为 `random` / `replay`，代码默认和默认 `.env` 均为 `random`。旧 `copy` / `dynamic` 不再作为合法 data mode。
 - 2026-08-03 用户定稿：失败态按 WEB-SPEC 路径互斥（`failed-start` 只可再启动，`failed-reinit` 只可再重置）；进页一律 `initial`；无 result-error/unknown-control；六文件失败保持 `calibrating`；`start`/`reinit` 强制 `status=""`；真实后端已确认接受开一轮空 `status`。
 - 2026-08-03 分工：本会话只实现正式 Web（`WEB-SPEC`）；Node 适配（`SERVER-SPEC`）与 `realback_no` 打桩由 Codex 交付；本地联调必须同时具备打桩。
 - 2026-08-03 Web SPEC 审阅增量已回填 `WEB-SPEC.md`。
@@ -59,7 +60,7 @@
 - P0-2 已确认：启动和重置互斥；不做取消、队列、自动超时或业务命令自动重试；`execute fail` 解除按钮并允许手动重试；刷新页面后一切回 Initial。截图生成/上传的有限重试不属于业务命令重试。
 - P0-3 已确认：Node 适配服务采用最小 REST；控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。
 - P0-4 已确认：后端仅在启动路径、`execute success` 之后至 `case complete`（允许同拍）置 `save_picture_flag=1`；重置不置 1。Web 仅 `calibrating` 观察，同拍 complete 仍截一次；同一截图任务最多尝试 3 次（首次 + 2 次重试），3 次仍失败则经适配服务自动清零并接受丢失本张截图。Node 采用临时文件 + 原子 rename 落盘，成功后清零；`seq` 从 `000` 递增且不覆盖。不做持久事务、SHA-256 去重或进程重启恢复。
-- Gate 3 默认值：Node 适配服务监听 `127.0.0.1:3102`；Web 以 1000ms 串行轮询；共享根通过必填环境变量 `DT_SHARED_DIR` 注入，旧 `CASE2_SHARED_DIR` 仅作为兼容 fallback。
+- Gate 3 默认值：Node 适配服务监听 `127.0.0.1:3102`；Web 以 1000ms 串行轮询；共享根使用项目级 `DT_SHARED_DIR`，其中 `code/back` stub 启动入口只从 `code/back/.env` 读取该键，未写时默认 `code/comdatafiles`。
 - Gate 3 控制写入：适配服务内串行、读最新快照、合并允许字段；`start`/`reinit` 额外强制 `status=""`；同目录临时文件 `fsync + rename`；不新增数据库、租约服务或长期锁文件。
 - Gate 3 打桩发布：与真实后端相同，向 flat `case2/` 直接写完并关闭六个 Calibrated 文件，最后写 `status=case complete`；不引入临时运行目录、内部指针或 `CASE2_DATA_MODE`（见 `doc/case2/realback_no.md`）。
 - 前后端 PC 使用同一已挂载共享目录；Web 与 Node 适配服务同机在前端 PC，适配服务是浏览器唯一文件/截图所有者。
@@ -70,7 +71,7 @@
 - 运行顺序：测试时用户必须先跑 Without DT，再跑 With DT；两侧互斥运行，一次只允许 without 或 with 一侧运行/重置。
 - 后端文件层：先沿用 `01-参考资料/case3/data/c3/` 的多 txt 现网协议；正式后端继续 append txt。JSONL 仅为收编讨论稿，当前不作为正式后端协议。
 - Node/Web 边界：Node 提供 `/api/case3/*`，负责清空单侧实时 append 文件、按行号读取和校验多 txt、收编为区分 Without/With 的结构化点位；Web 只消费结构化数据，不直接读/删共享目录。
-- 共享根配置：case2/case3 统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 只作为历史兼容或迁移期映射。
+- 共享根配置：case2/case3 统一使用项目级 `DT_SHARED_DIR`；`code/back` stub 启动入口只读 `code/back/.env`，不再接受旧 `CASE2_SHARED_DIR` fallback。
 - 控制文件：case3 沿用同一个 `case_control.json` 五字段结构。Start/ReInit 由 Node 写入 `case=case3`、`command=start|reinit`、`dt_type=without dt|with dt` 并强制 `status=""` 开新轮；进页/刷新/切回 case3 的 GET 成功后、单侧 `case complete` 结果被 Web 接收后、单侧 `reinit complete` 被 UI 消费后，Web 经 Node 写回 `command=init,status=""` 空闲态；业务终态仍只由后端写。
 - `init`：除空闲清洁态外，同时撤销旧 Case/旧侧文件写入权；后端观察到 init 后必须停止旧轮继续写文件。页面关闭时的卸载请求只作 best-effort，下一次 mount 的 GET→POST init 是可靠恢复门槛。
 - 跨 Case：任一 Case 处于 Start/ReInit 等待态时，Shell 锁定其他 Case Tab；不增加取消、命令队列、自动业务超时或自动业务重试。
@@ -96,12 +97,12 @@
 ## 主要风险与证据缺口
 
 - P0-1 的真实后端最小发布规则已冻结；本地模拟后端见 `doc/case2/realback_no.md`（flat；写完六文件后最后写 `case complete`），与 `SERVER-SPEC` 文件适配服务分离。
-- 共享目录实际挂载路径是部署输入，不写死在仓库；case2/case3 当前启动时应显式提供项目级 `DT_SHARED_DIR`，旧 `CASE2_SHARED_DIR` 只作为兼容 fallback。
+- 共享目录实际挂载路径是部署输入；back stub 在 `code/back/.env` 写 `DT_SHARED_DIR`，未写时仅用于本地默认 `code/comdatafiles`。
 - 无版本号共享 JSON 不能仅靠单端进程锁彻底消除双端同时整文件写入的最后写者覆盖；真实后端/真实挂载验收必须验证并发字段保留，若失败则回契约层增加双方共同锁协议。
 - `execute success` 是必须观察的中间状态；打桩默认保持至少 `CASE2_STUB_STEP_MS=5000`（见 `realback_no.md`），真实后端是否能被 1000ms 轮询稳定观察需在真实环境验收时验证。
 - 启动/重置的状态链路已确认：`execute success -> case complete` 或 `execute success -> reinit complete`；`execute fail` 为失败终态；刷新页面后一切回 Initial。
 - 初始、校准中、失败态为基于完成态结构补建的设计源；用户已审阅并批准，后续变更须重新冻结。
-- 当前参考 Calibrated 文件已存在，不能作为本次任务完成证据；本地打桩默认 random 合成 Calibrated（相对 Initial 改善），可 `copy` 回退参考样本；日志标注 synthetic/stub，不得表述为真实业务采集。
+- 当前参考 Calibrated 文件已存在，不能作为本次任务完成证据；本地打桩默认 random 合成 Calibrated（相对 Initial 改善），可 `replay` 回放参考样本；日志标注 synthetic/stub，不得表述为真实业务采集。
 - 本地自动测试与用户人工联调已通过；截图输出 `code/comdatafiles/out/case2/calibrated-000.png` 至 `calibrated-005.png` 为 3840×2160 PNG 运行证据，但不默认提交。
 - Gate 1 设计源中降幅已改为 `{reductionPct}%` 运行时占位；前端实现不得写死 50%。
 - case3 Gate 1 设计源已冻结；当前 UX PNG 仍只是输入，不是最终视觉契约。Gate 1.5 静态 HTML 已由用户接受，仅覆盖用户确认的核心状态；正式 Web 复用其 case-local 视觉规则和资源时必须重构为正式组件，不能直接迁入静态 CSS/JS。

@@ -93,7 +93,7 @@ export async function runMain(env = process.env) {
     throughputJitter: config.throughputJitter,
     costJitter: config.costJitter,
     dataSource:
-      config.dataMode === "dynamic"
+      config.dataMode === "random"
         ? "synthetic-kpi+fixture-structure"
         : "fixture-replay",
   });

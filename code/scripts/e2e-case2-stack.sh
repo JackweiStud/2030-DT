@@ -8,8 +8,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WEB_DIR="$ROOT/web"
 SERVER_DIR="$ROOT/server"
+BACK_DIR="$ROOT/back"
 STUB_DIR="$ROOT/back/case2"
 FIXTURE_DIR="$STUB_DIR/back"
+BACK_ENV="$BACK_DIR/.env"
+BACK_ENV_BACKUP="$ROOT/.tmp/case2-e2e-back-env.$$"
+BACK_ENV_HAD_FILE=0
+BACK_ENV_TOUCHED=0
 SHARED_DIR="${CASE2_E2E_SHARED_DIR:-$ROOT/.tmp/case2-e2e-shared}"
 WEB_PORT="${CASE2_E2E_WEB_PORT:-55173}"
 ADAPTER_HOST="${CASE2_E2E_ADAPTER_HOST:-127.0.0.1}"
@@ -48,6 +53,13 @@ cleanup() {
     fi
   done
   wait 2>/dev/null || true
+  if [[ "$BACK_ENV_TOUCHED" -eq 1 ]]; then
+    if [[ "$BACK_ENV_HAD_FILE" -eq 1 && -f "$BACK_ENV_BACKUP" ]]; then
+      mv "$BACK_ENV_BACKUP" "$BACK_ENV"
+    else
+      rm -f "$BACK_ENV"
+    fi
+  fi
   echo "[case2-e2e] stopped"
 }
 
@@ -55,9 +67,25 @@ trap cleanup INT TERM EXIT
 
 echo "[case2-e2e] preparing sharedDir=$SHARED_DIR"
 rm -rf "$SHARED_DIR"
-mkdir -p "$SHARED_DIR/case2" "$SHARED_DIR/out/case2"
+mkdir -p "$SHARED_DIR/case2" "$SHARED_DIR/out/case2" "$ROOT/.tmp"
 cp "$FIXTURE_DIR"/heatmap_init_*.txt "$SHARED_DIR/case2/"
 node -e 'const fs=require("fs"); const p=process.argv[1]; fs.writeFileSync(p, JSON.stringify({case:"case2",command:"init",dt_type:"with dt",status:"",save_picture_flag:0}, null, 2) + "\n");' "$SHARED_DIR/case_control.json"
+
+if [[ -f "$BACK_ENV" ]]; then
+  cp "$BACK_ENV" "$BACK_ENV_BACKUP"
+  BACK_ENV_HAD_FILE=1
+fi
+BACK_ENV_TOUCHED=1
+cat > "$BACK_ENV" <<EOF
+DT_SHARED_DIR=$SHARED_DIR
+CASE2_STUB_LOG_LEVEL=info
+CASE2_STUB_STEP_MS=$STUB_STEP_MS
+CASE2_STUB_POLL_MS=$STUB_POLL_MS
+CASE2_STUB_REQUEST_PICTURE=1
+CASE2_STUB_DATA_MODE=random
+CASE2_STUB_SEED=case2-e2e
+CASE3_STUB_DATA_MODE=random
+EOF
 
 (
   cd "$SERVER_DIR"
@@ -84,13 +112,6 @@ once();
 
 (
   cd "$STUB_DIR"
-  export DT_SHARED_DIR="$SHARED_DIR"
-  export CASE2_STUB_LOG_LEVEL="${CASE2_STUB_LOG_LEVEL:-info}"
-  export CASE2_STUB_STEP_MS="$STUB_STEP_MS"
-  export CASE2_STUB_POLL_MS="$STUB_POLL_MS"
-  export CASE2_STUB_REQUEST_PICTURE="${CASE2_STUB_REQUEST_PICTURE:-1}"
-  export CASE2_STUB_DATA_MODE="${CASE2_STUB_DATA_MODE:-random}"
-  export CASE2_STUB_SEED="${CASE2_STUB_SEED:-case2-e2e}"
   npm start
 ) &
 PIDS+=("$!")

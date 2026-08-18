@@ -12,11 +12,11 @@ synthetic/fixture 数据。它不提供 REST，不能与真实后端同时运行
 npm run start:case3
 ```
 
-`scripts/run.mjs` 在本地默认使用 `code/comdatafiles`。真实挂载或临时
-联调目录应显式传入绝对路径：
+`scripts/run.mjs` 在本地默认使用 `code/comdatafiles`，且只读取
+`code/back/.env` 作为外部配置源。真实挂载或临时联调目录应写入：
 
-```bash
-DT_SHARED_DIR=/absolute/shared/root npm run start:case3
+```dotenv
+DT_SHARED_DIR=/absolute/shared/root
 ```
 
 默认参数：
@@ -24,7 +24,7 @@ DT_SHARED_DIR=/absolute/shared/root npm run start:case3
 - 控制轮询 200ms；
 - `execute success` 保持 3000ms；
 - 每点 1000ms；
-- `CASE3_STUB_DATA_MODE=dynamic`；
+- `CASE3_STUB_DATA_MODE=random`；
 - Throughput 以 fixture 曲线为模板做 ±10% 有 seed 抖动；
 - Cost 以 fixture 25/15 为模板，每个点生成并 append 一个 ±15% 动态值；
 - Start 完成时同拍写 `case complete + save_picture_flag=1`；
@@ -32,31 +32,31 @@ DT_SHARED_DIR=/absolute/shared/root npm run start:case3
 
 数据模式：
 
-```bash
+```dotenv
 # 默认：仅动态生成 Throughput / Cost
-npm run start:case3
+CASE3_STUB_DATA_MODE=random
 
 # 固定 seed，复现同一套动态 KPI
-CASE3_STUB_SEED=demo-1 npm run start:case3
+CASE3_STUB_SEED=demo-1
 
 # 完整回放 fixtures（Cost 固定 25/15）
-CASE3_STUB_DATA_MODE=replay npm run start:case3
+# CASE3_STUB_DATA_MODE=replay
 ```
 
-关闭截图 / 调试日志用环境变量：
+关闭截图 / 调试日志也写在 `code/back/.env`：
 
-```bash
-CASE3_STUB_REQUEST_PICTURE=0 npm run start:case3
-CASE3_STUB_LOG_LEVEL=debug npm run start:case3
+```dotenv
+CASE3_STUB_REQUEST_PICTURE=0
+CASE3_STUB_LOG_LEVEL=debug
 ```
 
 ## 数据边界
 
 - 两侧 fixture 是 31 点预置模板。坐标、扫描/selected Beam、
   Reflection 始终逐行回放，不参与动态生成。
-- 默认 `dynamic` 只生成 Throughput 与 Cost；Beam Accuracy 仍由预置
+- 默认 `random` 只生成 Throughput 与 Cost；Beam Accuracy 仍由预置
   selected Beam 派生，因此保持可复现。
-- dynamic 每发布一个点就 append 一个 Cost；Node/Web 始终读取最新非空行，
+- random 每发布一个点就 append 一个 Cost；Node/Web 始终读取最新非空行，
   因此仪表可按点实时变化。
 - With Throughput 在自身 ±10% 范围内还会高于对应 Without 的理论上限；
   Cost 25/15 各自 ±15% 后仍保证 With 更低。

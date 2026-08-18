@@ -50,8 +50,8 @@ function unitInterval(env, name, fallback) {
 
 export async function loadRuntimeConfig(env = process.env, options = {}) {
   const fsOps = options.fsOps ?? defaultFs;
-  const sharedDir = env.DT_SHARED_DIR || env.CASE2_SHARED_DIR;
-  const sharedName = env.DT_SHARED_DIR ? "DT_SHARED_DIR" : "CASE2_SHARED_DIR";
+  const sharedDir = env.DT_SHARED_DIR;
+  const sharedName = "DT_SHARED_DIR";
   if (!sharedDir) invalid("缺少必填环境变量 DT_SHARED_DIR");
   if (!path.isAbsolute(sharedDir)) invalid(`${sharedName} 必须是绝对路径`);
 
@@ -108,7 +108,7 @@ export async function loadRuntimeConfig(env = process.env, options = {}) {
       env,
       "CASE3_STUB_DATA_MODE",
       DEFAULTS.dataMode,
-      ["dynamic", "replay"],
+      ["random", "replay"],
     ),
     seed: env.CASE3_STUB_SEED ?? DEFAULTS.seed,
     throughputJitter: unitInterval(
