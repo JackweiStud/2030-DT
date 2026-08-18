@@ -19,6 +19,11 @@ import { METRIC_KEYS } from "../types";
 /** 同源 Case2 API 前缀；不得在组件散落 `3102`。 */
 export const CASE2_API_PREFIX = "/api/case2";
 
+/** 控制 / 数据请求默认超时。 */
+export const CASE2_REQUEST_TIMEOUT_MS = 8000;
+/** 截图 POST 单独更长超时。 */
+export const CASE2_SCREENSHOT_TIMEOUT_MS = 20000;
+
 export class Case2ApiError extends Error {
   readonly code: string;
   readonly httpStatus: number;
@@ -33,6 +38,10 @@ export class Case2ApiError extends Error {
 
 type ApiClientOptions = {
   fetchImpl?: typeof fetch;
+  /** 控制/数据超时；用于测试注入，正式默认 8000ms。 */
+  requestTimeoutMs?: number;
+  /** 截图 POST 超时；用于测试注入，正式默认 20000ms。 */
+  screenshotTimeoutMs?: number;
 };
 
 function resolveApiUrl(path: string): string {
@@ -107,33 +116,72 @@ async function parseJson(res: Response): Promise<unknown> {
  */
 export function createCase2Api(options: ApiClientOptions = {}) {
   const fetchImpl = options.fetchImpl ?? fetch;
+  const requestTimeoutMs =
+    options.requestTimeoutMs ?? CASE2_REQUEST_TIMEOUT_MS;
+  const screenshotTimeoutMs =
+    options.screenshotTimeoutMs ?? CASE2_SCREENSHOT_TIMEOUT_MS;
 
   async function request<T>(
     path: string,
     init: RequestInit,
     mapOk: (body: unknown) => T,
+    timeoutMs: number = requestTimeoutMs,
   ): Promise<T> {
     const url = resolveApiUrl(path);
-    const res = await fetchImpl(url, {
-      ...init,
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
-        ...init.headers,
-      },
-    });
-    const body = await parseJson(res);
-    if (!isObject(body)) {
-      throw new Case2ApiError("INVALID_RESPONSE", "response is not object", res.status);
+    const requestAbort = new AbortController();
+    let timedOut = false;
+    let callerAborted = false;
+    const callerSignal = init.signal;
+    const abortFromCaller = () => {
+      callerAborted = true;
+      requestAbort.abort(callerSignal?.reason);
+    };
+    if (callerSignal?.aborted) {
+      abortFromCaller();
+    } else {
+      callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
     }
-    if (body.ok === true) {
-      return mapOk(body);
+    const timeoutId = globalThis.setTimeout(() => {
+      if (callerAborted) return;
+      timedOut = true;
+      requestAbort.abort();
+    }, timeoutMs);
+
+    try {
+      const res = await fetchImpl(url, {
+        ...init,
+        signal: requestAbort.signal,
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+          ...(init.body ? { "Content-Type": "application/json" } : {}),
+          ...init.headers,
+        },
+      });
+      const body = await parseJson(res);
+      if (!isObject(body)) {
+        throw new Case2ApiError("INVALID_RESPONSE", "response is not object", res.status);
+      }
+      if (body.ok === true) {
+        return mapOk(body);
+      }
+      const err = body as ApiErrorResponse;
+      const code = err.error?.code ?? "UNKNOWN";
+      const message = err.error?.message ?? "request failed";
+      throw new Case2ApiError(code, message, res.status);
+    } catch (err) {
+      if (timedOut) {
+        throw new Case2ApiError(
+          "REQUEST_TIMEOUT",
+          `request exceeded ${timeoutMs}ms`,
+          0,
+        );
+      }
+      throw err;
+    } finally {
+      globalThis.clearTimeout(timeoutId);
+      callerSignal?.removeEventListener("abort", abortFromCaller);
     }
-    const err = body as ApiErrorResponse;
-    const code = err.error?.code ?? "UNKNOWN";
-    const message = err.error?.message ?? "request failed";
-    throw new Case2ApiError(code, message, res.status);
   }
 
   return {
@@ -193,6 +241,7 @@ export function createCase2Api(options: ApiClientOptions = {}) {
           signal,
         },
         (body) => body as ScreenshotResponse,
+        screenshotTimeoutMs,
       );
     },
   };

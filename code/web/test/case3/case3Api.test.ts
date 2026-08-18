@@ -1,8 +1,34 @@
 /**
  * Case3 API shape 校验测试。
  */
-import { describe, expect, it } from "vitest";
-import { createCase3Api, Case3ApiError } from "../../src/cases/case3/api/case3Api";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  CASE3_REQUEST_TIMEOUT_MS,
+  CASE3_SCREENSHOT_TIMEOUT_MS,
+  Case3ApiError,
+  createCase3Api,
+} from "../../src/cases/case3/api/case3Api";
+
+async function hangUntilAbort(
+  _input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const signal = init?.signal;
+  await new Promise<never>((_, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("The operation was aborted", "AbortError"));
+      return;
+    }
+    signal?.addEventListener(
+      "abort",
+      () => {
+        reject(new DOMException("The operation was aborted", "AbortError"));
+      },
+      { once: true },
+    );
+  });
+  throw new Error("unreachable");
+}
 
 function ok(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -12,6 +38,10 @@ function ok(body: unknown): Response {
 }
 
 describe("case3Api", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("解析 control", async () => {
     const api = createCase3Api({
       fetchImpl: async () =>
@@ -120,5 +150,62 @@ describe("case3Api", () => {
       httpStatus: 0,
     });
     expect(observedAbort).toBe(true);
+  });
+
+  it("调用方 abort 不当成 REQUEST_TIMEOUT", async () => {
+    const caller = new AbortController();
+    const api = createCase3Api({
+      requestTimeoutMs: 500,
+      fetchImpl: hangUntilAbort,
+    });
+    const pending = api.getControl(caller.signal);
+    await Promise.resolve();
+    caller.abort();
+    const err = await pending.catch((e) => e);
+    expect(err).toMatchObject({ name: "AbortError" });
+    expect(err).not.toMatchObject({ code: "REQUEST_TIMEOUT" });
+  });
+
+  it("普通 GET 默认 5s，screenshot 默认 20s", async () => {
+    vi.useFakeTimers();
+    const api = createCase3Api({ fetchImpl: hangUntilAbort });
+
+    const controlPending = api.getControl();
+    await vi.advanceTimersByTimeAsync(CASE3_REQUEST_TIMEOUT_MS - 1);
+    let controlSettled = false;
+    void controlPending.then(
+      () => {
+        controlSettled = true;
+      },
+      () => {
+        controlSettled = true;
+      },
+    );
+    await Promise.resolve();
+    expect(controlSettled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(controlPending).rejects.toMatchObject({
+      code: "REQUEST_TIMEOUT",
+      message: `request exceeded ${CASE3_REQUEST_TIMEOUT_MS}ms`,
+    });
+
+    const shotPending = api.postScreenshot("xx");
+    await vi.advanceTimersByTimeAsync(CASE3_SCREENSHOT_TIMEOUT_MS - 1);
+    let shotSettled = false;
+    void shotPending.then(
+      () => {
+        shotSettled = true;
+      },
+      () => {
+        shotSettled = true;
+      },
+    );
+    await Promise.resolve();
+    expect(shotSettled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(shotPending).rejects.toMatchObject({
+      code: "REQUEST_TIMEOUT",
+      message: `request exceeded ${CASE3_SCREENSHOT_TIMEOUT_MS}ms`,
+    });
   });
 });

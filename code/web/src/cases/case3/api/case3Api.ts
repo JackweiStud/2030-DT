@@ -31,11 +31,16 @@ export class Case3ApiError extends Error {
 
 type ApiClientOptions = {
   fetchImpl?: typeof fetch;
-  /** 单次 HTTP 请求超时；用于测试注入，正式默认 5000ms。 */
+  /** 控制/数据超时；用于测试注入，正式默认 5000ms。 */
   requestTimeoutMs?: number;
+  /** 截图 POST 超时；用于测试注入，正式默认 20000ms。 */
+  screenshotTimeoutMs?: number;
 };
 
-const DEFAULT_REQUEST_TIMEOUT_MS = 5000;
+/** 控制 / init-data / side 默认超时。 */
+export const CASE3_REQUEST_TIMEOUT_MS = 5000;
+/** 截图 POST 单独更长超时。 */
+export const CASE3_SCREENSHOT_TIMEOUT_MS = 20000;
 
 function resolveApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -190,12 +195,15 @@ async function parseJson(res: Response): Promise<unknown> {
 export function createCase3Api(options: ApiClientOptions = {}) {
   const fetchImpl = options.fetchImpl ?? fetch;
   const requestTimeoutMs =
-    options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    options.requestTimeoutMs ?? CASE3_REQUEST_TIMEOUT_MS;
+  const screenshotTimeoutMs =
+    options.screenshotTimeoutMs ?? CASE3_SCREENSHOT_TIMEOUT_MS;
 
   async function request<T>(
     path: string,
     init: RequestInit,
     mapOk: (body: Record<string, unknown>) => T,
+    timeoutMs: number = requestTimeoutMs,
   ): Promise<T> {
     const url = resolveApiUrl(path);
     const requestAbort = new AbortController();
@@ -215,7 +223,7 @@ export function createCase3Api(options: ApiClientOptions = {}) {
       if (callerAborted) return;
       timedOut = true;
       requestAbort.abort();
-    }, requestTimeoutMs);
+    }, timeoutMs);
 
     try {
       const res = await fetchImpl(url, {
@@ -266,7 +274,7 @@ export function createCase3Api(options: ApiClientOptions = {}) {
       if (timedOut) {
         throw new Case3ApiError(
           "REQUEST_TIMEOUT",
-          `request exceeded ${requestTimeoutMs}ms`,
+          `request exceeded ${timeoutMs}ms`,
           0,
         );
       }
@@ -336,6 +344,7 @@ export function createCase3Api(options: ApiClientOptions = {}) {
           const seq = assertFiniteNumber(body.seq, "seq");
           return { path: body.path, seq };
         },
+        screenshotTimeoutMs,
       );
     },
   };
