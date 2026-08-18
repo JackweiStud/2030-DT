@@ -57,7 +57,7 @@ BF-025：真实算法数据不再因统一 `\-200～200` / `0～500` 整批 422�
 | 12  | [BF-011](BF-011-busy-adapter-error-badge.md)             | P1  | web          | 忙态中连接失败盖住「测试中」                      | ✅ done |
 | 13  | [BF-012](BF-012-case2-poll-control-ownership.md)         | P1  | web/case2    | 轮询不校验控制文件归属                         | open   |
 | 14  | [BF-013](BF-013-case3-poll-fail-visible.md)              | P1  | web/case3    | 轮询失败只打日志、用户无感知                      | ✅ done |
-| 15  | [BF-014](BF-014-case3-debug-jsonl-block-start.md)        | P1  | server/case3 | 调试 JSONL 清空失败会挡住 Start/ReInit       | open   |
+| 15  | [BF-014](BF-014-case3-debug-jsonl-block-start.md)        | P2  | server/case3 | 调试 JSONL 清空失败会挡住 Start/ReInit       | ⏸ deferred |
 | 16  | [BF-015](BF-015-clear-files-then-control-write-fail.md)  | P1  | server       | 先清结果文件再写控制，写失败会留下空文件                | open   |
 | 17  | [BF-016](BF-016-case2-pagehide-init.md)                  | P2  | web/case2    | 刷新/关页缺少 keepalive `init`            | open   |
 | 18  | [BF-017](BF-017-request-body-hang.md)                    | P2  | server       | 超限 body 无限排空、无请求超时                  | open   |
