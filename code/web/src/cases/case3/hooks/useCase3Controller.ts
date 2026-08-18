@@ -28,6 +28,8 @@ import {
   isActionBusy,
   sideStatusBadge,
   sideStatusBadgeIsError,
+  sideStatusRetryHint,
+  CASE3_POLL_FAIL_RETRY_THRESHOLD,
 } from "../state/case3Reducer";
 import type {
   ActiveAction,
@@ -193,6 +195,7 @@ export function useCase3Controller(options: Options) {
   const lastFinalDiagnosticRef = useRef<string | null>(null);
   const finalNotReadyAttemptsRef = useRef(0);
   const lastControlMismatchRef = useRef<string | null>(null);
+  const pollFailStreakRef = useRef(0);
   const probeStartedLoggedRef = useRef(false);
   const screenshotBusyRef = useRef(false);
   const pendingCompleteSideRef = useRef<Case3Side | null>(null);
@@ -224,6 +227,26 @@ export function useCase3Controller(options: Options) {
       probeTimerRef.current = null;
     }
   }, []);
+
+  const notePollTransportFail = useCallback(() => {
+    pollFailStreakRef.current += 1;
+    if (
+      pollFailStreakRef.current >= CASE3_POLL_FAIL_RETRY_THRESHOLD &&
+      !stateRef.current.adapterError
+    ) {
+      dispatch({ type: "ADAPTER_ERROR", value: true });
+    }
+  }, [dispatch]);
+
+  const notePollTransportOk = useCallback(() => {
+    pollFailStreakRef.current = 0;
+    if (
+      stateRef.current.adapterError &&
+      isActionBusy(stateRef.current)
+    ) {
+      dispatch({ type: "ADAPTER_ERROR", value: false });
+    }
+  }, [dispatch]);
 
   const maybeFinishAfterScreenshot = useCallback(async () => {
     if (pendingCompleteSideRef.current == null) return;
@@ -603,12 +626,15 @@ export function useCase3Controller(options: Options) {
     const api = apiRef.current;
     const ac = new AbortController();
     pollAbortRef.current = ac;
+    let sawControl = false;
+    let countedFail = false;
 
     try {
       const control = await api.getControl(ac.signal);
       if (ac.signal.aborted) {
         return;
       }
+      sawControl = true;
       if (!action) {
         if (control.save_picture_flag === 0) {
           screenshotPhaseRef.current = "idle";
@@ -887,6 +913,8 @@ export function useCase3Controller(options: Options) {
               code: err instanceof Case3ApiError ? err.code : undefined,
               reason: err instanceof Error ? err.message : String(err),
             });
+            countedFail = true;
+            notePollTransportFail();
           }
         }
       }
@@ -966,6 +994,8 @@ export function useCase3Controller(options: Options) {
       }
     } catch (err) {
       if (isAbortError(err)) return;
+      countedFail = true;
+      notePollTransportFail();
       case3Warn("poll.fail", {
         generation,
         kind: action?.kind,
@@ -974,11 +1004,17 @@ export function useCase3Controller(options: Options) {
         code: err instanceof Case3ApiError ? err.code : undefined,
         reason: err instanceof Error ? err.message : String(err),
       });
+    } finally {
+      if (!ac.signal.aborted && sawControl && !countedFail) {
+        notePollTransportOk();
+      }
     }
   }, [
     dispatch,
     maybeFinishAfterScreenshot,
     noteFinalNotReady,
+    notePollTransportFail,
+    notePollTransportOk,
     runScreenshotTask,
     setBusy,
     stopPolling,
@@ -1207,6 +1243,7 @@ export function useCase3Controller(options: Options) {
       finalNotReadyAttemptsRef.current = 0;
       lastControlMismatchRef.current = null;
       screenshotPhaseRef.current = "idle";
+      pollFailStreakRef.current = 0;
 
       try {
         const control = await apiRef.current.postControl(
@@ -1331,6 +1368,8 @@ export function useCase3Controller(options: Options) {
     withBadge: sideStatusBadge(state, "with"),
     withoutBadgeError: sideStatusBadgeIsError(state, "without"),
     withBadgeError: sideStatusBadgeIsError(state, "with"),
+    withoutRetryHint: sideStatusRetryHint(state, "without"),
+    withRetryHint: sideStatusRetryHint(state, "with"),
     onStartWithout,
     onStartWith,
     onReinitWithout,

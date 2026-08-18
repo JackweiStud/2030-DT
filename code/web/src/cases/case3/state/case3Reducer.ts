@@ -334,10 +334,25 @@ export const CASE3_ADAPTER_ERROR_BADGE = "case3文件服务器连接异常";
 /** init-data 语义错误（非 Node 不可达）时的徽标文案。 */
 export const CASE3_INIT_DATA_ERROR_BADGE = "case3初始化数据异常";
 
+export const CASE3_ADAPTER_RETRY_HINT = "重试中";
+/** 动作中连续 control/live GET 失败达到该次数才置 adapterError。 */
+export const CASE3_POLL_FAIL_RETRY_THRESHOLD = 3;
+
+function busyStatusText(state: Case3State, side: Case3Side): string {
+  return statusBadgeText(deriveVisibleState(state), side);
+}
+
+function isBusyStatusText(text: string): boolean {
+  return text === "测试中" || text === "重置中";
+}
+
 /**
- * 侧栏徽标最终文案：adapter / init 错误优先替换业务态文案。
+ * 侧栏徽标最终文案：忙态保留测试中/重置中；空闲态 adapter / init 错误优先。
  */
 export function sideStatusBadge(state: Case3State, side: Case3Side): string {
+  if (isActionBusy(state)) {
+    return busyStatusText(state, side);
+  }
   if (state.adapterError) return CASE3_ADAPTER_ERROR_BADGE;
   if (state.initStatus === "error") return CASE3_INIT_DATA_ERROR_BADGE;
   if (
@@ -350,14 +365,24 @@ export function sideStatusBadge(state: Case3State, side: Case3Side): string {
   return statusBadgeText(deriveVisibleState(state), side);
 }
 
-/** 徽标是否应使用错误样式。 */
+/** 徽标是否应使用错误样式。忙态即使 adapterError 也保持 busy，不走红样式。 */
 export function sideStatusBadgeIsError(
   state: Case3State,
   side?: Case3Side,
 ): boolean {
+  if (isActionBusy(state)) return false;
   if (state.adapterError || state.initStatus === "error") return true;
   if (side === undefined) return false;
   return state.failure?.side === side;
+}
+
+/** 忙态次要「重试中」：仅跑着的那一侧。 */
+export function sideStatusRetryHint(
+  state: Case3State,
+  side: Case3Side,
+): boolean {
+  if (!isActionBusy(state) || !state.adapterError) return false;
+  return isBusyStatusText(busyStatusText(state, side));
 }
 
 /** Without Start 是否可点。 */

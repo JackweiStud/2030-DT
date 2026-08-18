@@ -43,6 +43,7 @@ export function Case2Page(props: Props) {
   const {
     state,
     statusText,
+    statusRetryHint,
     startEnabled,
     resetEnabled,
     showCalibrated,
@@ -57,10 +58,13 @@ export function Case2Page(props: Props) {
     state.screenshotPhase === "pending" ||
     state.screenshotPhase === "saving" ||
     state.screenshotPhase === "waitClear";
-  const statusBusy =
-    !state.adapterError &&
-    !ui.startsWith("failed") &&
-    (ui === "calibrating" || ui === "resetting");
+  const commandBusy = ui === "calibrating" || ui === "resetting";
+  const statusBusy = commandBusy;
+  const statusError =
+    !commandBusy &&
+    (state.adapterError ||
+      Boolean(state.initialError) ||
+      ui.startsWith("failed"));
 
   useEffect(() => {
     onBusyChange?.(busy);
@@ -102,15 +106,15 @@ export function Case2Page(props: Props) {
                   </div>
                   <div
                     className={`status-feedback${ui === "completed" ? " is-done" : ""}${
-                      state.adapterError ||
-                      Boolean(state.initialError) ||
-                      ui.startsWith("failed")
-                        ? " is-error"
-                        : ""
+                      statusError ? " is-error" : ""
                     }${statusBusy ? " is-busy" : ""}`}
+                    title={statusRetryHint ? "连接重试中" : undefined}
                   >
                     <span className="status-dot" />
                     <span className="status-text">{statusText}</span>
+                    {statusRetryHint ? (
+                      <span className="status-retry">{statusRetryHint}</span>
+                    ) : null}
                     {statusBusy ? (
                       <span className="status-ellipsis" aria-hidden>
                         <span className="status-ellipsis__track" />

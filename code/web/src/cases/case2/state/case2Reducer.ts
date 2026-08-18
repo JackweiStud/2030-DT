@@ -26,6 +26,8 @@ export type Case2State = {
   screenshotAttempts: number;
   screenshotLastFlag: 0 | 1;
   screenshotBase64: string | null;
+  /** 忙态 control 轮询连续失败次数；仅用于「重试中」提示，不改变业务相。 */
+  pollFailStreak: number;
 };
 
 export type Case2Action =
@@ -71,6 +73,7 @@ export function createInitialCase2State(): Case2State {
     screenshotAttempts: 0,
     screenshotLastFlag: 0,
     screenshotBase64: null,
+    pollFailStreak: 0,
   };
 }
 
@@ -110,9 +113,34 @@ export function canReset(state: Case2State): boolean {
 /** 与 Case3「case3初始化数据异常」对齐：Initial 六文件失败，不是连接异常。 */
 export const CASE2_INIT_DATA_ERROR_BADGE = "case2初始化数据异常";
 
-/** StatusFeedback 主文案；adapterError 优先于 Initial 文件失败。 */
+export const CASE2_ADAPTER_ERROR_BADGE = "case2文件服务器连接异常";
+export const CASE2_ADAPTER_RETRY_HINT = "重试中";
+/** 忙态连续 poll 失败达到该次数才亮次要「重试中」。 */
+export const CASE2_POLL_FAIL_RETRY_THRESHOLD = 3;
+
+/** 启动/重置等待态：连接失败不得盖掉「测试运行中/重置中」。 */
+export function isCommandBusyUi(state: Case2State): boolean {
+  return (
+    state.case2UiState === "calibrating" || state.case2UiState === "resetting"
+  );
+}
+
+/** 完成态截图收尾期间仍在轮询，同样不把主文案换成连接异常。 */
+function keepsBusyPrimaryText(state: Case2State): boolean {
+  if (isCommandBusyUi(state)) return true;
+  return (
+    state.case2UiState === "completed" &&
+    (state.screenshotPhase === "pending" ||
+      state.screenshotPhase === "saving" ||
+      state.screenshotPhase === "waitClear")
+  );
+}
+
+/** StatusFeedback 主文案；忙态保留业务文案，空闲态 adapterError 优先。 */
 export function statusFeedbackText(state: Case2State): string {
-  if (state.adapterError) return "case2文件服务器连接异常";
+  if (state.adapterError && !keepsBusyPrimaryText(state)) {
+    return CASE2_ADAPTER_ERROR_BADGE;
+  }
   if (state.initialError) return CASE2_INIT_DATA_ERROR_BADGE;
   if (state.resultIncomplete && state.case2UiState === "failed-start") {
     return "结果不完整已自动回退";
@@ -134,6 +162,13 @@ export function statusFeedbackText(state: Case2State): string {
   }
 }
 
+/** 忙态次要提示；连续失败未达门槛则不闪。 */
+export function statusRetryHint(state: Case2State): string | null {
+  if (!isCommandBusyUi(state)) return null;
+  if (state.pollFailStreak < CASE2_POLL_FAIL_RETRY_THRESHOLD) return null;
+  return CASE2_ADAPTER_RETRY_HINT;
+}
+
 export function shouldShowCalibrated(state: Case2State): boolean {
   return (
     (state.case2UiState === "completed" || state.case2UiState === "resetting") &&
@@ -152,13 +187,19 @@ function reduceControlPoll(
   const waiting =
     state.case2UiState === "calibrating" || state.case2UiState === "resetting";
   if (!waiting) {
-    return { ...state, adapterError: false, lastControl: control };
+    return {
+      ...state,
+      adapterError: false,
+      lastControl: control,
+      pollFailStreak: 0,
+    };
   }
 
   let next: Case2State = {
     ...state,
     adapterError: false,
     lastControl: control,
+    pollFailStreak: 0,
   };
 
   const status = control.status;
@@ -258,6 +299,7 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         lastControl: action.control,
         // 进页诊断不因历史 status 改相；成功则清掉进页时的连接错误
         adapterError: false,
+        pollFailStreak: 0,
       };
 
     case "DIAGNOSTIC_CONTROL_FAIL":
@@ -275,6 +317,7 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         screenshotAttempts: 0,
         screenshotBase64: null,
         screenshotLastFlag: 0,
+        pollFailStreak: 0,
       };
 
     case "START_POST_OK":
@@ -283,6 +326,7 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         lastControl: action.control,
         phaseBeforeCommand: null,
         adapterError: false,
+        pollFailStreak: 0,
       };
 
     case "START_POST_FAIL":
@@ -304,6 +348,7 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         screenshotPhase: "idle",
         screenshotAttempts: 0,
         screenshotBase64: null,
+        pollFailStreak: 0,
       };
 
     case "RESET_POST_OK":
@@ -312,6 +357,7 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         lastControl: action.control,
         phaseBeforeCommand: null,
         adapterError: false,
+        pollFailStreak: 0,
       };
 
     case "RESET_POST_FAIL":
@@ -332,13 +378,18 @@ export function case2Reducer(state: Case2State, action: Case2Action): Case2State
         phaseBeforeCommand: null,
         adapterError: false,
         seenExecuteSuccess: false,
+        pollFailStreak: 0,
       };
 
     case "CONTROL_POLL_OK":
       return reduceControlPoll(state, action.control);
 
     case "CONTROL_POLL_FAIL":
-      return { ...state, adapterError: true };
+      return {
+        ...state,
+        adapterError: true,
+        pollFailStreak: state.pollFailStreak + 1,
+      };
 
     case "CALIBRATED_OK":
       return {

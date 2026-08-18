@@ -107,6 +107,7 @@ export function Case3Page(props: Props) {
             points={withoutPoints}
             badge={ctrl.withoutBadge}
             badgeError={ctrl.withoutBadgeError}
+            retryHint={ctrl.withoutRetryHint}
             startEnabled={ctrl.startWithoutEnabled}
             resetEnabled={ctrl.reinitWithoutEnabled}
             onStart={ctrl.onStartWithout}
@@ -122,6 +123,7 @@ export function Case3Page(props: Props) {
             peerPoints={withPeerPoints}
             badge={ctrl.withBadge}
             badgeError={ctrl.withBadgeError}
+            retryHint={ctrl.withRetryHint}
             startEnabled={ctrl.startWithEnabled}
             resetEnabled={ctrl.reinitWithEnabled}
             onStart={ctrl.onStartWith}

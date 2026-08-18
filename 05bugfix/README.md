@@ -54,9 +54,9 @@ BF-025：真实算法数据不再因统一 `\-200～200` / `0～500` 整批 422�
 | 9   | [BF-008](BF-008-http-timeout.md)                         | P1  | web          | Case2 无请求超时；Case3 截图共用 5s           | ✅ done |
 | 10  | [BF-009](BF-009-control-busy-vs-adapter.md)              | P1  | web/case2    | `CONTROL_BUSY` 被当成连接异常              | ✅ done |
 | 11  | [BF-010](BF-010-case2-abort-screenshot-on-incomplete.md) | P1  | web/case2    | 结果不完整回退时未真正取消截图                     | open   |
-| 12  | [BF-011](BF-011-busy-adapter-error-badge.md)             | P1  | web          | 忙态中连接失败盖住「测试中」                      | open   |
+| 12  | [BF-011](BF-011-busy-adapter-error-badge.md)             | P1  | web          | 忙态中连接失败盖住「测试中」                      | ✅ done |
 | 13  | [BF-012](BF-012-case2-poll-control-ownership.md)         | P1  | web/case2    | 轮询不校验控制文件归属                         | open   |
-| 14  | [BF-013](BF-013-case3-poll-fail-visible.md)              | P1  | web/case3    | 轮询失败只打日志、用户无感知                      | open   |
+| 14  | [BF-013](BF-013-case3-poll-fail-visible.md)              | P1  | web/case3    | 轮询失败只打日志、用户无感知                      | ✅ done |
 | 15  | [BF-014](BF-014-case3-debug-jsonl-block-start.md)        | P1  | server/case3 | 调试 JSONL 清空失败会挡住 Start/ReInit       | open   |
 | 16  | [BF-015](BF-015-clear-files-then-control-write-fail.md)  | P1  | server       | 先清结果文件再写控制，写失败会留下空文件                | open   |
 | 17  | [BF-016](BF-016-case2-pagehide-init.md)                  | P2  | web/case2    | 刷新/关页缺少 keepalive `init`            | open   |

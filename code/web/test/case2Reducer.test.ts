@@ -15,6 +15,10 @@ import {
   shouldStartScreenshot,
   shouldKeepPollingForWaitClear,
   statusFeedbackText,
+  statusRetryHint,
+  CASE2_ADAPTER_ERROR_BADGE,
+  CASE2_ADAPTER_RETRY_HINT,
+  CASE2_POLL_FAIL_RETRY_THRESHOLD,
   shouldShowCalibrated,
 } from "../src/cases/case2/state/case2Reducer";
 import type { ControlSnapshot, MetricsBundle } from "../src/cases/case2/types";
@@ -155,7 +159,7 @@ describe("case2Reducer", () => {
     s = case2Reducer(s, { type: "START_POST_FAIL" });
     expect(s.case2UiState).toBe("initial");
     expect(s.adapterError).toBe(true);
-    expect(statusFeedbackText(s)).toBe("case2文件服务器连接异常");
+    expect(statusFeedbackText(s)).toBe(CASE2_ADAPTER_ERROR_BADGE);
     expect(canStart(s)).toBe(false);
   });
 
@@ -208,7 +212,7 @@ describe("case2Reducer", () => {
     expect(s.case2UiState).toBe("initial");
 
     s = { ...s, adapterError: true };
-    expect(statusFeedbackText(s)).toBe("case2文件服务器连接异常");
+    expect(statusFeedbackText(s)).toBe(CASE2_ADAPTER_ERROR_BADGE);
 
     s = case2Reducer(
       { ...s, adapterError: false },
@@ -448,5 +452,40 @@ describe("case2Reducer", () => {
     expect(shouldKeepPollingForWaitClear(s)).toBe(false);
     expect(shouldResetCommandAfterCommandCompletion(s)).toBe(true);
     expect(canReset(s)).toBe(false);
+  });
+
+  it("忙态 poll 失败保留测试运行中；连续 3 次才亮重试中", () => {
+    let s = createInitialCase2State();
+    s = case2Reducer(s, { type: "INITIAL_DATA_OK", metrics: metrics() });
+    s = case2Reducer(s, { type: "START_CLICK" });
+    s = case2Reducer(s, { type: "CONTROL_POLL_FAIL" });
+    expect(s.adapterError).toBe(true);
+    expect(s.pollFailStreak).toBe(1);
+    expect(statusFeedbackText(s)).toBe("测试运行中");
+    expect(statusRetryHint(s)).toBeNull();
+
+    s = case2Reducer(s, { type: "CONTROL_POLL_FAIL" });
+    expect(statusRetryHint(s)).toBeNull();
+    s = case2Reducer(s, { type: "CONTROL_POLL_FAIL" });
+    expect(s.pollFailStreak).toBe(CASE2_POLL_FAIL_RETRY_THRESHOLD);
+    expect(statusFeedbackText(s)).toBe("测试运行中");
+    expect(statusRetryHint(s)).toBe(CASE2_ADAPTER_RETRY_HINT);
+
+    s = case2Reducer(s, {
+      type: "CONTROL_POLL_OK",
+      control: control({ status: "execute success" }),
+    });
+    expect(s.adapterError).toBe(false);
+    expect(s.pollFailStreak).toBe(0);
+    expect(s.case2UiState).toBe("calibrating");
+    expect(statusFeedbackText(s)).toBe("测试运行中");
+    expect(statusRetryHint(s)).toBeNull();
+  });
+
+  it("空闲态 adapterError 仍显示连接异常", () => {
+    let s = createInitialCase2State();
+    s = { ...s, adapterError: true };
+    expect(statusFeedbackText(s)).toBe(CASE2_ADAPTER_ERROR_BADGE);
+    expect(statusRetryHint(s)).toBeNull();
   });
 });

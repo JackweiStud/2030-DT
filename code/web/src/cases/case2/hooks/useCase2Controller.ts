@@ -28,6 +28,7 @@ import {
   shouldResetCommandAfterCommandCompletion,
   shouldStartScreenshot,
   statusFeedbackText,
+  statusRetryHint,
   shouldShowCalibrated,
   type Case2State,
 } from "../state/case2Reducer";
@@ -38,6 +39,7 @@ export const ADAPTER_RECOVERY_PROBE_MS = 5000;
 export type Case2Controller = {
   state: Case2State;
   statusText: string;
+  statusRetryHint: string | null;
   startEnabled: boolean;
   resetEnabled: boolean;
   showCalibrated: boolean;
@@ -834,6 +836,7 @@ export function useCase2Controller(options: Options): Case2Controller {
   return {
     state,
     statusText: statusFeedbackText(state),
+    statusRetryHint: statusRetryHint(state),
     startEnabled: canStart(state),
     resetEnabled: canReset(state),
     showCalibrated: shouldShowCalibrated(state),

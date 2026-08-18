@@ -14,6 +14,7 @@ import {
   deriveVisibleState,
   sideStatusBadge,
   sideStatusBadgeIsError,
+  sideStatusRetryHint,
 } from "../../src/cases/case3/state/case3Reducer";
 import type { SideSnapshot } from "../../src/cases/case3/types";
 
@@ -59,6 +60,28 @@ describe("case3Reducer", () => {
     expect(sideStatusBadge(s, "without")).toBe(CASE3_ADAPTER_ERROR_BADGE);
     expect(sideStatusBadge(s, "with")).toBe(CASE3_ADAPTER_ERROR_BADGE);
     expect(canStartWithout(s)).toBe(false);
+  });
+
+  it("忙态 adapterError 仍显示测试中，不走错误样式，并亮重试中", () => {
+    let s = createInitialCase3State();
+    s = case3Reducer(s, {
+      type: "INIT_READY",
+      baseRoute: [{ no: 1, x: 0, y: 0, z: 0 }],
+      baseline: { success: 1, total: 2 },
+    });
+    s = case3Reducer(s, {
+      type: "ACTION_BEGIN",
+      kind: "start",
+      side: "without",
+      generation: 1,
+    });
+    s = case3Reducer(s, { type: "ADAPTER_ERROR", value: true });
+    expect(sideStatusBadge(s, "without")).toBe("测试中");
+    expect(sideStatusBadge(s, "with")).toBe("等待无DT测试完成");
+    expect(sideStatusBadgeIsError(s, "without")).toBe(false);
+    expect(sideStatusRetryHint(s, "without")).toBe(true);
+    expect(sideStatusRetryHint(s, "with")).toBe(false);
+    expect(s.activeAction).not.toBeNull();
   });
 
   it("initStatus=error 时徽标替换为初始化数据异常", () => {

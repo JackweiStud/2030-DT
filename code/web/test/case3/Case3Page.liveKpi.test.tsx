@@ -85,6 +85,8 @@ function controller(
     withBadge: "测试中",
     withoutBadgeError: false,
     withBadgeError: false,
+    withoutRetryHint: false,
+    withRetryHint: false,
     onStartWithout: vi.fn(),
     onStartWith: vi.fn(),
     onReinitWithout: vi.fn(),

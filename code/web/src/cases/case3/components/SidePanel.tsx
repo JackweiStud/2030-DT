@@ -5,6 +5,7 @@
 
 import iconWithout from "../../../../assets/case3/icon-without.png";
 import iconWith from "../../../../assets/case3/icon-with.png";
+import { CASE3_ADAPTER_RETRY_HINT } from "../state/case3Reducer";
 import type { Case3RuntimeConfig } from "../config/case3RuntimeConfig";
 import type { MapRendererHandle } from "../hooks/useCase3Controller";
 import type { BaseRoutePoint, Case3Point, Case3Side } from "../types";
@@ -18,6 +19,7 @@ type Props = {
   peerPoints?: Case3Point[] | null;
   badge: string;
   badgeError?: boolean;
+  retryHint?: boolean;
   startEnabled: boolean;
   resetEnabled: boolean;
   onStart: () => void;
@@ -38,7 +40,7 @@ export function SidePanel(props: Props) {
   const isWithout = props.side === "without";
   const label = isWithout ? "无 DT" : "有 DT";
   const icon = isWithout ? iconWithout : iconWith;
-  const busy = !props.badgeError && isBusyBadge(props.badge);
+  const busy = isBusyBadge(props.badge);
 
   return (
     <article className="case3-side" data-side={props.side}>
@@ -50,8 +52,12 @@ export function SidePanel(props: Props) {
             className={`case3-status-badge${props.badgeError ? " is-error" : ""}${
               busy ? " is-busy" : ""
             }`}
+            title={props.retryHint ? "连接重试中" : undefined}
           >
             <span className="case3-status-text">{props.badge}</span>
+            {props.retryHint ? (
+              <span className="case3-status-retry">{CASE3_ADAPTER_RETRY_HINT}</span>
+            ) : null}
             {busy ? (
               <span className="case3-status-ellipsis" aria-hidden>
                 <span className="case3-status-ellipsis__track" />

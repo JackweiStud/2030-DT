@@ -1233,4 +1233,136 @@ describe("useCase3Controller lifecycle", () => {
     hook.unmount();
     errorLog.mockRestore();
   });
+
+  it("动作中连续 3 次 control GET 失败才 adapterError，成功一次清除且不解 busy", async () => {
+    const warnLog = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    let startPosted = false;
+    let failPolls = true;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        if (!startPosted) return control();
+        if (failPolls) {
+          throw new Case3ApiError("REQUEST_TIMEOUT", "timeout", 0);
+        }
+        return control({
+          command: "start",
+          dt_type: "without dt",
+          status: "execute success",
+        });
+      }),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          startPosted = true;
+          return control({
+            command: "start",
+            dt_type: "without dt",
+          });
+        }
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => liveWithout(1)),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.startWithoutEnabled).toBe(true),
+    );
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() => expect(hook.result.current.busy).toBe(true));
+
+    await waitFor(() =>
+      expect(hook.result.current.state.adapterError).toBe(true),
+    );
+    expect(hook.result.current.busy).toBe(true);
+    expect(hook.result.current.state.activeAction).not.toBeNull();
+    expect(hook.result.current.withoutBadge).toBe("测试中");
+    expect(hook.result.current.withoutBadgeError).toBe(false);
+    expect(hook.result.current.withoutRetryHint).toBe(true);
+
+    failPolls = false;
+    await waitFor(() =>
+      expect(hook.result.current.state.adapterError).toBe(false),
+    );
+    expect(hook.result.current.busy).toBe(true);
+    expect(hook.result.current.withoutRetryHint).toBe(false);
+    expect(hook.result.current.withoutBadge).toBe("测试中");
+
+    hook.unmount();
+    warnLog.mockRestore();
+  });
+
+  it("动作中单次 control GET 失败不置 adapterError", async () => {
+    const warnLog = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    let startPosted = false;
+    let pollReads = 0;
+    const api: Case3Api = {
+      getControl: vi.fn(async () => {
+        if (!startPosted) return control();
+        pollReads += 1;
+        if (pollReads === 1) {
+          throw new Case3ApiError("REQUEST_TIMEOUT", "timeout", 0);
+        }
+        return control({
+          command: "start",
+          dt_type: "without dt",
+          status: "execute success",
+        });
+      }),
+      postControl: vi.fn(async (payload) => {
+        if ("command" in payload && payload.command === "start") {
+          startPosted = true;
+          return control({
+            command: "start",
+            dt_type: "without dt",
+          });
+        }
+        return control();
+      }),
+      getInitData: vi.fn(async () => ({
+        baseRoute: [{ no: 1, x: 1, y: 2, z: 0 }],
+        baseline: { success: 80, total: 100 },
+      })),
+      getSide: vi.fn(async () => liveWithout(1)),
+      postScreenshot: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useCase3Controller({
+        config,
+        stageElementRef: { current: document.createElement("div") },
+        mapRendererRefs: mapRefs(),
+        api,
+      }),
+    );
+    await waitFor(() =>
+      expect(hook.result.current.startWithoutEnabled).toBe(true),
+    );
+
+    act(() => hook.result.current.onStartWithout());
+    await waitFor(() => expect(pollReads).toBeGreaterThanOrEqual(2));
+    expect(hook.result.current.state.adapterError).toBe(false);
+    expect(hook.result.current.busy).toBe(true);
+    expect(hook.result.current.withoutBadge).toBe("测试中");
+    expect(hook.result.current.withoutRetryHint).toBe(false);
+
+    hook.unmount();
+    warnLog.mockRestore();
+  });
 });

@@ -185,6 +185,17 @@
   animation: case3-badge-pulse 1.6s ease-in-out infinite;
 }
 
+.case3-status-retry {
+  flex-shrink: 1;
+  max-width: 4.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: 4px;
+  font: 600 10px/1 var(--shell-font-ui);
+  opacity: 0.8;
+}
+
 .case3-status-ellipsis {
   display: inline-block;
   width: 1.15em;
