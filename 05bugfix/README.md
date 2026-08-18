@@ -23,7 +23,7 @@
 
 ## 建议顺序
 
-先 P0（演示会卡住或丢数据），再 P1，再 P2。UI 单独一轮，不要插在 P0 中间。
+先 P0（演示会卡住或丢数据），再 P1，再 P2；P3 / 观察项不主动排修，等复现或验收条件变化再升级。UI 单独一轮，不要插在 P0 中间。
 
 ### 客户增量（2026-08-12，非原检视列表）
 
@@ -49,7 +49,7 @@ BF-025：真实算法数据不再因统一 `\-200～200` / `0～500` 整批 422�
 | 4   | [BF-003](BF-003-case2-calibrated-ownership.md)           | P2  | server/case2 | Calibrated 读取只认 `status`、不认 case 归属 | ✅ done |
 | 5   | [BF-004](BF-004-case3-optimistic-invalidate.md)          | P2  | web/case3    | POST 失败前已清空本侧结果；连接异常仍可点按钮           | ⏸ deferred |
 | 6   | [BF-005](BF-005-case2-initial-error-ui.md)               | P1  | web/case2    | Initial 加载失败无界面说明                   | ✅ done |
-| 7   | [BF-006](BF-006-case2-adapter-probe-idle.md)             | P1  | web/case2    | 连接探活只覆盖 `initial`，失败态会锁死按钮          | open   |
+| 7   | [BF-006](BF-006-case2-adapter-probe-idle.md)             | P3  | web/case2    | 连接探活只覆盖 `initial`，非 initial 空闲相需人工恢复 | ⏸ deferred-watch |
 | 8   | [BF-007](BF-007-screenshot-rename-retry.md)              | P1  | server       | 截图 `rename` 无瞬时锁重试                  | open   |
 | 9   | [BF-008](BF-008-http-timeout.md)                         | P1  | web          | Case2 无请求超时；Case3 截图共用 5s           | ✅ done |
 | 10  | [BF-009](BF-009-control-busy-vs-adapter.md)              | P1  | web/case2    | `CONTROL_BUSY` 被当成连接异常              | ✅ done |
