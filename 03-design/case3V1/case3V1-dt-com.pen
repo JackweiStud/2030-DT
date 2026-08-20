@@ -1,0 +1,1604 @@
+{
+  "version": "2.14",
+  "children": [
+    {
+      "type": "frame",
+      "id": "wGV9n",
+      "x": -3488,
+      "y": 6910,
+      "name": "case3.点击现场环境",
+      "clip": true,
+      "width": 1920,
+      "height": 1080,
+      "fill": "#191a1a",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Fc0QS",
+          "name": "ShellHeader",
+          "clip": true,
+          "width": 1920,
+          "height": 78,
+          "fill": "#191a1a",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "s2bKy",
+              "x": -382,
+              "y": -26,
+              "name": "导航背景",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "../../02-ux/case2/%E5%AF%BC%E8%88%AA%E6%A0%8F%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                "mode": "fill"
+              },
+              "width": 2328,
+              "height": 111
+            },
+            {
+              "type": "frame",
+              "id": "BYSOs",
+              "x": 0,
+              "y": 0,
+              "name": "品牌区",
+              "width": 540,
+              "height": 78,
+              "fill": "#00000000",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "G9Mxz",
+                  "x": 8,
+                  "y": 19,
+                  "name": "品牌图标",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E4%BA%91%E4%B8%8A%E5%A4%96%E5%9C%BA.png",
+                    "mode": "fit"
+                  },
+                  "width": 32,
+                  "height": 32
+                },
+                {
+                  "type": "text",
+                  "id": "puPBP",
+                  "x": 48,
+                  "y": 28,
+                  "name": "品牌副标题",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width-height",
+                  "width": 60,
+                  "height": 22,
+                  "content": "云上外场",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "EWx8q",
+                  "x": 234,
+                  "y": 16,
+                  "name": "品牌主标题",
+                  "fill": "$text",
+                  "textGrowth": "fixed-width-height",
+                  "width": 230,
+                  "height": 46,
+                  "content": "IMT-2030 DT测试",
+                  "fontFamily": "$font",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qDUmy",
+              "x": 607,
+              "y": 0,
+              "name": "标签导航区",
+              "width": 689,
+              "height": 78,
+              "gap": 20,
+              "padding": [
+                22,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "BnqHc",
+                  "name": "标签项-DT Construction",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wQXuF",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Construction",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Jg2yE",
+                  "name": "标签项-DT Calibration",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KCAyO",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Calibration",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rMsyI",
+                  "name": "标签项-DT for Comm",
+                  "width": 130,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "vTqZP",
+                      "name": "标签文案",
+                      "fill": "$primary-text",
+                      "textGrowth": "fixed-width-height",
+                      "width": 130,
+                      "height": 32,
+                      "content": "DT for Comm",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "XgT5K",
+                      "name": "激活指示条",
+                      "fill": "#EBF2F5",
+                      "width": "fill_container",
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "U2Ecw",
+                  "name": "标签项-DT for positioning",
+                  "width": 177,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "pOgCv",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 177,
+                      "height": 32,
+                      "content": "DT for positioning",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VzKOL",
+          "layoutPosition": "absolute",
+          "x": 400,
+          "y": 280,
+          "name": "现场环境弹窗",
+          "clip": true,
+          "width": 1120,
+          "height": 520,
+          "fill": "#393939",
+          "cornerRadius": 10,
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            16,
+            20,
+            20,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "sBMN7",
+              "name": "弹窗标题行",
+              "width": "fill_container",
+              "height": 28,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "L3Dk6",
+                  "name": "弹窗标题",
+                  "fill": "$text",
+                  "content": "现场环境",
+                  "fontFamily": "$font",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "icon",
+                  "id": "YDc3d",
+                  "name": "关闭按钮",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "x",
+                  "library": "lucide",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "KWgx0",
+              "name": "视频双列",
+              "width": "fill_container",
+              "height": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "yVFer",
+                  "name": "视频列-基站视角",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ljcc7",
+                      "name": "视频列标题行",
+                      "width": "fill_container",
+                      "height": 26,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 11,
+                          "id": "BmWXL",
+                          "name": "视频图标",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/video-icon.png",
+                            "mode": "fit"
+                          },
+                          "width": 22,
+                          "height": 22
+                        },
+                        {
+                          "type": "text",
+                          "id": "P0JKL7",
+                          "name": "视频标签",
+                          "fill": "$text",
+                          "content": "视频1 | 基站视角",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 8,
+                      "id": "rXC14",
+                      "name": "视频画面",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "assets/video-feed-1.png",
+                        "mode": "fill"
+                      },
+                      "width": "fill_container",
+                      "height": "fill_container"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "G6uZ8V",
+                  "name": "视频列-集装箱视角",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "IWOds",
+                      "name": "视频列标题行",
+                      "width": "fill_container",
+                      "height": 26,
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 11,
+                          "id": "S269vD",
+                          "name": "视频图标",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/video-icon.png",
+                            "mode": "fit"
+                          },
+                          "width": 22,
+                          "height": 22
+                        },
+                        {
+                          "type": "text",
+                          "id": "jV3qa",
+                          "name": "视频标签",
+                          "fill": "$text",
+                          "content": "视频2 | 集装箱视角",
+                          "fontFamily": "$font",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 8,
+                      "id": "cu2kU",
+                      "name": "视频画面",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "assets/video-feed-2.png",
+                        "mode": "fill"
+                      },
+                      "width": "fill_container",
+                      "height": "fill_container"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "u8lgf",
+      "x": -3516,
+      "y": 5600,
+      "name": "case3.有DT-completed",
+      "clip": true,
+      "width": 1920,
+      "height": 1080,
+      "fill": "#191a1a",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "ubdzn",
+          "name": "ShellHeader",
+          "clip": true,
+          "width": 1920,
+          "height": 78,
+          "fill": "#191a1a",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "voFSq",
+              "x": -382,
+              "y": -26,
+              "name": "导航背景",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "../../02-ux/case2/%E5%AF%BC%E8%88%AA%E6%A0%8F%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                "mode": "fill"
+              },
+              "width": 2328,
+              "height": 111
+            },
+            {
+              "type": "frame",
+              "id": "K1Rac6",
+              "x": 0,
+              "y": 0,
+              "name": "品牌区",
+              "width": 540,
+              "height": 78,
+              "fill": "#00000000",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "Vu9ex",
+                  "x": 8,
+                  "y": 19,
+                  "name": "品牌图标",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E4%BA%91%E4%B8%8A%E5%A4%96%E5%9C%BA.png",
+                    "mode": "fit"
+                  },
+                  "width": 32,
+                  "height": 32
+                },
+                {
+                  "type": "text",
+                  "id": "mknTc",
+                  "x": 48,
+                  "y": 28,
+                  "name": "品牌副标题",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width-height",
+                  "width": 60,
+                  "height": 22,
+                  "content": "云上外场",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "pUKFp",
+                  "x": 234,
+                  "y": 16,
+                  "name": "品牌主标题",
+                  "fill": "$text",
+                  "textGrowth": "fixed-width-height",
+                  "width": 230,
+                  "height": 46,
+                  "content": "IMT-2030 DT测试",
+                  "fontFamily": "$font",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "tf2SH",
+              "x": 607,
+              "y": 0,
+              "name": "标签导航区",
+              "width": 689,
+              "height": 78,
+              "gap": 20,
+              "padding": [
+                22,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "oUihT",
+                  "name": "标签项-DT Construction",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Ys2pC",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Construction",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "l9Ffl",
+                  "name": "标签项-DT Calibration",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Q7G8r",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Calibration",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "uG5Yj",
+                  "name": "标签项-DT for Comm",
+                  "width": 130,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RRdTH",
+                      "name": "标签文案",
+                      "fill": "$primary-text",
+                      "textGrowth": "fixed-width-height",
+                      "width": 130,
+                      "height": 32,
+                      "content": "DT for Comm",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "qHaQR",
+                      "name": "激活指示条",
+                      "fill": "#EBF2F5",
+                      "width": "fill_container",
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "p9PiEL",
+                  "name": "标签项-DT for positioning",
+                  "width": 177,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "HVOQf",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 177,
+                      "height": 32,
+                      "content": "DT for positioning",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "FU2j3",
+      "x": -3516,
+      "y": 3960,
+      "name": "case3.有DT-running",
+      "clip": true,
+      "width": 1920,
+      "height": 1080,
+      "fill": "#191a1a",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "xd7it",
+          "name": "ShellHeader",
+          "clip": true,
+          "width": 1920,
+          "height": 78,
+          "fill": "#191a1a",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "MBRsV",
+              "x": -382,
+              "y": -26,
+              "name": "导航背景",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "../../02-ux/case2/%E5%AF%BC%E8%88%AA%E6%A0%8F%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                "mode": "fill"
+              },
+              "width": 2328,
+              "height": 111
+            },
+            {
+              "type": "frame",
+              "id": "W0dqyy",
+              "x": 0,
+              "y": 0,
+              "name": "品牌区",
+              "width": 540,
+              "height": 78,
+              "fill": "#00000000",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "s64s4I",
+                  "x": 8,
+                  "y": 19,
+                  "name": "品牌图标",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E4%BA%91%E4%B8%8A%E5%A4%96%E5%9C%BA.png",
+                    "mode": "fit"
+                  },
+                  "width": 32,
+                  "height": 32
+                },
+                {
+                  "type": "text",
+                  "id": "ogL7R",
+                  "x": 48,
+                  "y": 28,
+                  "name": "品牌副标题",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width-height",
+                  "width": 60,
+                  "height": 22,
+                  "content": "云上外场",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "K65qR6",
+                  "x": 234,
+                  "y": 16,
+                  "name": "品牌主标题",
+                  "fill": "$text",
+                  "textGrowth": "fixed-width-height",
+                  "width": 230,
+                  "height": 46,
+                  "content": "IMT-2030 DT测试",
+                  "fontFamily": "$font",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "PzhWZ",
+              "x": 607,
+              "y": 0,
+              "name": "标签导航区",
+              "width": 689,
+              "height": 78,
+              "gap": 20,
+              "padding": [
+                22,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fpbhf",
+                  "name": "标签项-DT Construction",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VtfxB",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Construction",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "oFnr8",
+                  "name": "标签项-DT Calibration",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "x4Cuq",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Calibration",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wEsEd",
+                  "name": "标签项-DT for Comm",
+                  "width": 130,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ef8hz",
+                      "name": "标签文案",
+                      "fill": "$primary-text",
+                      "textGrowth": "fixed-width-height",
+                      "width": 130,
+                      "height": 32,
+                      "content": "DT for Comm",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "AaoLh",
+                      "name": "激活指示条",
+                      "fill": "#EBF2F5",
+                      "width": "fill_container",
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "oPCvl",
+                  "name": "标签项-DT for positioning",
+                  "width": 177,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "PARmb",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 177,
+                      "height": 32,
+                      "content": "DT for positioning",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Puymu",
+      "x": -3516,
+      "y": 2555,
+      "name": "case3.无DT-completed",
+      "clip": true,
+      "width": 1920,
+      "height": 1080,
+      "fill": "#191a1a",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "nDvaB",
+          "name": "ShellHeader",
+          "clip": true,
+          "width": 1920,
+          "height": 78,
+          "fill": "#191a1a",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "vrxD1",
+              "x": -382,
+              "y": -26,
+              "name": "导航背景",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "../../02-ux/case2/%E5%AF%BC%E8%88%AA%E6%A0%8F%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                "mode": "fill"
+              },
+              "width": 2328,
+              "height": 111
+            },
+            {
+              "type": "frame",
+              "id": "i2S0y",
+              "x": 0,
+              "y": 0,
+              "name": "品牌区",
+              "width": 540,
+              "height": 78,
+              "fill": "#00000000",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "s3k48",
+                  "x": 8,
+                  "y": 19,
+                  "name": "品牌图标",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E4%BA%91%E4%B8%8A%E5%A4%96%E5%9C%BA.png",
+                    "mode": "fit"
+                  },
+                  "width": 32,
+                  "height": 32
+                },
+                {
+                  "type": "text",
+                  "id": "p7Rca",
+                  "x": 48,
+                  "y": 28,
+                  "name": "品牌副标题",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width-height",
+                  "width": 60,
+                  "height": 22,
+                  "content": "云上外场",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "qrOUI",
+                  "x": 234,
+                  "y": 16,
+                  "name": "品牌主标题",
+                  "fill": "$text",
+                  "textGrowth": "fixed-width-height",
+                  "width": 230,
+                  "height": 46,
+                  "content": "IMT-2030 DT测试",
+                  "fontFamily": "$font",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Ofy6p",
+              "x": 607,
+              "y": 0,
+              "name": "标签导航区",
+              "width": 689,
+              "height": 78,
+              "gap": 20,
+              "padding": [
+                22,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "n1Nut",
+                  "name": "标签项-DT Construction",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "G4P47a",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Construction",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OtC9r",
+                  "name": "标签项-DT Calibration",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bmDTl",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Calibration",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lQGqp",
+                  "name": "标签项-DT for Comm",
+                  "width": 130,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "GRShq",
+                      "name": "标签文案",
+                      "fill": "$primary-text",
+                      "textGrowth": "fixed-width-height",
+                      "width": 130,
+                      "height": 32,
+                      "content": "DT for Comm",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "z7NiUu",
+                      "name": "激活指示条",
+                      "fill": "#EBF2F5",
+                      "width": "fill_container",
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "o9QJeX",
+                  "name": "标签项-DT for positioning",
+                  "width": 177,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "NecvM",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 177,
+                      "height": 32,
+                      "content": "DT for positioning",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VeoMH",
+      "x": -3563,
+      "y": 1131,
+      "name": "case3.无DT-running",
+      "clip": true,
+      "width": 1920,
+      "height": 1080,
+      "fill": "#191a1a",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Z94Dz",
+          "name": "ShellHeader",
+          "clip": true,
+          "width": 1920,
+          "height": 78,
+          "fill": "#191a1a",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "O4ycqS",
+              "x": -382,
+              "y": -26,
+              "name": "导航背景",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "../../02-ux/case2/%E5%AF%BC%E8%88%AA%E6%A0%8F%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                "mode": "fill"
+              },
+              "width": 2328,
+              "height": 111
+            },
+            {
+              "type": "frame",
+              "id": "LWXdA",
+              "x": 0,
+              "y": 0,
+              "name": "品牌区",
+              "width": 540,
+              "height": 78,
+              "fill": "#00000000",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "l11Fo",
+                  "x": 8,
+                  "y": 19,
+                  "name": "品牌图标",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E4%BA%91%E4%B8%8A%E5%A4%96%E5%9C%BA.png",
+                    "mode": "fit"
+                  },
+                  "width": 32,
+                  "height": 32
+                },
+                {
+                  "type": "text",
+                  "id": "ZNnLl",
+                  "x": 48,
+                  "y": 28,
+                  "name": "品牌副标题",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width-height",
+                  "width": 60,
+                  "height": 22,
+                  "content": "云上外场",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "TyUir",
+                  "x": 234,
+                  "y": 16,
+                  "name": "品牌主标题",
+                  "fill": "$text",
+                  "textGrowth": "fixed-width-height",
+                  "width": 230,
+                  "height": 46,
+                  "content": "IMT-2030 DT测试",
+                  "fontFamily": "$font",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "J48rO",
+              "x": 607,
+              "y": 0,
+              "name": "标签导航区",
+              "width": 689,
+              "height": 78,
+              "gap": 20,
+              "padding": [
+                22,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "t026k",
+                  "name": "标签项-DT Construction",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Z1YBko",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Construction",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "iZRQs",
+                  "name": "标签项-DT Calibration",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ftte5",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Calibration",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XjoEH",
+                  "name": "标签项-DT for Comm",
+                  "width": 130,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SFjoz",
+                      "name": "标签文案",
+                      "fill": "$primary-text",
+                      "textGrowth": "fixed-width-height",
+                      "width": 130,
+                      "height": 32,
+                      "content": "DT for Comm",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "N8zYE",
+                      "name": "激活指示条",
+                      "fill": "#EBF2F5",
+                      "width": "fill_container",
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "l4bQ7",
+                  "name": "标签项-DT for positioning",
+                  "width": 177,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "JSgdb",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 177,
+                      "height": 32,
+                      "content": "DT for positioning",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "wtnmr",
+      "x": -3586,
+      "y": -83,
+      "name": "case3.init",
+      "clip": true,
+      "width": 1920,
+      "height": 1080,
+      "fill": "#191a1a",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "b9ZVq",
+          "name": "ShellHeader",
+          "clip": true,
+          "width": 1920,
+          "height": 78,
+          "fill": "#191a1a",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "MrdDN",
+              "x": -382,
+              "y": -26,
+              "name": "导航背景",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "../../02-ux/case2/%E5%AF%BC%E8%88%AA%E6%A0%8F%E8%83%8C%E6%99%AF%E5%9B%BE.png",
+                "mode": "fill"
+              },
+              "width": 2328,
+              "height": 111
+            },
+            {
+              "type": "frame",
+              "id": "YyvdI",
+              "x": 0,
+              "y": 0,
+              "name": "品牌区",
+              "width": 540,
+              "height": 78,
+              "fill": "#00000000",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "HGfrF",
+                  "x": 8,
+                  "y": 19,
+                  "name": "品牌图标",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "../../02-ux/case2/%E4%BA%91%E4%B8%8A%E5%A4%96%E5%9C%BA.png",
+                    "mode": "fit"
+                  },
+                  "width": 32,
+                  "height": 32
+                },
+                {
+                  "type": "text",
+                  "id": "tTUiZ",
+                  "x": 48,
+                  "y": 28,
+                  "name": "品牌副标题",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width-height",
+                  "width": 60,
+                  "height": 22,
+                  "content": "云上外场",
+                  "fontFamily": "$font",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "slCTk",
+                  "x": 234,
+                  "y": 16,
+                  "name": "品牌主标题",
+                  "fill": "$text",
+                  "textGrowth": "fixed-width-height",
+                  "width": 230,
+                  "height": 46,
+                  "content": "IMT-2030 DT测试",
+                  "fontFamily": "$font",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "IVTG2",
+              "x": 607,
+              "y": 0,
+              "name": "标签导航区",
+              "width": 689,
+              "height": 78,
+              "gap": 20,
+              "padding": [
+                22,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "XI0Yp",
+                  "name": "标签项-DT Construction",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "qar42",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Construction",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lpES3",
+                  "name": "标签项-DT Calibration",
+                  "width": 150,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lxvsI",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 150,
+                      "height": 32,
+                      "content": "DT Calibration",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hc6CS",
+                  "name": "标签项-DT for Comm",
+                  "width": 130,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "E5eh3U",
+                      "name": "标签文案",
+                      "fill": "$primary-text",
+                      "textGrowth": "fixed-width-height",
+                      "width": 130,
+                      "height": 32,
+                      "content": "DT for Comm",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "m0szyv",
+                      "name": "激活指示条",
+                      "fill": "#EBF2F5",
+                      "width": "fill_container",
+                      "height": 4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "L9fC7",
+                  "name": "标签项-DT for positioning",
+                  "width": 177,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "u6N09",
+                      "name": "标签文案",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width-height",
+                      "width": 177,
+                      "height": 32,
+                      "content": "DT for positioning",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "font": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "datafont": {
+      "type": "string",
+      "value": "Geist Mono"
+    },
+    "muted": {
+      "type": "color",
+      "value": "#94A3B8"
+    },
+    "text": {
+      "type": "color",
+      "value": "#F8FAFC"
+    },
+    "primary-text": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "color-initial": {
+      "type": "color",
+      "value": "#6B7280"
+    },
+    "color-calibrated": {
+      "type": "color",
+      "value": "#22D3EE"
+    },
+    "color-success": {
+      "type": "color",
+      "value": "#22C55E"
+    },
+    "color-error": {
+      "type": "color",
+      "value": "#EF4444"
+    },
+    "color-metric-rss": {
+      "type": "color",
+      "value": "#3B82F6"
+    },
+    "color-metric-path": {
+      "type": "color",
+      "value": "#A855F7"
+    },
+    "color-metric-delay": {
+      "type": "color",
+      "value": "#EAB308"
+    },
+    "color-panel": {
+      "type": "color",
+      "value": "#121820"
+    },
+    "color-surface": {
+      "type": "color",
+      "value": "#0A0E14"
+    },
+    "radius-card": {
+      "type": "number",
+      "value": 8
+    },
+    "space-gap-row": {
+      "type": "number",
+      "value": 12
+    },
+    "space-gap-panel": {
+      "type": "number",
+      "value": 16
+    },
+    "color-without": {
+      "type": "color",
+      "value": "#E5E7EB"
+    },
+    "color-with": {
+      "type": "color",
+      "value": "#38BDF8"
+    },
+    "color-accent": {
+      "type": "color",
+      "value": "#22D3EE"
+    },
+    "color-badge-running": {
+      "type": "color",
+      "value": "#0EA5E9"
+    },
+    "color-badge-reset": {
+      "type": "color",
+      "value": "#F59E0B"
+    },
+    "color-disabled": {
+      "type": "color",
+      "value": "#475569"
+    },
+    "color-overlay": {
+      "type": "color",
+      "value": "#0F172ACC"
+    },
+    "color-card": {
+      "type": "color",
+      "value": "#0F172A"
+    },
+    "chart-grey": {
+      "type": "color",
+      "value": "#9CA3AF"
+    }
+  },
+  "fileToken": "388017ac-42e7-4b10-b9c0-231e270be348"
+}
