@@ -15,17 +15,44 @@
   --shell-color-muted: #94a3b8;
   --shell-color-tab-active-underline: #ebf2f5;
 
-  --shell-radius-tab-underline: 2px;
+  --shell-nav-color-text: #f4f7fb;
+  --shell-nav-color-muted: #8b93a7;
+
+  --shell-radius-tab-underline: 1px;
 
   --shell-stage-width: 1920px;
   --shell-stage-height: 1080px;
-  --shell-header-height: 78px;
-  --shell-brand-area-width: 540px;
-  --shell-nav-tabs-left: 607px;
-  --shell-nav-tabs-width: 689px;
-  --shell-tab-gap: 20px;
+  --shell-header-height: 80px;
 
-  --shell-font-size-brand-title: 24px;
-  --shell-font-size-brand-sub: 14px;
-  --shell-font-size-tab: 18px;
+  --shell-brand-left: 23px;
+  --shell-brand-top: 27px;
+  --shell-brand-height: 36px;
+  --shell-brand-gap: 6px;
+  --shell-brand-mark-size: 36px;
+
+  --shell-nav-top: 24px;
+  --shell-nav-height: 46px;
+  --shell-nav-gap: 6px;
+  --shell-nav-left-left: 320px;
+  --shell-nav-left-width: 291px;
+  --shell-nav-right-left: 1311px;
+  --shell-nav-right-width: 479px;
+
+  --shell-title-left: 780px;
+  --shell-title-top: 24px;
+  --shell-title-width: 360px;
+
+  --shell-corner-left: 1863px;
+  --shell-corner-top: 27px;
+  --shell-corner-size: 36px;
+
+  --shell-tab-active-width: 139px;
+  --shell-tab-underline-left: 8px;
+  --shell-tab-underline-top: 45px;
+  --shell-tab-underline-width: 124px;
+  --shell-tab-underline-height: 2px;
+
+  --shell-font-size-brand-title: 28px;
+  --shell-font-size-brand-sub: 18px;
+  --shell-font-size-tab: 16px;
 }

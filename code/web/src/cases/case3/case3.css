@@ -7,9 +7,9 @@
 .case3-page {
   position: absolute;
   left: 0;
-  top: 78px;
+  top: var(--shell-header-height);
   width: 1920px;
-  height: 1002px;
+  height: calc(1080px - var(--shell-header-height));
   padding: 2px;
   display: flex;
   flex-direction: column;

@@ -1,5 +1,5 @@
 /**
- * Shell：1920×1080 固定舞台等比缩放居中；四 Tab；跨 Case 导航锁。
+ * Shell：1920×1080 固定舞台等比缩放居中；开发期五 Tab；跨 Case 导航锁。
  * 拥有「现场环境」弹窗（case2/3/4 共用）。
  */
 
@@ -11,7 +11,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import brandLogo from "../../assets/shell/brand-logo.png";
+import brandMark from "../../assets/shell/cloud-site.png";
+import cornerMark from "../../assets/shell/huawei-logo.png";
 import { SiteEnvWindow } from "./SiteEnvWindow";
 import {
   SiteEnvWindowContext,
@@ -19,12 +20,16 @@ import {
 } from "./siteEnvWindowContext";
 import "./shell.css";
 
-export type CaseTabId = "case1" | "case2" | "case3" | "case4";
+export type CaseTabId = "case1" | "case2" | "case3" | "case4" | "case5";
 
-const TABS: { id: CaseTabId; label: string }[] = [
+const LEFT_TABS: { id: CaseTabId; label: string }[] = [
   { id: "case1", label: "DT Construction" },
   { id: "case2", label: "DT Calibration" },
+];
+
+const RIGHT_TABS: { id: CaseTabId; label: string }[] = [
   { id: "case3", label: "DT for Comm" },
+  { id: "case5", label: "DT for Comm new" },
   { id: "case4", label: "DT for positioning" },
 ];
 
@@ -37,6 +42,8 @@ type Props = {
   navigationLocked?: boolean;
   children: ReactNode;
 };
+
+type TabItem = (typeof LEFT_TABS)[number];
 
 /**
  * 固定舞台 + 视口缩放。业务页不得自行做第二套响应式。
@@ -80,6 +87,28 @@ export function Shell(props: Props) {
     return () => ro.disconnect();
   }, []);
 
+  const renderTab = (tab: TabItem) => {
+    const isActive = activeTab === tab.id;
+    const lockedOther = navigationLocked && tab.id !== activeTab;
+    return (
+      <button
+        key={tab.id}
+        type="button"
+        data-tab={tab.id}
+        className={`case-tab${isActive ? " is-active" : ""}`}
+        disabled={lockedOther}
+        aria-current={isActive ? "page" : undefined}
+        onClick={() => {
+          if (lockedOther) return;
+          onTabChange(tab.id);
+        }}
+      >
+        <span className="case-tab__label">{tab.label}</span>
+        <span className="tab-underline" aria-hidden />
+      </button>
+    );
+  };
+
   return (
     <SiteEnvWindowContext.Provider value={siteEnvApi}>
       <div className="stage-viewport" ref={viewportRef}>
@@ -93,34 +122,30 @@ export function Shell(props: Props) {
             <div className="brand-area">
               <img
                 className="brand-logo"
-                src={brandLogo}
-                width={32}
-                height={32}
+                src={brandMark}
+                width={36}
+                height={36}
                 alt=""
+                aria-hidden
               />
               <span className="brand-sub">云上外场</span>
-              <span className="brand-title">IMT-2030 DT测试</span>
             </div>
-            <nav className="case-nav" aria-label="Case tabs">
-              {TABS.map((tab) => {
-                const lockedOther = navigationLocked && tab.id !== activeTab;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`case-tab${activeTab === tab.id ? " is-active" : ""}`}
-                    disabled={lockedOther}
-                    onClick={() => {
-                      if (lockedOther) return;
-                      onTabChange(tab.id);
-                    }}
-                  >
-                    <span className="case-tab__label">{tab.label}</span>
-                    <span className="tab-underline" aria-hidden />
-                  </button>
-                );
-              })}
+            <nav className="case-nav case-nav--left" aria-label="左侧 Case">
+              {LEFT_TABS.map(renderTab)}
             </nav>
+            <div className="shell-title">IMT-2030 DT测试</div>
+            <nav className="case-nav case-nav--right" aria-label="右侧 Case">
+              {RIGHT_TABS.map(renderTab)}
+            </nav>
+            <div className="shell-corner" aria-hidden>
+              <img
+                className="shell-corner__mark"
+                src={cornerMark}
+                width={36}
+                height={36}
+                alt=""
+              />
+            </div>
           </header>
           {children}
           <SiteEnvWindow

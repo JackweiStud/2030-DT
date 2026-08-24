@@ -1,5 +1,6 @@
 /**
  * 应用入口：加载 Case2/Case3 配置；仅激活 Tab 挂载对应页面；汇总跨 Case busy。
+ * 开发期第五 Tab（文案 DT for Comm new）只显示建设中，不挂业务页、不接 API。
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -82,6 +83,7 @@ export function App() {
       </main>
     );
   } else {
+    // case1 / case4 / 开发期第五 Tab：现有 ComingSoon
     body = <ComingSoon />;
   }
 

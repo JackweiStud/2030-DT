@@ -38,102 +38,158 @@ body,
 
 .shell-header {
   position: relative;
+  z-index: 30;
   width: 1920px;
   height: var(--shell-header-height);
   overflow: hidden;
-  background: var(--shell-color-page);
 }
 
 .nav-bg {
   position: absolute;
-  left: -382px;
-  top: -26px;
-  width: 2328px;
-  height: 111px;
-  background: url("../../assets/shell/shell-nav-background.png") center / cover
-    no-repeat;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: 1920px;
+  height: var(--shell-header-height);
+  background: url("../../assets/shell/nav-bg.png") center / cover no-repeat;
   pointer-events: none;
 }
 
 .brand-area {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: var(--shell-brand-area-width);
-  height: 78px;
+  left: var(--shell-brand-left);
+  top: var(--shell-brand-top);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: var(--shell-brand-gap);
+  height: var(--shell-brand-height);
+  pointer-events: none;
 }
 
 .brand-logo {
-  position: absolute;
-  left: 8px;
-  top: 19px;
-  width: 32px;
-  height: 32px;
+  width: var(--shell-brand-mark-size);
+  height: var(--shell-brand-mark-size);
+  flex-shrink: 0;
   object-fit: contain;
 }
 
 .brand-sub {
-  position: absolute;
-  left: 48px;
-  top: 28px;
+  color: var(--shell-nav-color-text);
   font-size: var(--shell-font-size-brand-sub);
-  color: var(--shell-color-muted);
-}
-
-.brand-title {
-  position: absolute;
-  left: 234px;
-  top: 16px;
-  font-size: var(--shell-font-size-brand-title);
-  color: var(--shell-color-text);
-  line-height: 46px;
+  font-weight: 600;
+  line-height: normal;
   white-space: nowrap;
 }
 
 .case-nav {
   position: absolute;
-  left: var(--shell-nav-tabs-left);
-  top: 0;
-  width: var(--shell-nav-tabs-width);
-  height: 78px;
+  top: var(--shell-nav-top);
+  z-index: 4;
   display: flex;
-  align-items: stretch;
-  gap: var(--shell-tab-gap);
+  align-items: center;
+  height: var(--shell-nav-height);
+}
+
+.case-nav--left {
+  left: var(--shell-nav-left-left);
+  width: var(--shell-nav-left-width);
+  justify-content: space-between;
+  gap: var(--shell-nav-gap);
+}
+
+.case-nav--right {
+  left: var(--shell-nav-right-left);
+  width: var(--shell-nav-right-width);
+  justify-content: space-between;
+  gap: var(--shell-nav-gap);
 }
 
 .case-tab {
-  position: relative;
-  flex: 1;
+  appearance: none;
+  display: block;
+  margin: 0;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: var(--shell-color-muted);
+  color: var(--shell-nav-color-muted);
+  font-family: var(--shell-font-ui);
   font-size: var(--shell-font-size-tab);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: normal;
+  text-align: left;
+  white-space: nowrap;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
   cursor: pointer;
-  padding: 0;
+}
+
+.case-tab:disabled {
+  cursor: not-allowed;
 }
 
 .case-tab.is-active {
-  color: var(--shell-color-primary-text);
+  position: relative;
+  width: var(--shell-tab-active-width);
+  height: var(--shell-nav-height);
+  flex-shrink: 0;
+  color: var(--shell-nav-color-text);
 }
 
-.case-tab__label {
-  display: block;
-  line-height: 78px;
-  white-space: nowrap;
+.case-tab.is-active .case-tab__label {
+  position: absolute;
+  left: 0;
+  top: 14px;
 }
 
 .tab-underline {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: 10px;
-  height: 3px;
-  border-radius: var(--shell-radius-tab-underline);
-  background: transparent;
+  display: none;
 }
 
 .case-tab.is-active .tab-underline {
-  background: var(--shell-color-tab-active-underline);
+  display: block;
+  position: absolute;
+  left: var(--shell-tab-underline-left);
+  top: var(--shell-tab-underline-top);
+  width: var(--shell-tab-underline-width);
+  height: var(--shell-tab-underline-height);
+  border-radius: var(--shell-radius-tab-underline);
+  background: var(--shell-nav-color-text);
+}
+
+.shell-title {
+  position: absolute;
+  left: var(--shell-title-left);
+  top: var(--shell-title-top);
+  z-index: 1;
+  width: var(--shell-title-width);
+  color: var(--shell-nav-color-text);
+  font-size: var(--shell-font-size-brand-title);
+  font-weight: 600;
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.shell-corner {
+  position: absolute;
+  left: var(--shell-corner-left);
+  top: var(--shell-corner-top);
+  z-index: 2;
+  width: var(--shell-corner-size);
+  height: var(--shell-corner-size);
+  pointer-events: none;
+}
+
+.shell-corner__mark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .placeholder-page {
