@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>case3V1 Gate 1.5 工程静态页</title>
+    <link rel="stylesheet" href="./shell-nav-v2.css" />
+    <link rel="stylesheet" href="./case3-v2.css" />
+  </head>
+  <body>
+    <div class="shell-v2-viewport">
+      <div class="shell-v2-stage" id="stage">
+        <header class="shell-v2-header" data-layer="ShellHeader">
+          <div class="shell-v2-nav-bg" aria-hidden="true"></div>
+          <div class="shell-v2-brand">
+            <span class="shell-v2-brand-mark" aria-hidden="true"></span>
+            <span class="shell-v2-brand-text">云上外场</span>
+          </div>
+          <nav class="shell-v2-tabs shell-v2-tabs--left" aria-label="左侧 Case">
+            <button type="button" class="shell-v2-tab" data-tab="case1" tabindex="-1">
+              <span class="shell-v2-tab__label">DT Construction</span>
+            </button>
+            <button type="button" class="shell-v2-tab" data-tab="case2" tabindex="-1">
+              <span class="shell-v2-tab__label">DT Calibration</span>
+            </button>
+          </nav>
+          <div class="shell-v2-title">IMT-2030 DT测试</div>
+          <nav class="shell-v2-tabs shell-v2-tabs--right" aria-label="右侧 Case">
+            <button type="button" class="shell-v2-tab" data-tab="case3" tabindex="-1">
+              <span class="shell-v2-tab__label">DT for Comm</span>
+            </button>
+            <button type="button" class="shell-v2-tab is-active" data-tab="case5" aria-current="page">
+              <span class="shell-v2-tab__label">DT for Comm new</span>
+              <span class="shell-v2-tab__underline" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="shell-v2-tab" data-tab="case4" tabindex="-1">
+              <span class="shell-v2-tab__label">DT for positioning</span>
+            </button>
+          </nav>
+          <div class="shell-v2-corner" aria-hidden="true"></div>
+        </header>
+
+        <main class="case3v2-page" id="case3v2-page" data-state="initial">
+          <section class="case3v2-map-stage" data-region="MapStage">
+            <div class="case3v2-map-image" aria-hidden="true"></div>
+            <div class="case3v2-route-base" aria-hidden="true">
+              <svg class="case3v2-route-svg" viewBox="655 338 807 200" preserveAspectRatio="none">
+                <path d="M669 523l526-171 253 173" fill="none" stroke="#ABC5FF80" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+              </svg>
+              <svg class="case3v2-route-svg" viewBox="655 338 807 200" preserveAspectRatio="none">
+                <path d="M669 523l526-171 253 173" fill="none" stroke="#457EF980" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+              </svg>
+            </div>
+            <div class="case3v2-route-walked" aria-hidden="true">
+              <svg class="case3v2-route-svg" viewBox="655 338 807 200" preserveAspectRatio="none">
+                <path data-walked-outer d="M669 523l131-44" fill="none" stroke="#ABC5FF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+              </svg>
+              <svg class="case3v2-route-svg" viewBox="655 338 807 200" preserveAspectRatio="none">
+                <path data-walked-inner d="M669 523l131-44" fill="none" stroke="#457EF9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+              </svg>
+            </div>
+            <div class="case3v2-route-points" data-route-points></div>
+            <div class="case3v2-ue" data-ue aria-hidden="true"></div>
+          </section>
+
+          <section class="case3v2-map-hud" data-region="MapHud">
+            <div class="case3v2-top-mask" aria-hidden="true"></div>
+            <div class="case3v2-compare">
+              <span class="case3v2-compare__icon" aria-hidden="true"></span>
+              <span class="case3v2-compare__text">测试对比</span>
+            </div>
+            <button type="button" class="case3v2-site-env-link" data-action="open-site-env">现场环境 &gt;</button>
+            <div class="case3v2-view-toggle" data-region="ViewModeToggle">
+              <span class="case3v2-view-toggle__item is-active">2D视图</span>
+              <span class="case3v2-view-toggle__item is-disabled" aria-disabled="true">3D视图</span>
+            </div>
+
+            <article class="case3v2-beam-card" data-region="BeamMatrixCard">
+              <div class="case3v2-beam-card__head">
+                <span class="case3v2-beam-card__pin" aria-hidden="true"></span>
+                <div class="case3v2-beam-card__point">
+                  <span class="case3v2-beam-card__point-label">当前点位</span>
+                  <span class="case3v2-beam-card__point-value" data-point-value>P--</span>
+                </div>
+              </div>
+              <div class="case3v2-beam-card__body">
+                <div class="case3v2-beam-card__title-row">
+                  <span class="case3v2-beam-card__title">波束矩阵</span>
+                  <div class="case3v2-beam-card__meta">
+                    <span class="case3v2-beam-badge" data-beam-badge>预测成功</span>
+                    <span class="case3v2-beam-card__beamid-label">BeamID</span>
+                    <span class="case3v2-beam-card__beamid-value" data-beam-id>--</span>
+                  </div>
+                </div>
+                <div class="case3v2-beam-card__grid-wrap">
+                  <div class="case3v2-beam-y" data-beam-y></div>
+                  <div class="case3v2-beam-grid" data-beam-grid></div>
+                  <div class="case3v2-beam-x" data-beam-x></div>
+                  <div class="case3v2-beam-overlay" aria-hidden="true"></div>
+                </div>
+                <div class="case3v2-beam-legend">
+                  <span class="case3v2-beam-legend__item case3v2-beam-legend__item--scan">
+                    <i class="case3v2-beam-legend__swatch case3v2-beam-legend__swatch--scan" aria-hidden="true"></i>
+                    <span class="case3v2-beam-legend__text" data-legend-scan>扫描波</span>
+                  </span>
+                  <span class="case3v2-beam-legend__item">
+                    <i class="case3v2-beam-legend__swatch case3v2-beam-legend__swatch--best" aria-hidden="true"></i>
+                    <span class="case3v2-beam-legend__text">最优波</span>
+                  </span>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="case3v2-dock" data-region="BottomDock">
+            <div class="case3v2-replay" data-region="PointBeamReplay">
+              <div class="case3v2-replay-controls">
+                <div class="case3v2-replay-title">点位波束回溯</div>
+                <div class="case3v2-side-bar" data-side="without">
+                  <span class="case3v2-side-num" data-side-num="without">1</span>
+                  <div class="case3v2-side-copy">
+                    <span class="case3v2-side-name">无DT</span>
+                    <span class="case3v2-side-status" data-status="without">未开始</span>
+                  </div>
+                  <div class="case3v2-side-actions">
+                    <button type="button" class="case3v2-icon-btn case3v2-icon-btn--play is-ready" data-action="start-without" title="启动无 DT"></button>
+                    <button type="button" class="case3v2-icon-btn case3v2-icon-btn--reset is-off" data-action="reset-without" title="重置无 DT" disabled></button>
+                  </div>
+                </div>
+                <div class="case3v2-side-bar" data-side="with">
+                  <span class="case3v2-side-num" data-side-num="with">2</span>
+                  <div class="case3v2-side-copy">
+                    <span class="case3v2-side-name">有DT</span>
+                    <span class="case3v2-side-status" data-status="with">未开始</span>
+                  </div>
+                  <div class="case3v2-side-actions">
+                    <button type="button" class="case3v2-icon-btn case3v2-icon-btn--play is-off" data-action="start-with" title="启动有 DT" disabled></button>
+                    <button type="button" class="case3v2-icon-btn case3v2-icon-btn--reset is-off" data-action="reset-with" title="重置有 DT" disabled></button>
+                  </div>
+                </div>
+                <div class="case3v2-side-link" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+              </div>
+
+              <div class="case3v2-replay-board">
+                <div class="case3v2-replay-head">
+                  <div class="case3v2-progress" aria-hidden="true"></div>
+                  <div data-replay-headers></div>
+                  <div class="case3v2-cursor" aria-hidden="true"></div>
+                </div>
+                <div class="case3v2-replay-pair">
+                  <div class="case3v2-replay-row" data-replay-without></div>
+                  <div class="case3v2-replay-row" data-replay-with></div>
+                  <div class="case3v2-check-layer" data-replay-checks></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="case3v2-kpi-row" data-region="KpiRow">
+              <article class="case3v2-kpi case3v2-kpi--cost" data-region="CostCompareCard">
+                <div class="case3v2-kpi__head"><span class="case3v2-kpi__title">开销对比</span></div>
+                <div class="case3v2-cost-plot">
+                  <div class="case3v2-cost-col">
+                    <div class="case3v2-cost-shell">
+                      <div class="case3v2-cost-aux--left"></div>
+                      <div class="case3v2-cost-fill--left"></div>
+                      <div class="case3v2-cost-edge--left"></div>
+                    </div>
+                    <div class="case3v2-cost-value case3v2-cost-value--left">
+                      <span class="case3v2-cost-value__num" data-cost-wo>--</span>
+                      <span class="case3v2-cost-value__unit">%</span>
+                    </div>
+                    <div class="case3v2-cost-caption--left">without DT</div>
+                  </div>
+                  <div class="case3v2-cost-axis">
+                    <span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span>
+                  </div>
+                  <div class="case3v2-cost-col">
+                    <div class="case3v2-cost-shell">
+                      <div class="case3v2-cost-aux--right"></div>
+                      <div class="case3v2-cost-fill--right"></div>
+                      <div class="case3v2-cost-edge--right"></div>
+                    </div>
+                    <div class="case3v2-cost-value case3v2-cost-value--right">
+                      <span class="case3v2-cost-value__num" data-cost-w>--</span>
+                      <span class="case3v2-cost-value__unit">%</span>
+                    </div>
+                    <div class="case3v2-cost-caption--right">with DT</div>
+                  </div>
+                  <div class="case3v2-cost-delta">
+                    <div class="case3v2-cost-delta__row">
+                      <span class="case3v2-cost-delta__num" data-cost-delta>--</span>
+                      <span class="case3v2-cost-delta__unit">%</span>
+                    </div>
+                    <span class="case3v2-cost-delta__label">开销变化</span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="case3v2-kpi case3v2-kpi--thr" data-region="ThroughputCompareCard">
+                <div class="case3v2-kpi__head"><span class="case3v2-kpi__title">吞吐率对比(Gbps)</span></div>
+                <div class="case3v2-thr-legend">
+                  <span class="case3v2-thr-legend__item">
+                    <i class="case3v2-thr-legend__dot case3v2-thr-legend__dot--wo"></i>
+                    <span class="case3v2-thr-legend__text--wo">无DT</span>
+                  </span>
+                  <span class="case3v2-thr-legend__item">
+                    <i class="case3v2-thr-legend__dot case3v2-thr-legend__dot--w"></i>
+                    <span class="case3v2-thr-legend__text--w">有DT</span>
+                  </span>
+                </div>
+                <div class="case3v2-thr-plot">
+                  <div class="case3v2-thr-grid" data-thr-grid></div>
+                  <div class="case3v2-thr-axis" data-thr-axis></div>
+                  <div class="case3v2-thr-lines">
+                    <svg class="case3v2-thr-svg" viewBox="0 0 576 230" preserveAspectRatio="none">
+                      <path data-thr-wo fill="none" stroke="#6B7280" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+                      <path data-thr-w fill="none" stroke="#22D3EE" stroke-width="2.5" vector-effect="non-scaling-stroke"></path>
+                    </svg>
+                    <div class="case3v2-thr-dots" data-thr-dots></div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="case3v2-kpi case3v2-kpi--ba" data-region="BeamAccuracyCard">
+                <div class="case3v2-kpi__head"><span class="case3v2-kpi__title">波束预测准确率</span></div>
+                <div class="case3v2-ba-counts">
+                  <div class="case3v2-ba-count case3v2-ba-count--ok">
+                    <i class="case3v2-ba-dot case3v2-ba-dot--ok"></i>
+                    <span class="case3v2-ba-count__label">正确次数</span>
+                    <span class="case3v2-ba-count__value case3v2-ba-count__value--ok" data-ba-ok>75</span>
+                  </div>
+                  <div class="case3v2-ba-count case3v2-ba-count--bad">
+                    <i class="case3v2-ba-dot case3v2-ba-dot--bad"></i>
+                    <span class="case3v2-ba-count__label">错误次数</span>
+                    <span class="case3v2-ba-count__value case3v2-ba-count__value--bad" data-ba-bad>25</span>
+                  </div>
+                </div>
+                <div class="case3v2-ba-bar">
+                  <div class="case3v2-ba-fill-row">
+                    <div class="case3v2-ba-fill--ok">
+                      <div class="case3v2-ba-main">
+                        <div class="case3v2-ba-main__row">
+                          <span class="case3v2-ba-main__num" data-ba-pct>75.0</span>
+                          <span class="case3v2-ba-main__unit-wrap"><span class="case3v2-ba-main__unit">%</span></span>
+                        </div>
+                        <span class="case3v2-ba-main__desc">预测准确率</span>
+                      </div>
+                    </div>
+                    <div class="case3v2-ba-fill--bad"></div>
+                  </div>
+                  <div class="case3v2-ba-bottom">
+                    <div class="case3v2-ba-bottom__ok"></div>
+                    <div class="case3v2-ba-bottom__bad"></div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <aside class="case3v2-overlay" data-region="SiteEnvOverlay" hidden>
+            <button type="button" class="case3v2-overlay__mask" data-action="close-site-env" aria-label="关闭现场环境"></button>
+            <div class="case3v2-overlay__dialog" role="dialog" aria-labelledby="case3v2-site-env-title">
+              <div class="case3v2-overlay__head">
+                <span class="case3v2-overlay__title" id="case3v2-site-env-title">现场环境</span>
+                <button type="button" class="case3v2-overlay__close" data-action="close-site-env" aria-label="关闭">
+                  <svg viewBox="0 0 14 14" width="18" height="18" aria-hidden="true">
+                    <path d="M3.3 3.3l7.4 7.4M10.7 3.3l-7.4 7.4" stroke="#F8FAFC" stroke-width="1.6" stroke-linecap="round"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="case3v2-overlay__videos">
+                <div class="case3v2-overlay__col">
+                  <div class="case3v2-overlay__col-head">
+                    <span class="case3v2-overlay__cam" aria-hidden="true"></span>
+                    <span class="case3v2-overlay__col-title">视频1 | 基站视角</span>
+                  </div>
+                  <div class="case3v2-overlay__feed case3v2-overlay__feed--1"></div>
+                </div>
+                <div class="case3v2-overlay__col">
+                  <div class="case3v2-overlay__col-head">
+                    <span class="case3v2-overlay__cam" aria-hidden="true"></span>
+                    <span class="case3v2-overlay__col-title">视频2 | 集装箱视角</span>
+                  </div>
+                  <div class="case3v2-overlay__feed case3v2-overlay__feed--2"></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </main>
+      </div>
+    </div>
+
+    <aside class="case3v2-review-controls" id="review-controls" data-visible="false">
+      <p class="case3v2-review-controls__title">Gate 1.5 六态切换</p>
+    </aside>
+    <script src="./case3-v2.js"></script>
+  </body>
+</html>

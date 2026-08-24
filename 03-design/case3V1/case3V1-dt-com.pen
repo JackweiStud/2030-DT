@@ -95,6 +95,60 @@
             },
             {
               "type": "frame",
+              "id": "g2KQzc",
+              "x": 0,
+              "y": -60,
+              "name": "已走路线层",
+              "width": 1920,
+              "height": 782,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "path",
+                  "id": "KwomH",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-外带",
+                  "geometry": "M669 523l526-171 253 173",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#ABC5FF",
+                  "strokeWidth": 14,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                },
+                {
+                  "type": "path",
+                  "id": "RpP38",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-内芯",
+                  "geometry": "M669 523l526-171 253 173",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#457EF9",
+                  "strokeWidth": 9,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "TrUUg",
               "x": 0,
               "y": -60,
@@ -646,60 +700,6 @@
               ]
             },
             {
-              "type": "frame",
-              "id": "g2KQzc",
-              "x": 0,
-              "y": -60,
-              "name": "已走路线层",
-              "width": 1920,
-              "height": 782,
-              "layout": "none",
-              "children": [
-                {
-                  "type": "path",
-                  "id": "KwomH",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-外带",
-                  "geometry": "M669 523l526-171 253 173",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#ABC5FF",
-                  "strokeWidth": 14,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
-                },
-                {
-                  "type": "path",
-                  "id": "RpP38",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-内芯",
-                  "geometry": "M669 523l526-171 253 173",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#457EF9",
-                  "strokeWidth": 9,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
-                }
-              ]
-            },
-            {
               "type": "rectangle",
               "id": "OdIUK",
               "x": 1416,
@@ -897,6 +897,7 @@
           "x": 0,
           "y": 650,
           "name": "底栏",
+          "reusable": true,
           "width": 1920,
           "height": 430,
           "fill": "#2a2a2af5",
@@ -3466,6 +3467,60 @@
             },
             {
               "type": "frame",
+              "id": "nzsp2",
+              "x": 0,
+              "y": -60,
+              "name": "已走路线层",
+              "width": 1920,
+              "height": 782,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "path",
+                  "id": "CdvYh",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-外带",
+                  "geometry": "M669 523l526-171 253 173",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#ABC5FF",
+                  "strokeWidth": 14,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                },
+                {
+                  "type": "path",
+                  "id": "p8tfA",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-内芯",
+                  "geometry": "M669 523l526-171 253 173",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#457EF9",
+                  "strokeWidth": 9,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "iU9lk",
               "x": 0,
               "y": -60,
@@ -4013,60 +4068,6 @@
                       "fill": "#FFFFFF"
                     }
                   }
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "nzsp2",
-              "x": 0,
-              "y": -60,
-              "name": "已走路线层",
-              "width": 1920,
-              "height": 782,
-              "layout": "none",
-              "children": [
-                {
-                  "type": "path",
-                  "id": "CdvYh",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-外带",
-                  "geometry": "M669 523l526-171 253 173",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#ABC5FF",
-                  "strokeWidth": 14,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
-                },
-                {
-                  "type": "path",
-                  "id": "p8tfA",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-内芯",
-                  "geometry": "M669 523l526-171 253 173",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#457EF9",
-                  "strokeWidth": 9,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
                 }
               ]
             },
@@ -6966,7 +6967,13 @@
                           "url": "assets/ba-bad-fill.png",
                           "mode": "stretch"
                         }
-                      ]
+                      ],
+                      "flipX": false,
+                      "flipY": false,
+                      "width": 126,
+                      "height": "fill_container",
+                      "x": 474,
+                      "y": 0
                     },
                     "SfZy6": {
                       "enabled": true,
@@ -6978,7 +6985,13 @@
                       "y": 0
                     },
                     "G8XYD": {
-                      "enabled": true
+                      "enabled": true,
+                      "flipX": false,
+                      "flipY": false,
+                      "width": 126,
+                      "height": 10,
+                      "x": 474,
+                      "y": 0
                     }
                   }
                 }
@@ -7088,6 +7101,16 @@
                   "strokeLinecap": "round"
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "Wo65Y",
+              "x": 0,
+              "y": 0,
+              "name": "已走路线层",
+              "width": 1920,
+              "height": 782,
+              "layout": "none"
             },
             {
               "type": "frame",
@@ -7640,16 +7663,6 @@
                   }
                 }
               ]
-            },
-            {
-              "type": "frame",
-              "id": "Wo65Y",
-              "x": 0,
-              "y": 0,
-              "name": "已走路线层",
-              "width": 1920,
-              "height": 782,
-              "layout": "none"
             },
             {
               "type": "rectangle",
@@ -15913,6 +15926,60 @@
             },
             {
               "type": "frame",
+              "id": "t4uOyU",
+              "x": 0,
+              "y": -60,
+              "name": "已走路线层",
+              "width": 1920,
+              "height": 782,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "path",
+                  "id": "C9R3tl",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-外带",
+                  "geometry": "M669 523l131-44",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#ABC5FF",
+                  "strokeWidth": 14,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                },
+                {
+                  "type": "path",
+                  "id": "n4OXv",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-内芯",
+                  "geometry": "M669 523l131-44",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#457EF9",
+                  "strokeWidth": 9,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "P58g0J",
               "x": 0,
               "y": -60,
@@ -16460,60 +16527,6 @@
                       "fill": "#FFFFFF"
                     }
                   }
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "t4uOyU",
-              "x": 0,
-              "y": -60,
-              "name": "已走路线层",
-              "width": 1920,
-              "height": 782,
-              "layout": "none",
-              "children": [
-                {
-                  "type": "path",
-                  "id": "C9R3tl",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-外带",
-                  "geometry": "M669 523l131-44",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#ABC5FF",
-                  "strokeWidth": 14,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
-                },
-                {
-                  "type": "path",
-                  "id": "n4OXv",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-内芯",
-                  "geometry": "M669 523l131-44",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#457EF9",
-                  "strokeWidth": 9,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
                 }
               ]
             },
@@ -25760,6 +25773,60 @@
             },
             {
               "type": "frame",
+              "id": "Y17AbP",
+              "x": 0,
+              "y": -60,
+              "name": "已走路线层",
+              "width": 1920,
+              "height": 782,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "path",
+                  "id": "Yvzyx",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-外带",
+                  "geometry": "M669 523l131-44",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#ABC5FF",
+                  "strokeWidth": 14,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                },
+                {
+                  "type": "path",
+                  "id": "vW82o",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-内芯",
+                  "geometry": "M669 523l131-44",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#457EF9",
+                  "strokeWidth": 9,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "oY08v",
               "x": 0,
               "y": -60,
@@ -26307,60 +26374,6 @@
                       "fill": "#FFFFFF"
                     }
                   }
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "Y17AbP",
-              "x": 0,
-              "y": -60,
-              "name": "已走路线层",
-              "width": 1920,
-              "height": 782,
-              "layout": "none",
-              "children": [
-                {
-                  "type": "path",
-                  "id": "Yvzyx",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-外带",
-                  "geometry": "M669 523l131-44",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#ABC5FF",
-                  "strokeWidth": 14,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
-                },
-                {
-                  "type": "path",
-                  "id": "vW82o",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-内芯",
-                  "geometry": "M669 523l131-44",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#457EF9",
-                  "strokeWidth": 9,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
                 }
               ]
             },
@@ -29268,6 +29281,60 @@
             },
             {
               "type": "frame",
+              "id": "VhxoG",
+              "x": 0,
+              "y": -60,
+              "name": "已走路线层",
+              "width": 1920,
+              "height": 782,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "path",
+                  "id": "LyK4h",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-外带",
+                  "geometry": "M669 523l131-44",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#ABC5FF",
+                  "strokeWidth": 14,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                },
+                {
+                  "type": "path",
+                  "id": "hN3rH",
+                  "x": 655,
+                  "y": 338,
+                  "name": "已走路线-内芯",
+                  "geometry": "M669 523l131-44",
+                  "viewBox": [
+                    655,
+                    338,
+                    807,
+                    200
+                  ],
+                  "fill": "#00000000",
+                  "width": 807,
+                  "height": 200,
+                  "stroke": "#457EF9",
+                  "strokeWidth": 9,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "g8D8F",
               "x": 0,
               "y": -60,
@@ -29819,60 +29886,6 @@
               ]
             },
             {
-              "type": "frame",
-              "id": "VhxoG",
-              "x": 0,
-              "y": -60,
-              "name": "已走路线层",
-              "width": 1920,
-              "height": 782,
-              "layout": "none",
-              "children": [
-                {
-                  "type": "path",
-                  "id": "LyK4h",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-外带",
-                  "geometry": "M669 523l131-44",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#ABC5FF",
-                  "strokeWidth": 14,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
-                },
-                {
-                  "type": "path",
-                  "id": "hN3rH",
-                  "x": 655,
-                  "y": 338,
-                  "name": "已走路线-内芯",
-                  "geometry": "M669 523l131-44",
-                  "viewBox": [
-                    655,
-                    338,
-                    807,
-                    200
-                  ],
-                  "fill": "#00000000",
-                  "width": 807,
-                  "height": 200,
-                  "stroke": "#457EF9",
-                  "strokeWidth": 9,
-                  "strokeLinejoin": "round",
-                  "strokeLinecap": "round"
-                }
-              ]
-            },
-            {
               "type": "rectangle",
               "id": "Ec87V",
               "x": 796,
@@ -30371,6 +30384,7 @@
                             "mode": "fit"
                           },
                           "height": 14,
+                          "enabled": true,
                           "descendants": {
                             "hptNP": {
                               "content": "P1",
@@ -30392,6 +30406,7 @@
                             "mode": "fit"
                           },
                           "height": 14,
+                          "enabled": true,
                           "descendants": {
                             "hptNP": {
                               "content": "P2",
@@ -30565,6 +30580,7 @@
                           "width": 82,
                           "fill": "#f3f3f30d",
                           "height": 14,
+                          "enabled": true,
                           "descendants": {
                             "hptNP": {
                               "content": "P13"

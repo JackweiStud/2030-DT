@@ -1,0 +1,186 @@
+/* 新版共享导航（Gate 1.5 工程底稿）
+   只含 1920×1080 舞台缩放 + 80px 五 Tab 顶栏。
+   不含 Case3 业务样式。后续可单独迁到 React Shell。 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.shell-v2-viewport {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.shell-v2-stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  flex-shrink: 0;
+  overflow: hidden;
+  transform-origin: center center;
+  background: #070a0f;
+  color: #f4f7fb;
+}
+
+.shell-v2-header {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  width: 1920px;
+  height: 80px;
+  overflow: hidden;
+}
+
+.shell-v2-nav-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: 1920px;
+  height: 80px;
+  background-image: url("assets/nav-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+}
+
+.shell-v2-brand {
+  position: absolute;
+  left: 23px;
+  top: 27px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+}
+
+.shell-v2-brand-mark {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: url("assets/cloud-site.png") center / contain no-repeat;
+}
+
+.shell-v2-brand-text {
+  color: #f4f7fb;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.shell-v2-tabs {
+  position: absolute;
+  top: 24px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  height: 46px;
+}
+
+.shell-v2-tabs--left {
+  left: 320px;
+  width: 291px;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.shell-v2-tabs--right {
+  left: 1311px;
+  width: 479px;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.shell-v2-tab {
+  appearance: none;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8b93a7;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: normal;
+  text-align: left;
+  white-space: nowrap;
+  min-width: 0;
+  min-height: 0;
+  cursor: default;
+}
+
+.shell-v2-tab.is-active {
+  position: relative;
+  width: 139px;
+  height: 46px;
+  flex-shrink: 0;
+  color: #f4f7fb;
+}
+
+.shell-v2-tab.is-active .shell-v2-tab__label {
+  position: absolute;
+  left: 0;
+  top: 14px;
+}
+
+.shell-v2-tab__underline {
+  display: none;
+}
+
+.shell-v2-tab.is-active .shell-v2-tab__underline {
+  display: block;
+  position: absolute;
+  left: 8px;
+  top: 45px;
+  width: 124px;
+  height: 2px;
+  border-radius: 1px;
+  background: #f4f7fb;
+}
+
+.shell-v2-title {
+  position: absolute;
+  left: 780px;
+  top: 24px;
+  z-index: 1;
+  width: 360px;
+  color: #f4f7fb;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.shell-v2-corner {
+  position: absolute;
+  left: 1863px;
+  top: 27px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  background: url("assets/huawei-logo.png") center / contain no-repeat;
+}
