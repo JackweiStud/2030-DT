@@ -18,17 +18,14 @@ import {
   type Case3RuntimeConfig,
 } from "../config/case3RuntimeConfig";
 import { isFinalSideReady } from "../metrics/case3Metrics";
+import { selectCase3Presentation } from "../presentation/selectCase3Presentation";
 import {
   canReinit,
   canStartWith,
   canStartWithout,
   case3Reducer,
   createInitialCase3State,
-  deriveVisibleState,
   isActionBusy,
-  sideStatusBadge,
-  sideStatusBadgeIsError,
-  sideStatusRetryHint,
   CASE3_POLL_FAIL_RETRY_THRESHOLD,
 } from "../state/case3Reducer";
 import type {
@@ -1354,22 +1351,22 @@ export function useCase3Controller(options: Options) {
     return () => window.removeEventListener("pagehide", onHide);
   }, []);
 
-  const visible = deriveVisibleState(state);
+  const presentation = selectCase3Presentation(state);
 
   return {
     state,
-    visible,
-    busy: isActionBusy(state),
-    startWithoutEnabled: canStartWithout(state),
-    startWithEnabled: canStartWith(state),
-    reinitWithoutEnabled: canReinit(state, "without"),
-    reinitWithEnabled: canReinit(state, "with"),
-    withoutBadge: sideStatusBadge(state, "without"),
-    withBadge: sideStatusBadge(state, "with"),
-    withoutBadgeError: sideStatusBadgeIsError(state, "without"),
-    withBadgeError: sideStatusBadgeIsError(state, "with"),
-    withoutRetryHint: sideStatusRetryHint(state, "without"),
-    withRetryHint: sideStatusRetryHint(state, "with"),
+    visible: presentation.visible,
+    busy: presentation.busy,
+    startWithoutEnabled: presentation.startWithoutEnabled,
+    startWithEnabled: presentation.startWithEnabled,
+    reinitWithoutEnabled: presentation.reinitWithoutEnabled,
+    reinitWithEnabled: presentation.reinitWithEnabled,
+    withoutBadge: presentation.withoutBadge,
+    withBadge: presentation.withBadge,
+    withoutBadgeError: presentation.withoutBadgeError,
+    withBadgeError: presentation.withBadgeError,
+    withoutRetryHint: presentation.withoutRetryHint,
+    withRetryHint: presentation.withRetryHint,
     onStartWithout,
     onStartWith,
     onReinitWithout,

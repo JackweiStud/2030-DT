@@ -15,7 +15,7 @@ import { SidePanel } from "./components/SidePanel";
 import { CostCard } from "./components/CostCard";
 import { ThroughputChart } from "./components/ThroughputChart";
 import { BeamAccuracyCard } from "./components/BeamAccuracyCard";
-import { canCompareWithCurrentWithout } from "./state/case3Reducer";
+import { selectCase3Presentation } from "./presentation/selectCase3Presentation";
 import "./case3.css";
 
 type Props = {
@@ -44,58 +44,10 @@ export function Case3Page(props: Props) {
     mapRendererRefs,
     onBusyChange,
   });
-
-  const thrpRouteNos = useMemo(
-    () => ctrl.state.baseRoute.map((p) => p.no),
-    [ctrl.state.baseRoute],
-  );
-  const withoutPoints =
-    ctrl.state.live.without?.points ??
-    ctrl.state.results.without?.points ??
-    [];
-  const withPoints =
-    ctrl.state.live.with?.points ?? ctrl.state.results.with?.points ?? [];
-  const withPeerPoints = canCompareWithCurrentWithout(ctrl.state)
-    ? ctrl.state.results.without?.points
-    : null;
-  const activeStartSide =
-    ctrl.state.activeAction?.kind === "start"
-      ? ctrl.state.activeAction.side
-      : null;
-  const withoutKpiSnapshot =
-    activeStartSide === "without"
-      ? ctrl.state.live.without
-      : ctrl.state.results.without;
-  /*
-   * pairValid 只控制跨侧结论，不能充当 With 单侧结果的显示开关。
-   * 重置 Without 后没有可比较的 Without 快照，此时仍展示保留下来的
-   * With 历史；新 Without 已产生数据后则隐藏旧 With KPI，避免跨代对比。
-   */
-  const showStandaloneWithHistory =
-    activeStartSide !== "without" &&
-    withoutKpiSnapshot === null &&
-    ctrl.state.results.with !== null;
-  const withKpiSnapshot =
-    activeStartSide === "with"
-      ? ctrl.state.live.with
-      : ctrl.state.pairValid || showStandaloneWithHistory
-        ? ctrl.state.results.with
-        : null;
-  const showWithThroughput = withKpiSnapshot !== null;
-
-  const dataState =
-    ctrl.visible === "unpaired-both" || ctrl.visible === "with-history-only"
-      ? "without-completed"
-      : ctrl.visible.startsWith("failed-")
-        ? "initial"
-        : ctrl.visible.startsWith("resetting-")
-          ? ctrl.visible.includes("without")
-            ? "without-completed"
-            : "with-completed"
-          : ctrl.visible;
+  const view = selectCase3Presentation(ctrl.state);
 
   return (
-    <main className="case3-page" data-state={dataState}>
+    <main className="case3-page" data-state={view.dataState}>
       <div className="case3-page__bg" aria-hidden />
       <section className="case3-test-panel">
         <PanelHeader onOpenSiteEnv={openSiteEnv} />
@@ -103,13 +55,13 @@ export function Case3Page(props: Props) {
           <SidePanel
             side="without"
             config={config}
-            baseRoute={ctrl.state.baseRoute}
-            points={withoutPoints}
-            badge={ctrl.withoutBadge}
-            badgeError={ctrl.withoutBadgeError}
-            retryHint={ctrl.withoutRetryHint}
-            startEnabled={ctrl.startWithoutEnabled}
-            resetEnabled={ctrl.reinitWithoutEnabled}
+            baseRoute={view.baseRoute}
+            points={view.withoutPoints}
+            badge={view.withoutBadge}
+            badgeError={view.withoutBadgeError}
+            retryHint={view.withoutRetryHint}
+            startEnabled={view.startWithoutEnabled}
+            resetEnabled={view.reinitWithoutEnabled}
             onStart={ctrl.onStartWithout}
             onReset={ctrl.onReinitWithout}
             stageElementRef={stageElementRef}
@@ -118,14 +70,14 @@ export function Case3Page(props: Props) {
           <SidePanel
             side="with"
             config={config}
-            baseRoute={ctrl.state.baseRoute}
-            points={withPoints}
-            peerPoints={withPeerPoints}
-            badge={ctrl.withBadge}
-            badgeError={ctrl.withBadgeError}
-            retryHint={ctrl.withRetryHint}
-            startEnabled={ctrl.startWithEnabled}
-            resetEnabled={ctrl.reinitWithEnabled}
+            baseRoute={view.baseRoute}
+            points={view.withPoints}
+            peerPoints={view.withPeerPoints}
+            badge={view.withBadge}
+            badgeError={view.withBadgeError}
+            retryHint={view.withRetryHint}
+            startEnabled={view.startWithEnabled}
+            resetEnabled={view.reinitWithEnabled}
             onStart={ctrl.onStartWith}
             onReset={ctrl.onReinitWith}
             stageElementRef={stageElementRef}
@@ -141,21 +93,21 @@ export function Case3Page(props: Props) {
         </div>
         <div className="case3-kpi-cols">
           <CostCard
-            withoutCostPct={withoutKpiSnapshot?.costPct ?? null}
-            withCostPct={withKpiSnapshot?.costPct ?? null}
-            pairValid={ctrl.state.pairValid}
+            withoutCostPct={view.withoutKpiSnapshot?.costPct ?? null}
+            withCostPct={view.withKpiSnapshot?.costPct ?? null}
+            pairValid={view.pairValid}
           />
           <ThroughputChart
-            withoutPoints={withoutKpiSnapshot?.points ?? null}
-            withPoints={withKpiSnapshot?.points ?? null}
-            routeNos={thrpRouteNos}
-            showWithSeries={showWithThroughput}
+            withoutPoints={view.withoutKpiSnapshot?.points ?? null}
+            withPoints={view.withKpiSnapshot?.points ?? null}
+            routeNos={view.routeNos}
+            showWithSeries={view.showWithThroughput}
           />
           <BeamAccuracyCard
-            baseline={ctrl.state.baseline}
-            without={ctrl.state.results.without}
-            withSide={ctrl.state.results.with}
-            pairValid={ctrl.state.pairValid}
+            baseline={view.baseline}
+            without={view.beamWithout}
+            withSide={view.beamWith}
+            pairValid={view.pairValid}
           />
         </div>
       </section>
