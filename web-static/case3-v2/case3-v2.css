@@ -339,21 +339,23 @@
   white-space: nowrap;
 }
 
-.case3v2-page .case3v2-beam-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .case3v2-page .case3v2-beam-badge {
   display: none;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 61px;
   height: 17px;
   border-radius: 4px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 400;
+}
+
+.case3v2-page .case3v2-beam-card__beamid {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
 }
 
 .case3v2-page[data-state="with-running"] .case3v2-beam-badge,
