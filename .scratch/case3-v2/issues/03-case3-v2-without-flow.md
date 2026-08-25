@@ -4,7 +4,9 @@
 
 **Blocked by:** 02: 接入 Case3 V2 初始页与真实初始化握手。
 
-**Status:** awaiting-human-acceptance
+**Status:** human-accepted
+
+> 2026-08-25：用户确认 Case3 V2 Ticket 01–07 整体人工验收完成，本 Ticket 随整体收口转为 `human-accepted`。
 
 - [x] Without Start 完整复用现有 Case3 Start 命令、轮询、generation 防陈旧响应和最终快照门槛。
 - [x] 点击 Start 后目标侧旧结果立即失效，单地图和波束矩阵回初始内容；用户当前缩放、旋转和平移视角保持不变。
