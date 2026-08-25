@@ -1,12 +1,13 @@
 /**
  * 应用入口：加载 Case2/Case3 配置；仅激活 Tab 挂载对应页面；汇总跨 Case busy。
- * 开发期第五 Tab（文案 DT for Comm new）只显示建设中，不挂业务页、不接 API。
+ * 开发期第五 Tab（文案 DT for Comm new）挂 Case3 V2 页面，复用 Case3 控制链。
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { ComingSoon, Shell, type CaseTabId } from "../shell/Shell";
 import { Case2Page } from "../cases/case2/Case2Page";
 import { Case3Page } from "../cases/case3/Case3Page";
+import { Case3V2Page } from "../cases/case3-v2/Case3V2Page";
 import {
   HeatmapConfigError,
   loadCase2RuntimeConfig,
@@ -23,6 +24,7 @@ export function App() {
   const stageRef = useRef<HTMLDivElement>(null);
   const [case2Busy, setCase2Busy] = useState(false);
   const [case3Busy, setCase3Busy] = useState(false);
+  const [case3V2Busy, setCase3V2Busy] = useState(false);
 
   const case2Config = useMemo(() => {
     try {
@@ -43,7 +45,9 @@ export function App() {
   }, []);
 
   const navigationLocked =
-    (tab === "case2" && case2Busy) || (tab === "case3" && case3Busy);
+    (tab === "case2" && case2Busy) ||
+    (tab === "case3" && case3Busy) ||
+    (tab === "case5" && case3V2Busy);
 
   const onTabChange = useCallback(
     (next: CaseTabId) => {
@@ -82,8 +86,21 @@ export function App() {
         </p>
       </main>
     );
+  } else if (tab === "case5") {
+    body = case3Config.ok ? (
+      <Case3V2Page
+        config={case3Config.config}
+        stageElementRef={stageRef}
+        onBusyChange={setCase3V2Busy}
+      />
+    ) : (
+      <main className="case3v2-page">
+        <p className="case3v2-config-error">
+          case3 配置错误：{case3Config.field}
+        </p>
+      </main>
+    );
   } else {
-    // case1 / case4 / 开发期第五 Tab：现有 ComingSoon
     body = <ComingSoon />;
   }
 
