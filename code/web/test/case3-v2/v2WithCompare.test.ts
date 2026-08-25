@@ -6,12 +6,14 @@ import { describe, expect, it } from "vitest";
 import { withBeamCellRole } from "../../src/cases/case3-v2/v2BeamGrid";
 import {
   peerPointByNo,
+  v2DisplayMapSide,
   v2LiveMapSide,
   v2ReplayCompleteCount,
+  v2ReplayDriveSide,
   withBeamVerdict,
   withReplayTone,
 } from "../../src/cases/case3-v2/v2WithCompare";
-import type { Case3Point } from "../../src/cases/case3/types";
+import type { Case3Point, SideSnapshot } from "../../src/cases/case3/types";
 
 function point(no: number, beam: number): Case3Point {
   return {
@@ -97,11 +99,86 @@ describe("v2LiveMapSide", () => {
   });
 });
 
+describe("v2DisplayMapSide", () => {
+  it("清图保持期间强制 without，解除后恢复 source live side", () => {
+    expect(v2DisplayMapSide("with", true)).toBe("without");
+    expect(v2DisplayMapSide("without", true)).toBe("without");
+    expect(v2DisplayMapSide("with", false)).toBe("with");
+    expect(v2DisplayMapSide("without", false)).toBe("without");
+  });
+});
+
 describe("v2ReplayCompleteCount", () => {
   it("With 展示侧用 With 点数，其余用 Without", () => {
     expect(v2ReplayCompleteCount("without", 31, 2)).toBe(31);
     expect(v2ReplayCompleteCount("with", 31, 2)).toBe(2);
     expect(v2ReplayCompleteCount("with", 31, 0)).toBe(0);
     expect(v2ReplayCompleteCount("with", 31, 22)).toBe(22);
+  });
+});
+
+function snap(
+  side: "without" | "with",
+  count: number,
+): SideSnapshot {
+  return {
+    side,
+    points: Array.from({ length: count }, (_, i) => point(i + 1, (i + 1) * 10)),
+    completeCount: count,
+    pendingTail: false,
+    costPct: side === "without" ? 25 : 12.5,
+  };
+}
+
+describe("v2ReplayDriveSide", () => {
+  it("Start 运行中跟随 activeStartSide，即使另一侧仍有历史", () => {
+    expect(
+      v2ReplayDriveSide({
+        activeStartSide: "with",
+        withoutKpiSnapshot: snap("without", 31),
+        withKpiSnapshot: snap("with", 2),
+      }),
+    ).toBe("with");
+    expect(
+      v2ReplayDriveSide({
+        activeStartSide: "without",
+        withoutKpiSnapshot: snap("without", 1),
+        withKpiSnapshot: snap("with", 31),
+      }),
+    ).toBe("without");
+  });
+
+  it("双侧配对完成时保持 With", () => {
+    expect(
+      v2ReplayDriveSide({
+        activeStartSide: null,
+        withoutKpiSnapshot: snap("without", 31),
+        withKpiSnapshot: snap("with", 31),
+      }),
+    ).toBe("with");
+  });
+
+  it("空闲 / ReInit 后跟随仍有完整点的一侧；两侧都空为 Without", () => {
+    expect(
+      v2ReplayDriveSide({
+        activeStartSide: null,
+        withoutKpiSnapshot: snap("without", 31),
+        withKpiSnapshot: null,
+      }),
+    ).toBe("without");
+    expect(
+      v2ReplayDriveSide({
+        activeStartSide: null,
+        withoutKpiSnapshot: null,
+        withKpiSnapshot: snap("with", 31),
+      }),
+    ).toBe("with");
+    expect(
+      v2ReplayDriveSide({
+        activeStartSide: null,
+        withoutKpiSnapshot: null,
+        withKpiSnapshot: null,
+      }),
+    ).toBe("without");
   });
 });

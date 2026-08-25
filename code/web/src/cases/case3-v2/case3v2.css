@@ -513,32 +513,11 @@
 }
 
 .case3v2-page .case3v2-beam-crosshair {
-  --beam-crosshair-stroke: rgba(255, 255, 255, 0.92);
-  --beam-crosshair-fill: rgba(255, 255, 255, 0.1);
-  --beam-crosshair-glow: rgba(255, 255, 255, 0.28);
-  --beam-crosshair-glow-core: rgba(255, 255, 255, 0.55);
-  --beam-crosshair-core: rgba(255, 255, 255, 0.5);
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
   overflow: visible;
-}
-
-.case3v2-page .case3v2-beam-crosshair[data-tone="success"] {
-  --beam-crosshair-stroke: rgba(176, 255, 214, 0.92);
-  --beam-crosshair-fill: rgba(61, 220, 151, 0.12);
-  --beam-crosshair-glow: rgba(61, 220, 151, 0.32);
-  --beam-crosshair-glow-core: rgba(168, 255, 214, 0.6);
-  --beam-crosshair-core: rgba(176, 255, 214, 0.7);
-}
-
-.case3v2-page .case3v2-beam-crosshair[data-tone="fail"] {
-  --beam-crosshair-stroke: rgba(255, 176, 176, 0.9);
-  --beam-crosshair-fill: rgba(220, 64, 72, 0.12);
-  --beam-crosshair-glow: rgba(220, 64, 72, 0.3);
-  --beam-crosshair-glow-core: rgba(255, 148, 148, 0.55);
-  --beam-crosshair-core: rgba(255, 168, 168, 0.7);
 }
 
 .case3v2-page .case3v2-beam-crosshair__svg {
@@ -547,10 +526,6 @@
   width: 100%;
   height: 100%;
   overflow: visible;
-}
-
-.case3v2-page .case3v2-beam-crosshair__glow {
-  mix-blend-mode: screen;
 }
 
 .case3v2-page .case3v2-beam-crosshair__mark {
@@ -854,6 +829,16 @@
   flex: 1 1 0;
   align-items: flex-start;
   gap: 6px;
+}
+
+.case3v2-page .case3v2-replay-board.is-scrollable {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.case3v2-page .case3v2-replay-board.is-dragging {
+  cursor: grabbing;
 }
 
 .case3v2-page .case3v2-replay-head {
@@ -1240,12 +1225,12 @@
 
 .case3v2-page .case3v2-cost-delta {
   position: absolute;
-  left: 525px;
+  left: 505px;
   top: -15.5px;
   z-index: 3;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 2px;
 }

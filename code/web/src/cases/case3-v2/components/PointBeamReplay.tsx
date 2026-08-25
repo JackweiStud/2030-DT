@@ -1,9 +1,14 @@
 /**
  * 点位波束回溯：20 槽壳 + 两侧控制。Without 按真实 no 填 BeamID。
+ * N>20 时整表 Pointer Events 拖动，槽距 85px，不复用旧皮肤 29px。
  */
 
+import { useEffect, useRef, useState } from "react";
 import { CASE3_POINT_WINDOW } from "../../case3/config/case3RuntimeConfig";
-import { pointProgressRouteNos } from "../../case3/metrics/case3Metrics";
+import {
+  pointProgressRouteNos,
+  pointProgressWindowRange,
+} from "../../case3/metrics/case3Metrics";
 import type { Case3Point } from "../../case3/types";
 import {
   case3V2StatusClass,
@@ -17,10 +22,15 @@ import {
   type V2LiveMapSide,
 } from "../v2WithCompare";
 
-const SLOT_PITCH = 85;
+/** V2 槽距：82px 格 + 3px gap。不得使用旧皮肤 CASE3_POINT_SLOT_PITCH=29。 */
+export const CASE3V2_REPLAY_SLOT_PITCH = 85;
 const CURSOR_SIZE = 28;
 /** 勾/叉相对回溯对表左缘，与静态 `fillChecks` 一致：34 + i * 85。 */
 const CHECK_LEFT0 = 34;
+
+function clampStart(value: number, maxStart: number): number {
+  return Math.max(0, Math.min(maxStart, Math.round(value)));
+}
 
 type Props = {
   routeNos: number[];
@@ -80,13 +90,53 @@ export function PointBeamReplay(props: Props) {
     props.withoutPoints.length,
     (props.withPoints ?? []).length,
   );
+  const range = pointProgressWindowRange(
+    props.routeNos.length,
+    completeCount,
+    CASE3_POINT_WINDOW,
+  );
+  const [followLatest, setFollowLatest] = useState(true);
+  const [userStart, setUserStart] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{
+    pointerId: number;
+    originX: number;
+    originStart: number;
+    scale: number;
+  } | null>(null);
+  const progressSideRef = useRef(progressSide);
+
+  useEffect(() => {
+    if (progressSideRef.current !== progressSide) {
+      progressSideRef.current = progressSide;
+      setFollowLatest(true);
+      setUserStart(0);
+    }
+  }, [progressSide]);
+
+  useEffect(() => {
+    if (completeCount <= 0) {
+      setFollowLatest(true);
+      setUserStart(0);
+    }
+  }, [completeCount]);
+
+  useEffect(() => {
+    if (range.maxStart <= 0) setFollowLatest(true);
+  }, [range.maxStart]);
+
+  const windowStart = followLatest
+    ? range.defaultStart
+    : clampStart(userStart, range.maxStart);
   const windowNos = pointProgressRouteNos(
     props.routeNos,
     completeCount,
     CASE3_POINT_WINDOW,
+    windowStart,
   );
   const slots: Array<number | null> = [...windowNos];
   while (slots.length < CASE3_POINT_WINDOW) slots.push(null);
+  const canDrag = range.maxStart > 0;
 
   const withoutByNo = new Map(
     props.withoutPoints.map((p) => [p.no, p] as const),
@@ -101,8 +151,67 @@ export function PointBeamReplay(props: Props) {
   ).length;
   const showTrack = doneInWindow > 0;
   /** 进度条宽；游标贴蓝条前端，避免盖住列心 P##（对齐静态稿）。 */
-  const progressWidth = showTrack ? doneInWindow * SLOT_PITCH - 3 : 0;
+  const progressWidth = showTrack
+    ? doneInWindow * CASE3V2_REPLAY_SLOT_PITCH - 3
+    : 0;
   const cursorLeft = showTrack ? progressWidth - CURSOR_SIZE : 0;
+
+  function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.button > 0 || !canDrag) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const el = event.currentTarget;
+    const cssWidth = el.getBoundingClientRect().width;
+    const layoutWidth = el.offsetWidth;
+    const scale =
+      cssWidth > 0 && layoutWidth > 0 ? cssWidth / layoutWidth : 1;
+    dragRef.current = {
+      pointerId: event.pointerId,
+      originX: event.clientX,
+      originStart: windowStart,
+      scale,
+    };
+    try {
+      el.setPointerCapture(event.pointerId);
+    } catch {
+      /* jsdom 可能未实现 pointer capture */
+    }
+    setDragging(true);
+  }
+
+  function samePointer(
+    event: React.PointerEvent<HTMLDivElement>,
+    pointerId: number,
+  ): boolean {
+    if (event.pointerId == null || event.pointerId === 0) return true;
+    return event.pointerId === pointerId;
+  }
+
+  function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || !samePointer(event, drag.pointerId)) return;
+    const localDx = (event.clientX - drag.originX) / drag.scale;
+    const next = clampStart(
+      drag.originStart - localDx / CASE3V2_REPLAY_SLOT_PITCH,
+      range.maxStart,
+    );
+    setFollowLatest(next >= range.maxStart);
+    setUserStart(next);
+  }
+
+  function endDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || !samePointer(event, drag.pointerId)) return;
+    dragRef.current = null;
+    try {
+      if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      /* jsdom 可能未实现 pointer capture */
+    }
+    setDragging(false);
+  }
 
   return (
     <div
@@ -110,6 +219,9 @@ export function PointBeamReplay(props: Props) {
       data-region="PointBeamReplay"
       data-replay-progress-side={progressSide}
       data-replay-done={String(doneInWindow)}
+      data-replay-window-start={String(windowStart)}
+      data-replay-follow-latest={followLatest ? "1" : "0"}
+      data-replay-can-drag={canDrag ? "1" : "0"}
     >
       <div className="case3v2-replay-controls">
         <div className="case3v2-replay-title">点位波束回溯</div>
@@ -183,7 +295,17 @@ export function PointBeamReplay(props: Props) {
         </div>
       </div>
 
-      <div className="case3v2-replay-board">
+      <div
+        className={`case3v2-replay-board${canDrag ? " is-scrollable" : ""}${
+          dragging ? " is-dragging" : ""
+        }`}
+        data-replay-surface
+        data-replay-dragging={dragging ? "1" : "0"}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
         <div className="case3v2-replay-head">
           <div
             className="case3v2-progress"
@@ -273,7 +395,7 @@ export function PointBeamReplay(props: Props) {
                   data-replay-check={tone}
                   data-replay-check-slot={String(i)}
                   data-replay-check-no={no == null ? undefined : String(no)}
-                  style={{ left: `${CHECK_LEFT0 + i * SLOT_PITCH}px` }}
+                  style={{ left: `${CHECK_LEFT0 + i * CASE3V2_REPLAY_SLOT_PITCH}px` }}
                   key={`ck-${i}`}
                 />
               );

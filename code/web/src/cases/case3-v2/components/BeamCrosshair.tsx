@@ -1,5 +1,6 @@
 /**
  * 最优波准星叠层：跟随 BeamID 格子，tone 控制颜色供 With 复用。
+ * 截图关键色必须写在 SVG 属性上的字面量；html-to-image 深拷贝 SVG 时不固化 CSS var。
  */
 
 import { useId } from "react";
@@ -24,6 +25,35 @@ type Props = {
   beamId: number;
   tone?: BeamCrosshairTone;
   marker?: BeamCrosshairMarker;
+};
+
+type CrosshairPalette = {
+  fill: string;
+  stroke: string;
+  glow: string;
+  glowCore: string;
+};
+
+/** 与截图自包含绑定的 tone 色表（字面量 rgba，禁止 CSS var）。 */
+export const BEAM_CROSSHAIR_PALETTE: Record<BeamCrosshairTone, CrosshairPalette> = {
+  neutral: {
+    fill: "rgba(255, 255, 255, 0.1)",
+    stroke: "rgba(255, 255, 255, 0.92)",
+    glow: "rgba(255, 255, 255, 0.28)",
+    glowCore: "rgba(255, 255, 255, 0.55)",
+  },
+  success: {
+    fill: "rgba(61, 220, 151, 0.12)",
+    stroke: "rgba(176, 255, 214, 0.92)",
+    glow: "rgba(61, 220, 151, 0.32)",
+    glowCore: "rgba(168, 255, 214, 0.6)",
+  },
+  fail: {
+    fill: "rgba(220, 64, 72, 0.12)",
+    stroke: "rgba(255, 176, 176, 0.9)",
+    glow: "rgba(220, 64, 72, 0.3)",
+    glowCore: "rgba(255, 148, 148, 0.55)",
+  },
 };
 
 const GLOW_R = 20;
@@ -69,10 +99,7 @@ export function BeamCrosshair(props: Props) {
   const barH = Math.max(0, y1 - y0);
   const hY = cy - CASE3V2_BEAM_CROSSHAIR_BAR_PX / 2;
   const vX = cx - CASE3V2_BEAM_CROSSHAIR_BAR_PX / 2;
-  const fill = `var(--beam-crosshair-fill)`;
-  const stroke = `var(--beam-crosshair-stroke)`;
-  const glow = `var(--beam-crosshair-glow)`;
-  const glowCore = `var(--beam-crosshair-glow-core)`;
+  const { fill, stroke, glow, glowCore } = BEAM_CROSSHAIR_PALETTE[tone];
 
   return (
     <div
@@ -143,7 +170,7 @@ export function BeamCrosshair(props: Props) {
             <feGaussianBlur stdDeviation="2.2" />
           </filter>
         </defs>
-        <g className="case3v2-beam-crosshair__glow">
+        <g className="case3v2-beam-crosshair__glow" style={{ mixBlendMode: "screen" }}>
           <ellipse cx={cx} cy={cy} rx={GLOW_R} ry={GLOW_R} fill={`url(#${uid}-g)`} />
           <rect
             x={x0}

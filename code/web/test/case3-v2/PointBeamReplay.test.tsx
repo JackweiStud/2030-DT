@@ -3,11 +3,40 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
-import { PointBeamReplay } from "../../src/cases/case3-v2/components/PointBeamReplay";
+import { fireEvent, render } from "@testing-library/react";
+import {
+  CASE3V2_REPLAY_SLOT_PITCH,
+  PointBeamReplay,
+} from "../../src/cases/case3-v2/components/PointBeamReplay";
 import type { Case3Point } from "../../src/cases/case3/types";
 // @ts-expect-error vitest 跑在 Node，tsconfig 未纳入 @types/node
 import { readFileSync } from "fs";
+
+if (typeof PointerEvent === "undefined") {
+  class PointerEventPolyfill extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    isPrimary: boolean;
+    constructor(
+      type: string,
+      init: MouseEventInit & {
+        pointerId?: number;
+        pointerType?: string;
+        isPrimary?: boolean;
+      } = {},
+    ) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+      this.pointerType = init.pointerType ?? "mouse";
+      this.isPrimary = init.isPrimary ?? true;
+    }
+  }
+  Object.defineProperty(globalThis, "PointerEvent", {
+    configurable: true,
+    writable: true,
+    value: PointerEventPolyfill,
+  });
+}
 
 const noop = () => undefined;
 
@@ -221,5 +250,313 @@ describe("PointBeamReplay with", () => {
     expect(checks[19]?.getAttribute("data-replay-check-slot")).toBe("19");
     expect((checks[19] as HTMLElement).style.left).toBe(`${34 + 19 * 85}px`);
     expect(container.querySelector('[data-replay-check-no="2"]')).toBeNull();
+  });
+});
+
+function headersOf(container: HTMLElement): string[] {
+  return [...container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")].map(
+    (el) => el.textContent ?? "",
+  );
+}
+
+function mockSurfaceSize(el: HTMLElement, width = 1702) {
+  Object.defineProperty(el, "offsetWidth", { configurable: true, value: width });
+  el.getBoundingClientRect = () =>
+    ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      width,
+      height: 140,
+      right: width,
+      bottom: 140,
+      toJSON: () => ({}),
+    }) as DOMRect;
+}
+
+function dragSurface(container: HTMLElement, dx: number) {
+  const surface = container.querySelector("[data-replay-surface]") as HTMLElement;
+  mockSurfaceSize(surface);
+  fireEvent.pointerDown(surface, {
+    button: 0,
+    buttons: 1,
+    pointerId: 1,
+    clientX: 800,
+    clientY: 20,
+  });
+  fireEvent.pointerMove(surface, {
+    pointerId: 1,
+    buttons: 1,
+    clientX: 800 + dx,
+    clientY: 20,
+  });
+  fireEvent.pointerUp(surface, {
+    pointerId: 1,
+    button: 0,
+    clientX: 800 + dx,
+    clientY: 20,
+  });
+}
+
+describe("PointBeamReplay window size", () => {
+  it("N<20 补空槽且不可拖", () => {
+    const routeNos = [1, 2, 3, 4, 5];
+    const { container } = renderReplay([point(1, 10), point(2, 20), point(3, 30)], {
+      routeNos,
+    });
+    const headers = headersOf(container);
+    expect(headers).toHaveLength(20);
+    expect(headers.slice(0, 5)).toEqual(["P1", "P2", "P3", "P4", "P5"]);
+    expect(headers.slice(5).every((text) => text === "\u00A0" || text.trim() === "")).toBe(
+      true,
+    );
+    expect(container.querySelector("[data-replay-can-drag]")?.getAttribute("data-replay-can-drag")).toBe(
+      "0",
+    );
+    expect(container.querySelector("[data-replay-surface]")?.classList.contains("is-scrollable")).toBe(
+      false,
+    );
+    dragSurface(container, CASE3V2_REPLAY_SLOT_PITCH);
+    expect(headersOf(container)[0]).toBe("P1");
+    expect(container.querySelector("[data-replay-window-start]")?.getAttribute("data-replay-window-start")).toBe(
+      "0",
+    );
+  });
+
+  it("N=20 显示 P1–P20 且不可拖", () => {
+    const routeNos = Array.from({ length: 20 }, (_, i) => i + 1);
+    const points = routeNos.map((no) => point(no, no * 10));
+    const { container } = renderReplay(points, { routeNos });
+    const headers = headersOf(container);
+    expect(headers).toEqual(Array.from({ length: 20 }, (_, i) => `P${i + 1}`));
+    expect(container.querySelector("[data-replay-can-drag]")?.getAttribute("data-replay-can-drag")).toBe(
+      "0",
+    );
+    dragSurface(container, CASE3V2_REPLAY_SLOT_PITCH * 3);
+    expect(headersOf(container)[0]).toBe("P1");
+    expect(headersOf(container)[19]).toBe("P20");
+  });
+
+  it("N=31 默认最新窗口 P12–P31，可拖到 P1–P20，两行与勾叉同步", () => {
+    const routeNos = Array.from({ length: 31 }, (_, i) => i + 1);
+    const without = routeNos.map((no) => point(no, no * 10));
+    const withPts = routeNos.map((no) => point(no, no === 12 ? 121 : no * 10));
+    const { container } = renderReplay(without, {
+      routeNos,
+      withPoints: withPts,
+      withPeerPoints: without,
+      progressSide: "with",
+    });
+    expect(headersOf(container)[0]).toBe("P12");
+    expect(headersOf(container)[19]).toBe("P31");
+    expect(container.querySelector("[data-replay-can-drag]")?.getAttribute("data-replay-can-drag")).toBe(
+      "1",
+    );
+    expect(container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "1",
+    );
+    expect(container.querySelector("[data-replay-window-start]")?.getAttribute("data-replay-window-start")).toBe(
+      "11",
+    );
+    expect(container.querySelector("[data-replay-surface]")?.classList.contains("is-scrollable")).toBe(
+      true,
+    );
+    const wo = [...container.querySelectorAll("[data-replay-wo-value]")].map((el) => el.textContent);
+    const w = [...container.querySelectorAll("[data-replay-w-value]")].map((el) => el.textContent);
+    expect(wo[0]).toBe("120");
+    expect(w[0]).toBe("121");
+    expect(wo[19]).toBe("310");
+    expect(w[19]).toBe("310");
+    expect(container.querySelector("[data-replay-check-no='12']")?.getAttribute("data-replay-check")).toBe(
+      "fail",
+    );
+    expect((container.querySelector("[data-replay-check-no='12']") as HTMLElement).style.left).toBe(
+      "34px",
+    );
+    expect(container.querySelector("[data-replay-headers] button")).toBeNull();
+
+    dragSurface(container, CASE3V2_REPLAY_SLOT_PITCH * 11);
+    expect(headersOf(container)[0]).toBe("P1");
+    expect(headersOf(container)[19]).toBe("P20");
+    expect(container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "0",
+    );
+    expect(container.querySelector("[data-replay-window-start]")?.getAttribute("data-replay-window-start")).toBe(
+      "0",
+    );
+    const woEarly = [...container.querySelectorAll("[data-replay-wo-value]")].map(
+      (el) => el.textContent,
+    );
+    const wEarly = [...container.querySelectorAll("[data-replay-w-value]")].map(
+      (el) => el.textContent,
+    );
+    expect(woEarly[0]).toBe("10");
+    expect(wEarly[0]).toBe("10");
+    expect(woEarly[19]).toBe("200");
+    expect(wEarly[19]).toBe("200");
+    expect(container.querySelector("[data-replay-check-no='1']")?.getAttribute("data-replay-check-slot")).toBe(
+      "0",
+    );
+    expect(container.querySelector("[data-replay-check-no='12']")?.getAttribute("data-replay-check-slot")).toBe(
+      "11",
+    );
+    expect((container.querySelector("[data-replay-check-no='12']") as HTMLElement).style.left).toBe(
+      `${34 + 11 * 85}px`,
+    );
+    expect(container.querySelector("[data-replay-check-no='31']")).toBeNull();
+
+    dragSurface(container, -CASE3V2_REPLAY_SLOT_PITCH * 11);
+    expect(headersOf(container)[0]).toBe("P12");
+    expect(headersOf(container)[19]).toBe("P31");
+    expect(container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "1",
+    );
+  });
+
+  it("拖过边界会钳制；拖到较早窗口后新点到达保持用户窗口", () => {
+    const routeNos = Array.from({ length: 31 }, (_, i) => i + 1);
+    const makeWithout = (n: number) =>
+      Array.from({ length: n }, (_, i) => point(i + 1, (i + 1) * 10));
+    const first = renderReplay(makeWithout(22), { routeNos });
+    dragSurface(first.container, CASE3V2_REPLAY_SLOT_PITCH * 20);
+    expect(headersOf(first.container)[0]).toBe("P1");
+    expect(first.container.querySelector("[data-replay-window-start]")?.getAttribute("data-replay-window-start")).toBe(
+      "0",
+    );
+
+    first.rerender(
+      <PointBeamReplay
+        routeNos={routeNos}
+        withoutPoints={makeWithout(24)}
+        withPoints={undefined}
+        withPeerPoints={undefined}
+        progressSide="without"
+        withoutStatus="测试中"
+        withStatus="等待无DT测试完成"
+        startWithoutEnabled={false}
+        startWithEnabled={false}
+        reinitWithoutEnabled={false}
+        reinitWithEnabled={false}
+        withoutPlayBusy
+        withPlayBusy={false}
+        onStartWithout={noop}
+        onStartWith={noop}
+        onReinitWithout={noop}
+        onReinitWith={noop}
+      />,
+    );
+    expect(headersOf(first.container)[0]).toBe("P1");
+    expect(headersOf(first.container)[19]).toBe("P20");
+    expect(first.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "0",
+    );
+
+    dragSurface(first.container, -CASE3V2_REPLAY_SLOT_PITCH * 4);
+    expect(headersOf(first.container)[0]).toBe("P5");
+    expect(first.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "1",
+    );
+    first.rerender(
+      <PointBeamReplay
+        routeNos={routeNos}
+        withoutPoints={makeWithout(25)}
+        progressSide="without"
+        withoutStatus="测试中"
+        withStatus="等待无DT测试完成"
+        startWithoutEnabled={false}
+        startWithEnabled={false}
+        reinitWithoutEnabled={false}
+        reinitWithEnabled={false}
+        withoutPlayBusy
+        withPlayBusy={false}
+        onStartWithout={noop}
+        onStartWith={noop}
+        onReinitWithout={noop}
+        onReinitWith={noop}
+      />,
+    );
+    expect(headersOf(first.container)[0]).toBe("P6");
+    expect(headersOf(first.container)[19]).toBe("P25");
+  });
+
+  it("进度侧切换或同侧完整点数回到 0 时恢复 follow-latest", () => {
+    const routeNos = Array.from({ length: 31 }, (_, i) => i + 1);
+    const without = routeNos.map((no) => point(no, no * 10));
+    const view = renderReplay(without, { routeNos, progressSide: "without" });
+    dragSurface(view.container, CASE3V2_REPLAY_SLOT_PITCH * 11);
+    expect(headersOf(view.container)[0]).toBe("P1");
+    expect(view.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "0",
+    );
+
+    view.rerender(
+      <PointBeamReplay
+        routeNos={routeNos}
+        withoutPoints={without}
+        withPoints={without.map((p) => point(p.no, p.selectedBeamId))}
+        withPeerPoints={without}
+        progressSide="with"
+        withoutStatus="已结束"
+        withStatus="已结束"
+        startWithoutEnabled={false}
+        startWithEnabled={false}
+        reinitWithoutEnabled={false}
+        reinitWithEnabled={false}
+        withoutPlayBusy={false}
+        withPlayBusy={false}
+        onStartWithout={noop}
+        onStartWith={noop}
+        onReinitWithout={noop}
+        onReinitWith={noop}
+      />,
+    );
+    expect(headersOf(view.container)[0]).toBe("P12");
+    expect(view.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "1",
+    );
+
+    dragSurface(view.container, CASE3V2_REPLAY_SLOT_PITCH * 11);
+    expect(headersOf(view.container)[0]).toBe("P1");
+    view.rerender(
+      <PointBeamReplay
+        routeNos={routeNos}
+        withoutPoints={[]}
+        withPoints={[]}
+        progressSide="with"
+        withoutStatus="测试中"
+        withStatus="测试中"
+        startWithoutEnabled={false}
+        startWithEnabled={false}
+        reinitWithoutEnabled={false}
+        reinitWithEnabled={false}
+        withoutPlayBusy={false}
+        withPlayBusy
+        onStartWithout={noop}
+        onStartWith={noop}
+        onReinitWithout={noop}
+        onReinitWith={noop}
+      />,
+    );
+    expect(view.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
+      "1",
+    );
+    expect(view.container.querySelector("[data-replay-window-start]")?.getAttribute("data-replay-window-start")).toBe(
+      "0",
+    );
+    expect(headersOf(view.container)[0]).toBe("P1");
+  });
+
+  it("拖动 CSS 只用 grab/grabbing，不出现分页或滚动条", () => {
+    const css = readFileSync("src/cases/case3-v2/case3v2.css", "utf8") as string;
+    expect(css).toContain("cursor: grab");
+    expect(css).toContain("cursor: grabbing");
+    const boardBlock = css.match(
+      /\.case3v2-page \.case3v2-replay-board\.is-scrollable \{[^}]+\}/,
+    )?.[0];
+    expect(boardBlock).toBeDefined();
+    expect(boardBlock).not.toMatch(/overflow(-x)?:\s*auto/);
+    expect(css).not.toContain("上一页");
+    expect(css).not.toContain("下一页");
   });
 });

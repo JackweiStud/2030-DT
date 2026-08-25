@@ -5,6 +5,7 @@
 
 import type { Case3Presentation } from "../case3/presentation/selectCase3Presentation";
 import type { Case3Point } from "../case3/types";
+import { completePointsOf } from "./v2CompletePoints";
 
 export type WithBeamVerdict = "empty" | "no-peer" | "match" | "mismatch";
 export type WithReplayTone = "idle" | "ok" | "fail";
@@ -60,6 +61,34 @@ export function v2LiveMapSide(
   if (view.dataState === "with-running" || view.dataState === "with-completed") {
     return "with";
   }
+  return "without";
+}
+
+/**
+ * 主地图/矩阵实际展示侧。清图保持期间强制 Initial without 壳，
+ * 不得把 source live side 的 With 图例带到空矩阵。
+ */
+export function v2DisplayMapSide(
+  liveSide: V2LiveMapSide,
+  holdEmpty: boolean,
+): V2LiveMapSide {
+  return holdEmpty ? "without" : liveSide;
+}
+
+/**
+ * 底栏回溯驱动侧：与主地图 `v2LiveMapSide` 分离。
+ * Start 运行中跟随当前 Start 侧；空闲 / ReInit 中 / ReInit 后 / failed-reinit
+ * 跟随仍有展示完整点的一侧；双侧都有时用 With；两侧都空时为 Without。
+ */
+export function v2ReplayDriveSide(
+  view: Pick<
+    Case3Presentation,
+    "activeStartSide" | "withoutKpiSnapshot" | "withKpiSnapshot"
+  >,
+): V2LiveMapSide {
+  if (view.activeStartSide) return view.activeStartSide;
+  if (completePointsOf(view.withKpiSnapshot).length > 0) return "with";
+  if (completePointsOf(view.withoutKpiSnapshot).length > 0) return "without";
   return "without";
 }
 

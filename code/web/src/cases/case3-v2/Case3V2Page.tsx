@@ -3,7 +3,7 @@
  * 复用现有 useCase3Controller / selectCase3Presentation，不新增 Case5 状态链。
  */
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSiteEnvWindow } from "../../shell/siteEnvWindowContext";
 import type { Case3RuntimeConfig } from "../case3/config/case3RuntimeConfig";
 import {
@@ -15,7 +15,7 @@ import { BottomDock } from "./components/BottomDock";
 import { MapHud } from "./components/MapHud";
 import { MapRenderer2D } from "./components/map/MapRenderer2D";
 import { completePointsOf, latestCompletePoint } from "./v2CompletePoints";
-import { peerPointByNo, v2LiveMapSide } from "./v2WithCompare";
+import { peerPointByNo, v2DisplayMapSide, v2LiveMapSide } from "./v2WithCompare";
 import "./case3v2.css";
 
 type Props = {
@@ -43,22 +43,56 @@ export function Case3V2Page(props: Props) {
     onBusyChange,
   });
   const view = selectCase3Presentation(ctrl.state);
-  const mapSide = v2LiveMapSide(view);
+  const sourceMapSide = v2LiveMapSide(view);
   const liveSnapshot =
-    mapSide === "with" ? view.withKpiSnapshot : view.withoutKpiSnapshot;
-  const mapPoints = completePointsOf(liveSnapshot);
-  const currentPoint = latestCompletePoint(liveSnapshot);
+    sourceMapSide === "with" ? view.withKpiSnapshot : view.withoutKpiSnapshot;
+  const startSideSnapshot =
+    view.activeStartSide === "with"
+      ? view.withKpiSnapshot
+      : view.activeStartSide === "without"
+        ? view.withoutKpiSnapshot
+        : null;
+  const startCompleteCount = completePointsOf(startSideSnapshot).length;
+  const [mapHoldEmpty, setMapHoldEmpty] = useState(
+    () => ctrl.state.activeAction?.kind === "reinit",
+  );
+
+  useEffect(() => {
+    if (view.activeAction?.kind === "reinit") {
+      setMapHoldEmpty(true);
+    }
+  }, [view.activeAction?.kind, view.activeAction?.side]);
+
+  useEffect(() => {
+    if (view.activeStartSide && startCompleteCount > 0) {
+      setMapHoldEmpty(false);
+    }
+  }, [view.activeStartSide, startCompleteCount]);
+
+  const mapCleared = mapHoldEmpty;
+  const displayMapSide = v2DisplayMapSide(sourceMapSide, mapCleared);
+  const mapPoints = mapCleared ? [] : completePointsOf(liveSnapshot);
+  const currentPoint = mapCleared ? null : latestCompletePoint(liveSnapshot);
   const peerPoint =
-    mapSide === "with" && currentPoint
+    !mapCleared && displayMapSide === "with" && currentPoint
       ? peerPointByNo(view.withPeerPoints, currentPoint.no)
       : null;
+
+  function holdMapThen(run: () => void) {
+    return () => {
+      setMapHoldEmpty(true);
+      run();
+    };
+  }
 
   return (
     <main
       className="case3v2-page"
       data-testid="case3-v2-page"
       data-state={view.dataState}
-      data-map-side={mapSide}
+      data-map-side={displayMapSide}
+      data-map-source-side={sourceMapSide}
+      data-map-cleared={mapCleared ? "1" : "0"}
     >
       <section className="case3v2-map-stage" data-region="MapStage">
         <MapRenderer2D
@@ -69,7 +103,7 @@ export function Case3V2Page(props: Props) {
         />
       </section>
       <MapHud
-        beamMode={mapSide}
+        beamMode={displayMapSide}
         currentPoint={currentPoint}
         peerPoint={peerPoint}
         onOpenSiteEnv={openSiteEnv}
@@ -78,8 +112,8 @@ export function Case3V2Page(props: Props) {
         view={view}
         onStartWithout={ctrl.onStartWithout}
         onStartWith={ctrl.onStartWith}
-        onReinitWithout={ctrl.onReinitWithout}
-        onReinitWith={ctrl.onReinitWith}
+        onReinitWithout={holdMapThen(ctrl.onReinitWithout)}
+        onReinitWith={holdMapThen(ctrl.onReinitWith)}
       />
     </main>
   );

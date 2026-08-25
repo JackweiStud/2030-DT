@@ -18,7 +18,10 @@ import {
   legalSelectedBeamId,
   withBeamCellRole,
 } from "../../src/cases/case3-v2/v2BeamGrid";
-import { BeamCrosshair } from "../../src/cases/case3-v2/components/BeamCrosshair";
+import {
+  BEAM_CROSSHAIR_PALETTE,
+  BeamCrosshair,
+} from "../../src/cases/case3-v2/components/BeamCrosshair";
 import type { Case3Point } from "../../src/cases/case3/types";
 
 function point(partial: Partial<Case3Point> = {}): Case3Point {
@@ -166,6 +169,51 @@ describe("BeamCrosshair", () => {
   it("非法 BeamID 不渲染", () => {
     const { container } = render(<BeamCrosshair beamId={256} tone="neutral" />);
     expect(container.querySelector("[data-beam-crosshair]")).toBeNull();
+  });
+
+  it("截图关键色在整棵 SVG 克隆后仍为字面量 rgba，不含 CSS var", () => {
+    const { container } = render(
+      <BeamCrosshair beamId={122} tone="success" marker="none" />,
+    );
+    const svg = container.querySelector(".case3v2-beam-crosshair__svg");
+    expect(svg).not.toBeNull();
+    const clone = svg?.cloneNode(true) as SVGElement;
+    const stops = [...clone.querySelectorAll("stop")];
+    expect(stops.length).toBeGreaterThan(0);
+    for (const stop of stops) {
+      const color = stop.getAttribute("stop-color");
+      expect(color).toMatch(/^rgba?\(/);
+      expect(color).not.toContain("var(");
+    }
+    expect(
+      stops.some(
+        (s) => s.getAttribute("stop-color") === BEAM_CROSSHAIR_PALETTE.success.stroke,
+      ),
+    ).toBe(true);
+    expect(
+      stops.some(
+        (s) => s.getAttribute("stop-color") === BEAM_CROSSHAIR_PALETTE.success.glowCore,
+      ),
+    ).toBe(true);
+
+    const glow = clone.querySelector(".case3v2-beam-crosshair__glow") as SVGGElement | null;
+    expect(glow).not.toBeNull();
+    expect(glow?.style.mixBlendMode).toBe("screen");
+  });
+
+  it("fail tone 克隆后仍保留红色字面量", () => {
+    const { container } = render(
+      <BeamCrosshair beamId={21} tone="fail" marker="none" />,
+    );
+    const clone = (
+      container.querySelector(".case3v2-beam-crosshair__svg") as SVGElement
+    ).cloneNode(true) as SVGElement;
+    const colors = [...clone.querySelectorAll("stop")].map((s) =>
+      s.getAttribute("stop-color"),
+    );
+    expect(colors).toContain(BEAM_CROSSHAIR_PALETTE.fail.stroke);
+    expect(colors).toContain(BEAM_CROSSHAIR_PALETTE.fail.fill);
+    expect(colors.every((c) => c && !c.includes("var("))).toBe(true);
   });
 });
 

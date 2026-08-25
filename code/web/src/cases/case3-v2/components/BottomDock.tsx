@@ -4,7 +4,7 @@
 
 import type { Case3Presentation } from "../../case3/presentation/selectCase3Presentation";
 import { completePointsOf } from "../v2CompletePoints";
-import { v2LiveMapSide } from "../v2WithCompare";
+import { v2ReplayDriveSide } from "../v2WithCompare";
 import { BeamAccuracyCard } from "./BeamAccuracyCard";
 import { CostCompareCard } from "./CostCompareCard";
 import { PointBeamReplay } from "./PointBeamReplay";
@@ -32,7 +32,7 @@ export function BottomDock(props: Props) {
         withoutPoints={withoutComplete}
         withPoints={withComplete}
         withPeerPoints={view.withPeerPoints}
-        progressSide={v2LiveMapSide(view)}
+        progressSide={v2ReplayDriveSide(view)}
         withoutStatus={view.withoutBadge}
         withStatus={view.withBadge}
         startWithoutEnabled={view.startWithoutEnabled}
