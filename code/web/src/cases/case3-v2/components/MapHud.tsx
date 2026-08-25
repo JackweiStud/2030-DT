@@ -2,10 +2,12 @@
  * 地图 HUD：测试对比、现场环境、2D|3D、波束矩阵。不进地图 transform。
  */
 
+import type { Case3Point } from "../../case3/types";
 import { BeamMatrixCard } from "./BeamMatrixCard";
 import { ViewModeToggle } from "./ViewModeToggle";
 
 type Props = {
+  currentPoint?: Case3Point | null;
   onOpenSiteEnv: () => void;
 };
 
@@ -28,7 +30,7 @@ export function MapHud(props: Props) {
         {"现场环境 >"}
       </button>
       <ViewModeToggle />
-      <BeamMatrixCard />
+      <BeamMatrixCard point={props.currentPoint ?? null} />
     </section>
   );
 }

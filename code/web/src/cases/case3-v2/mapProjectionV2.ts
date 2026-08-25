@@ -39,6 +39,11 @@ export const CASE3V2_PIN_SIZE = {
   height: 42,
 } as const;
 
+export const CASE3V2_UE_SIZE = {
+  width: 36,
+  height: 38,
+} as const;
+
 export type Case3V2StagePoint = {
   stageX: number;
   stageY: number;
@@ -68,15 +73,30 @@ export function projectBusinessToStage(
   };
 }
 
+function groundBoxFromStagePoint(
+  point: Case3V2StagePoint,
+  size: { width: number; height: number },
+): { left: number; top: number } {
+  return {
+    left: point.stageX - size.width / 2,
+    top: point.stageY - size.height,
+  };
+}
+
 /** 点位图标以投影点为地面锚点（底边中心）。 */
 export function pinBoxFromStagePoint(point: Case3V2StagePoint): {
   left: number;
   top: number;
 } {
-  return {
-    left: point.stageX - CASE3V2_PIN_SIZE.width / 2,
-    top: point.stageY - CASE3V2_PIN_SIZE.height,
-  };
+  return groundBoxFromStagePoint(point, CASE3V2_PIN_SIZE);
+}
+
+/** UE 图标以投影点为地面锚点（底边中心）。 */
+export function ueBoxFromStagePoint(point: Case3V2StagePoint): {
+  left: number;
+  top: number;
+} {
+  return groundBoxFromStagePoint(point, CASE3V2_UE_SIZE);
 }
 
 /** 投影点是否落在 V2 地图舞台可视范围内。 */

@@ -14,6 +14,7 @@ import { selectCase3Presentation } from "../case3/presentation/selectCase3Presen
 import { BottomDock } from "./components/BottomDock";
 import { MapHud } from "./components/MapHud";
 import { MapRenderer2D } from "./components/map/MapRenderer2D";
+import { completePointsOf, latestCompletePoint } from "./v2CompletePoints";
 import "./case3v2.css";
 
 type Props = {
@@ -41,6 +42,8 @@ export function Case3V2Page(props: Props) {
     onBusyChange,
   });
   const view = selectCase3Presentation(ctrl.state);
+  const withoutComplete = completePointsOf(view.withoutKpiSnapshot);
+  const currentWithoutPoint = latestCompletePoint(view.withoutKpiSnapshot);
 
   return (
     <main
@@ -52,10 +55,14 @@ export function Case3V2Page(props: Props) {
         <MapRenderer2D
           ref={mapRef}
           baseRoute={view.baseRoute}
+          points={withoutComplete}
           stageElementRef={stageElementRef}
         />
       </section>
-      <MapHud onOpenSiteEnv={openSiteEnv} />
+      <MapHud
+        currentPoint={currentWithoutPoint}
+        onOpenSiteEnv={openSiteEnv}
+      />
       <BottomDock
         view={view}
         onStartWithout={ctrl.onStartWithout}

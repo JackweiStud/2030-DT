@@ -1,12 +1,22 @@
 /**
- * 点位波束回溯：20 槽壳 + 两侧控制。初始格子为空。
+ * 点位波束回溯：20 槽壳 + 两侧控制。Without 按真实 no 填 BeamID。
  */
 
 import { CASE3_POINT_WINDOW } from "../../case3/config/case3RuntimeConfig";
-import { case3V2StatusClass, toCase3V2SideStatus } from "../v2SideStatus";
+import { pointProgressRouteNos } from "../../case3/metrics/case3Metrics";
+import type { Case3Point } from "../../case3/types";
+import {
+  case3V2StatusClass,
+  case3V2StatusIsRunning,
+  toCase3V2SideStatus,
+} from "../v2SideStatus";
+
+const SLOT_PITCH = 85;
+const CURSOR_SIZE = 28;
 
 type Props = {
   routeNos: number[];
+  withoutPoints: Case3Point[];
   withoutStatus: string;
   withStatus: string;
   startWithoutEnabled: boolean;
@@ -30,14 +40,48 @@ function resetClass(enabled: boolean): string {
   return enabled ? "is-ready" : "is-off";
 }
 
+function StatusLabel(props: { status: string; side: "without" | "with" }) {
+  const running = case3V2StatusIsRunning(props.status);
+  return (
+    <span
+      className={`case3v2-side-status ${case3V2StatusClass(props.status)}`.trim()}
+      data-status={props.side}
+    >
+      <span className="case3v2-side-status__text">{props.status}</span>
+      {running ? (
+        <span className="case3v2-status-ellipsis" aria-hidden data-status-ellipsis>
+          <span className="case3v2-status-ellipsis__track" />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 /**
- * 一张回溯表，含 ①② 控制。
+ * 一张回溯表，含 ①② 控制。默认跟随最近最多 20 个点。
  */
 export function PointBeamReplay(props: Props) {
   const withoutStatus = toCase3V2SideStatus(props.withoutStatus);
   const withStatus = toCase3V2SideStatus(props.withStatus);
-  const slots = Array.from({ length: CASE3_POINT_WINDOW }, (_, i) => i);
-  const headers = slots.map((i) => props.routeNos[i] ?? i + 1);
+  const completeCount = props.withoutPoints.length;
+  const windowNos = pointProgressRouteNos(
+    props.routeNos,
+    completeCount,
+    CASE3_POINT_WINDOW,
+  );
+  const slots: Array<number | null> = [...windowNos];
+  while (slots.length < CASE3_POINT_WINDOW) slots.push(null);
+
+  const withoutByNo = new Map(
+    props.withoutPoints.map((p) => [p.no, p] as const),
+  );
+  const doneInWindow = slots.filter(
+    (no) => no != null && withoutByNo.has(no),
+  ).length;
+  const showTrack = doneInWindow > 0;
+  /** 进度条宽；游标贴蓝条前端，避免盖住列心 P##（对齐静态稿）。 */
+  const progressWidth = showTrack ? doneInWindow * SLOT_PITCH - 3 : 0;
+  const cursorLeft = showTrack ? progressWidth - CURSOR_SIZE : 0;
 
   return (
     <div className="case3v2-replay" data-region="PointBeamReplay">
@@ -49,12 +93,7 @@ export function PointBeamReplay(props: Props) {
           </span>
           <div className="case3v2-side-copy">
             <span className="case3v2-side-name">无DT</span>
-            <span
-              className={`case3v2-side-status ${case3V2StatusClass(withoutStatus)}`.trim()}
-              data-status="without"
-            >
-              {withoutStatus}
-            </span>
+            <StatusLabel status={withoutStatus} side="without" />
           </div>
           <div className="case3v2-side-actions">
             <button
@@ -84,12 +123,7 @@ export function PointBeamReplay(props: Props) {
           </span>
           <div className="case3v2-side-copy">
             <span className="case3v2-side-name">有DT</span>
-            <span
-              className={`case3v2-side-status ${case3V2StatusClass(withStatus)}`.trim()}
-              data-status="with"
-            >
-              {withStatus}
-            </span>
+            <StatusLabel status={withStatus} side="with" />
           </div>
           <div className="case3v2-side-actions">
             <button
@@ -125,35 +159,70 @@ export function PointBeamReplay(props: Props) {
 
       <div className="case3v2-replay-board">
         <div className="case3v2-replay-head">
-          <div className="case3v2-progress" aria-hidden />
+          <div
+            className="case3v2-progress"
+            data-replay-progress
+            aria-hidden
+            style={
+              showTrack
+                ? { display: "block", width: `${progressWidth}px` }
+                : { display: "none" }
+            }
+          />
           <div data-replay-headers>
-            {headers.map((no, i) => (
-              <div className="case3v2-replay-col" key={`h-${i}`}>
-                {`P${no}`}
+            {slots.map((no, i) => (
+              <div
+                className={`case3v2-replay-col${
+                  no != null && withoutByNo.has(no) ? " is-done" : ""
+                }`}
+                key={`h-${i}`}
+              >
+                {no == null ? "\u00A0" : `P${no}`}
               </div>
             ))}
           </div>
-          <div className="case3v2-cursor" aria-hidden />
+          <div
+            className="case3v2-cursor"
+            data-replay-cursor
+            aria-hidden
+            style={
+              showTrack
+                ? { display: "block", left: `${cursorLeft}px` }
+                : { display: "none" }
+            }
+          />
         </div>
         <div className="case3v2-replay-pair">
           <div className="case3v2-replay-row" data-replay-without>
-            {slots.map((i) => (
-              <div
-                className="case3v2-replay-cell case3v2-replay-cell--without"
-                key={`wo-${i}`}
-              >
-                <span className="case3v2-replay-cell__label">最优波</span>
-                <span className="case3v2-replay-cell__value">--</span>
-              </div>
-            ))}
+            {slots.map((no, i) => {
+              const point = no == null ? null : (withoutByNo.get(no) ?? null);
+              return (
+                <div
+                  className={`case3v2-replay-cell case3v2-replay-cell--without${
+                    point ? " is-done" : ""
+                  }`}
+                  key={`wo-${i}`}
+                >
+                  <span className="case3v2-replay-cell__label">最优波</span>
+                  <span
+                    className="case3v2-replay-cell__value"
+                    data-replay-wo-value
+                  >
+                    {point ? String(point.selectedBeamId) : "--"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
           <div className="case3v2-replay-row" data-replay-with>
-            {slots.map((i) => (
+            {slots.map((_no, i) => (
               <div
                 className="case3v2-replay-cell case3v2-replay-cell--with"
                 key={`w-${i}`}
               >
-                <span className="case3v2-replay-cell__value">--</span>
+                <span className="case3v2-replay-cell__value" data-replay-w-value>
+                  --
+                </span>
                 <span className="case3v2-replay-cell__label">预测波</span>
               </div>
             ))}

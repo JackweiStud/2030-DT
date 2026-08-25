@@ -1,36 +1,56 @@
 /**
- * 吞吐率对比卡：Ticket 02 只画空坐标系，不写演示折线/点。
- * X 域来自完整 baseRoute；Y 用 Case3 默认上界 0～12。
+ * 吞吐率对比卡：Without 灰色曲线；缺点不补 0。
+ * X 域来自完整 baseRoute；Y 按真实最大值扩展。
  */
 
 import { useMemo } from "react";
 import {
   CASE3_THRP_Y_MAX_DEFAULT,
+  niceCeilThroughput,
+  throughputSeries,
   throughputXDomain,
   throughputXTicks,
 } from "../../case3/metrics/case3Metrics";
+import type { Case3Point } from "../../case3/types";
+import { segmentedThroughputPath } from "../v2ThroughputPath";
 
 type Props = {
   /** init baseRoute 点号；用于固定 X 域。 */
   routeNos: ReadonlyArray<number>;
+  withoutPoints?: Case3Point[] | null;
+  withPoints?: Case3Point[] | null;
+  showWithSeries?: boolean;
 };
 
-/** 与已验收 V2 绘图区 602×176 内框一致，不是静态 THR_X/THR_Y 数组。 */
+/** 与已验收 V2 绘图区 602×176 内框一致。 */
 const PLOT_LEFT = 29.264;
 const PLOT_RIGHT = 593.639;
 const PLOT_TOP = 4.591;
 const PLOT_BOTTOM = 159.165;
+const PLOT_WIDTH = 602;
+const PLOT_HEIGHT = 176;
 const Y_LINE_WIDTH = PLOT_RIGHT - PLOT_LEFT;
 const X_LINE_HEIGHT = PLOT_BOTTOM - PLOT_TOP;
 const X_LABEL_TOP = 162.226;
 const Y_LABEL_SHIFT = 5;
+const DOT = 4;
 
 /**
- * 吞吐对比图：无数据时仍渲染网格、Y 轴与 X 点位刻度。
+ * 吞吐对比图。
  */
 export function ThroughputCompareCard(props: Props) {
+  const series = useMemo(
+    () => throughputSeries(props.withoutPoints ?? [], props.withPoints ?? []),
+    [props.withoutPoints, props.withPoints],
+  );
+  const withSeries = props.showWithSeries ? series.with : [];
+  const all = [...series.without, ...withSeries];
+  const empty = all.length === 0;
+
   const [minNo, maxNo] = throughputXDomain(props.routeNos);
-  const maxY = CASE3_THRP_Y_MAX_DEFAULT;
+  const maxY = empty
+    ? CASE3_THRP_Y_MAX_DEFAULT
+    : niceCeilThroughput(Math.max(...all.map((p) => p.value)));
   const yDivisions = maxY === CASE3_THRP_Y_MAX_DEFAULT ? 12 : 10;
   const yTicks = Array.from(
     { length: yDivisions + 1 },
@@ -46,6 +66,17 @@ export function ThroughputCompareCard(props: Props) {
     return PLOT_LEFT + ((no - minNo) / (maxNo - minNo)) * (PLOT_RIGHT - PLOT_LEFT);
   };
   const yAt = (v: number) => PLOT_BOTTOM - (v / maxY) * (PLOT_BOTTOM - PLOT_TOP);
+
+  const withoutPlot = series.without.map((p) => ({
+    no: p.no,
+    x: xAt(p.no),
+    y: yAt(p.value),
+  }));
+  const withPlot = withSeries.map((p) => ({
+    no: p.no,
+    x: xAt(p.no),
+    y: yAt(p.value),
+  }));
 
   return (
     <article className="case3v2-kpi case3v2-kpi--thr" data-region="ThroughputCompareCard">
@@ -121,11 +152,12 @@ export function ThroughputCompareCard(props: Props) {
         <div className="case3v2-thr-lines">
           <svg
             className="case3v2-thr-svg"
-            viewBox="0 0 576 230"
+            viewBox={`0 0 ${PLOT_WIDTH} ${PLOT_HEIGHT}`}
             preserveAspectRatio="none"
           >
             <path
               data-thr-wo
+              d={segmentedThroughputPath(props.routeNos, withoutPlot)}
               fill="none"
               stroke="#6B7280"
               strokeWidth="1.5"
@@ -133,13 +165,41 @@ export function ThroughputCompareCard(props: Props) {
             />
             <path
               data-thr-w
+              d={segmentedThroughputPath(props.routeNos, withPlot)}
               fill="none"
               stroke="#22D3EE"
               strokeWidth="2.5"
               vectorEffect="non-scaling-stroke"
             />
           </svg>
-          <div className="case3v2-thr-dots" data-thr-dots />
+          <div className="case3v2-thr-dots" data-thr-dots>
+            {withoutPlot.map((p) => (
+              <div
+                key={`wo-${p.no}`}
+                className="case3v2-thr-dot"
+                data-thr-dot-wo
+                data-thr-no={p.no}
+                style={{
+                  background: "#6B7280",
+                  left: `${p.x - DOT / 2}px`,
+                  top: `${p.y - DOT / 2}px`,
+                }}
+              />
+            ))}
+            {withPlot.map((p) => (
+              <div
+                key={`w-${p.no}`}
+                className="case3v2-thr-dot"
+                data-thr-dot-w
+                data-thr-no={p.no}
+                style={{
+                  background: "#22D3EE",
+                  left: `${p.x - DOT / 2}px`,
+                  top: `${p.y - DOT / 2}px`,
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </article>

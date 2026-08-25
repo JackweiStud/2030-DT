@@ -115,26 +115,11 @@
   z-index: 4;
   width: 36px;
   height: 38px;
+  pointer-events: none;
   background: url("../../../assets/case3-v2/ue-2d.png") center / contain no-repeat;
-  display: none;
 }
 
-.case3v2-page[data-state="without-running"] .case3v2-ue,
-.case3v2-page[data-state="with-running"] .case3v2-ue,
-.case3v2-page[data-state="site-env"] .case3v2-ue {
-  display: block;
-  left: 796px;
-  top: 383px;
-}
-
-.case3v2-page[data-state="without-completed"] .case3v2-ue,
-.case3v2-page[data-state="with-completed"] .case3v2-ue {
-  display: block;
-  left: 1416px;
-  top: 423px;
-}
-
-.case3v2-page[data-state="initial"] .case3v2-route-walked {
+.case3v2-page[data-state="initial"] .case3v2-route-walked:empty {
   display: none;
 }
 
@@ -709,18 +694,82 @@
 }
 
 .case3v2-page .case3v2-side-status {
+  display: inline-flex;
+  align-items: baseline;
   width: 74px;
   color: #8b93a7;
   font-size: 12px;
   font-weight: 400;
+  white-space: nowrap;
 }
 
 .case3v2-page .case3v2-side-status.is-running {
   color: #4c8dff;
+  animation: case3v2-status-pulse 1.6s ease-in-out infinite;
 }
 
 .case3v2-page .case3v2-side-status.is-done {
   color: #0ba11f;
+}
+
+.case3v2-page .case3v2-status-ellipsis {
+  display: inline-block;
+  width: 1.15em;
+  overflow: hidden;
+  margin-left: 1px;
+  line-height: 1;
+  vertical-align: baseline;
+  flex-shrink: 0;
+}
+
+.case3v2-page .case3v2-status-ellipsis__track {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  vertical-align: baseline;
+  animation: case3v2-status-ellipsis 1.2s steps(4, end) infinite;
+}
+
+.case3v2-page .case3v2-status-ellipsis__track::after {
+  content: "…";
+  display: inline-block;
+  line-height: 1;
+  vertical-align: baseline;
+  transform: translateY(0.18em);
+}
+
+@keyframes case3v2-status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.78;
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes case3v2-status-ellipsis {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 1.15em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case3v2-page .case3v2-side-status.is-running {
+    animation: none;
+  }
+
+  .case3v2-page .case3v2-status-ellipsis__track {
+    animation: none;
+    width: 1.15em;
+  }
 }
 
 .case3v2-page .case3v2-side-actions {
@@ -863,32 +912,6 @@
   display: none;
   background: url("../../../assets/case3-v2/cursor-car.png") center / contain no-repeat;
   pointer-events: none;
-}
-
-.case3v2-page[data-state="without-running"] .case3v2-progress,
-.case3v2-page[data-state="with-running"] .case3v2-progress,
-.case3v2-page[data-state="site-env"] .case3v2-progress {
-  display: block;
-  width: 342px;
-}
-
-.case3v2-page[data-state="without-completed"] .case3v2-progress,
-.case3v2-page[data-state="with-completed"] .case3v2-progress {
-  display: block;
-  width: 1699px;
-}
-
-.case3v2-page[data-state="without-running"] .case3v2-cursor,
-.case3v2-page[data-state="with-running"] .case3v2-cursor,
-.case3v2-page[data-state="site-env"] .case3v2-cursor {
-  display: block;
-  left: 301px;
-}
-
-.case3v2-page[data-state="without-completed"] .case3v2-cursor,
-.case3v2-page[data-state="with-completed"] .case3v2-cursor {
-  display: block;
-  left: 1669px;
 }
 
 .case3v2-page .case3v2-replay-pair {
@@ -1078,7 +1101,7 @@
   width: 183px;
   height: 25px;
   display: none;
-  background: url("../../../assets/case3-v2/cost-left-fill.png") center / cover no-repeat;
+  background: url("../../../assets/case3-v2/cost-left-fill.png") center / contain no-repeat;
 }
 
 .case3v2-page .case3v2-cost-edge--left {
@@ -1109,7 +1132,7 @@
   width: 183px;
   height: 25px;
   display: none;
-  background: url("../../../assets/case3-v2/cost-right-fill.png") center / cover no-repeat;
+  background: url("../../../assets/case3-v2/cost-right-fill.png") center / contain no-repeat;
 }
 
 .case3v2-page .case3v2-cost-edge--right {

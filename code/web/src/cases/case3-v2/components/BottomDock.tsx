@@ -3,6 +3,7 @@
  */
 
 import type { Case3Presentation } from "../../case3/presentation/selectCase3Presentation";
+import { completePointsOf } from "../v2CompletePoints";
 import { BeamAccuracyCard } from "./BeamAccuracyCard";
 import { CostCompareCard } from "./CostCompareCard";
 import { PointBeamReplay } from "./PointBeamReplay";
@@ -21,10 +22,12 @@ type Props = {
  */
 export function BottomDock(props: Props) {
   const { view } = props;
+  const withoutComplete = completePointsOf(view.withoutKpiSnapshot);
   return (
     <section className="case3v2-dock" data-region="BottomDock">
       <PointBeamReplay
         routeNos={view.routeNos}
+        withoutPoints={withoutComplete}
         withoutStatus={view.withoutBadge}
         withStatus={view.withBadge}
         startWithoutEnabled={view.startWithoutEnabled}
@@ -44,7 +47,12 @@ export function BottomDock(props: Props) {
           withCostPct={view.withKpiSnapshot?.costPct ?? null}
           deltaText="--"
         />
-        <ThroughputCompareCard routeNos={view.routeNos} />
+        <ThroughputCompareCard
+          routeNos={view.routeNos}
+          withoutPoints={withoutComplete}
+          withPoints={[]}
+          showWithSeries={false}
+        />
         <BeamAccuracyCard
           baseline={view.baseline}
           without={view.beamWithout}

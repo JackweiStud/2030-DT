@@ -24,15 +24,18 @@ import {
   zoomMapViewAtPointer,
   type MapView,
 } from "../../../case3/metrics/mapProjection";
-import type { BaseRoutePoint } from "../../../case3/types";
+import type { BaseRoutePoint, Case3Point } from "../../../case3/types";
 import {
   CASE3V2_MAP_STAGE,
   pinBoxFromStagePoint,
   projectBusinessToStage,
+  ueBoxFromStagePoint,
 } from "../../mapProjectionV2";
 
 type Props = {
   baseRoute: BaseRoutePoint[];
+  /** 最新快照中的完整点；不完整尾点不得传入。 */
+  points?: Case3Point[];
   stageElementRef: React.RefObject<HTMLElement>;
 };
 
@@ -52,7 +55,7 @@ function routePointsAttr(
  */
 export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
   function MapRenderer2D(props, ref) {
-    const { baseRoute, stageElementRef } = props;
+    const { baseRoute, points = [], stageElementRef } = props;
     const rootRef = useRef<HTMLDivElement>(null);
     const [view, setView] = useState<MapView>(IDENTITY_MAP_VIEW);
     const captureReadyRef = useRef(false);
@@ -178,6 +181,13 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
 
     const routePts = baseRoute.map((p) => projectBusinessToStage(p.x, p.y));
     const polyline = routePointsAttr(routePts);
+    const litNos = new Set(points.map((p) => p.no));
+    const walkedPts = [...points]
+      .sort((a, b) => a.no - b.no)
+      .map((p) => projectBusinessToStage(p.ue.x, p.ue.y));
+    const walkedPolyline = routePointsAttr(walkedPts);
+    const uePoint = walkedPts.at(-1) ?? null;
+    const ueBox = uePoint ? ueBoxFromStagePoint(uePoint) : null;
 
     return (
       <div
@@ -243,16 +253,56 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
               </>
             ) : null}
           </div>
+          <div className="case3v2-route-walked" data-walked aria-hidden>
+            {walkedPts.length > 1 ? (
+              <>
+                <svg
+                  className="case3v2-route-svg"
+                  viewBox={`0 0 ${CASE3V2_MAP_STAGE.width} ${CASE3V2_MAP_STAGE.height}`}
+                  preserveAspectRatio="none"
+                >
+                  <polyline
+                    data-walked-outer
+                    fill="none"
+                    stroke="#ABC5FF"
+                    strokeWidth={14}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    points={walkedPolyline}
+                  />
+                </svg>
+                <svg
+                  className="case3v2-route-svg"
+                  viewBox={`0 0 ${CASE3V2_MAP_STAGE.width} ${CASE3V2_MAP_STAGE.height}`}
+                  preserveAspectRatio="none"
+                >
+                  <polyline
+                    data-walked-inner
+                    fill="none"
+                    stroke="#457EF9"
+                    strokeWidth={9}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    points={walkedPolyline}
+                  />
+                </svg>
+              </>
+            ) : null}
+          </div>
           <div className="case3v2-route-points" data-route-points>
             {baseRoute.map((point, index) => {
               const stage = routePts[index];
               if (!stage) return null;
               const box = pinBoxFromStagePoint(stage);
+              const lit = litNos.has(point.no);
               return (
                 <div
                   key={point.no}
-                  className="case3v2-pin is-idle"
+                  className={`case3v2-pin ${lit ? "is-lit" : "is-idle"}`}
                   data-route-no={point.no}
+                  data-pin-lit={lit ? "1" : "0"}
                   style={{ left: box.left, top: box.top }}
                 >
                   <span className="case3v2-pin__icon" aria-hidden />
@@ -261,6 +311,13 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
               );
             })}
           </div>
+          {ueBox ? (
+            <div
+              className="case3v2-ue"
+              data-ue
+              style={{ left: ueBox.left, top: ueBox.top }}
+            />
+          ) : null}
         </div>
         {!isIdentityMapView(view) ? (
           <button

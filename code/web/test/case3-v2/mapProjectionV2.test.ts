@@ -9,6 +9,7 @@ import {
   isStagePointInMapView,
   pinBoxFromStagePoint,
   projectBusinessToStage,
+  ueBoxFromStagePoint,
 } from "../../src/cases/case3-v2/mapProjectionV2";
 import type { BaseRoutePoint } from "../../src/cases/case3/types";
 
@@ -67,5 +68,11 @@ describe("projectBusinessToStage", () => {
     const box = pinBoxFromStagePoint({ stageX: 669, stageY: 463 });
     expect(box.left).toBeCloseTo(651.5);
     expect(box.top).toBeCloseTo(421);
+  });
+
+  it("UE 以投影点为地面锚点", () => {
+    const box = ueBoxFromStagePoint({ stageX: 669, stageY: 463 });
+    expect(box.left).toBeCloseTo(651);
+    expect(box.top).toBeCloseTo(425);
   });
 });

@@ -1,8 +1,9 @@
 /**
- * 开销对比卡：初始为空，不写代表数字。
+ * 开销对比卡：数字跟 costPct；空值隐藏 fill，有值只移动中间亮带。
  */
 
 import { formatOneDecimal } from "../../case3/metrics/case3Metrics";
+import { costFillStyle } from "../v2CostFill";
 
 type Props = {
   withoutCostPct: number | null;
@@ -20,6 +21,8 @@ function costText(value: number | null): string {
 export function CostCompareCard(props: Props) {
   const wo = costText(props.withoutCostPct);
   const w = costText(props.withCostPct);
+  const withoutFill = costFillStyle(props.withoutCostPct, "without");
+  const withFill = costFillStyle(props.withCostPct, "with");
 
   return (
     <article className="case3v2-kpi case3v2-kpi--cost" data-region="CostCompareCard">
@@ -30,7 +33,11 @@ export function CostCompareCard(props: Props) {
         <div className="case3v2-cost-col">
           <div className="case3v2-cost-shell">
             <div className="case3v2-cost-aux--left" />
-            <div className="case3v2-cost-fill--left" />
+            <div
+              className="case3v2-cost-fill--left"
+              data-cost-fill-wo
+              style={withoutFill}
+            />
             <div className="case3v2-cost-edge--left" />
           </div>
           <div className="case3v2-cost-value case3v2-cost-value--left">
@@ -51,7 +58,11 @@ export function CostCompareCard(props: Props) {
         <div className="case3v2-cost-col">
           <div className="case3v2-cost-shell">
             <div className="case3v2-cost-aux--right" />
-            <div className="case3v2-cost-fill--right" />
+            <div
+              className="case3v2-cost-fill--right"
+              data-cost-fill-w
+              style={withFill}
+            />
             <div className="case3v2-cost-edge--right" />
           </div>
           <div className="case3v2-cost-value case3v2-cost-value--right">
