@@ -5,17 +5,37 @@
 import { useId } from "react";
 import costLeftAux from "../../../../assets/case3-v2/cost-left-aux.png";
 import costRightAux from "../../../../assets/case3-v2/cost-right-aux.png";
-import { formatOneDecimal } from "../../case3/metrics/case3Metrics";
+import { formatOneDecimal, relativeCostChangePct } from "../../case3/metrics/case3Metrics";
 import { CASE3V2_COST_AUX, costFillVolume } from "../v2CostFill";
 
 type Props = {
   withoutCostPct: number | null;
   withCostPct: number | null;
-  deltaText: string;
+  pairValid: boolean;
 };
 
 function costText(value: number | null): string {
   return value == null ? "--" : formatOneDecimal(value);
+}
+
+export type CostDeltaTone = "up" | "down" | "zero" | "empty";
+
+export function costDeltaView(
+  withoutCostPct: number | null,
+  withCostPct: number | null,
+  pairValid: boolean,
+): { text: string; label: string; tone: CostDeltaTone } {
+  const delta = relativeCostChangePct(withoutCostPct, withCostPct, pairValid);
+  if (delta == null) {
+    return { text: "--", label: "开销变化", tone: "empty" };
+  }
+  if (delta > 0) {
+    return { text: formatOneDecimal(delta), label: "开销增加", tone: "up" };
+  }
+  if (delta < 0) {
+    return { text: formatOneDecimal(delta), label: "开销减少", tone: "down" };
+  }
+  return { text: formatOneDecimal(delta), label: "开销变化", tone: "zero" };
 }
 
 function CostVolumeFill(props: {
@@ -93,6 +113,11 @@ function CostVolumeFill(props: {
 export function CostCompareCard(props: Props) {
   const wo = costText(props.withoutCostPct);
   const w = costText(props.withCostPct);
+  const delta = costDeltaView(
+    props.withoutCostPct,
+    props.withCostPct,
+    props.pairValid,
+  );
 
   return (
     <article className="case3v2-kpi case3v2-kpi--cost" data-region="CostCompareCard">
@@ -135,14 +160,16 @@ export function CostCompareCard(props: Props) {
           </div>
           <div className="case3v2-cost-caption--right">有 DT</div>
         </div>
-        <div className="case3v2-cost-delta">
+        <div className="case3v2-cost-delta" data-delta-tone={delta.tone}>
           <div className="case3v2-cost-delta__row">
             <span className="case3v2-cost-delta__num" data-cost-delta>
-              {props.deltaText}
+              {delta.text}
             </span>
             <span className="case3v2-cost-delta__unit">%</span>
           </div>
-          <span className="case3v2-cost-delta__label">开销变化</span>
+          <span className="case3v2-cost-delta__label" data-cost-delta-label>
+            {delta.label}
+          </span>
         </div>
       </div>
     </article>

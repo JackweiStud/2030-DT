@@ -381,24 +381,26 @@
   font-weight: 400;
 }
 
+.case3v2-page .case3v2-beam-badge.is-success,
+.case3v2-page .case3v2-beam-badge.is-fail {
+  display: flex;
+}
+
+.case3v2-page .case3v2-beam-badge.is-success {
+  background: #1f6b4a;
+  color: #3ddc97;
+}
+
+.case3v2-page .case3v2-beam-badge.is-fail {
+  background: #6b571fbe;
+  color: #f59e0b;
+}
+
 .case3v2-page .case3v2-beam-card__beamid {
   display: flex;
   align-items: center;
   flex-shrink: 0;
   gap: 4px;
-}
-
-.case3v2-page[data-state="with-running"] .case3v2-beam-badge,
-.case3v2-page[data-state="site-env"] .case3v2-beam-badge {
-  display: flex;
-  background: #1f6b4a;
-  color: #3ddc97;
-}
-
-.case3v2-page[data-state="with-completed"] .case3v2-beam-badge {
-  display: flex;
-  background: #6b571fbe;
-  color: #f59e0b;
 }
 
 .case3v2-page .case3v2-beam-card__beamid-label,
@@ -611,12 +613,6 @@
   font-size: 12px;
   font-weight: 400;
   white-space: nowrap;
-}
-
-.case3v2-page[data-state="with-running"] .case3v2-beam-legend__item--scan .case3v2-beam-legend__swatch,
-.case3v2-page[data-state="with-completed"] .case3v2-beam-legend__item--scan .case3v2-beam-legend__swatch,
-.case3v2-page[data-state="site-env"] .case3v2-beam-legend__item--scan .case3v2-beam-legend__swatch {
-  background: url("../../../assets/case3-v2/beam-pred.png") center / contain no-repeat;
 }
 
 /* ---- 底栏 ---- */
@@ -1262,11 +1258,17 @@
 }
 
 .case3v2-page .case3v2-cost-delta__num {
-  width: 46px;
+  flex-shrink: 0;
+  box-sizing: content-box;
+  width: 72px;
+  min-width: 72px;
   color: #8b93a7;
   font-size: 24px;
   font-weight: 700;
-  text-align: center;
+  font-variant-numeric: tabular-nums;
+  line-height: normal;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .case3v2-page .case3v2-cost-delta__unit {
@@ -1282,10 +1284,22 @@
   white-space: nowrap;
 }
 
-.case3v2-page[data-state="with-completed"] .case3v2-cost-delta__num,
-.case3v2-page[data-state="with-completed"] .case3v2-cost-delta__unit,
-.case3v2-page[data-state="with-completed"] .case3v2-cost-delta__label {
+.case3v2-page .case3v2-cost-delta[data-delta-tone="down"] .case3v2-cost-delta__num,
+.case3v2-page .case3v2-cost-delta[data-delta-tone="down"] .case3v2-cost-delta__unit,
+.case3v2-page .case3v2-cost-delta[data-delta-tone="down"] .case3v2-cost-delta__label {
   color: #0ba11f;
+}
+
+.case3v2-page .case3v2-cost-delta[data-delta-tone="up"] .case3v2-cost-delta__num,
+.case3v2-page .case3v2-cost-delta[data-delta-tone="up"] .case3v2-cost-delta__unit,
+.case3v2-page .case3v2-cost-delta[data-delta-tone="up"] .case3v2-cost-delta__label {
+  color: #dc4048;
+}
+
+.case3v2-page .case3v2-cost-delta[data-delta-tone="zero"] .case3v2-cost-delta__num,
+.case3v2-page .case3v2-cost-delta[data-delta-tone="zero"] .case3v2-cost-delta__unit,
+.case3v2-page .case3v2-cost-delta[data-delta-tone="zero"] .case3v2-cost-delta__label {
+  color: #f4f7fb;
 }
 
 .case3v2-page .case3v2-thr-legend {

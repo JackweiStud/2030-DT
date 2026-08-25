@@ -16,6 +16,7 @@ import {
   CASE3V2_BEAM_GRID_WIDTH_PX,
   isLegalBeamId,
   legalSelectedBeamId,
+  withBeamCellRole,
 } from "../../src/cases/case3-v2/v2BeamGrid";
 import { BeamCrosshair } from "../../src/cases/case3-v2/components/BeamCrosshair";
 import type { Case3Point } from "../../src/cases/case3/types";
@@ -58,6 +59,8 @@ describe("v2BeamGrid", () => {
     expect(CASE3V2_BEAM_CROSSHAIR_ARM_PX).toBeLessThan(CASE3V2_BEAM_GRID_WIDTH_PX);
     expect(CASE3V2_BEAM_CROSSHAIR_OPACITY).toBeGreaterThan(0);
     expect(CASE3V2_BEAM_CROSSHAIR_OPACITY).toBeLessThanOrEqual(1);
+    expect(withBeamCellRole(0, 0, 0, 255)).toBe("pred");
+    expect(withBeamCellRole(15, 15, 0, 255)).toBe("best");
   });
 });
 
@@ -65,7 +68,7 @@ describe("BeamMatrixCard", () => {
   it("初始为空网格", () => {
     const { container } = render(<BeamMatrixCard />);
     expect(container.querySelector("[data-point-value]")?.textContent).toBe("P--");
-    expect(container.querySelector("[data-beam-id]")?.textContent).toBe("--");
+    expect(container.querySelector("[data-beam-id-value]")?.textContent).toBe("--");
     expect(container.querySelectorAll(".is-scan")).toHaveLength(0);
     expect(container.querySelectorAll(".is-best")).toHaveLength(0);
     expect(container.querySelector("[data-beam-crosshair]")).toBeNull();
@@ -76,7 +79,7 @@ describe("BeamMatrixCard", () => {
       <BeamMatrixCard point={point({ scanBeamIds: [0, 122], selectedBeamId: 122 })} />,
     );
     expect(container.querySelector("[data-point-value]")?.textContent).toBe("P4");
-    expect(container.querySelector("[data-beam-id]")?.textContent).toBe("122");
+    expect(container.querySelector("[data-beam-id-value]")?.textContent).toBe("122");
     const best = container.querySelector('[data-rc="7,10"]');
     const scan = container.querySelector('[data-rc="0,0"]');
     expect(best?.classList.contains("is-best")).toBe(true);
@@ -99,7 +102,7 @@ describe("BeamMatrixCard", () => {
         })}
       />,
     );
-    expect(container.querySelector("[data-beam-id]")?.textContent).toBe("--");
+    expect(container.querySelector("[data-beam-id-value]")?.textContent).toBe("--");
     expect(container.querySelectorAll(".is-best")).toHaveLength(0);
     expect(container.querySelectorAll(".is-scan")).toHaveLength(1);
     expect(container.querySelector('[data-rc="0,3"]')?.classList.contains("is-scan")).toBe(
@@ -163,5 +166,94 @@ describe("BeamCrosshair", () => {
   it("非法 BeamID 不渲染", () => {
     const { container } = render(<BeamCrosshair beamId={256} tone="neutral" />);
     expect(container.querySelector("[data-beam-crosshair]")).toBeNull();
+  });
+});
+
+describe("BeamMatrixCard with", () => {
+  it("match：同格预测波、绿色准星、预测成功，无扫描波", () => {
+    const { container } = render(
+      <BeamMatrixCard
+        mode="with"
+        point={point({ selectedBeamId: 122, scanBeamIds: [0, 5] })}
+        peerPoint={point({ no: 4, selectedBeamId: 122 })}
+      />,
+    );
+    expect(container.querySelector("[data-beam-mode]")?.getAttribute("data-beam-mode")).toBe(
+      "with",
+    );
+    expect(container.querySelector("[data-legend-pred]")?.textContent).toBe("预测波");
+    expect(container.querySelector("[data-legend-best]")?.textContent).toBe("最优波");
+    expect(container.querySelector("[data-legend-scan]")).toBeNull();
+    expect(container.querySelector("[data-beam-badge]")?.textContent).toBe("预测成功");
+    expect(container.querySelector("[data-beam-id-value]")?.textContent).toBe("122");
+    const cell = container.querySelector('[data-rc="7,10"]');
+    expect(cell?.getAttribute("data-beam-role")).toBe("pred");
+    expect(cell?.classList.contains("is-pred")).toBe(true);
+    expect(cell?.classList.contains("is-best")).toBe(false);
+    expect(container.querySelectorAll(".is-scan")).toHaveLength(0);
+    expect(container.querySelector("[data-beam-crosshair]")?.getAttribute("data-tone")).toBe(
+      "success",
+    );
+    expect(container.querySelector("[data-beam-crosshair]")?.getAttribute("data-beam-id")).toBe(
+      "122",
+    );
+    expect(container.querySelector('[data-crosshair-mark="pred"]')).not.toBeNull();
+  });
+
+  it("mismatch：最优波与预测波分格，红色准星锚定预测波", () => {
+    const { container } = render(
+      <BeamMatrixCard
+        mode="with"
+        point={point({ no: 4, selectedBeamId: 0 })}
+        peerPoint={point({ no: 4, selectedBeamId: 255 })}
+      />,
+    );
+    expect(container.querySelector("[data-beam-badge]")?.textContent).toBe("预测失败");
+    expect(container.querySelector("[data-beam-id-value]")?.textContent).toBe("0");
+    expect(container.querySelector('[data-rc="0,0"]')?.getAttribute("data-beam-role")).toBe(
+      "pred",
+    );
+    expect(container.querySelector('[data-rc="15,15"]')?.getAttribute("data-beam-role")).toBe(
+      "best",
+    );
+    expect(container.querySelector("[data-beam-crosshair]")?.getAttribute("data-tone")).toBe(
+      "fail",
+    );
+    expect(container.querySelector("[data-beam-crosshair]")?.getAttribute("data-beam-id")).toBe(
+      "0",
+    );
+  });
+
+  it("no peer：隐藏徽标和准星，只显示预测波", () => {
+    const { container } = render(
+      <BeamMatrixCard
+        mode="with"
+        point={point({ selectedBeamId: 91 })}
+        peerPoint={null}
+      />,
+    );
+    expect(container.querySelector("[data-beam-badge]")).toBeNull();
+    expect(container.querySelector("[data-beam-crosshair]")).toBeNull();
+    expect(container.querySelector("[data-beam-id-value]")?.textContent).toBe("91");
+    expect(container.querySelector('[data-rc="5,11"]')?.classList.contains("is-pred")).toBe(
+      true,
+    );
+    expect(container.querySelectorAll(".is-best")).toHaveLength(0);
+    expect(container.textContent).not.toContain("待比对");
+  });
+
+  it("peer 不同 no 视为无对照，不按下标误配", () => {
+    const { container } = render(
+      <BeamMatrixCard
+        mode="with"
+        point={point({ no: 4, selectedBeamId: 10 })}
+        peerPoint={point({ no: 9, selectedBeamId: 10 })}
+      />,
+    );
+    expect(container.querySelector("[data-beam-badge]")).toBeNull();
+    expect(container.querySelector("[data-beam-crosshair]")).toBeNull();
+    expect(container.querySelector('[data-rc="0,10"]')?.classList.contains("is-pred")).toBe(
+      true,
+    );
   });
 });

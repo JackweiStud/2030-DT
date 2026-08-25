@@ -10,13 +10,24 @@ import {
   case3V2StatusIsRunning,
   toCase3V2SideStatus,
 } from "../v2SideStatus";
+import {
+  peerPointByNo,
+  v2ReplayCompleteCount,
+  withReplayTone,
+  type V2LiveMapSide,
+} from "../v2WithCompare";
 
 const SLOT_PITCH = 85;
 const CURSOR_SIZE = 28;
+/** 勾/叉相对回溯对表左缘，与静态 `fillChecks` 一致：34 + i * 85。 */
+const CHECK_LEFT0 = 34;
 
 type Props = {
   routeNos: number[];
   withoutPoints: Case3Point[];
+  withPoints?: Case3Point[];
+  withPeerPoints?: Case3Point[] | null;
+  progressSide?: V2LiveMapSide;
   withoutStatus: string;
   withStatus: string;
   startWithoutEnabled: boolean;
@@ -63,7 +74,12 @@ function StatusLabel(props: { status: string; side: "without" | "with" }) {
 export function PointBeamReplay(props: Props) {
   const withoutStatus = toCase3V2SideStatus(props.withoutStatus);
   const withStatus = toCase3V2SideStatus(props.withStatus);
-  const completeCount = props.withoutPoints.length;
+  const progressSide = props.progressSide ?? "without";
+  const completeCount = v2ReplayCompleteCount(
+    progressSide,
+    props.withoutPoints.length,
+    (props.withPoints ?? []).length,
+  );
   const windowNos = pointProgressRouteNos(
     props.routeNos,
     completeCount,
@@ -75,8 +91,13 @@ export function PointBeamReplay(props: Props) {
   const withoutByNo = new Map(
     props.withoutPoints.map((p) => [p.no, p] as const),
   );
+  const withByNo = new Map(
+    (props.withPoints ?? []).map((p) => [p.no, p] as const),
+  );
+  const progressByNo = progressSide === "with" ? withByNo : withoutByNo;
+  const withPeers = props.withPeerPoints ?? null;
   const doneInWindow = slots.filter(
-    (no) => no != null && withoutByNo.has(no),
+    (no) => no != null && progressByNo.has(no),
   ).length;
   const showTrack = doneInWindow > 0;
   /** 进度条宽；游标贴蓝条前端，避免盖住列心 P##（对齐静态稿）。 */
@@ -84,7 +105,12 @@ export function PointBeamReplay(props: Props) {
   const cursorLeft = showTrack ? progressWidth - CURSOR_SIZE : 0;
 
   return (
-    <div className="case3v2-replay" data-region="PointBeamReplay">
+    <div
+      className="case3v2-replay"
+      data-region="PointBeamReplay"
+      data-replay-progress-side={progressSide}
+      data-replay-done={String(doneInWindow)}
+    >
       <div className="case3v2-replay-controls">
         <div className="case3v2-replay-title">点位波束回溯</div>
         <div className="case3v2-side-bar" data-side="without">
@@ -173,7 +199,7 @@ export function PointBeamReplay(props: Props) {
             {slots.map((no, i) => (
               <div
                 className={`case3v2-replay-col${
-                  no != null && withoutByNo.has(no) ? " is-done" : ""
+                  no != null && progressByNo.has(no) ? " is-done" : ""
                 }`}
                 key={`h-${i}`}
               >
@@ -215,17 +241,43 @@ export function PointBeamReplay(props: Props) {
             })}
           </div>
           <div className="case3v2-replay-row" data-replay-with>
-            {slots.map((_no, i) => (
-              <div
-                className="case3v2-replay-cell case3v2-replay-cell--with"
-                key={`w-${i}`}
-              >
-                <span className="case3v2-replay-cell__value" data-replay-w-value>
-                  --
-                </span>
-                <span className="case3v2-replay-cell__label">预测波</span>
-              </div>
-            ))}
+            {slots.map((no, i) => {
+              const withPoint = no == null ? null : (withByNo.get(no) ?? null);
+              const peer = no == null ? null : peerPointByNo(withPeers, no);
+              const tone = withReplayTone(withPoint, peer);
+              const toneClass =
+                tone === "ok" ? " is-ok" : tone === "fail" ? " is-fail" : "";
+              return (
+                <div
+                  className={`case3v2-replay-cell case3v2-replay-cell--with${toneClass}`}
+                  data-replay-w-tone={tone}
+                  key={`w-${i}`}
+                >
+                  <span className="case3v2-replay-cell__value" data-replay-w-value>
+                    {withPoint ? String(withPoint.selectedBeamId) : "--"}
+                  </span>
+                  <span className="case3v2-replay-cell__label">预测波</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="case3v2-check-layer" data-replay-checks aria-hidden>
+            {slots.map((no, i) => {
+              const withPoint = no == null ? null : (withByNo.get(no) ?? null);
+              const peer = no == null ? null : peerPointByNo(withPeers, no);
+              const tone = withReplayTone(withPoint, peer);
+              if (tone !== "ok" && tone !== "fail") return null;
+              return (
+                <div
+                  className={`case3v2-check is-${tone}`}
+                  data-replay-check={tone}
+                  data-replay-check-slot={String(i)}
+                  data-replay-check-no={no == null ? undefined : String(no)}
+                  style={{ left: `${CHECK_LEFT0 + i * SLOT_PITCH}px` }}
+                  key={`ck-${i}`}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

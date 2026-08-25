@@ -8,6 +8,8 @@ import { ViewModeToggle } from "./ViewModeToggle";
 
 type Props = {
   currentPoint?: Case3Point | null;
+  peerPoint?: Case3Point | null;
+  beamMode?: "without" | "with";
   onOpenSiteEnv: () => void;
 };
 
@@ -30,7 +32,11 @@ export function MapHud(props: Props) {
         {"现场环境 >"}
       </button>
       <ViewModeToggle />
-      <BeamMatrixCard point={props.currentPoint ?? null} />
+      <BeamMatrixCard
+        mode={props.beamMode ?? "without"}
+        point={props.currentPoint ?? null}
+        peerPoint={props.peerPoint ?? null}
+      />
     </section>
   );
 }

@@ -156,7 +156,7 @@ describe("Case3V2Page without flow", () => {
     const { view } = renderPage(running(1, 1, null));
     expect(view.container.querySelectorAll('[data-pin-lit="1"]')).toHaveLength(1);
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P1");
-    expect(view.container.querySelector("[data-beam-id]")?.textContent).toBe("10");
+    expect(view.container.querySelector("[data-beam-id-value]")?.textContent).toBe("10");
     const values = [...view.container.querySelectorAll("[data-replay-wo-value]")].map(
       (el) => el.textContent,
     );
@@ -180,7 +180,7 @@ describe("Case3V2Page without flow", () => {
     const next = renderPage(running(3, 0, 25));
     expect(next.view.container.querySelectorAll('[data-pin-lit="1"]')).toHaveLength(3);
     expect(next.view.container.querySelector("[data-point-value]")?.textContent).toBe("P3");
-    expect(next.view.container.querySelector("[data-beam-id]")?.textContent).toBe("30");
+    expect(next.view.container.querySelector("[data-beam-id-value]")?.textContent).toBe("30");
     expect(
       next.view.container.querySelector("[data-beam-crosshair]")?.getAttribute("data-beam-id"),
     ).toBe("30");

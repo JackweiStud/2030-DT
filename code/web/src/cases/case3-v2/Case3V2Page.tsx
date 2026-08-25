@@ -15,6 +15,7 @@ import { BottomDock } from "./components/BottomDock";
 import { MapHud } from "./components/MapHud";
 import { MapRenderer2D } from "./components/map/MapRenderer2D";
 import { completePointsOf, latestCompletePoint } from "./v2CompletePoints";
+import { peerPointByNo, v2LiveMapSide } from "./v2WithCompare";
 import "./case3v2.css";
 
 type Props = {
@@ -42,25 +43,35 @@ export function Case3V2Page(props: Props) {
     onBusyChange,
   });
   const view = selectCase3Presentation(ctrl.state);
-  const withoutComplete = completePointsOf(view.withoutKpiSnapshot);
-  const currentWithoutPoint = latestCompletePoint(view.withoutKpiSnapshot);
+  const mapSide = v2LiveMapSide(view);
+  const liveSnapshot =
+    mapSide === "with" ? view.withKpiSnapshot : view.withoutKpiSnapshot;
+  const mapPoints = completePointsOf(liveSnapshot);
+  const currentPoint = latestCompletePoint(liveSnapshot);
+  const peerPoint =
+    mapSide === "with" && currentPoint
+      ? peerPointByNo(view.withPeerPoints, currentPoint.no)
+      : null;
 
   return (
     <main
       className="case3v2-page"
       data-testid="case3-v2-page"
       data-state={view.dataState}
+      data-map-side={mapSide}
     >
       <section className="case3v2-map-stage" data-region="MapStage">
         <MapRenderer2D
           ref={mapRef}
           baseRoute={view.baseRoute}
-          points={withoutComplete}
+          points={mapPoints}
           stageElementRef={stageElementRef}
         />
       </section>
       <MapHud
-        currentPoint={currentWithoutPoint}
+        beamMode={mapSide}
+        currentPoint={currentPoint}
+        peerPoint={peerPoint}
         onOpenSiteEnv={openSiteEnv}
       />
       <BottomDock

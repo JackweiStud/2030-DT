@@ -28,6 +28,7 @@ export function isLegalBeamId(id: number): boolean {
 }
 
 export type BeamCellRole = "best" | "scan" | null;
+export type WithBeamCellRole = "pred" | "best" | null;
 
 /**
  * 同格最优波优先于扫描波；非法 id 不进格子。
@@ -45,6 +46,21 @@ export function beamCellRole(
   if (scanBeamIds?.some((scanId) => isLegalBeamId(scanId) && scanId === id)) {
     return "scan";
   }
+  return null;
+}
+
+/**
+ * With 格子：无扫描波。同格时预测波覆盖最优波；非法 id 不进格子。
+ */
+export function withBeamCellRole(
+  row: number,
+  col: number,
+  predId: number | null,
+  bestId: number | null,
+): WithBeamCellRole {
+  const id = row * CASE3V2_BEAM_GRID_SIZE + col;
+  if (predId != null && isLegalBeamId(predId) && id === predId) return "pred";
+  if (bestId != null && isLegalBeamId(bestId) && id === bestId) return "best";
   return null;
 }
 

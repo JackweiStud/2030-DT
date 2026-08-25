@@ -188,7 +188,7 @@ test.describe("case3 v2 without (frontend-isolated)", () => {
 
     await expect(root.locator('[data-pin-lit="1"]')).toHaveCount(1, { timeout: 10000 });
     await expect(root.locator("[data-point-value]")).toHaveText("P1");
-    await expect(root.locator("[data-beam-id]")).toHaveText("10");
+    await expect(root.locator("[data-beam-id-value]")).toHaveText("10");
     await expect(root.locator("[data-replay-wo-value]").nth(0)).toHaveText("10");
     await expect(root.locator("[data-replay-wo-value]").nth(1)).toHaveText("--");
     await expect(root.locator("[data-cost-wo]")).toHaveText("25.0");
@@ -198,13 +198,13 @@ test.describe("case3 v2 without (frontend-isolated)", () => {
 
     await expect(root.locator('[data-pin-lit="1"]')).toHaveCount(2, { timeout: 10000 });
     await expect(root.locator("[data-point-value]")).toHaveText("P2");
-    await expect(root.locator("[data-beam-id]")).toHaveText("20");
+    await expect(root.locator("[data-beam-id-value]")).toHaveText("20");
     await expect(root.locator("[data-replay-wo-value]").nth(1)).toHaveText("20");
     await expect(root.locator("[data-thr-dot-wo]")).toHaveCount(2);
 
     await expect(root.locator('[data-pin-lit="1"]')).toHaveCount(3, { timeout: 10000 });
     await expect(root.locator("[data-point-value]")).toHaveText("P3");
-    await expect(root.locator("[data-beam-id]")).toHaveText("30");
+    await expect(root.locator("[data-beam-id-value]")).toHaveText("30");
     await expect(root.locator("[data-replay-wo-value]").nth(2)).toHaveText("30");
     await expect(root.locator("[data-thr-dot-wo]")).toHaveCount(3);
     await expect(root.locator("[data-walked-inner]")).toHaveAttribute("points", /,/);
