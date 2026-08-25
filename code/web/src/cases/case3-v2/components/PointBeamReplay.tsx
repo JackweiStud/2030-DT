@@ -10,6 +10,7 @@ import {
   pointProgressWindowRange,
 } from "../../case3/metrics/case3Metrics";
 import type { Case3Point } from "../../case3/types";
+import { CASE3_ADAPTER_RETRY_HINT } from "../../case3/state/case3Reducer";
 import {
   case3V2StatusClass,
   case3V2StatusIsRunning,
@@ -40,6 +41,10 @@ type Props = {
   progressSide?: V2LiveMapSide;
   withoutStatus: string;
   withStatus: string;
+  withoutBadgeError?: boolean;
+  withBadgeError?: boolean;
+  withoutRetryHint?: boolean;
+  withRetryHint?: boolean;
   startWithoutEnabled: boolean;
   startWithEnabled: boolean;
   reinitWithoutEnabled: boolean;
@@ -61,17 +66,39 @@ function resetClass(enabled: boolean): string {
   return enabled ? "is-ready" : "is-off";
 }
 
-function StatusLabel(props: { status: string; side: "without" | "with" }) {
+function StatusLabel(props: {
+  status: string;
+  side: "without" | "with";
+  error?: boolean;
+  retryHint?: boolean;
+}) {
   const running = case3V2StatusIsRunning(props.status);
+  const error = Boolean(props.error) && !running;
+  const retryHint = Boolean(props.retryHint);
+  const className = [
+    "case3v2-side-status",
+    case3V2StatusClass(props.status),
+    error ? "is-error" : "",
+    retryHint ? "is-retrying" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <span
-      className={`case3v2-side-status ${case3V2StatusClass(props.status)}`.trim()}
+      className={className}
       data-status={props.side}
+      data-status-error={error ? "1" : "0"}
+      data-status-retry={retryHint ? "1" : "0"}
     >
       <span className="case3v2-side-status__text">{props.status}</span>
       {running ? (
         <span className="case3v2-status-ellipsis" aria-hidden data-status-ellipsis>
           <span className="case3v2-status-ellipsis__track" />
+        </span>
+      ) : null}
+      {retryHint ? (
+        <span className="case3v2-side-status__retry" data-status-retry-text>
+          {CASE3_ADAPTER_RETRY_HINT}
         </span>
       ) : null}
     </span>
@@ -231,7 +258,12 @@ export function PointBeamReplay(props: Props) {
           </span>
           <div className="case3v2-side-copy">
             <span className="case3v2-side-name">无DT</span>
-            <StatusLabel status={withoutStatus} side="without" />
+            <StatusLabel
+              status={withoutStatus}
+              side="without"
+              error={props.withoutBadgeError}
+              retryHint={props.withoutRetryHint}
+            />
           </div>
           <div className="case3v2-side-actions">
             <button
@@ -261,7 +293,12 @@ export function PointBeamReplay(props: Props) {
           </span>
           <div className="case3v2-side-copy">
             <span className="case3v2-side-name">有DT</span>
-            <StatusLabel status={withStatus} side="with" />
+            <StatusLabel
+              status={withStatus}
+              side="with"
+              error={props.withBadgeError}
+              retryHint={props.withRetryHint}
+            />
           </div>
           <div className="case3v2-side-actions">
             <button

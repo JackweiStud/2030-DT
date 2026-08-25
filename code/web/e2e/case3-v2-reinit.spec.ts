@@ -266,12 +266,27 @@ test.describe("case3 v2 reinit (frontend-isolated)", () => {
     await expect(root.locator("[data-replay-wo-value]").nth(2)).toHaveText("30");
 
     await page.getByTitle("启动有 DT").click();
-    await expect(root).toHaveAttribute("data-map-cleared", "1");
-    await expect(root).toHaveAttribute("data-map-side", "without");
-    await expect(root.locator("[data-beam-mode]")).toHaveAttribute("data-beam-mode", "without");
-    await expect(root.locator("[data-legend-scan]")).toHaveText("扫描波");
-    await expect(root.locator("[data-legend-pred]")).toHaveCount(0);
-    await expect(root.locator('[data-pin-lit="1"]')).toHaveCount(0);
+    await expect
+      .poll(() =>
+        root.evaluate((element) => ({
+          cleared: element.getAttribute("data-map-cleared"),
+          mapSide: element.getAttribute("data-map-side"),
+          beamMode: element
+            .querySelector("[data-beam-mode]")
+            ?.getAttribute("data-beam-mode"),
+          scanLegend: element.querySelector("[data-legend-scan]")?.textContent,
+          predLegendCount: element.querySelectorAll("[data-legend-pred]").length,
+          litPins: element.querySelectorAll('[data-pin-lit="1"]').length,
+        })),
+      )
+      .toEqual({
+        cleared: "1",
+        mapSide: "without",
+        beamMode: "without",
+        scanLegend: "扫描波",
+        predLegendCount: 0,
+        litPins: 0,
+      });
     await expect(root.locator('[data-pin-lit="1"]')).toHaveCount(1, { timeout: 10000 });
     await expect(root).toHaveAttribute("data-map-cleared", "0");
     await expect(root).toHaveAttribute("data-map-side", "with");

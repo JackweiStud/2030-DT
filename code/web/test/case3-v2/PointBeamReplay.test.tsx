@@ -8,6 +8,10 @@ import {
   CASE3V2_REPLAY_SLOT_PITCH,
   PointBeamReplay,
 } from "../../src/cases/case3-v2/components/PointBeamReplay";
+import {
+  CASE3_ADAPTER_ERROR_BADGE,
+  CASE3_ADAPTER_RETRY_HINT,
+} from "../../src/cases/case3/state/case3Reducer";
 import type { Case3Point } from "../../src/cases/case3/types";
 // @ts-expect-error vitest 跑在 Node，tsconfig 未纳入 @types/node
 import { readFileSync } from "fs";
@@ -57,6 +61,14 @@ function renderReplay(
     withPoints?: Case3Point[];
     withPeerPoints?: Case3Point[] | null;
     progressSide?: "without" | "with";
+    withoutStatus?: string;
+    withStatus?: string;
+    withoutBadgeError?: boolean;
+    withBadgeError?: boolean;
+    withoutRetryHint?: boolean;
+    withRetryHint?: boolean;
+    withoutPlayBusy?: boolean;
+    withPlayBusy?: boolean;
   } = {},
 ) {
   const nos = extras.routeNos ?? Array.from({ length: 25 }, (_, i) => i + 1);
@@ -67,14 +79,18 @@ function renderReplay(
       withPoints={extras.withPoints}
       withPeerPoints={extras.withPeerPoints}
       progressSide={extras.progressSide}
-      withoutStatus="测试中"
-      withStatus="等待无DT测试完成"
+      withoutStatus={extras.withoutStatus ?? "测试中"}
+      withStatus={extras.withStatus ?? "等待无DT测试完成"}
+      withoutBadgeError={extras.withoutBadgeError}
+      withBadgeError={extras.withBadgeError}
+      withoutRetryHint={extras.withoutRetryHint}
+      withRetryHint={extras.withRetryHint}
       startWithoutEnabled={false}
       startWithEnabled={false}
       reinitWithoutEnabled={false}
       reinitWithEnabled={false}
-      withoutPlayBusy
-      withPlayBusy={false}
+      withoutPlayBusy={extras.withoutPlayBusy ?? true}
+      withPlayBusy={extras.withPlayBusy ?? false}
       onStartWithout={noop}
       onStartWith={noop}
       onReinitWithout={noop}
@@ -121,6 +137,111 @@ describe("PointBeamReplay without", () => {
     );
     expect(values[0]).toBe("102");
     expect(values[19]).toBe("121");
+  });
+
+  it("重置中使用同一套动态省略号，不走错误样式", () => {
+    const { container } = renderReplay([], {
+      withoutStatus: "重置中",
+      withoutPlayBusy: false,
+      withPlayBusy: false,
+    });
+    const status = container.querySelector('[data-status="without"]');
+    expect(status?.textContent).toContain("重置中");
+    expect(status?.classList.contains("is-running")).toBe(true);
+    expect(status?.classList.contains("is-error")).toBe(false);
+    expect(container.querySelector("[data-status-ellipsis]")).not.toBeNull();
+  });
+});
+
+describe("PointBeamReplay status error and retry", () => {
+  it("四类错误文案使用错误样式，不显示省略号或重试中", () => {
+    const cases = [
+      { status: "执行失败", side: "without" as const },
+      { status: "重置失败", side: "with" as const },
+      { status: "结果不完整已自动回退", side: "without" as const },
+      { status: CASE3_ADAPTER_ERROR_BADGE, side: "with" as const },
+    ];
+    for (const item of cases) {
+      const view = renderReplay([], {
+        withoutStatus: item.side === "without" ? item.status : "未开始",
+        withStatus: item.side === "with" ? item.status : "未开始",
+        withoutBadgeError: item.side === "without",
+        withBadgeError: item.side === "with",
+        withoutPlayBusy: false,
+        withPlayBusy: false,
+      });
+      const status = view.container.querySelector(`[data-status="${item.side}"]`);
+      expect(status?.textContent).toContain(item.status);
+      expect(status?.classList.contains("is-error")).toBe(true);
+      expect(status?.getAttribute("data-status-error")).toBe("1");
+      expect(status?.classList.contains("is-running")).toBe(false);
+      expect(view.container.querySelector("[data-status-ellipsis]")).toBeNull();
+      expect(view.container.querySelector("[data-status-retry-text]")).toBeNull();
+      view.unmount();
+    }
+    const css = readFileSync("src/cases/case3-v2/case3v2.css", "utf8") as string;
+    expect(css).toMatch(/\.case3v2-side-status\.is-error \{[^}]*color:\s*#f87171/);
+  });
+
+  it("retryHint=true 时出现重试中，false 时消失；忙态主状态保持测试中", () => {
+    const first = renderReplay([], {
+      withoutStatus: "测试中",
+      withoutRetryHint: true,
+    });
+    const status = first.container.querySelector('[data-status="without"]');
+    expect(status?.textContent).toContain("测试中");
+    expect(status?.textContent).toContain(CASE3_ADAPTER_RETRY_HINT);
+    expect(status?.classList.contains("is-running")).toBe(true);
+    expect(status?.classList.contains("is-error")).toBe(false);
+    expect(status?.getAttribute("data-status-error")).toBe("0");
+    expect(status?.getAttribute("data-status-retry")).toBe("1");
+    expect(first.container.querySelector("[data-status-ellipsis]")).not.toBeNull();
+    expect(first.container.querySelector("[data-status-retry-text]")?.textContent).toBe(
+      CASE3_ADAPTER_RETRY_HINT,
+    );
+
+    first.rerender(
+      <PointBeamReplay
+        routeNos={Array.from({ length: 25 }, (_, i) => i + 1)}
+        withoutPoints={[]}
+        withoutStatus="测试中"
+        withStatus="等待无DT测试完成"
+        withoutRetryHint={false}
+        startWithoutEnabled={false}
+        startWithEnabled={false}
+        reinitWithoutEnabled={false}
+        reinitWithEnabled={false}
+        withoutPlayBusy
+        withPlayBusy={false}
+        onStartWithout={noop}
+        onStartWith={noop}
+        onReinitWithout={noop}
+        onReinitWith={noop}
+      />,
+    );
+    const after = first.container.querySelector('[data-status="without"]');
+    expect(after?.textContent).toContain("测试中");
+    expect(after?.textContent).not.toContain(CASE3_ADAPTER_RETRY_HINT);
+    expect(after?.classList.contains("is-error")).toBe(false);
+    expect(after?.getAttribute("data-status-retry")).toBe("0");
+    expect(first.container.querySelector("[data-status-retry-text]")).toBeNull();
+    expect(first.container.querySelector("[data-status-ellipsis]")).not.toBeNull();
+  });
+
+  it("忙态连接异常不被改成红色错误主状态，重置中同样保留省略号和重试中", () => {
+    const { container } = renderReplay([], {
+      withoutStatus: "重置中",
+      withoutRetryHint: true,
+      withoutBadgeError: true,
+      withoutPlayBusy: false,
+    });
+    const status = container.querySelector('[data-status="without"]');
+    expect(status?.textContent).toContain("重置中");
+    expect(status?.textContent).toContain(CASE3_ADAPTER_RETRY_HINT);
+    expect(status?.classList.contains("is-running")).toBe(true);
+    expect(status?.classList.contains("is-error")).toBe(false);
+    expect(status?.getAttribute("data-status-error")).toBe("0");
+    expect(container.querySelector("[data-status-ellipsis]")).not.toBeNull();
   });
 });
 

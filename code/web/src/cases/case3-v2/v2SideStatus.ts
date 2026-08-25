@@ -13,7 +13,7 @@ export function toCase3V2SideStatus(badge: string): string {
 }
 
 export function case3V2StatusIsRunning(status: string): boolean {
-  return status === "测试中";
+  return status === "测试中" || status === "重置中";
 }
 
 export function case3V2StatusClass(status: string): string {

@@ -173,7 +173,13 @@ describe("Case3V2Page with flow", () => {
     expect(view.container.querySelector("[data-testid='case3-v2-page']")?.getAttribute("data-state")).toBe(
       "with-running",
     );
+    expect(view.container.querySelector("[data-map-cleared]")?.getAttribute("data-map-cleared")).toBe(
+      "1",
+    );
     expect(view.container.querySelector("[data-map-side]")?.getAttribute("data-map-side")).toBe(
+      "without",
+    );
+    expect(view.container.querySelector("[data-map-source-side]")?.getAttribute("data-map-source-side")).toBe(
       "with",
     );
     expect(view.container.querySelectorAll(".case3v2-pin")).toHaveLength(5);
@@ -182,8 +188,9 @@ describe("Case3V2Page with flow", () => {
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P--");
     expect(view.container.querySelector("[data-beam-id-value]")?.textContent).toBe("--");
     expect(view.container.querySelector("[data-beam-crosshair]")).toBeNull();
-    expect(view.container.querySelector("[data-legend-pred]")?.textContent).toBe("预测波");
-    expect(view.container.querySelector("[data-legend-scan]")).toBeNull();
+    expect(view.container.querySelector("[data-legend-scan]")?.textContent).toBe("扫描波");
+    expect(view.container.querySelector("[data-legend-best]")?.textContent).toBe("最优波");
+    expect(view.container.querySelector("[data-legend-pred]")).toBeNull();
     const wo = [...view.container.querySelectorAll("[data-replay-wo-value]")].map(
       (el) => el.textContent,
     );

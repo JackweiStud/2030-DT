@@ -35,6 +35,10 @@ export function BottomDock(props: Props) {
         progressSide={v2ReplayDriveSide(view)}
         withoutStatus={view.withoutBadge}
         withStatus={view.withBadge}
+        withoutBadgeError={view.withoutBadgeError}
+        withBadgeError={view.withBadgeError}
+        withoutRetryHint={view.withoutRetryHint}
+        withRetryHint={view.withRetryHint}
         startWithoutEnabled={view.startWithoutEnabled}
         startWithEnabled={view.startWithEnabled}
         reinitWithoutEnabled={view.reinitWithoutEnabled}

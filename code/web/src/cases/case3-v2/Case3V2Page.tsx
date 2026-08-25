@@ -53,23 +53,39 @@ export function Case3V2Page(props: Props) {
         ? view.withoutKpiSnapshot
         : null;
   const startCompleteCount = completePointsOf(startSideSnapshot).length;
-  const [mapHoldEmpty, setMapHoldEmpty] = useState(
-    () => ctrl.state.activeAction?.kind === "reinit",
-  );
-
-  useEffect(() => {
-    if (view.activeAction?.kind === "reinit") {
-      setMapHoldEmpty(true);
-    }
-  }, [view.activeAction?.kind, view.activeAction?.side]);
+  const [mapHoldEmpty, setMapHoldEmpty] = useState(() => {
+    if (ctrl.state.failure) return true;
+    const action = ctrl.state.activeAction;
+    if (action?.kind === "reinit") return true;
+    if (action?.kind === "start") return startCompleteCount === 0;
+    return false;
+  });
 
   useEffect(() => {
     if (view.activeStartSide && startCompleteCount > 0) {
       setMapHoldEmpty(false);
+      return;
     }
-  }, [view.activeStartSide, startCompleteCount]);
+    if (view.activeAction || ctrl.state.failure) {
+      setMapHoldEmpty(true);
+    }
+  }, [
+    view.activeAction,
+    view.activeAction?.kind,
+    view.activeAction?.side,
+    view.activeAction?.generation,
+    view.activeStartSide,
+    startCompleteCount,
+    ctrl.state.failure,
+  ]);
 
-  const mapCleared = mapHoldEmpty;
+  // failure / 尚无首点的活动轮必须在本次 render 就清图，不能等 effect
+  // 再落本地 hold，否则失败切态时可能先闪回一帧另一侧历史。
+  const stateRequiresEmptyMap =
+    Boolean(ctrl.state.failure) ||
+    view.activeAction?.kind === "reinit" ||
+    (view.activeAction?.kind === "start" && startCompleteCount === 0);
+  const mapCleared = mapHoldEmpty || stateRequiresEmptyMap;
   const displayMapSide = v2DisplayMapSide(sourceMapSide, mapCleared);
   const mapPoints = mapCleared ? [] : completePointsOf(liveSnapshot);
   const currentPoint = mapCleared ? null : latestCompletePoint(liveSnapshot);
@@ -110,8 +126,8 @@ export function Case3V2Page(props: Props) {
       />
       <BottomDock
         view={view}
-        onStartWithout={ctrl.onStartWithout}
-        onStartWith={ctrl.onStartWith}
+        onStartWithout={holdMapThen(ctrl.onStartWithout)}
+        onStartWith={holdMapThen(ctrl.onStartWith)}
         onReinitWithout={holdMapThen(ctrl.onReinitWithout)}
         onReinitWith={holdMapThen(ctrl.onReinitWith)}
       />
