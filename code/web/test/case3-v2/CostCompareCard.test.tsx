@@ -1,38 +1,42 @@
 /**
- * Case3 V2 Cost fill：空值隐藏，有值移动不拉伸。
+ * Case3 V2 Cost：数字槽与 SVG 梯形体积填充。
  */
 
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { CostCompareCard } from "../../src/cases/case3-v2/components/CostCompareCard";
-import {
-  CASE3V2_COST_FILL,
-  costFillStyle,
-} from "../../src/cases/case3-v2/v2CostFill";
+import { costFillVolume, CASE3V2_COST_AUX_RANGE } from "../../src/cases/case3-v2/v2CostFill";
 
-describe("costFillStyle", () => {
-  it("空值隐藏", () => {
-    expect(costFillStyle(null, "without")).toEqual({ display: "none" });
-    expect(costFillStyle(undefined, "with")).toEqual({ display: "none" });
+describe("costFillVolume", () => {
+  it("空值不画", () => {
+    expect(costFillVolume(null, "without")).toBeNull();
+    expect(costFillVolume(undefined, "with")).toBeNull();
   });
 
-  it("50% 对齐冻结带顶 94px，且不改宽高", () => {
-    const style = costFillStyle(50, "without");
-    expect(style.display).toBe("block");
-    expect(style.top).toBe("94px");
-    expect(style.transform).toContain("scaleX(1)");
-    expect(style).not.toHaveProperty("width");
-    expect(style).not.toHaveProperty("height");
+  it("0% 贴近近端，100% 贴 aux 上边缘，50% 在中间", () => {
+    const low = costFillVolume(0, "without")!;
+    const mid = costFillVolume(50, "without")!;
+    const high = costFillVolume(100, "without")!;
+    expect(low.clipHeight).toBe(0);
+    expect(high.yCut).toBe(CASE3V2_COST_AUX_RANGE.without.yFar);
+    expect(low.yCut).toBe(CASE3V2_COST_AUX_RANGE.without.yNear);
+    expect(high.yCut).toBeLessThan(mid.yCut);
+    expect(mid.yCut).toBeLessThan(low.yCut);
+    expect(high.clipHeight).toBeGreaterThan(mid.clipHeight);
   });
 
-  it("100% 高于 0%，透视 scaleX 更小", () => {
-    const high = costFillStyle(100, "without");
-    const low = costFillStyle(0, "without");
-    expect(high.top).toBe(`${CASE3V2_COST_FILL.topAt100}px`);
-    expect(low.top).toBe(`${CASE3V2_COST_FILL.topAt0}px`);
-    const highScale = Number(/scaleX\((.+)\)/.exec(high.transform ?? "")?.[1]);
-    const lowScale = Number(/scaleX\((.+)\)/.exec(low.transform ?? "")?.[1]);
-    expect(highScale).toBeLessThan(lowScale);
+  it("左右侧都沿 aux 边缘裁切", () => {
+    const wo = costFillVolume(23.1, "without")!;
+    const w = costFillVolume(23.1, "with")!;
+    expect(wo.surfaceX2).toBeGreaterThan(wo.surfaceX1);
+    expect(w.surfaceX2).toBeGreaterThan(w.surfaceX1);
+    expect(costFillVolume(100, "with")!.yCut).toBe(CASE3V2_COST_AUX_RANGE.with.yFar);
+    const topWo = costFillVolume(100, "without")!;
+    expect(topWo.surfaceX2 - topWo.surfaceX1).toBeGreaterThan(90);
+    expect(
+      costFillVolume(85, "without")!.surfaceX2 -
+        costFillVolume(85, "without")!.surfaceX1,
+    ).toBeGreaterThan(90);
   });
 });
 
@@ -43,24 +47,51 @@ describe("CostCompareCard", () => {
     );
     expect(container.querySelector("[data-cost-wo]")?.textContent).toBe("--");
     expect(container.querySelector("[data-cost-w]")?.textContent).toBe("--");
+    expect(container.querySelector("[data-cost-wo]")?.classList.contains("case3v2-cost-value__num")).toBe(
+      true,
+    );
     expect(
-      (container.querySelector("[data-cost-fill-wo]") as HTMLElement).style.display,
-    ).toBe("none");
-    expect(
-      (container.querySelector("[data-cost-fill-w]") as HTMLElement).style.display,
-    ).toBe("none");
+      (container.querySelector("[data-cost-wo]")?.nextElementSibling as HTMLElement)
+        .classList.contains("case3v2-cost-value__unit"),
+    ).toBe(true);
+    expect(container.querySelector("[data-cost-fill-wo]")?.hasAttribute("hidden")).toBe(
+      true,
+    );
+    expect(container.querySelector("[data-cost-fill-w]")?.hasAttribute("hidden")).toBe(
+      true,
+    );
   });
 
-  it("Without 实时值显示 fill，With 仍隐藏", () => {
+  it("Without 实时值显示 SVG 体积，With 仍隐藏", () => {
     const { container } = render(
       <CostCompareCard withoutCostPct={25} withCostPct={null} deltaText="--" />,
     );
     expect(container.querySelector("[data-cost-wo]")?.textContent).toBe("25.0");
     expect(container.querySelector("[data-cost-w]")?.textContent).toBe("--");
-    const wo = container.querySelector("[data-cost-fill-wo]") as HTMLElement;
-    const w = container.querySelector("[data-cost-fill-w]") as HTMLElement;
-    expect(wo.style.display).toBe("block");
-    expect(wo.style.top).not.toBe("94px");
-    expect(w.style.display).toBe("none");
+    const wo = container.querySelector("[data-cost-fill-wo]") as SVGSVGElement;
+    const w = container.querySelector("[data-cost-fill-w]") as SVGSVGElement;
+    expect(wo.hasAttribute("hidden")).toBe(false);
+    expect(wo.querySelector("[data-cost-fill-clip]")).not.toBeNull();
+    expect(wo.querySelector("line")).toBeNull();
+    expect(w.hasAttribute("hidden")).toBe(true);
+  });
+
+  it("有 DT 填充用切图青绿，无 DT 仍为灰白", () => {
+    const { container } = render(
+      <CostCompareCard withoutCostPct={50} withCostPct={25} deltaText="-50.0" />,
+    );
+    const woStops = [
+      ...container.querySelectorAll("[data-cost-fill-wo] stop"),
+    ].map((el) => el.getAttribute("stop-color"));
+    const wStops = [
+      ...container.querySelectorAll("[data-cost-fill-w] stop"),
+    ].map((el) => el.getAttribute("stop-color"));
+    expect(woStops).toContain("#ffffff");
+    expect(woStops).toContain("#f4f7fb");
+    expect(wStops).toContain("#1affa8");
+    expect(wStops).toContain("#b8ffe8");
+    expect(wStops).not.toContain("#f4f7fb");
+    expect(container.querySelector("[data-cost-fill-wo] line")).toBeNull();
+    expect(container.querySelector("[data-cost-fill-w] line")).toBeNull();
   });
 });

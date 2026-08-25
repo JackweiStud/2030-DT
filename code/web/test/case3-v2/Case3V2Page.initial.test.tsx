@@ -122,6 +122,7 @@ describe("Case3V2Page initial", () => {
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P--");
     expect(view.container.querySelector("[data-beam-id]")?.textContent).toBe("--");
     expect(view.container.querySelectorAll(".case3v2-beam-cell")).toHaveLength(256);
+    expect(view.container.querySelector("[data-beam-crosshair]")).toBeNull();
   });
 
   it("baseline 未就绪时 BA 为 --", () => {

@@ -8,11 +8,20 @@ import {
   beamCellRole,
   legalSelectedBeamId,
 } from "../v2BeamGrid";
+import {
+  BeamCrosshair,
+  type BeamCrosshairMarker,
+  type BeamCrosshairTone,
+} from "./BeamCrosshair";
+
+export type { BeamCrosshairMarker, BeamCrosshairTone };
 
 const AXIS = Array.from({ length: CASE3V2_BEAM_GRID_SIZE }, (_, i) => i);
 
 type Props = {
   point?: Case3Point | null;
+  crosshairTone?: BeamCrosshairTone;
+  crosshairMarker?: BeamCrosshairMarker;
 };
 
 /**
@@ -84,6 +93,13 @@ export function BeamMatrixCard(props: Props) {
               <span key={`x-${n}`}>{n}</span>
             ))}
           </div>
+          {legalBest == null ? null : (
+            <BeamCrosshair
+              beamId={legalBest}
+              tone={props.crosshairTone ?? "neutral"}
+              marker={props.crosshairMarker ?? "best"}
+            />
+          )}
         </div>
         <div className="case3v2-beam-legend">
           <span className="case3v2-beam-legend__item case3v2-beam-legend__item--scan">

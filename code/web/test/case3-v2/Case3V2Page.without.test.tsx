@@ -143,6 +143,7 @@ describe("Case3V2Page without flow", () => {
     expect(view.container.querySelectorAll('[data-pin-lit="1"]')).toHaveLength(0);
     expect(view.container.querySelector("[data-ue]")).toBeNull();
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P--");
+    expect(view.container.querySelector("[data-beam-crosshair]")).toBeNull();
     expect(view.getByTitle("启动无 DT")).toHaveProperty("disabled", true);
     expect(view.getByTitle("启动有 DT")).toHaveProperty("disabled", true);
     expect(view.container.querySelector('[data-status="without"]')?.textContent).toContain(
@@ -167,9 +168,9 @@ describe("Case3V2Page without flow", () => {
     const { view } = renderPage(running(1, 0, 25));
     expect(view.container.querySelectorAll('[data-pin-lit="1"]')).toHaveLength(1);
     expect(view.container.querySelector("[data-cost-wo]")?.textContent).toBe("25.0");
-    expect(
-      (view.container.querySelector("[data-cost-fill-wo]") as HTMLElement).style.display,
-    ).toBe("block");
+    expect(view.container.querySelector("[data-cost-fill-wo]")?.hasAttribute("hidden")).toBe(
+      false,
+    );
     expect(view.container.querySelector("[data-thr-wo]")?.getAttribute("d")).toContain("M");
     expect(view.container.querySelectorAll("[data-thr-dot-wo]")).toHaveLength(1);
     expect(view.container.querySelector("[data-ba-ok]")?.textContent).toBe("222");
@@ -180,6 +181,12 @@ describe("Case3V2Page without flow", () => {
     expect(next.view.container.querySelectorAll('[data-pin-lit="1"]')).toHaveLength(3);
     expect(next.view.container.querySelector("[data-point-value]")?.textContent).toBe("P3");
     expect(next.view.container.querySelector("[data-beam-id]")?.textContent).toBe("30");
+    expect(
+      next.view.container.querySelector("[data-beam-crosshair]")?.getAttribute("data-beam-id"),
+    ).toBe("30");
+    expect(
+      next.view.container.querySelector("[data-beam-crosshair]")?.getAttribute("data-tone"),
+    ).toBe("neutral");
     expect(next.view.container.querySelector("[data-walked-inner]")?.getAttribute("points")?.trim().split(/\s+/)).toHaveLength(3);
     const replay = [...next.view.container.querySelectorAll("[data-replay-wo-value]")].map(
       (el) => el.textContent,
@@ -205,6 +212,9 @@ describe("Case3V2Page without flow", () => {
     ).toBe("without-completed");
     expect(closing.view.container.querySelector("[data-point-value]")?.textContent).toBe("P3");
     expect(closing.view.container.querySelectorAll(".is-best")).toHaveLength(1);
+    expect(
+      closing.view.container.querySelector("[data-beam-crosshair]")?.getAttribute("data-beam-id"),
+    ).toBe("30");
     expect(closing.ctrl.busy).toBe(true);
     expect(closing.view.getByTitle("启动有 DT")).toHaveProperty("disabled", true);
     expect(closing.view.getByTitle("重置无 DT")).toHaveProperty("disabled", true);
