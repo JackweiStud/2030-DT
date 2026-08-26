@@ -15,6 +15,14 @@ const config: Case3RuntimeConfig = {
   mapOriginX: 905,
   mapOriginY: 445,
   mapUnitsPerPx: 0.11,
+  v2MapOriginX: 905,
+  v2MapOriginY: 445,
+  v2MapUnitsPerPx: 0.11,
+  v2MapImageScale: 1,
+  v2MapImageRotationDeg: 0,
+  v2MapImageOffsetX: 0,
+  v2MapImageOffsetY: 0,
+  v2DebugShow: true,
 };
 
 function setNaturalSize(image: HTMLImageElement): void {

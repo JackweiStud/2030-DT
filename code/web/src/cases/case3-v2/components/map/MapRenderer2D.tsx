@@ -12,27 +12,31 @@ import {
 } from "react";
 import mapSrc from "../../../../../assets/case3-v2/site-2d.jpg";
 import iconReset from "../../../../../assets/case3-v2/icon-rotate-ccw.svg";
-import { CASE3_MAP_CAPTURE_READY_TIMEOUT_MS } from "../../../case3/config/case3RuntimeConfig";
+import {
+  CASE3_MAP_CAPTURE_READY_TIMEOUT_MS,
+  type Case3RuntimeConfig,
+} from "../../../case3/config/case3RuntimeConfig";
 import type { MapRendererHandle } from "../../../case3/hooks/useCase3Controller";
 import {
-  IDENTITY_MAP_VIEW,
   clientDeltaToStageLogical,
-  isIdentityMapView,
-  mapViewToCssTransform,
   panMapView,
   rotateMapViewByDrag,
   zoomMapViewAtPointer,
-  type MapView,
 } from "../../../case3/metrics/mapProjection";
 import type { BaseRoutePoint, Case3Point } from "../../../case3/types";
 import {
   CASE3V2_MAP_STAGE,
-  pinBoxFromStagePoint,
-  projectBusinessToStage,
-  ueBoxFromStagePoint,
+  formatCase3V2MapEnv,
+  mapImageLayerToCssTransform,
+  mapImageTransformFromConfig,
+  pinBoxFromImagePoint,
+  projectBusinessToImage,
+  type Case3V2MapImageTransform,
+  ueBoxFromImagePoint,
 } from "../../mapProjectionV2";
 
 type Props = {
+  config: Case3RuntimeConfig;
   baseRoute: BaseRoutePoint[];
   /** 最新快照中的完整点；不完整尾点不得传入。 */
   points?: Case3Point[];
@@ -45,9 +49,21 @@ type CaptureWaiter = {
 };
 
 function routePointsAttr(
-  points: Array<{ stageX: number; stageY: number }>,
+  points: Array<{ imageX: number; imageY: number }>,
 ): string {
-  return points.map((p) => `${p.stageX},${p.stageY}`).join(" ");
+  return points.map((p) => `${p.imageX},${p.imageY}`).join(" ");
+}
+
+function sameImageTransform(
+  left: Case3V2MapImageTransform,
+  right: Case3V2MapImageTransform,
+): boolean {
+  return (
+    left.scale === right.scale &&
+    left.rotationDeg === right.rotationDeg &&
+    left.offsetX === right.offsetX &&
+    left.offsetY === right.offsetY
+  );
 }
 
 /**
@@ -55,9 +71,14 @@ function routePointsAttr(
  */
 export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
   function MapRenderer2D(props, ref) {
-    const { baseRoute, points = [], stageElementRef } = props;
+    const { config, baseRoute, points = [], stageElementRef } = props;
     const rootRef = useRef<HTMLDivElement>(null);
-    const [view, setView] = useState<MapView>(IDENTITY_MAP_VIEW);
+    const baseImageTransform = mapImageTransformFromConfig(config);
+    const [imageTransform, setImageTransform] =
+      useState<Case3V2MapImageTransform>(baseImageTransform);
+    const [natural, setNatural] = useState<{ w: number; h: number } | null>(
+      null,
+    );
     const captureReadyRef = useRef(false);
     const captureErrorRef = useRef<Error | null>(null);
     const captureWaitersRef = useRef(new Set<CaptureWaiter>());
@@ -71,7 +92,7 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
       ref,
       () => ({
         resetView() {
-          setView(IDENTITY_MAP_VIEW);
+          setImageTransform(baseImageTransform);
         },
         async prepareCapture() {
           if (captureReadyRef.current) return;
@@ -105,7 +126,7 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
           });
         },
       }),
-      [],
+      [baseImageTransform],
     );
 
     useEffect(
@@ -128,7 +149,25 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
           (e.clientX - rect.left) / scaleRatio - el.clientWidth / 2;
         const ly =
           (e.clientY - rect.top) / scaleRatio - el.clientHeight / 2;
-        setView((v: MapView) => zoomMapViewAtPointer(v, lx, ly, e.deltaY < 0));
+        setImageTransform((v: Case3V2MapImageTransform) => {
+          const next = zoomMapViewAtPointer(
+            {
+              scale: v.scale,
+              rotation: v.rotationDeg,
+              offsetX: v.offsetX,
+              offsetY: v.offsetY,
+            },
+            lx,
+            ly,
+            e.deltaY < 0,
+          );
+          return {
+            scale: next.scale,
+            rotationDeg: next.rotation,
+            offsetX: next.offsetX,
+            offsetY: next.offsetY,
+          };
+        });
       };
       el.addEventListener("wheel", onWheel, { passive: false });
       return () => el.removeEventListener("wheel", onWheel);
@@ -159,13 +198,38 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
       drag.lastY = e.clientY;
       const w = rootRef.current?.clientWidth ?? CASE3V2_MAP_STAGE.width;
       if (drag.mode === "rotate") {
-        setView((v: MapView) => rotateMapViewByDrag(v, dx, w));
+        setImageTransform((v: Case3V2MapImageTransform) => {
+          const next = rotateMapViewByDrag(
+            {
+              scale: v.scale,
+              rotation: v.rotationDeg,
+              offsetX: v.offsetX,
+              offsetY: v.offsetY,
+            },
+            dx,
+            w,
+          );
+          return { ...v, rotationDeg: next.rotation };
+        });
       } else {
-        setView((v: MapView) => panMapView(v, dx, dy));
+        setImageTransform((v: Case3V2MapImageTransform) => {
+          const next = panMapView(
+            {
+              scale: v.scale,
+              rotation: v.rotationDeg,
+              offsetX: v.offsetX,
+              offsetY: v.offsetY,
+            },
+            dx,
+            dy,
+          );
+          return { ...v, offsetX: next.offsetX, offsetY: next.offsetY };
+        });
       }
     };
 
-    const settleCaptureOk = () => {
+    const settleCaptureOk = (img: HTMLImageElement) => {
+      setNatural({ w: img.naturalWidth, h: img.naturalHeight });
       captureReadyRef.current = true;
       captureErrorRef.current = null;
       for (const waiter of captureWaitersRef.current) waiter.resolve();
@@ -179,15 +243,20 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
       captureWaitersRef.current.clear();
     };
 
-    const routePts = baseRoute.map((p) => projectBusinessToStage(p.x, p.y));
+    const routePts = baseRoute.map((p) =>
+      projectBusinessToImage(p.x, p.y, config),
+    );
     const polyline = routePointsAttr(routePts);
     const litNos = new Set(points.map((p) => p.no));
     const walkedPts = [...points]
       .sort((a, b) => a.no - b.no)
-      .map((p) => projectBusinessToStage(p.ue.x, p.ue.y));
+      .map((p) => projectBusinessToImage(p.ue.x, p.ue.y, config));
     const walkedPolyline = routePointsAttr(walkedPts);
     const uePoint = walkedPts.at(-1) ?? null;
-    const ueBox = uePoint ? ueBoxFromStagePoint(uePoint) : null;
+    const ueBox = uePoint ? ueBoxFromImagePoint(uePoint) : null;
+    const routeViewBox = natural ?? { w: 1, h: 1 };
+    const debugEnvText = formatCase3V2MapEnv(imageTransform);
+    const showReset = !sameImageTransform(imageTransform, baseImageTransform);
 
     return (
       <div
@@ -203,123 +272,148 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
         }}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <div
-          className="case3v2-map-transform"
-          style={{ transform: mapViewToCssTransform(view) }}
-        >
-          <img
-            className="case3v2-map-image"
-            src={mapSrc}
-            alt=""
-            draggable={false}
-            onLoad={settleCaptureOk}
-            onError={() =>
-              settleCaptureError(new Error("case3-v2 map image failed to load"))
-            }
-          />
-          <div className="case3v2-route-base" aria-hidden>
-            {routePts.length > 1 ? (
-              <>
-                <svg
-                  className="case3v2-route-svg"
-                  viewBox={`0 0 ${CASE3V2_MAP_STAGE.width} ${CASE3V2_MAP_STAGE.height}`}
-                  preserveAspectRatio="none"
-                >
-                  <polyline
-                    fill="none"
-                    stroke="#ABC5FF80"
-                    strokeWidth={14}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                    points={polyline}
-                  />
-                </svg>
-                <svg
-                  className="case3v2-route-svg"
-                  viewBox={`0 0 ${CASE3V2_MAP_STAGE.width} ${CASE3V2_MAP_STAGE.height}`}
-                  preserveAspectRatio="none"
-                >
-                  <polyline
-                    fill="none"
-                    stroke="#457EF980"
-                    strokeWidth={9}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                    points={polyline}
-                  />
-                </svg>
-              </>
-            ) : null}
-          </div>
-          <div className="case3v2-route-walked" data-walked aria-hidden>
-            {walkedPts.length > 1 ? (
-              <>
-                <svg
-                  className="case3v2-route-svg"
-                  viewBox={`0 0 ${CASE3V2_MAP_STAGE.width} ${CASE3V2_MAP_STAGE.height}`}
-                  preserveAspectRatio="none"
-                >
-                  <polyline
-                    data-walked-outer
-                    fill="none"
-                    stroke="#ABC5FF"
-                    strokeWidth={14}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                    points={walkedPolyline}
-                  />
-                </svg>
-                <svg
-                  className="case3v2-route-svg"
-                  viewBox={`0 0 ${CASE3V2_MAP_STAGE.width} ${CASE3V2_MAP_STAGE.height}`}
-                  preserveAspectRatio="none"
-                >
-                  <polyline
-                    data-walked-inner
-                    fill="none"
-                    stroke="#457EF9"
-                    strokeWidth={9}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                    points={walkedPolyline}
-                  />
-                </svg>
-              </>
-            ) : null}
-          </div>
-          <div className="case3v2-route-points" data-route-points>
-            {baseRoute.map((point, index) => {
-              const stage = routePts[index];
-              if (!stage) return null;
-              const box = pinBoxFromStagePoint(stage);
-              const lit = litNos.has(point.no);
-              return (
-                <div
-                  key={point.no}
-                  className={`case3v2-pin ${lit ? "is-lit" : "is-idle"}`}
-                  data-route-no={point.no}
-                  data-pin-lit={lit ? "1" : "0"}
-                  style={{ left: box.left, top: box.top }}
-                >
-                  <span className="case3v2-pin__icon" aria-hidden />
-                  <span className="case3v2-pin__no">{point.no}</span>
-                </div>
-              );
-            })}
-          </div>
-          {ueBox ? (
-            <div
-              className="case3v2-ue"
-              data-ue
-              style={{ left: ueBox.left, top: ueBox.top }}
+        <div className="case3v2-map-transform">
+          <div
+            className="case3v2-map-image-layer"
+            style={{
+              width: natural?.w,
+              height: natural?.h,
+              transform: mapImageLayerToCssTransform(imageTransform),
+            }}
+          >
+            <img
+              className="case3v2-map-image"
+              src={mapSrc}
+              alt=""
+              draggable={false}
+              onLoad={(e) => settleCaptureOk(e.currentTarget)}
+              onError={() =>
+                settleCaptureError(new Error("case3-v2 map image failed to load"))
+              }
             />
-          ) : null}
+            <div className="case3v2-route-base" aria-hidden>
+              {routePts.length > 1 ? (
+                <>
+                  <svg
+                    className="case3v2-route-svg"
+                    viewBox={`0 0 ${routeViewBox.w} ${routeViewBox.h}`}
+                    preserveAspectRatio="none"
+                  >
+                    <polyline
+                      fill="none"
+                      stroke="#ABC5FF80"
+                      strokeWidth={14}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      points={polyline}
+                    />
+                  </svg>
+                  <svg
+                    className="case3v2-route-svg"
+                    viewBox={`0 0 ${routeViewBox.w} ${routeViewBox.h}`}
+                    preserveAspectRatio="none"
+                  >
+                    <polyline
+                      fill="none"
+                      stroke="#457EF980"
+                      strokeWidth={9}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      points={polyline}
+                    />
+                  </svg>
+                </>
+              ) : null}
+            </div>
+            <div className="case3v2-route-walked" data-walked aria-hidden>
+              {walkedPts.length > 1 ? (
+                <>
+                  <svg
+                    className="case3v2-route-svg"
+                    viewBox={`0 0 ${routeViewBox.w} ${routeViewBox.h}`}
+                    preserveAspectRatio="none"
+                  >
+                    <polyline
+                      data-walked-outer
+                      fill="none"
+                      stroke="#ABC5FF"
+                      strokeWidth={14}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      points={walkedPolyline}
+                    />
+                  </svg>
+                  <svg
+                    className="case3v2-route-svg"
+                    viewBox={`0 0 ${routeViewBox.w} ${routeViewBox.h}`}
+                    preserveAspectRatio="none"
+                  >
+                    <polyline
+                      data-walked-inner
+                      fill="none"
+                      stroke="#457EF9"
+                      strokeWidth={9}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      points={walkedPolyline}
+                    />
+                  </svg>
+                </>
+              ) : null}
+            </div>
+            <div className="case3v2-route-points" data-route-points>
+              {baseRoute.map((point, index) => {
+                const imagePoint = routePts[index];
+                if (!imagePoint) return null;
+                const box = pinBoxFromImagePoint(imagePoint);
+                const lit = litNos.has(point.no);
+                return (
+                  <div
+                    key={point.no}
+                    className={`case3v2-pin ${lit ? "is-lit" : "is-idle"}`}
+                    data-route-no={point.no}
+                    data-pin-lit={lit ? "1" : "0"}
+                    style={{ left: box.left, top: box.top }}
+                  >
+                    <span className="case3v2-pin__icon" aria-hidden />
+                    <span className="case3v2-pin__no">{point.no}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {ueBox ? (
+              <div
+                className="case3v2-ue"
+                data-ue
+                style={{ left: ueBox.left, top: ueBox.top }}
+              />
+            ) : null}
+          </div>
         </div>
-        {!isIdentityMapView(view) ? (
+        {config.v2DebugShow ? (
+          <aside
+            className="case3v2-map-debug"
+            data-map-debug
+            onPointerDown={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+          >
+            <div className="case3v2-map-debug__title">V2 地图调参</div>
+            <textarea
+              className="case3v2-map-debug__env"
+              aria-label="case3-v2 地图显示参数"
+              readOnly
+              value={debugEnvText}
+            />
+            <div className="case3v2-map-debug__hint">
+              复制到 code/web/.env 后重启 dev / 重新 build
+            </div>
+          </aside>
+        ) : null}
+        {showReset ? (
           <button
             type="button"
             className="case3v2-map-reset"
@@ -330,7 +424,7 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
             }}
             onClick={(e) => {
               e.stopPropagation();
-              setView(IDENTITY_MAP_VIEW);
+              setImageTransform(baseImageTransform);
             }}
           >
             <img src={iconReset} alt="" width={16} height={16} draggable={false} />

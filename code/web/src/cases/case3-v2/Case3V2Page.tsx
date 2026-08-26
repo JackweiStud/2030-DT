@@ -113,6 +113,7 @@ export function Case3V2Page(props: Props) {
       <section className="case3v2-map-stage" data-region="MapStage">
         <MapRenderer2D
           ref={mapRef}
+          config={config}
           baseRoute={view.baseRoute}
           points={mapPoints}
           stageElementRef={stageElementRef}

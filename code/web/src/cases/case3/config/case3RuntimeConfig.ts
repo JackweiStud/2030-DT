@@ -9,6 +9,14 @@ export type Case3RuntimeConfig = {
   mapOriginX: number;
   mapOriginY: number;
   mapUnitsPerPx: number;
+  v2MapOriginX: number;
+  v2MapOriginY: number;
+  v2MapUnitsPerPx: number;
+  v2MapImageScale: number;
+  v2MapImageRotationDeg: number;
+  v2MapImageOffsetX: number;
+  v2MapImageOffsetY: number;
+  v2DebugShow: boolean;
 };
 
 const DEFAULTS: Case3RuntimeConfig = {
@@ -16,6 +24,14 @@ const DEFAULTS: Case3RuntimeConfig = {
   mapOriginX: 905,
   mapOriginY: 445,
   mapUnitsPerPx: 0.11,
+  v2MapOriginX: 905,
+  v2MapOriginY: 445,
+  v2MapUnitsPerPx: 0.11,
+  v2MapImageScale: 1,
+  v2MapImageRotationDeg: 0,
+  v2MapImageOffsetX: 0,
+  v2MapImageOffsetY: 0,
+  v2DebugShow: true,
 };
 
 export class Case3ConfigError extends Error {
@@ -81,6 +97,20 @@ function readPositiveFinite(
   return value;
 }
 
+/** 缺失用默认；已提供则必须为 0/1。 */
+function readBooleanFlag(
+  env: EnvLike,
+  key: string,
+  fallback: boolean,
+): boolean {
+  const raw = env[key];
+  if (raw === undefined) return fallback;
+  const trimmed = raw.trim();
+  if (trimmed === "1") return true;
+  if (trimmed === "0") return false;
+  throw new Case3ConfigError(key, `${key} must be 0 or 1`);
+}
+
 /**
  * 解析 Case3 Vite env。
  * @param env 通常传入 import.meta.env
@@ -104,6 +134,46 @@ export function loadCase3RuntimeConfig(
       env,
       "VITE_CASE3_MAP_UNITS_PER_PX",
       DEFAULTS.mapUnitsPerPx,
+    ),
+    v2MapOriginX: readFiniteNumber(
+      env,
+      "VITE_CASE3_V2_MAP_ORIGIN_X",
+      DEFAULTS.v2MapOriginX,
+    ),
+    v2MapOriginY: readFiniteNumber(
+      env,
+      "VITE_CASE3_V2_MAP_ORIGIN_Y",
+      DEFAULTS.v2MapOriginY,
+    ),
+    v2MapUnitsPerPx: readPositiveFinite(
+      env,
+      "VITE_CASE3_V2_MAP_UNITS_PER_PX",
+      DEFAULTS.v2MapUnitsPerPx,
+    ),
+    v2MapImageScale: readPositiveFinite(
+      env,
+      "VITE_CASE3_V2_MAP_IMAGE_SCALE",
+      DEFAULTS.v2MapImageScale,
+    ),
+    v2MapImageRotationDeg: readFiniteNumber(
+      env,
+      "VITE_CASE3_V2_MAP_IMAGE_ROTATION_DEG",
+      DEFAULTS.v2MapImageRotationDeg,
+    ),
+    v2MapImageOffsetX: readFiniteNumber(
+      env,
+      "VITE_CASE3_V2_MAP_IMAGE_OFFSET_X",
+      DEFAULTS.v2MapImageOffsetX,
+    ),
+    v2MapImageOffsetY: readFiniteNumber(
+      env,
+      "VITE_CASE3_V2_MAP_IMAGE_OFFSET_Y",
+      DEFAULTS.v2MapImageOffsetY,
+    ),
+    v2DebugShow: readBooleanFlag(
+      env,
+      "VITE_CASE3_V2_DEGUB_SHOW",
+      DEFAULTS.v2DebugShow,
     ),
   };
 }
