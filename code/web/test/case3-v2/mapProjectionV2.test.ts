@@ -5,10 +5,14 @@
 import { describe, expect, it } from "vitest";
 import {
   CASE3V2_MAP_STAGE,
+  formatBusinessCoordinateRows,
   isImagePointInNaturalBounds,
   mapImageLayerToCssTransform,
+  mapStagePointToImagePoint,
   pinBoxFromImagePoint,
   projectBusinessToImage,
+  projectImageToBusiness,
+  sampleImagePolylineByDistance,
   ueBoxFromImagePoint,
 } from "../../src/cases/case3-v2/mapProjectionV2";
 import type { Case3RuntimeConfig } from "../../src/cases/case3/config/case3RuntimeConfig";
@@ -59,6 +63,53 @@ describe("projectBusinessToImage", () => {
     expect(turn.imageY).toBeCloseTo(454.09);
     expect(end.imageX).toBeCloseTo(923.18);
     expect(end.imageY).toBeCloseTo(608.64);
+  });
+
+  it("site-2d.jpg 原图自然像素可反算为客户 UE 物理坐标", () => {
+    expect(projectImageToBusiness({ imageX: 905, imageY: 445 }, config)).toEqual({
+      x: 0,
+      y: 0,
+      z: 0,
+    });
+    const point = projectImageToBusiness({ imageX: 915, imageY: 465 }, config);
+    expect(point.x).toBeCloseTo(2.2);
+    expect(point.y).toBeCloseTo(1.1);
+    expect(point.z).toBe(0);
+  });
+
+  it("撤销显示平移/旋转/缩放后得到原图自然像素点", () => {
+    expect(
+      mapStagePointToImagePoint(
+        { stageX: 970, stageY: 494 },
+        { w: 1920, h: 988 },
+        { scale: 2, rotationDeg: 0, offsetX: 10, offsetY: -20 },
+      ),
+    ).toEqual({ imageX: 960, imageY: 504 });
+  });
+
+  it("按折线欧式距离等距采样 N 个点，包含首尾", () => {
+    expect(
+      sampleImagePolylineByDistance(
+        [
+          { imageX: 0, imageY: 0 },
+          { imageX: 3, imageY: 4 },
+        ],
+        3,
+      ),
+    ).toEqual([
+      { imageX: 0, imageY: 0 },
+      { imageX: 1.5, imageY: 2 },
+      { imageX: 3, imageY: 4 },
+    ]);
+  });
+
+  it("格式化采样结果为 X,Y,Z 行文本", () => {
+    expect(
+      formatBusinessCoordinateRows([
+        { x: 0, y: -0, z: 0 },
+        { x: 1.234, y: 5.678, z: 0 },
+      ]),
+    ).toBe("0,0,0\n1.23,5.68,0");
   });
 
   it("动态 N 条 L 形路线全部落在当前 site-2d.jpg 原图范围", () => {

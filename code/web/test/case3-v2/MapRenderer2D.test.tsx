@@ -3,7 +3,7 @@
  */
 
 import { createRef } from "react";
-import { act, fireEvent, render } from "@testing-library/react";
+import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MapRenderer2D } from "../../src/cases/case3-v2/components/map/MapRenderer2D";
 import type { Case3RuntimeConfig } from "../../src/cases/case3/config/case3RuntimeConfig";
@@ -149,6 +149,51 @@ describe("Case3V2 MapRenderer2D", () => {
       />,
     );
     expect(view.container.querySelector("[data-map-debug]")).toBeNull();
+  });
+
+  it("debug 面板支持绘制 UE 预置路径并输出 N 个物理坐标", async () => {
+    const ref = createRef<MapRendererHandle>();
+    const view = render(
+      <MapRenderer2D
+        ref={ref}
+        config={config}
+        baseRoute={route}
+        stageElementRef={{ current: document.createElement("div") }}
+      />,
+    );
+    const image = view.container.querySelector(
+      "img.case3v2-map-image",
+    ) as HTMLImageElement;
+    setNaturalSize(image);
+    fireEvent.load(image);
+    const imageLayer = view.container.querySelector(
+      ".case3v2-map-image-layer",
+    ) as HTMLDivElement;
+    await waitFor(() => expect(imageLayer.style.width).toBe("1920px"));
+
+    const drawButton = view.getByRole("button", { name: "绘制路径" });
+    fireEvent.click(drawButton);
+    const interact = view.container.querySelector(
+      ".case3v2-map-interact",
+    ) as HTMLDivElement;
+    fireEvent.click(interact, { clientX: 905, clientY: 445 });
+    fireEvent.click(interact, { clientX: 915, clientY: 445 });
+
+    const coords = view.getByLabelText(
+      "case3-v2 UE预置路径采样坐标",
+    ) as HTMLTextAreaElement;
+    await waitFor(() =>
+      expect(coords.value).toBe("0,0,0\n0,0.55,0\n0,1.1,0"),
+    );
+    expect(
+      view.container.querySelectorAll("[data-debug-sample-point]"),
+    ).toHaveLength(3);
+
+    const sampleInput = view.getByLabelText(
+      "case3-v2 UE路径采样点数",
+    ) as HTMLInputElement;
+    fireEvent.change(sampleInput, { target: { value: "2" } });
+    expect(coords.value).toBe("0,0,0\n0,1.1,0");
   });
 
   it("0/1/N 个完整点点亮、UE 与轨迹，数据更新不重置视角", () => {

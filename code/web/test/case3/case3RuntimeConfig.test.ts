@@ -37,7 +37,7 @@ describe("case3RuntimeConfig", () => {
       VITE_CASE3_V2_MAP_IMAGE_ROTATION_DEG: "-3",
       VITE_CASE3_V2_MAP_IMAGE_OFFSET_X: "20",
       VITE_CASE3_V2_MAP_IMAGE_OFFSET_Y: "-30",
-      VITE_CASE3_V2_DEGUB_SHOW: "0",
+      VITE_CASE3_V2_DEBUG_SHOW: "0",
     });
     expect(c.pollMs).toBe(250);
     expect(c.mapOriginX).toBe(100);
@@ -72,7 +72,7 @@ describe("case3RuntimeConfig", () => {
 
   it("非法 v2 debug show 抛错", () => {
     expect(() =>
-      loadCase3RuntimeConfig({ VITE_CASE3_V2_DEGUB_SHOW: "true" }),
+      loadCase3RuntimeConfig({ VITE_CASE3_V2_DEBUG_SHOW: "true" }),
     ).toThrow(Case3ConfigError);
   });
 });

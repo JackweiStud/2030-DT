@@ -172,7 +172,7 @@ export function loadCase3RuntimeConfig(
     ),
     v2DebugShow: readBooleanFlag(
       env,
-      "VITE_CASE3_V2_DEGUB_SHOW",
+      "VITE_CASE3_V2_DEBUG_SHOW",
       DEFAULTS.v2DebugShow,
     ),
   };
