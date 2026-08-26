@@ -1,5 +1,5 @@
 /**
- * App 导航挂载：第五 Tab 挂 Case3 V2；旧 case3 仍独立；busy 互斥。
+ * App 导航挂载：可见 Tab 挂 Case3 V2；旧 case3 不出现在导航；busy 互斥。
  */
 
 import { fireEvent, render } from "@testing-library/react";
@@ -76,40 +76,16 @@ describe("App Shell 导航挂载", () => {
     expect(view.queryByText("建设中")).toBeNull();
   });
 
-  it("DT for Comm 仍挂载原 case3 页面路径", () => {
+  it("DT for Comm 挂载 Case3 V2，不再是建设中", () => {
     const view = render(<App />);
     fireEvent.click(view.getByRole("button", tab("DT for Comm")));
-    expect(view.getByTestId("case3-page")).toBeTruthy();
-    expect(view.queryByTestId("case2-page")).toBeNull();
-    expect(view.queryByTestId("case3-v2-page")).toBeNull();
-    expect(view.queryByText("建设中")).toBeNull();
-  });
-
-  it("第五 Tab 挂载 Case3 V2，不再是建设中", () => {
-    const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT for Comm new")));
     expect(view.getByTestId("case3-v2-page")).toBeTruthy();
     expect(view.queryByText("建设中")).toBeNull();
     expect(view.queryByTestId("case2-page")).toBeNull();
     expect(view.queryByTestId("case3-page")).toBeNull();
     expect(
-      view.getByRole("button", tab("DT for Comm new")).classList.contains("is-active"),
+      view.getByRole("button", tab("DT for Comm")).classList.contains("is-active"),
     ).toBe(true);
-  });
-
-  it("切换 case3 / case5 时只挂载当前 Tab 的业务页", () => {
-    const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT for Comm")));
-    expect(view.getByTestId("case3-page")).toBeTruthy();
-    expect(view.queryByTestId("case3-v2-page")).toBeNull();
-
-    fireEvent.click(view.getByRole("button", tab("DT for Comm new")));
-    expect(view.getByTestId("case3-v2-page")).toBeTruthy();
-    expect(view.queryByTestId("case3-page")).toBeNull();
-
-    fireEvent.click(view.getByRole("button", tab("DT for Comm")));
-    expect(view.getByTestId("case3-page")).toBeTruthy();
-    expect(view.queryByTestId("case3-v2-page")).toBeNull();
   });
 
   it("case1 与 case4 仍为建设中", () => {
@@ -127,15 +103,12 @@ describe("App Shell 导航挂载", () => {
     case2Busy.onMount = true;
     const view = render(<App />);
     const current = view.getByRole("button", tab("DT Calibration"));
-    const case5 = view.getByRole("button", tab("DT for Comm new"));
+    const case5 = view.getByRole("button", tab("DT for Comm"));
     expect((current as HTMLButtonElement).disabled).toBe(false);
     expect((case5 as HTMLButtonElement).disabled).toBe(true);
     expect(
       (view.getByRole("button", tab("DT Construction")) as HTMLButtonElement)
         .disabled,
-    ).toBe(true);
-    expect(
-      (view.getByRole("button", tab("DT for Comm")) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(
       (view.getByRole("button", tab("DT for positioning")) as HTMLButtonElement)
@@ -150,18 +123,15 @@ describe("App Shell 导航挂载", () => {
   it("case5 busy 时锁定其他 Tab", () => {
     case3V2Busy.onMount = true;
     const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT for Comm new")));
+    fireEvent.click(view.getByRole("button", tab("DT for Comm")));
     expect(view.getByTestId("case3-v2-page")).toBeTruthy();
     expect(
-      (view.getByRole("button", tab("DT for Comm new")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT for Comm")) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
     expect(
       (view.getByRole("button", tab("DT Calibration")) as HTMLButtonElement)
         .disabled,
-    ).toBe(true);
-    expect(
-      (view.getByRole("button", tab("DT for Comm")) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(
       (view.getByRole("button", tab("DT Construction")) as HTMLButtonElement)
@@ -172,8 +142,9 @@ describe("App Shell 导航挂载", () => {
         .disabled,
     ).toBe(true);
 
-    fireEvent.click(view.getByRole("button", tab("DT for Comm")));
+    fireEvent.click(view.getByRole("button", tab("DT Calibration")));
     expect(view.getByTestId("case3-v2-page")).toBeTruthy();
     expect(view.queryByTestId("case3-page")).toBeNull();
+    expect(view.queryByTestId("case2-page")).toBeNull();
   });
 });

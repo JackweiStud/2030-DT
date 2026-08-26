@@ -1,5 +1,6 @@
 /**
- * Shell 开发期五 Tab 导航：顺序、文案、active、忙锁。
+ * Shell 可见 Tab 导航：顺序、文案、active、忙锁。
+ * 旧「DT for Comm」不出现在导航里。
  */
 
 import { createRef } from "react";
@@ -22,7 +23,6 @@ const TAB_LABELS = [
   "DT Construction",
   "DT Calibration",
   "DT for Comm",
-  "DT for Comm new",
   "DT for positioning",
 ] as const;
 
@@ -50,8 +50,8 @@ function tabButtons(view: ReturnType<typeof render>) {
   return view.getAllByRole("button");
 }
 
-describe("Shell 五 Tab 导航", () => {
-  it("五个 Tab 从左到右顺序与文案固定", () => {
+describe("Shell 可见 Tab 导航", () => {
+  it("四个 Tab 从左到右顺序与文案固定", () => {
     const { view } = renderShell();
     expect(tabButtons(view).map((el) => el.textContent)).toEqual([...TAB_LABELS]);
     expect(view.getByText("云上外场")).toBeTruthy();
@@ -60,7 +60,7 @@ describe("Shell 五 Tab 导航", () => {
 
   it("当前 Tab 带 is-active 与 aria-current=page", () => {
     const { view } = renderShell({ activeTab: "case5" });
-    const active = view.getByRole("button", { name: "DT for Comm new" });
+    const active = view.getByRole("button", { name: "DT for Comm" });
     expect(active.classList.contains("is-active")).toBe(true);
     expect(active.getAttribute("aria-current")).toBe("page");
     expect(active.getAttribute("data-tab")).toBe("case5");
@@ -72,7 +72,7 @@ describe("Shell 五 Tab 导航", () => {
 
   it("未锁定时第五 Tab 可点击并回传", () => {
     const { view, onTabChange } = renderShell({ activeTab: "case2" });
-    fireEvent.click(view.getByRole("button", { name: "DT for Comm new" }));
+    fireEvent.click(view.getByRole("button", { name: "DT for Comm" }));
     expect(onTabChange).toHaveBeenCalledWith("case5");
   });
 
@@ -82,7 +82,7 @@ describe("Shell 五 Tab 导航", () => {
       navigationLocked: true,
     });
     const current = view.getByRole("button", { name: "DT Calibration" });
-    const case5 = view.getByRole("button", { name: "DT for Comm new" });
+    const case5 = view.getByRole("button", { name: "DT for Comm" });
     const others = tabButtons(view).filter((el) => el !== current);
 
     expect((current as HTMLButtonElement).disabled).toBe(false);
@@ -101,7 +101,7 @@ describe("Shell 五 Tab 导航", () => {
       activeTab: "case5",
       navigationLocked: true,
     });
-    const case5 = view.getByRole("button", { name: "DT for Comm new" });
+    const case5 = view.getByRole("button", { name: "DT for Comm" });
     expect((case5 as HTMLButtonElement).disabled).toBe(false);
     expect(
       (view.getByRole("button", { name: "DT Calibration" }) as HTMLButtonElement)
@@ -114,7 +114,7 @@ describe("Shell 五 Tab 导航", () => {
 
   it("品牌标、标题与右侧标识不是按钮", () => {
     const { view } = renderShell();
-    expect(tabButtons(view)).toHaveLength(5);
+    expect(tabButtons(view)).toHaveLength(4);
     expect(view.container.querySelector(".brand-area")?.closest("button")).toBeNull();
     expect(view.container.querySelector(".shell-title")?.closest("button")).toBeNull();
     expect(view.container.querySelector(".shell-corner")?.closest("button")).toBeNull();

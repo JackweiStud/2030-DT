@@ -1,5 +1,6 @@
 /**
- * Shell：1920×1080 固定舞台等比缩放居中；开发期五 Tab；跨 Case 导航锁。
+ * Shell：1920×1080 固定舞台等比缩放居中；跨 Case 导航锁。
+ * 可见 Tab 不含旧「DT for Comm」；Case3 V2 走「DT for Comm new」。
  * 拥有「现场环境」弹窗（case2/3/4 共用）。
  */
 
@@ -28,8 +29,7 @@ const LEFT_TABS: { id: CaseTabId; label: string }[] = [
 ];
 
 const RIGHT_TABS: { id: CaseTabId; label: string }[] = [
-  { id: "case3", label: "DT for Comm" },
-  { id: "case5", label: "DT for Comm new" },
+  { id: "case5", label: "DT for Comm" },
   { id: "case4", label: "DT for positioning" },
 ];
 

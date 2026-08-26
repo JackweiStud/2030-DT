@@ -1,6 +1,6 @@
 /**
  * 应用入口：加载 Case2/Case3 配置；仅激活 Tab 挂载对应页面；汇总跨 Case busy。
- * 开发期第五 Tab（文案 DT for Comm new）挂 Case3 V2 页面，复用 Case3 控制链。
+ * 「DT for Comm new」挂 Case3 V2 页面，复用 Case3 控制链；旧 case3 页仍保留但不进导航。
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
