@@ -20,6 +20,14 @@
 | `doc/case2/QA-EVIDENCE.md` | 本地自动测试、人工联调、截图输出、残余风险 | 未验证的真实后端或真实挂载结论 |
 | `doc/case2/RETRO-METHOD.md` | case2 可复用流程、检查清单、下一 case 复用边界 | 具体实现代码或新的业务契约 |
 
+## case4 文档落点
+
+- `doc/case4/PHASE0-SCOPE.md`：用户明确范围、演示主线、职责及数据真实性。
+- `doc/case4/UX-STATE-MAP.md`：三态展示意图、图片差异及设计交接依据。
+- `doc/case4/INPUT-AND-OPEN-QUESTIONS.md`：接口样本、UI 数据映射与未决事项，不代替冻结契约。
+- `03-design/case4/`：由用户安排 Cursor 处理 Pencil；设计文件存在不等于冻结。
+- case4 当前 Gate 与下一步只在 `state.md` 记录；后续契约/SPEC/QA 按对应阶段补齐。
+
 ## 三轨资源纪律
 
 1. 设计源：Gate 1 冻结使用；UX PNG 是输入，不是最终契约。
@@ -35,6 +43,7 @@
 - 当前事实与风险：`state.md`
 - case2 业务入口：`doc/case2/MAINLINE.md`
 - case3 业务入口：`doc/case3/MAINLINE.md`
+- case4 业务入口：`doc/case4/PHASE0-SCOPE.md`
 
 ## 创建规则
 
