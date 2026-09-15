@@ -1,79 +1,74 @@
-# Visual Diff — case4 Pencil 审阅稿
+# Visual Diff — case4 Pencil 定稿
 
 ## Summary
 
-- Source：`02-ux/case4/` 三态整页 + 局部切图；规则以 `doc/case4/` 为准
+- Source：`02-ux/case4/` 三态整页（历史参考）+ `doc/case4/` 规则
 - Pencil：`03-design/case4/case4.pen`
-- Overall status：**needs iteration**（可审阅，非冻结）
-- 2026-09-13 已从整页 UX 切图改为 **HPx45/szvkN 可编辑组件树**；CDF+柱参考 case2 `ii9XW` 新建 `Fcn8x`
+- Overall status：**FROZEN（Gate 1，2026-09-15）**
+- 数字均为示意；实现必须绑运行时数据
 
-未宣称 Gate 1 冻结。数字均为示意。交付帧 ID：`mEyG6` / `YFD1U` / `iVPf8` / `yGo26` / `A6SO8` / `PyHHC` / `kmDkq`。
+## 定稿交付帧
 
-## Pencil MCP 验证证据
+| Frame | ID |
+|---|---|
+| Case4-空闲态（同构·仅显隐与进度） | `mEyG6` |
+| Case4-测试中（同构·仅显隐与进度） | `YFD1U` |
+| Case4-完成态（同构·仅显隐与进度） | `iVPf8` |
+| case4.现场环境 | `PyHHC` |
 
-| Frame/Node | Tool | Check | Result | Evidence/Notes |
-|---|---|---|---|---|
-| `mEyG6` case4.初始 | get_screenshot | 整页 | 航拍地图+可编辑 path/点位+空底栏 | 空槽、CDF/CEP `--`、NLOS `--`、开始可用 |
-| `YFD1U` case4.测试中 | get_screenshot | 整页 | 三色误差点 P1–P13+等待统计+吞吐曲线 | 不用暂停键 |
-| `iVPf8` case4.完成 | get_screenshot | 整页 | CDF 阶梯 + CEP 三柱 + NLOS 90% + 已完成 | 无增减百分比 |
-| `yGo26` case4.完成悬停 | get_screenshot | 整页+浮层 | 浮层「P13定位误差」三方案+m | `z3YAGC` |
-| `A6SO8` case4.等待最终统计 | get_screenshot | 整页 | 轨迹/误差/吞吐保留；统计等待 | 双禁 |
-| `PyHHC` case4.现场环境 | get_screenshot | 整页 | 蒙版+双路视频弹窗 | Copy `S36cr` |
-| `kmDkq` case4.异常状态板 | get_screenshot | 五变体 | MCP 中文可能缺字 | 请在 Pencil 打开 |
-| `mEyG6` 地图舞台 | Get | 场地底图 cover 裁切 | 与 szvkN 相同，属预期 | — |
+已不在文件中的审阅帧（勿再引用 ID）：完成悬停 `yGo26`、等待最终统计 `A6SO8`、异常状态板 `kmDkq`、case3V1 整页。
 
-## 结构问题
+## Pencil MCP 验证（定稿前）
 
-| Frame/Node | Problem | Severity | Fix | Recheck result |
-|---|---|---|---|---|
-| 点位 20 槽 | 未用可复用实例（Pencil 在复制帧内对 **新** ref 不合成） | important | 用实体 Copy；实现仍应按组件做 | 运行/完成帧可见色点 |
-| 异常板 | MCP screenshot 发黑 | important | 用户在编辑器内审；必要时再改成与主帧相同的 Copy 合成 | Get 布局完整 |
-| case3V1 旧帧 | 仍留在文件左侧 | minor | 有意保留复用基线 | 未改组件定义 |
+| Frame | Check | Result |
+|---|---|---|
+| 三业务态 | 命名树 depth3 同构 | 0 结构差；差异靠显隐/进度 |
+| 四屏 | 合同层（空槽/点叠层/变换层/浮层/吞吐占位） | 6/6 |
+| 全文件 | `layout:none` + gap/align 假横排 | 0 |
+| 组件 | 10 个均有引用 | 已删未用 `图例项`、游离 `轴体` |
+| 截图 | 空闲/测试中/完成 | 用户确认视觉满意 |
 
-## Diff Table
+## 相对 UX 的有意偏差（保持）
 
-| Frame | Area | Issue | Severity | Suggested fix | Needs approval |
-|---|---|---|---|---|---|
-| 全部 | 完成文案/按钮 | 相对 UX 完成图去掉暂停和「测试中」 | 有意偏差 | 保持 | 审阅是否接受 |
-| 全部 | CEP | 分标 CEP50% / CEP90%，无 Δ% | 有意偏差 | 保持 | 否 |
-| 全部 | CDF 轴 | 米级 0–10，非 UX 0.003–0.015 | 有意偏差 | 保持 | 否 |
-| 全部 | 吞吐 X | 样点 1–8，非时钟 | 有意偏差 | 保持 | 否 |
-| 完成 | NLOS | 示意 90%（样本 0.897），不用 UX 60 | 有意偏差 | 保持 | 否 |
-| 完成 | CDF 折线 | 线偏弱，故事主要靠 CEP 柱 | important | 若审阅要更强折线再加粗 | 否 |
-| 初始 | 点位 P 号 | 对比偏低 | minor | 可加亮 `$muted` | 否 |
-| 顶栏 | DT for positioning | 下划线在浅色区不够抢 | important | 已用 `#22D3EE`；请看实机 | 否 |
-| 地图 | 三色轨迹 | 代表折线，未按 38 点投影 | important | 实现必须用 case3 V2 投影 | 否 |
-| 悬停 | 浮层位置 | 在地图区而非贴着 P13 槽 | minor | 可再贴槽 | 否 |
+| Area | Issue | 处理 |
+|---|---|---|
+| 完成态 | UX 暂停 +「测试中」 | 开始灰、重置可用、完成语义 |
+| CEP | 双卡都写 50% / 带 Δ% | 分标 50/90，无增减% |
+| CDF 轴 | 厘米刻度 | 米级 |
+| 吞吐 X | 时钟 | 样点序号 |
+| NLOS | UX 60 | 示意用样本量级，不硬编码 |
+| 点位 | 画死 20 | 代表窗；实现跟 N |
+| 图例 | 可隐藏单方案 | 不可点显隐 |
 
-## Structure / Layout / Dev Feasibility
+## 结构 / 交接（定稿已处理）
 
-| Frame | Problem | Why it matters for frontend | Fix |
-|---|---|---|---|
-| 底栏 | Pencil 用绝对坐标叠在 1920×1080 上 | 实现应 Dock flex：控制 hug + 20 列 fill + KPI 三卡 | Frontend_Spec 已写契约 |
-| 点位窗 | 设计画 20 槽 | 实现 N 动态、最新 20 | 脚注已写示意 N=38 |
+| 原问题 | 定稿处理 |
+|---|---|
+| 底栏绝对坐标易被照抄 | 层名标 `横排·flex` / `y640叠层`；缺省 layout=横排 |
+| 空槽与点列双轨歧义 | `列几何槽` + `误差点叠层…非抄left` + `点列…按P索引` |
+| 吞吐外壳语义不清 | `吞吐卡占位（宽623·内嵌组件）` |
+| 地图魔法偏移 | 层名「含校准偏移」+ 唯一变换层 |
+| 死层 | `侧标*（预留·默认隐藏）` |
 
-## Asset Source / Dynamic Graphic Issues
+## Asset / Dynamic
 
-| Frame | Asset/Layer | Problem | Correct decision | Fix |
-|---|---|---|---|---|
-| 地图 | site-2d.jpg | 无 | 复用 case3 底图 | — |
-| 轨迹/CDF/CEP | path | Pencil 代表态 | 前端 SVG | 规格已写 |
-| 波束/开销/BA | 未进 case4 业务帧 | 正确 | 不要用 | — |
+| Layer | Decision |
+|---|---|
+| site-2d / 品牌切图 | 复用，禁止 AI 重绘 |
+| 轨迹/误差/CDF/CEP/NLOS/吞吐 | 前端 SVG/canvas；Pencil 代表态 |
+| `连线（示意·非实现源）` | 禁止照抄矩形段 |
+| 波束/开销/BA | 不进 case4 |
 
 ## Blocking Issues
 
-无（不阻塞审阅）。无用户拍板项来自设计结构；后端四项遗留不在本文件决定。
+无。可开 case4 静态 Web。
 
-## Important Issues
+## Important（实现注意，非解冻项）
 
-1. 异常状态板请在 Pencil 里打开 `T1BeaL`，不要只看 MCP 缩略图。
-2. CDF 完成态折线偏弱。
-3. 地图轨迹是示意，不是投影结果。
+1. 地图轨迹是示意，须用 case3 V2 投影。
+2. 悬停/等待统计/异常无独立定稿帧，按 `Frontend_Spec.md` 派生。
+3. 禁止把 Pencil left/top 当业务布局契约。
 
-## Minor Issues
+## Next
 
-P 号对比、浮层锚点、顶栏下划线粗细。
-
-## Next Iteration Plan
-
-用户视觉审阅 → 按批注改 `.pen` → 再冻结。未经确认不写 `APPROVED`。
+静态 Gate 1.5 → 契约/适配 → 真实后端验收。改视觉须显式解冻并改 `.pen`。
