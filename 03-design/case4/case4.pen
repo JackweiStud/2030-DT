@@ -9,7 +9,7 @@
       "name": "列头",
       "reusable": true,
       "width": 81,
-      "height": 14,
+      "height": 18,
       "fill": "#2a2a2a99",
       "cornerRadius": 8,
       "layout": "vertical",
@@ -23,12 +23,12 @@
           "fill": "$primary-text",
           "textGrowth": "fixed-width-height",
           "width": "fill_container",
-          "height": 14,
+          "height": 18,
           "content": "P1",
           "textAlign": "center",
           "textAlignVertical": "middle",
           "fontFamily": "$font",
-          "fontSize": 11,
+          "fontSize": 13,
           "fontWeight": "600"
         }
       ]
@@ -1765,52 +1765,10 @@
     },
     {
       "type": "frame",
-      "id": "H0RYO",
-      "x": -8000,
-      "y": -8180,
-      "name": "case4.点位误差列",
-      "reusable": true,
-      "width": 75,
-      "height": 88,
-      "fill": "#FFFFFF0D",
-      "cornerRadius": 6,
-      "layout": "vertical",
-      "gap": 8,
-      "justifyContent": "center",
-      "alignItems": "center",
-      "children": [
-        {
-          "type": "ellipse",
-          "id": "dy0qq",
-          "name": "基站点",
-          "fill": "$c4-bs",
-          "width": 10,
-          "height": 10
-        },
-        {
-          "type": "ellipse",
-          "id": "lJoOG",
-          "name": "商用点",
-          "fill": "$c4-gaode",
-          "width": 10,
-          "height": 10
-        },
-        {
-          "type": "ellipse",
-          "id": "Z988k",
-          "name": "DT点",
-          "fill": "$c4-dt",
-          "width": 10,
-          "height": 10
-        }
-      ]
-    },
-    {
-      "type": "frame",
       "id": "P6EMJ",
-      "x": -3913,
-      "y": -608,
-      "name": "case4.NLOS卡",
+      "x": -2848,
+      "y": -164,
+      "name": "NLOS卡",
       "reusable": true,
       "width": 280,
       "height": 225,
@@ -2122,7 +2080,7 @@
       "id": "Fcn8x",
       "x": -3445,
       "y": -608,
-      "name": "case4.定位误差卡",
+      "name": "定位误差卡",
       "reusable": true,
       "width": 980,
       "height": 225,
@@ -3301,9 +3259,9 @@
     {
       "type": "frame",
       "id": "X607U",
-      "x": -3599,
-      "y": 628,
-      "name": "case4.控制条",
+      "x": -3193,
+      "y": -302,
+      "name": "控制条",
       "reusable": true,
       "clip": true,
       "width": 123,
@@ -3457,7 +3415,7 @@
       "id": "wYizf",
       "x": -2347,
       "y": -287,
-      "name": "case4.误差Y轴",
+      "name": "误差Y轴",
       "reusable": true,
       "width": 29,
       "height": 147,
@@ -3558,6 +3516,92 @@
               "fontFamily": "$datafont",
               "fontSize": 10,
               "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dd22i",
+      "x": -2429,
+      "y": -287,
+      "name": "轴体",
+      "width": "fill_container(59)",
+      "height": 110,
+      "layout": "vertical",
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "o7ce2y",
+          "name": "刻度列",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "justifyContent": "space_between",
+          "alignItems": "end",
+          "children": [
+            {
+              "type": "text",
+              "id": "jeN1S",
+              "name": "轴标题",
+              "fill": "$c4-dt",
+              "content": "测试误差",
+              "fontFamily": "$font",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "q9Sml",
+              "name": "刻度-0.024m",
+              "fill": "$c4-gaode",
+              "content": "2.0",
+              "fontFamily": "$datafont",
+              "fontSize": 10,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "V9TWq",
+              "name": "刻度-0.018m",
+              "fill": "$c4-gaode",
+              "content": "1.5",
+              "fontFamily": "$datafont",
+              "fontSize": 10,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "q1wcB",
+              "name": "刻度-0.012m",
+              "fill": "$c4-gaode",
+              "content": "1.0",
+              "fontFamily": "$datafont",
+              "fontSize": 10,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "RPAcp",
+              "name": "刻度-0.006m",
+              "fill": "$c4-gaode",
+              "content": "0.5",
+              "fontFamily": "$datafont",
+              "fontSize": 10,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "h5oHff",
+              "name": "刻度-0m",
+              "fill": "$c4-gaode",
+              "content": "0",
+              "fontFamily": "$datafont",
+              "fontSize": 10,
+              "fontWeight": "normal"
             }
           ]
         }
@@ -4576,7 +4620,7 @@
                       "name": "点位列表头",
                       "context": "layout=horizontal",
                       "width": "fill_container",
-                      "height": 16,
+                      "height": 18,
                       "alignItems": "center",
                       "children": [
                         {
@@ -4598,7 +4642,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P1"
+                                  "content": "P1",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4612,7 +4660,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P2"
+                                  "content": "P2",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4626,7 +4678,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P3"
+                                  "content": "P3",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4642,8 +4698,9 @@
                                 "hptNP": {
                                   "content": "P4",
                                   "width": "fill_container",
-                                  "height": "fit_content(13)",
-                                  "textGrowth": "fixed-width"
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "fontSize": 13
                                 }
                               }
                             },
@@ -4657,7 +4714,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P5"
+                                  "content": "P5",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4671,7 +4732,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P6"
+                                  "content": "P6",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4685,7 +4750,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P7"
+                                  "content": "P7",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4699,7 +4768,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P8"
+                                  "content": "P8",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4713,7 +4786,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P9"
+                                  "content": "P9",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4727,7 +4804,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P10"
+                                  "content": "P10",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4741,7 +4822,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P11"
+                                  "content": "P11",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4755,7 +4840,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P12"
+                                  "content": "P12",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4769,7 +4858,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P13"
+                                  "content": "P13",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4783,7 +4876,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P14"
+                                  "content": "P14",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4797,7 +4894,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P15"
+                                  "content": "P15",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4811,7 +4912,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P16"
+                                  "content": "P16",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4825,7 +4930,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P17"
+                                  "content": "P17",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4839,7 +4948,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P18"
+                                  "content": "P18",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4853,7 +4966,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P19"
+                                  "content": "P19",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -4867,7 +4984,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P20"
+                                  "content": "P20",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             }
@@ -5432,6 +5553,7 @@
           "y": 0,
           "name": "现场环境浮层",
           "context": "Overlay；盖住整页；子级含整页蒙版与现场环境弹窗",
+          "enabled": false,
           "width": 1920,
           "height": 1080,
           "layout": "none",
@@ -8964,7 +9086,7 @@
           "name": "底栏",
           "width": 1920,
           "height": 439,
-          "fill": "#ffffff66",
+          "fill": "#59535366",
           "cornerRadius": 14,
           "effect": {
             "type": "background_blur",
@@ -8998,6 +9120,14 @@
                   "gap": 5,
                   "padding": 0,
                   "descendants": {
+                    "ITBVS": {
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "assets/btn-play-disabled.png",
+                        "mode": "fit"
+                      }
+                    },
                     "rOHqn": {
                       "fill": {
                         "type": "image",
@@ -9056,7 +9186,7 @@
                       "name": "点位列表头",
                       "context": "layout=horizontal",
                       "width": "fill_container",
-                      "height": 16,
+                      "height": 18,
                       "alignItems": "center",
                       "children": [
                         {
@@ -9078,14 +9208,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P1",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9099,14 +9233,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P2",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9120,14 +9258,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P3",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9142,13 +9284,17 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "descendants": {
                                 "hptNP": {
                                   "content": "P4",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9162,14 +9308,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P5",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9183,14 +9333,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P6",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9204,14 +9358,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P7",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9225,14 +9383,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P8",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9246,14 +9408,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P9",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9267,14 +9433,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P10",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9288,14 +9458,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P11",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9309,14 +9483,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P12",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9330,14 +9508,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P13",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9351,14 +9533,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P14",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9372,14 +9558,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P15",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9393,14 +9583,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P16",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9414,14 +9608,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P17",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9435,14 +9633,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P18",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9456,14 +9658,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P19",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -9477,18 +9683,38 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P20",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             }
                           ]
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "ymYIB",
+                          "layoutPosition": "absolute",
+                          "x": 1726,
+                          "y": -2.5,
+                          "name": "当前点光标浮层",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/cursor-car.png",
+                            "mode": "fit"
+                          },
+                          "width": 24,
+                          "height": 24
                         },
                         {
                           "type": "rectangle",
@@ -9503,24 +9729,8 @@
                             "url": "assets/progress-overlay.png",
                             "mode": "stretch"
                           },
-                          "width": 1740,
-                          "height": 16
-                        },
-                        {
-                          "type": "rectangle",
-                          "id": "ymYIB",
-                          "layoutPosition": "absolute",
-                          "x": 1702,
-                          "y": -6,
-                          "name": "当前点光标浮层",
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "assets/cursor-car.png",
-                            "mode": "fit"
-                          },
-                          "width": 28,
-                          "height": 28
+                          "width": 1750,
+                          "height": 18
                         }
                       ]
                     },
@@ -18358,7 +18568,7 @@
                       "name": "点位列表头",
                       "context": "layout=horizontal",
                       "width": "fill_container",
-                      "height": 16,
+                      "height": 18,
                       "alignItems": "center",
                       "children": [
                         {
@@ -18380,7 +18590,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "enabled": true,
@@ -18388,7 +18598,11 @@
                                 "hptNP": {
                                   "content": "P1",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18402,14 +18616,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P2",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18423,14 +18641,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P3",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18444,17 +18666,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P4",
                                   "width": "fill_container",
-                                  "height": "fit_content(13)",
-                                  "textGrowth": "fixed-width",
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13
                                 }
                               }
                             },
@@ -18468,14 +18691,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P5",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18489,14 +18716,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P6",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18510,14 +18741,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P7",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18531,14 +18766,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P8",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18552,14 +18791,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P9",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18573,14 +18816,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P10",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18594,14 +18841,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P11",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18615,14 +18866,18 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
                                   "content": "P12",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18636,7 +18891,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "assets/point-done.png",
-                                "mode": "fit"
+                                "mode": "fill"
                               },
                               "height": "fill_container",
                               "enabled": true,
@@ -18644,7 +18899,11 @@
                                 "hptNP": {
                                   "content": "P13",
                                   "fill": "#FFFFFF",
-                                  "textAlign": "center"
+                                  "textAlign": "center",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18658,7 +18917,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P14"
+                                  "content": "P14",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18672,7 +18935,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P15"
+                                  "content": "P15",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18686,7 +18953,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P16"
+                                  "content": "P16",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18700,7 +18971,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P17"
+                                  "content": "P17",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18714,7 +18989,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P18"
+                                  "content": "P18",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18728,7 +19007,11 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P19"
+                                  "content": "P19",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             },
@@ -18742,27 +19025,15 @@
                               "height": "fill_container",
                               "descendants": {
                                 "hptNP": {
-                                  "content": "P20"
+                                  "content": "P20",
+                                  "fontSize": 13,
+                                  "height": 18,
+                                  "textGrowth": "fixed-width-height",
+                                  "width": "fill_container"
                                 }
                               }
                             }
                           ]
-                        },
-                        {
-                          "type": "rectangle",
-                          "id": "bdSuL",
-                          "layoutPosition": "absolute",
-                          "x": 1093,
-                          "y": -6,
-                          "name": "当前点光标浮层",
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "assets/cursor-car.png",
-                            "mode": "fit"
-                          },
-                          "width": 28,
-                          "height": 28
                         },
                         {
                           "type": "rectangle",
@@ -18777,8 +19048,24 @@
                             "url": "assets/progress-overlay.png",
                             "mode": "stretch"
                           },
-                          "width": 1131,
-                          "height": 16
+                          "width": 1137,
+                          "height": 18
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "bdSuL",
+                          "layoutPosition": "absolute",
+                          "x": 1114,
+                          "y": -2.5,
+                          "name": "当前点光标浮层",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/cursor-car.png",
+                            "mode": "fit"
+                          },
+                          "width": 24,
+                          "height": 24
                         }
                       ]
                     },
@@ -25107,7 +25394,7 @@
                           "name": "点位列表头",
                           "context": "layout=horizontal",
                           "width": "fill_container",
-                          "height": 16,
+                          "height": 18,
                           "alignItems": "center",
                           "children": [
                             {
@@ -25132,8 +25419,10 @@
                                     "hptNP": {
                                       "content": "P1",
                                       "width": "fill_container",
-                                      "height": 14,
-                                      "fill": "#f2f3f5ff"
+                                      "height": 18,
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "textGrowth": "fixed-width-height"
                                     }
                                   }
                                 },
@@ -25149,8 +25438,10 @@
                                     "hptNP": {
                                       "content": "P2",
                                       "width": "fill_container",
-                                      "height": 14,
-                                      "fill": "#f2f3f5ff"
+                                      "height": 18,
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "textGrowth": "fixed-width-height"
                                     }
                                   }
                                 },
@@ -25165,7 +25456,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P3",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25181,9 +25476,10 @@
                                     "hptNP": {
                                       "content": "P4",
                                       "width": "fill_container",
-                                      "height": "fit_content(13)",
-                                      "textGrowth": "fixed-width",
-                                      "fill": "#f2f3f5ff"
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13
                                     }
                                   }
                                 },
@@ -25198,7 +25494,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P5",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25213,7 +25513,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P6",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25228,7 +25532,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P7",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25243,7 +25551,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P8",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25258,7 +25570,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P9",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25273,7 +25589,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P10",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25288,7 +25608,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P11",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25303,7 +25627,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P12",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25318,7 +25646,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P13",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25333,7 +25665,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P14",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25348,7 +25684,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P15",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25363,7 +25703,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P16",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25378,7 +25722,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P17",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25393,7 +25741,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P18",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25408,7 +25760,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P19",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 },
@@ -25423,7 +25779,11 @@
                                   "descendants": {
                                     "hptNP": {
                                       "content": "P20",
-                                      "fill": "#f2f3f5ff"
+                                      "fill": "#f2f3f5ff",
+                                      "fontSize": 13,
+                                      "height": 18,
+                                      "textGrowth": "fixed-width-height",
+                                      "width": "fill_container"
                                     }
                                   }
                                 }
@@ -25909,92 +26269,6 @@
               "enabled": true
             }
           }
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "dd22i",
-      "x": -2429,
-      "y": -287,
-      "name": "轴体",
-      "width": "fill_container(59)",
-      "height": 110,
-      "layout": "vertical",
-      "justifyContent": "center",
-      "alignItems": "center",
-      "children": [
-        {
-          "type": "frame",
-          "id": "o7ce2y",
-          "name": "刻度列",
-          "width": "fill_container",
-          "height": "fill_container",
-          "layout": "vertical",
-          "justifyContent": "space_between",
-          "alignItems": "end",
-          "children": [
-            {
-              "type": "text",
-              "id": "jeN1S",
-              "name": "轴标题",
-              "fill": "$c4-dt",
-              "content": "测试误差",
-              "fontFamily": "$font",
-              "fontSize": 11,
-              "fontWeight": "normal"
-            },
-            {
-              "type": "text",
-              "id": "q9Sml",
-              "name": "刻度-0.024m",
-              "fill": "$c4-gaode",
-              "content": "2.0",
-              "fontFamily": "$datafont",
-              "fontSize": 10,
-              "fontWeight": "normal"
-            },
-            {
-              "type": "text",
-              "id": "V9TWq",
-              "name": "刻度-0.018m",
-              "fill": "$c4-gaode",
-              "content": "1.5",
-              "fontFamily": "$datafont",
-              "fontSize": 10,
-              "fontWeight": "normal"
-            },
-            {
-              "type": "text",
-              "id": "q1wcB",
-              "name": "刻度-0.012m",
-              "fill": "$c4-gaode",
-              "content": "1.0",
-              "fontFamily": "$datafont",
-              "fontSize": 10,
-              "fontWeight": "normal"
-            },
-            {
-              "type": "text",
-              "id": "RPAcp",
-              "name": "刻度-0.006m",
-              "fill": "$c4-gaode",
-              "content": "0.5",
-              "fontFamily": "$datafont",
-              "fontSize": 10,
-              "fontWeight": "normal"
-            },
-            {
-              "type": "text",
-              "id": "h5oHff",
-              "name": "刻度-0m",
-              "fill": "$c4-gaode",
-              "content": "0",
-              "fontFamily": "$datafont",
-              "fontSize": 10,
-              "fontWeight": "normal"
-            }
-          ]
         }
       ]
     }
