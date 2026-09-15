@@ -25,7 +25,8 @@
 - `doc/case4/PHASE0-SCOPE.md`：用户明确范围、演示主线、职责及数据真实性。
 - `doc/case4/UX-STATE-MAP.md`：三态展示意图、图片差异及设计交接依据。
 - `doc/case4/INPUT-AND-OPEN-QUESTIONS.md`：接口样本、UI 数据映射与未决事项，不代替冻结契约。
-- `03-design/case4/`：由用户安排 Cursor 处理 Pencil；设计文件存在不等于冻结。
+- `doc/case4/DESIGN-NOTES.md`：Pencil 审阅用设计说明；相对 UX 的纠正与未决定项。设计文件存在不等于冻结。
+- `03-design/case4/`：Pencil 设计源与重建文档；未经用户确认不得标记 Gate 1 冻结。
 - case4 当前 Gate 与下一步只在 `state.md` 记录；后续契约/SPEC/QA 按对应阶段补齐。
 
 ## 三轨资源纪律

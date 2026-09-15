@@ -1,26 +1,22 @@
-# case3V1 设计源资产
+# case4 设计源资产
 
 运行时不要直接读本目录。Pencil 内相对路径 `./assets/...`。
 
-| 文件 | 来源 | 用途 |
-|---|---|---|
-| `site-2d.jpg` | 由 `02-ux/case3-V1/主页面--层0/元素/场地2D.png` 压到宽 1920 | 等轴测场地图。原 PNG 约 51MB，仅设计源用压缩版 |
-| `nav-bg.png` 等导航切图 | `02-ux/case3-V1/导航栏/元素/` | 全站顶栏 |
-| `ue-2d.png` | `主页面--层0/元素/2D/UE图标2D.png` | UE |
-| `ue-pin-idle.png` | `主页面--层0/元素/UE轨迹/UE位置初始.png` | 未走过点位（气泡 52×62 + 地面光点 16×16，整图 70×83） |
-| `ue-pin-lit.png` | `主页面--层0/元素/UE轨迹/UE位置点亮.png` | 已走过点位，同上尺寸 |
-| `ue-bubble-pin.png` | `主页面--层0/元素/UE轨迹/UE位置气泡-上.png` | 仅气泡切图，已被上面两张整图取代，保留备查 |
-| `ue-ground-dot.png` | `主页面--层0/元素/UE轨迹/位置气泡点-下.png` | 仅地面光点切图，同上 |
-| `btn-*.png` | `KPI面板-层1/测试按钮/元素/` | 播放/禁止/执行中。无「重置可用」切图，Pencil 用白底+图标代替 |
-| `beam-*.png` | `波束面板-层1/元素/` | 矩阵图例参考；含 `beam-vector-success.png` / `beam-vector-fail.png`（预测成功/失败矢量叠图） |
-| `cell-with-ok.png` | `KPI面板-层1/点位波束回溯/元素/局部/有DT对.png` | 有 DT 正确格底 |
-| `cell-with-fail.png` | `KPI面板-层1/点位波束回溯/元素/局部/有DT错.png` | 有 DT 错误格底 |
-| `cell-icon-ok.png` | `KPI面板-层1/点位波束回溯/元素/局部/对.png` | 正确角标 |
-| `cell-icon-fail.png` | `KPI面板-层1/点位波束回溯/元素/局部/错.png` | 错误角标 |
-| `cursor-car.png` | `点位进度条/元素/小车光标.png` | 当前列光标 |
-| `ba-ok-fill.png` | `KPI面板-层1/波束预测准确率/元素/正确绿色矩形填充.png` | BA 卡正确区铺底。Pencil 代表态；前端按准确率拉宽 |
-| `ba-bad-fill.png` | `KPI面板-层1/波束预测准确率/元素/错误红色矩形填充.png` | BA 卡错误区铺底。同上 |
-| `ba-ok-bar.png` | `KPI面板-层1/波束预测准确率/元素/正确绿色栅格条.png` | BA 底栏正确实心条 |
-| `ba-bad-bar.png` | `KPI面板-层1/波束预测准确率/元素/错误红色栅格条.png` | BA 底栏错误齿条的视觉源；Pencil 用重复矩形画齿，避免缩放糊掉 |
+本目录多数切图与 case3 V2 同源（同场地、同 Shell）。case4 只用其中地图、导航、点位、按钮和吞吐壳相关文件；波束 / 开销 / BA 切图保留在目录中以免破坏已有 case3V1 基线帧，**不要**用进 case4 业务区。
 
-禁止把本目录样例数字当 API 契约。 75% / 正确 3 / 错误 1 只是代表态。
+| 文件 | 来源 | case4 用途 |
+|---|---|---|
+| `site-2d.jpg` | case3 场地 2D 压缩版；与 `code/web/assets/case3-v2/site-2d.jpg` 同源 | 等轴测底图。禁止 AI 重绘 |
+| `nav-bg.png` `menu-bars.png` `cloud-site.png` `huawei-logo.png` | case3 导航 | 全站顶栏 |
+| `ue-2d.png` `ue-pin-idle.png` `ue-pin-lit.png` | case3 UE/点位 | 终端与预置点 |
+| `btn-play.png` `btn-play-disabled.png` `btn-playing.png` `btn-reset.png` `btn-reset-disabled.png` | case3 测试按钮 | 单次开始/重置。完成态不用暂停图标 |
+| `cursor-car.png` | case3 点位进度 | 误差窗当前列 |
+| `top-mask.png` | case3 HUD | 顶蒙版 |
+| `compare-icon.png` | case3 | 「测试对比」 |
+| `c4-slot-empty.png` | UX `测试误差一个点的填充背景.png`（同文件） | `槽-P*` 空壳底图 |
+| `c4-label-line.png` | UX `图标直线.png`（原样拷贝，不做处理） | 地图侧标竖线 |
+| `c4-label-live.png` | UX `实际轨迹图标背景.png`（原样拷贝，不做处理） | 「测试方案」侧标底 |
+| `c4-label-plan.png` | UX `计划轨迹图标背景.png`（原样拷贝，不做处理） | 「计划轨迹」侧标底 |
+| `beam-*` `cost-*` `ba-*` `cell-*` | case3 波束/开销/BA | **仅供文件内旧 case3V1 帧**；case4 不用 |
+
+禁止把本目录或 UX 上的数字当成 API 契约。CEP / NLOS / 吞吐 / 逐点误差的示意值只服务审阅。
