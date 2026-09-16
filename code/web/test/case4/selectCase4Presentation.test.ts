@@ -33,9 +33,18 @@ describe("selectCase4Presentation", () => {
     const view = selectCase4Presentation(s);
     expect(view.ui).toBe("finalizing");
     expect(view.dataState).toBe("running");
-    expect(view.statusText).toBe("测试中...");
+    expect(view.statusText).toBe("测试中");
     expect(view.busy).toBe(true);
     expect(view.statistics).toBeNull();
+  });
+
+  it("resetting 文案为重置中且 busy", () => {
+    let s = ready();
+    s = case4Reducer(s, { type: "ACTION_BEGIN", kind: "reinit", generation: 1 });
+    const view = selectCase4Presentation(s);
+    expect(view.dataState).toBe("resetting");
+    expect(view.statusText).toBe("重置中");
+    expect(view.busy).toBe(true);
   });
 
   it("completed 展示统计但仍 busy 时重置禁用", () => {
@@ -50,20 +59,20 @@ describe("selectCase4Presentation", () => {
     expect(view.resetEnabled).toBe(false);
   });
 
-  it("result 耗尽文案可区分执行失败", () => {
+  it("result 耗尽：控制列异常请重试，横幅保留详情", () => {
     let s = ready();
     s = case4Reducer(s, { type: "ACTION_BEGIN", kind: "start", generation: 1 });
     s = case4Reducer(s, { type: "RESULT_EXHAUSTED" });
     const view = selectCase4Presentation(s);
-    expect(view.statusText).toBe("结果不完整已自动回退");
+    expect(view.statusText).toBe("异常请重试");
     expect(view.banner).toBe("结果不完整已自动回退");
   });
 
-  it("adapterError 文案为适配异常", () => {
+  it("adapterError：控制列异常请重试，横幅保留详情", () => {
     let s = ready();
     s = case4Reducer(s, { type: "ADAPTER_ERROR", value: true });
     const view = selectCase4Presentation(s);
-    expect(view.statusText).toBe("适配异常");
+    expect(view.statusText).toBe("异常请重试");
     expect(view.banner).toBe("适配服务异常");
   });
 });

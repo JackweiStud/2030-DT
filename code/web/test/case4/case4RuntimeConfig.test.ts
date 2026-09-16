@@ -17,6 +17,7 @@ describe("loadCase4RuntimeConfig", () => {
     expect(c.mapImageScale).toBe(2);
     expect(c.mapImageOffsetX).toBe(205);
     expect(c.mapImageOffsetY).toBe(-670);
+    expect(c.mapDebugShow).toBe(true);
   });
 
   it("接受合法覆盖", () => {
@@ -28,6 +29,15 @@ describe("loadCase4RuntimeConfig", () => {
     expect(c.pollMs).toBe(250);
     expect(c.mapOriginX).toBe(900);
     expect(c.mapImageScale).toBe(1.2);
+  });
+
+  it("VITE_CASE4_MAP_DEBUG_SHOW 仅接受 0/1", () => {
+    expect(
+      loadCase4RuntimeConfig({ VITE_CASE4_MAP_DEBUG_SHOW: "0" }).mapDebugShow,
+    ).toBe(false);
+    expect(() =>
+      loadCase4RuntimeConfig({ VITE_CASE4_MAP_DEBUG_SHOW: "true" }),
+    ).toThrow(/VITE_CASE4_MAP_DEBUG_SHOW/);
   });
 
   it("非法值抛键名，不静默 fallback", () => {

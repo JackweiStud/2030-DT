@@ -64,13 +64,24 @@ export type ErrorWindowPoint = {
   dt: number | null;
 };
 
-/**
- * 最近 20 个完整点；N≤20 左起填、右侧空槽。
- */
-export function errorWindow(
+/** 误差回溯可滑动范围：N≤窗口不可滑；超出后默认最新 20 点。 */
+export function errorWindowRange(
+  completeCount: number,
+  windowSize = CASE4_POINT_WINDOW,
+): { maxStart: number; defaultStart: number } {
+  const size = Math.max(1, Math.floor(windowSize));
+  const done = Math.max(0, Math.floor(completeCount));
+  const maxStart = Math.max(0, done - size);
+  return {
+    maxStart,
+    defaultStart: done <= size ? 0 : maxStart,
+  };
+}
+
+/** 全部完整点的误差行，不截窗。 */
+export function errorWindowRows(
   points: TrajectoryPoint[],
   baseRoute: BasePoint[],
-  windowSize = CASE4_POINT_WINDOW,
 ): ErrorWindowPoint[] {
   const byNo = new Map(baseRoute.map((p) => [p.no, p]));
   const rows: ErrorWindowPoint[] = [];
@@ -85,8 +96,27 @@ export function errorWindow(
       dt: pointErrorM(p.dt, base),
     });
   }
-  const visible = rows.slice(-windowSize);
-  return visible;
+  return rows;
+}
+
+/**
+ * 最近 20 个完整点；N≤20 左起填、右侧空槽。
+ * windowStart 可把窗口拖回更早点；缺省跟最新。
+ */
+export function errorWindow(
+  points: TrajectoryPoint[],
+  baseRoute: BasePoint[],
+  windowSize = CASE4_POINT_WINDOW,
+  windowStart?: number,
+): ErrorWindowPoint[] {
+  const rows = errorWindowRows(points, baseRoute);
+  const size = Math.max(1, Math.floor(windowSize));
+  const { maxStart, defaultStart } = errorWindowRange(rows.length, size);
+  const start =
+    windowStart == null
+      ? defaultStart
+      : Math.max(0, Math.min(maxStart, Math.floor(windowStart)));
+  return rows.slice(start, start + size);
 }
 
 export const CASE4_ERROR_AXIS_FLOOR_M = 5.5;
@@ -97,6 +127,8 @@ export const CASE4_ERROR_REPLAY_PLOT_H = 110;
 export const CASE4_ERROR_REPLAY_POINT_R = 5;
 /** 圆点外缘与 SVG 顶边之间至少 1px（viewBox 坐标）。 */
 export const CASE4_ERROR_REPLAY_TOP_GAP_PX = 1;
+/** 纵轴下限为 0 时，绘图区在数值轴下再留 1% 虚拟余量（与顶缘留白配套）。 */
+export const CASE4_ERROR_REPLAY_BOTTOM_MARGIN_RATIO = 0.01;
 
 export function errorWindowYMax(window: ErrorWindowPoint[]): number {
   let max = 0;
@@ -123,6 +155,36 @@ export function errorPlotYMax(dataYMax: number): number {
   const h = CASE4_ERROR_REPLAY_PLOT_H;
   const lifted = (dataYMax * h) / (h - pad);
   return Math.round(Math.max(dataYMax, lifted) * 10) / 10;
+}
+
+/** 有数据点时：0 以下留 plotYMax 的 1%，避免 0 值圆点贴底被裁。 */
+export function errorPlotYMin(plotYMax: number): number {
+  if (!Number.isFinite(plotYMax) || plotYMax <= 0) return 0;
+  return -plotYMax * CASE4_ERROR_REPLAY_BOTTOM_MARGIN_RATIO;
+}
+
+export function errorPlotBandPx(): { top: number; bottom: number } {
+  const pointPad =
+    CASE4_ERROR_REPLAY_POINT_R + CASE4_ERROR_REPLAY_TOP_GAP_PX;
+  const bottom = Math.max(
+    pointPad,
+    CASE4_ERROR_REPLAY_PLOT_H * CASE4_ERROR_REPLAY_BOTTOM_MARGIN_RATIO,
+  );
+  return { top: pointPad, bottom };
+}
+
+/** 将误差（米）映射到 ErrorReplay SVG 的 y（viewBox 坐标）。 */
+export function errorValueToSvgY(
+  valueM: number,
+  plotYMin: number,
+  plotYMax: number,
+): number {
+  const { top, bottom } = errorPlotBandPx();
+  const h = CASE4_ERROR_REPLAY_PLOT_H;
+  const innerH = h - top - bottom;
+  const span = plotYMax - plotYMin;
+  const t = span > 0 ? (valueM - plotYMin) / span : 0;
+  return h - bottom - t * innerH;
 }
 
 /** Pencil VdJMI：5.5、4.5、3.5、2.5、1.5、0；yMax>5.5 时同比拉伸，结果锁 1 位小数。 */

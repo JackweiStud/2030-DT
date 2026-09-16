@@ -24,6 +24,7 @@ export const CASE4_TEST_CONFIG: Case4RuntimeConfig = {
   mapImageRotationDeg: 0,
   mapImageOffsetX: 205,
   mapImageOffsetY: -670,
+  mapDebugShow: true,
 };
 
 export function xyz(x: number, y: number, z = 0): XYZ {

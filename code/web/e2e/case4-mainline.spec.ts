@@ -272,7 +272,8 @@ test.describe("case4 mainline (frontend-isolated)", () => {
     await shot(page, "01-initial.png");
 
     await start.click();
-    await expect(page.locator(".c4-ctrl-status")).toHaveText("测试中...");
+    await expect(page.locator(".c4-ctrl-status")).toContainText("测试中");
+    await expect(page.locator(".c4-ctrl-status .c4-status-ellipsis")).toBeVisible();
     await expect(start).toBeDisabled();
     await expect(page.locator(".c4-pin.is-lit")).toHaveCount(30, {
       timeout: 10_000,

@@ -1,11 +1,37 @@
 /**
  * 底栏图表：空态骨架、刻度与折线共用映射、误差圆点。
  */
-import { render } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
+if (typeof PointerEvent === "undefined") {
+  class PointerEventPolyfill extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    isPrimary: boolean;
+    constructor(
+      type: string,
+      init: MouseEventInit & {
+        pointerId?: number;
+        pointerType?: string;
+        isPrimary?: boolean;
+      } = {},
+    ) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+      this.pointerType = init.pointerType ?? "mouse";
+      this.isPrimary = init.isPrimary ?? true;
+    }
+  }
+  Object.defineProperty(globalThis, "PointerEvent", {
+    configurable: true,
+    writable: true,
+    value: PointerEventPolyfill,
+  });
+}
 import { CdfChart } from "../../src/cases/case4/components/CdfChart";
 import { CepBars } from "../../src/cases/case4/components/CepBars";
-import { ErrorReplay } from "../../src/cases/case4/components/ErrorReplay";
+import { ErrorReplay, CASE4_ERROR_REPLAY_SLOT_PITCH } from "../../src/cases/case4/components/ErrorReplay";
 import { NlosGauge } from "../../src/cases/case4/components/NlosGauge";
 import { ThroughputChart } from "../../src/cases/case4/components/ThroughputChart";
 import {
@@ -241,7 +267,7 @@ describe("ErrorReplay", () => {
       <ErrorReplay
         baseRoute={base}
         points={base.map((p) => trajPoint(p.no, p))}
-        statusText="测试中..."
+        statusText="测试中"
         startEnabled={false}
         resetEnabled={false}
         busy
@@ -255,5 +281,138 @@ describe("ErrorReplay", () => {
     expect(circles.length).toBeGreaterThanOrEqual(3);
     const xs = circles.slice(0, 3).map((c) => Number(c.getAttribute("cx")));
     expect(xs[1]! - xs[0]!).toBeGreaterThan(50);
+  });
+
+  it("测试中与重置中都带动态省略号，未开始不带", () => {
+    const base = {
+      baseRoute: sampleBaseRoute(1),
+      points: [],
+      startEnabled: false,
+      resetEnabled: false,
+      busy: true,
+      onStart: () => undefined,
+      onReset: () => undefined,
+    };
+    const running = render(<ErrorReplay {...base} statusText="测试中" />);
+    expect(
+      running.container.querySelector(".c4-ctrl-status.is-busy"),
+    ).not.toBeNull();
+    expect(
+      running.container.querySelector(".c4-status-ellipsis"),
+    ).not.toBeNull();
+    running.unmount();
+
+    const resetting = render(<ErrorReplay {...base} statusText="重置中" />);
+    expect(
+      resetting.container.querySelector(".c4-ctrl-status.is-busy"),
+    ).not.toBeNull();
+    expect(
+      resetting.container.querySelector(".c4-status-ellipsis"),
+    ).not.toBeNull();
+    resetting.unmount();
+
+    const idle = render(
+      <ErrorReplay {...base} statusText="未开始" busy={false} startEnabled />,
+    );
+    expect(idle.container.querySelector(".c4-ctrl-status.is-busy")).toBeNull();
+    expect(idle.container.querySelector(".c4-status-ellipsis")).toBeNull();
+    idle.unmount();
+
+    const done = render(<ErrorReplay {...base} statusText="已完成" />);
+    expect(done.container.querySelector(".c4-ctrl-status.is-busy")).toBeNull();
+    expect(done.container.querySelector(".c4-status-ellipsis")).toBeNull();
+  });
+
+  it("N=21 默认 P2–P21 可拖到 P1–P20，列头与折线同步", async () => {
+    const base = sampleBaseRoute(21);
+    const points = base.map((p) => trajPoint(p.no, p));
+    const view = render(
+      <ErrorReplay
+        baseRoute={base}
+        points={points}
+        statusText="测试中"
+        startEnabled={false}
+        resetEnabled={false}
+        busy
+        onStart={() => undefined}
+        onReset={() => undefined}
+      />,
+    );
+    const board = view.container.querySelector(
+      "[data-replay-surface]",
+    ) as HTMLElement;
+    expect(board?.getAttribute("data-replay-can-drag")).toBe("1");
+    expect(board?.classList.contains("is-scrollable")).toBe(true);
+    const heads = () =>
+      [...view.container.querySelectorAll(".c4-col-head")].map(
+        (el) => el.textContent,
+      );
+    expect(heads()[0]).toBe("P2");
+    expect(heads()[19]).toBe("P21");
+    expect(board?.getAttribute("data-replay-window-start")).toBe("1");
+
+    Object.defineProperty(board, "offsetWidth", {
+      configurable: true,
+      value: 1748,
+    });
+    board.getBoundingClientRect = () =>
+      ({
+        width: 1748,
+        height: 147,
+        top: 0,
+        left: 0,
+        right: 1748,
+        bottom: 147,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    fireEvent.pointerDown(board, {
+      button: 0,
+      buttons: 1,
+      pointerId: 1,
+      clientX: 800,
+      clientY: 20,
+    });
+    fireEvent.pointerMove(board, {
+      pointerId: 1,
+      buttons: 1,
+      clientX: 800 + CASE4_ERROR_REPLAY_SLOT_PITCH,
+      clientY: 20,
+    });
+    fireEvent.pointerUp(board, {
+      pointerId: 1,
+      button: 0,
+      clientX: 800 + CASE4_ERROR_REPLAY_SLOT_PITCH,
+      clientY: 20,
+    });
+
+    await waitFor(() => {
+      expect(heads()[0]).toBe("P1");
+    });
+    expect(heads()[19]).toBe("P20");
+    expect(board?.getAttribute("data-replay-follow-latest")).toBe("0");
+    expect(board?.getAttribute("data-replay-window-start")).toBe("0");
+  });
+
+  it("N≤20 不可拖动", () => {
+    const base = sampleBaseRoute(5);
+    const points = base.map((p) => trajPoint(p.no, p));
+    const view = render(
+      <ErrorReplay
+        baseRoute={base}
+        points={points}
+        statusText="未开始"
+        startEnabled
+        resetEnabled={false}
+        busy={false}
+        onStart={() => undefined}
+        onReset={() => undefined}
+      />,
+    );
+    const board = view.container.querySelector("[data-replay-surface]");
+    expect(board?.getAttribute("data-replay-can-drag")).toBe("0");
+    expect(board?.classList.contains("is-scrollable")).toBe(false);
   });
 });

@@ -50,7 +50,7 @@ describe("Case4 SVG screenshot compatibility", () => {
       <ErrorReplay
         baseRoute={base}
         points={base.map((p) => trajPoint(p.no, p))}
-        statusText="测试中..."
+        statusText="测试中"
         startEnabled={false}
         resetEnabled={false}
         busy

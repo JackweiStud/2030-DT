@@ -53,7 +53,7 @@ CASE4_STUB_LOG_LEVEL=debug
 
 - fixtures 来自 `01-参考资料/case4/data/` 的一次性复制，运行时只读
   `code/back/case4/fixtures/`，不回读参考目录。
-- `replay` 发布有效记录原文（含科学计数），剥离首尾空行。
+- `replay` 发布有效记录原文（含科学计数、空白或逗号分隔、单独一行 `65535`），剥离首尾空行，不改分隔符。
 - `random` 扰动 XY / 吞吐 / CDF 横轴与 CEP / NLOS；Z、65535、base
   与 CDF 概率列保持原值。日志标记 `synthetic-perturbation` /
   `fixture-replay`，不得表述为真实采集。

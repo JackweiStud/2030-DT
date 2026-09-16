@@ -39,6 +39,27 @@ test("坐标接受科学计数，拒绝垃圾后缀和空行重编号", () => {
     y: 2.5,
     z: 0.5,
   });
+  assert.deepEqual(parseCoordinateRaw("65535", "xyz.txt"), {
+    x: 65535,
+    y: 65535,
+    z: 65535,
+  });
+  assert.deepEqual(parseCoordinateRaw("65535.0", "xyz.txt"), {
+    x: 65535,
+    y: 65535,
+    z: 65535,
+  });
+  assert.deepEqual(parseCoordinateRaw("1 2 3", "xyz.txt"), {
+    x: 1,
+    y: 2,
+    z: 3,
+  });
+  assert.throws(() => parseBaseRoute("1 2 3\n", "base.txt"), {
+    code: "INIT_DATA_INVALID",
+  });
+  assert.throws(() => parseCoordinateRaw("1", "xyz.txt"), {
+    code: "TRAJECTORY_DATA_INVALID",
+  });
   assert.throws(() => parseCoordinateRaw("1.2abc,2,3", "xyz.txt"), {
     code: "TRAJECTORY_DATA_INVALID",
   });
@@ -199,7 +220,7 @@ test("65535 按分量替换：P1 用 base，连续递推，仅 Z 不影响 XY", 
   const traditional = {
     filename: "trad.txt",
     complete: [
-      parseCoordinateRaw("65535,65535,65535", "trad.txt"),
+      parseCoordinateRaw("65535", "trad.txt"),
       parseCoordinateRaw("65535,20,65535", "trad.txt"),
       parseCoordinateRaw("3.1,21,65535", "trad.txt"),
     ],
@@ -228,6 +249,9 @@ test("65535 按分量替换：P1 用 base，连续递推，仅 Z 不影响 XY", 
 
 test("base 含哨兵初始化失败；实时超 base 不截短", () => {
   assert.throws(() => parseBaseRoute("65535,15,0\n", "base.txt"), {
+    code: "INIT_DATA_INVALID",
+  });
+  assert.throws(() => parseBaseRoute("65535\n", "base.txt"), {
     code: "INIT_DATA_INVALID",
   });
   assert.throws(() => parseBaseRoute("1,15,0\n2,16,65535\n", "base.txt"), {

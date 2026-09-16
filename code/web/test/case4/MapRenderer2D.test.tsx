@@ -78,6 +78,18 @@ describe("Case4 MapRenderer2D", () => {
     expect(view.container.querySelector('[aria-label="复位地图"]')).toBeNull();
   });
 
+  it("mapDebugShow 为 false 时隐藏调参面板", () => {
+    const view = render(
+      <MapRenderer2D
+        config={{ ...CASE4_TEST_CONFIG, mapDebugShow: false }}
+        stageElementRef={{ current: document.createElement("div") }}
+        baseRoute={[basePoint(1, 1, 15)]}
+        livePoints={[]}
+      />,
+    );
+    expect(view.container.querySelector("[data-map-debug]")).toBeNull();
+  });
+
   it("滚轮后出现复位钮，点击回到 config 视角", () => {
     const ref = createRef<MapRendererHandle>();
     const view = render(

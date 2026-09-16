@@ -43,6 +43,155 @@
   user-select: none;
 }
 
+.case4-page .c4-map-interact.is-drawing {
+  cursor: crosshair;
+}
+
+.case4-page .c4-map-debug {
+  position: absolute;
+  right: 170px;
+  top: 18px;
+  z-index: 8;
+  width: 430px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  border: 1px solid #38bdf866;
+  border-radius: 8px;
+  background: #020617f2;
+  box-shadow: 0 10px 30px #00000066;
+  color: #e0f2fe;
+  pointer-events: auto;
+}
+
+.case4-page .c4-map-debug__title {
+  margin-bottom: 5px;
+  font: 700 12px/16px var(--c4-font-ui);
+  letter-spacing: 0.04em;
+  color: #7dd3fc;
+}
+
+.case4-page .c4-map-debug__env {
+  display: block;
+  width: 100%;
+  height: 82px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  resize: none;
+  border: 1px solid #38bdf855;
+  border-radius: 6px;
+  background: #0f172acc;
+  color: #f8fafc;
+  font: 600 11px/17px var(--c4-font-data);
+  outline: none;
+  white-space: pre;
+}
+
+.case4-page .c4-map-debug__env:focus {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 2px #38bdf833;
+}
+
+.case4-page .c4-map-debug__hint {
+  margin-top: 5px;
+  font: 500 10px/14px var(--c4-font-ui);
+  color: #bae6fd;
+  opacity: 0.86;
+}
+
+.case4-page .c4-map-debug__section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #38bdf833;
+}
+
+.case4-page .c4-map-debug__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.case4-page .c4-map-debug__button {
+  height: 25px;
+  padding: 0 9px;
+  border: 1px solid #38bdf866;
+  border-radius: 6px;
+  background: #0f172acc;
+  color: #e0f2fe;
+  font: 700 11px/1 var(--c4-font-ui);
+  cursor: pointer;
+}
+
+.case4-page .c4-map-debug__button:hover,
+.case4-page .c4-map-debug__button.is-active {
+  background: #0e7490;
+  border-color: #67e8f9;
+  color: #ffffff;
+}
+
+.case4-page .c4-map-debug__sample {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: #bae6fd;
+  font: 700 11px/1 var(--c4-font-ui);
+}
+
+.case4-page .c4-map-debug__sample input {
+  width: 58px;
+  height: 25px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border: 1px solid #38bdf866;
+  border-radius: 6px;
+  background: #0f172acc;
+  color: #f8fafc;
+  font: 700 11px/1 var(--c4-font-data);
+  outline: none;
+}
+
+.case4-page .c4-map-debug__coords {
+  display: block;
+  width: 100%;
+  height: 96px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 62px;
+  max-height: 220px;
+  border: 1px solid #fb923c66;
+  border-radius: 6px;
+  background: #111827e6;
+  color: #ffedd5;
+  font: 600 11px/17px var(--c4-font-data);
+  outline: none;
+  white-space: pre;
+}
+
+.case4-page .c4-map-debug__coords:focus {
+  border-color: #fdba74;
+  box-shadow: 0 0 0 2px #fb923c33;
+}
+
+.case4-page .c4-route-debug {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.case4-page .c4-route-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
 .case4-page .c4-map-transform {
   position: absolute;
   inset: 0;
@@ -70,8 +219,8 @@
 
 .case4-page .c4-map-reset {
   position: absolute;
-  top: 28px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
   z-index: 6;
   width: 32px;
   height: 32px;
@@ -245,7 +394,7 @@
 
 .case4-page .c4-site-env-link {
   position: absolute;
-  left: 1770px;
+  right: 56px;
   top: 14px;
   z-index: 1;
   margin: 0;
@@ -534,6 +683,8 @@
 }
 
 .case4-page .c4-ctrl-status {
+  display: flex;
+  align-items: baseline;
   width: 76px;
   height: 31px;
   margin-top: 0;
@@ -545,7 +696,9 @@
   white-space: nowrap;
 }
 
-.case4-page[data-state="running"] .c4-ctrl-status {
+.case4-page[data-state="running"] .c4-ctrl-status,
+.case4-page[data-state="resetting"] .c4-ctrl-status,
+.case4-page .c4-ctrl-status.is-busy {
   color: #0ea5e9;
 }
 
@@ -553,13 +706,53 @@
   color: #3ddc97;
 }
 
-.case4-page[data-state="resetting"] .c4-ctrl-status {
-  color: #94a3b8;
-}
-
 .case4-page[data-state="failed-start"] .c4-ctrl-status,
 .case4-page[data-state="failed-reinit"] .c4-ctrl-status {
   color: #f07178;
+}
+
+.case4-page .c4-status-ellipsis {
+  display: inline-block;
+  width: 1.15em;
+  overflow: hidden;
+  margin-left: 1px;
+  line-height: 1;
+  vertical-align: baseline;
+  flex-shrink: 0;
+}
+
+.case4-page .c4-status-ellipsis__track {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  vertical-align: baseline;
+  animation: c4-status-ellipsis 1.2s steps(4, end) infinite;
+}
+
+.case4-page .c4-status-ellipsis__track::after {
+  content: "…";
+  display: inline-block;
+  line-height: 1;
+  vertical-align: baseline;
+  transform: translateY(0.18em);
+}
+
+@keyframes c4-status-ellipsis {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 1.15em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case4-page .c4-status-ellipsis__track {
+    animation: none;
+    width: 1.15em;
+  }
 }
 
 .case4-config-error {
@@ -639,6 +832,16 @@
   height: 147px;
   /* Pencil 列头 fill 均分，不裁圆角；勿用 overflow:hidden 裁 P20 */
   overflow: visible;
+}
+
+.case4-page .c4-replay-board.is-scrollable {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.case4-page .c4-replay-board.is-dragging {
+  cursor: grabbing;
 }
 
 .case4-page .c4-replay-head {

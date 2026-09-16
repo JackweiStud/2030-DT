@@ -152,8 +152,24 @@ function inferCodeFromParser(parseLine) {
   return parseLine.invalidCode ?? "TRAJECTORY_DATA_INVALID";
 }
 
+function splitTrajectoryCoordinateTokens(line) {
+  if (line.includes(",")) {
+    return line.split(",").map((token) => token.trim());
+  }
+  return line.trim().split(/\s+/);
+}
+
 export function parseCoordinateRaw(line, filename, code = "TRAJECTORY_DATA_INVALID") {
-  const tokens = line.split(",").map((token) => token.trim());
+  const tokens =
+    code === "INIT_DATA_INVALID"
+      ? line.split(",").map((token) => token.trim())
+      : splitTrajectoryCoordinateTokens(line);
+  if (tokens.length === 1 && tokens[0] !== "" && NUMBER_TOKEN.test(tokens[0])) {
+    const value = parseRawFiniteToken(tokens[0], filename, "coordinate", code);
+    if (isCoordinateSentinel(value)) {
+      return { x: SENTINEL, y: SENTINEL, z: SENTINEL };
+    }
+  }
   if (tokens.length !== 3 || tokens.some((token) => token === "")) {
     throw invalidData(code, filename, "coordinate row must contain exactly x,y,z");
   }

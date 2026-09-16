@@ -13,6 +13,7 @@ export type Case4RuntimeConfig = {
   mapImageRotationDeg: number;
   mapImageOffsetX: number;
   mapImageOffsetY: number;
+  mapDebugShow: boolean;
 };
 
 const DEFAULTS: Case4RuntimeConfig = {
@@ -24,6 +25,7 @@ const DEFAULTS: Case4RuntimeConfig = {
   mapImageRotationDeg: 0,
   mapImageOffsetX: 205,
   mapImageOffsetY: -670,
+  mapDebugShow: true,
 };
 
 export class Case4ConfigError extends Error {
@@ -86,6 +88,20 @@ function readPositiveFinite(
   return value;
 }
 
+/** 缺失用默认；已提供则必须为 0/1。 */
+function readBooleanFlag(
+  env: EnvLike,
+  key: string,
+  fallback: boolean,
+): boolean {
+  const raw = env[key];
+  if (raw === undefined) return fallback;
+  const trimmed = raw.trim();
+  if (trimmed === "1") return true;
+  if (trimmed === "0") return false;
+  throw new Case4ConfigError(key, `${key} must be 0 or 1`);
+}
+
 /**
  * 解析 Case4 Vite env。键已提供但非法 → 抛键名，禁止静默 fallback。
  */
@@ -128,6 +144,11 @@ export function loadCase4RuntimeConfig(
       env,
       "VITE_CASE4_MAP_IMAGE_OFFSET_Y",
       DEFAULTS.mapImageOffsetY,
+    ),
+    mapDebugShow: readBooleanFlag(
+      env,
+      "VITE_CASE4_MAP_DEBUG_SHOW",
+      DEFAULTS.mapDebugShow,
     ),
   };
 }

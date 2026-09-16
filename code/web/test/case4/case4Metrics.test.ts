@@ -10,7 +10,12 @@ import {
   cepGroupGeometry,
   errorAxisTicks,
   errorPlotYMax,
+  errorPlotYMin,
+  errorValueToSvgY,
+  CASE4_ERROR_REPLAY_PLOT_H,
+  CASE4_ERROR_REPLAY_POINT_R,
   errorWindow,
+  errorWindowRange,
   errorWindowYMax,
   errorsFromTrajectory,
   isFinalResultReady,
@@ -78,6 +83,21 @@ describe("errorWindow", () => {
     expect(thirty[19]?.label).toBe("P30");
   });
 
+  it("windowStart=0 时 N>20 显示 P1–P20", () => {
+    const base = sampleBaseRoute(30);
+    const points = base.map((p) => trajPoint(p.no, p));
+    const win = errorWindow(points, base, 20, 0);
+    expect(win).toHaveLength(20);
+    expect(win[0]?.label).toBe("P1");
+    expect(win[19]?.label).toBe("P20");
+  });
+
+  it("errorWindowRange：N≤20 不可滑，N=21 maxStart=1", () => {
+    expect(errorWindowRange(20).maxStart).toBe(0);
+    expect(errorWindowRange(21).maxStart).toBe(1);
+    expect(errorWindowRange(21).defaultStart).toBe(1);
+  });
+
   it("空窗与低于 5.5 的峰值都用 5.5；更高峰值不截顶", () => {
     expect(errorWindowYMax([])).toBe(5.5);
     expect(
@@ -96,6 +116,18 @@ describe("errorWindow", () => {
     expect(errorPlotYMax(5.5)).toBe(5.8);
     expect(errorPlotYMax(100)).toBe(105.8);
     expect(errorPlotYMax(8.2)).toBe(8.7);
+  });
+
+  it("绘图 yMin 为 plotYMax 的 -1%；0 值 y 高于底缘圆点半径", () => {
+    const yMax = errorPlotYMax(100);
+    const yMin = errorPlotYMin(yMax);
+    expect(yMin).toBe(-1.058);
+    const y0 = errorValueToSvgY(0, yMin, yMax);
+    const yPeak = errorValueToSvgY(yMax, yMin, yMax);
+    expect(y0 + CASE4_ERROR_REPLAY_POINT_R).toBeLessThanOrEqual(
+      CASE4_ERROR_REPLAY_PLOT_H,
+    );
+    expect(yPeak - CASE4_ERROR_REPLAY_POINT_R).toBeGreaterThanOrEqual(0);
   });
 
   it("Y 轴六刻度对齐 Pencil 5.5…0；峰值抬轴后按比例一位小数", () => {

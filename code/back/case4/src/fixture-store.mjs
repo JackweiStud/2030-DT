@@ -55,21 +55,41 @@ function finite(token, filename, label) {
   return value;
 }
 
-function csv3(line, filename) {
-  const tokens = line.split(",").map((token) => token.trim());
-  if (tokens.length !== 3 || tokens.some((token) => token === "")) {
-    invalid(filename, "每行必须恰好 3 个逗号字段");
+function splitCoordinateTokens(line) {
+  if (line.includes(",")) {
+    return line.split(",").map((token) => token.trim());
   }
-  return tokens;
+  return line.split(/\s+/);
+}
+
+function isStandaloneSentinelTokens(tokens) {
+  if (tokens.length !== 1 || tokens[0] === "") return false;
+  if (!NUMBER_TOKEN.test(tokens[0])) return false;
+  return Number(tokens[0]) === 65535;
 }
 
 export function parseCoordinateLine(line, filename) {
-  const tokens = csv3(line, filename);
+  const tokens = splitCoordinateTokens(line);
+  if (isStandaloneSentinelTokens(tokens)) {
+    const token = tokens[0];
+    return {
+      tokens: [token, token, token],
+      values: [65535, 65535, 65535],
+      passthrough: true,
+    };
+  }
+  if (tokens.length !== 3 || tokens.some((token) => token === "")) {
+    invalid(
+      filename,
+      "每行必须恰好 3 个坐标字段（逗号或空白分隔），或单独一行 65535",
+    );
+  }
   return {
     tokens,
     values: tokens.map((token, index) =>
       finite(token, filename, `坐标 ${index}`),
     ),
+    passthrough: false,
   };
 }
 

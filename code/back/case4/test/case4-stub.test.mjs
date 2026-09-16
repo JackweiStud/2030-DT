@@ -114,6 +114,13 @@ async function writeLines(filePath, lines) {
   await fs.writeFile(filePath, lines.length ? `${lines.join("\n")}\n` : "");
 }
 
+function coordLines(count, start = 1) {
+  return Array.from(
+    { length: count },
+    (_, index) => `${start + index},${start + index},0`,
+  );
+}
+
 async function emptyDynamics(sharedDir) {
   const dir = path.join(sharedDir, "case4");
   await fs.mkdir(dir, { recursive: true });
@@ -129,6 +136,11 @@ async function seedBaseFromDefault(sharedDir) {
   );
   await fs.mkdir(path.join(sharedDir, "case4"), { recursive: true });
   await fs.writeFile(path.join(sharedDir, "case4", BASE_FILE), text);
+}
+
+async function seedBaseLineCount(sharedDir, count) {
+  await fs.mkdir(path.join(sharedDir, "case4"), { recursive: true });
+  await writeLines(path.join(sharedDir, "case4", BASE_FILE), coordLines(count));
 }
 
 async function startStub(t, sharedDir, overrides = {}) {
@@ -209,6 +221,43 @@ test("roundSemanticNumber 含 EPSILON 的边界与契约一致", () => {
   assert.equal(roundSemanticNumber(-0.001, 2), 0);
 });
 
+test("空白三分量与单独 65535：replay 原文写入，random 改逗号且哨兵行原文", async (t) => {
+  const dir = await copyFixtures(t);
+  const traj = [
+    "10.229538563916561 7.613752557833976 0.94",
+    "65535",
+    "10.3 7.4 0.94",
+  ];
+  for (const scheme of ["traditional", "commercial", "dt"]) {
+    await writeLines(path.join(dir, TRAJECTORY_FILES[scheme]), traj);
+  }
+  await writeLines(path.join(dir, BASE_FILE), ["1,2,0", "3,4,0", "5,6,0"]);
+  const store = await loadFixtureStore({ fixtureDir: dir });
+  assert.equal(store.trajectories.traditional.points[1].passthrough, true);
+
+  const replay = createRoundDataset({
+    fixtureStore: store,
+    dataMode: "replay",
+  });
+  assert.deepEqual(replay.trajectories.traditional, traj);
+
+  const random = createRoundDataset({
+    fixtureStore: store,
+    dataMode: "random",
+    seed: "sentinel-space",
+    operationId: "op",
+  });
+  assert.equal(random.trajectories.traditional[1], "65535");
+  assert.match(
+    random.trajectories.traditional[0],
+    /^-?\d+\.\d{2},-?\d+\.\d{2},0\.94$/,
+  );
+  assert.match(
+    random.trajectories.traditional[2],
+    /^-?\d+\.\d{2},-?\d+\.\d{2},0\.94$/,
+  );
+});
+
 test("默认 fixtures 预检通过且不硬编码发布循环", async () => {
   const store = await loadFixtureStore({ fixtureDir: DEFAULT_FIXTURE_DIR });
   assert.ok(store.base.lines.length >= 1);
@@ -275,6 +324,9 @@ test("记录中间空行、负吞吐、非单调 CDF、p50>p90、NLOS>1、base �
     },
     async (dir) => {
       await fs.writeFile(path.join(dir, BASE_FILE), "65535,15,0\n1,14,0\n");
+    },
+    async (dir) => {
+      await fs.writeFile(path.join(dir, BASE_FILE), "65535\n1,14,0\n");
     },
   ];
   for (const mutate of cases) {
@@ -704,18 +756,19 @@ test("JSON 短暂非法只等待，恢复后可接单", async (t) => {
 
 test("轨迹 30 / 吞吐 38 不被截断；38/12 与单路空、双路空可 complete", async (t) => {
   const store = await loadFixtureStore({ fixtureDir: DEFAULT_FIXTURE_DIR });
+  const thrp38 = Array.from({ length: 38 }, () => "1.00");
 
   async function runInjected(throughputs, trajCount = 3) {
     const sharedDir = await createSharedDir(t, START_CONTROL);
-    await seedBaseFromDefault(sharedDir);
+    await seedBaseLineCount(sharedDir, Math.max(trajCount, 38));
     await emptyDynamics(sharedDir);
     await startStub(t, sharedDir, {
       createDataset: () =>
         createInjectedDataset({
           trajectories: {
-            traditional: store.trajectories.traditional.lines.slice(0, trajCount),
-            commercial: store.trajectories.commercial.lines.slice(0, trajCount),
-            dt: store.trajectories.dt.lines.slice(0, trajCount),
+            traditional: coordLines(trajCount),
+            commercial: coordLines(trajCount, 10),
+            dt: coordLines(trajCount, 20),
           },
           throughputs,
           statistics: {
@@ -734,24 +787,24 @@ test("轨迹 30 / 吞吐 38 不被截断；38/12 与单路空、双路空可 com
 
   const a = await runInjected(
     {
-      without: store.throughputs.without.lines,
-      with: store.throughputs.with.lines,
+      without: thrp38,
+      with: thrp38,
     },
     30,
   );
   assert.equal(countLines(await readCase4(a, TRAJECTORY_FILES.dt)), 30);
   assert.equal(
     countLines(await readCase4(a, THROUGHPUT_FILES.without)),
-    store.throughputs.without.lines.length,
+    thrp38.length,
   );
 
   const b = await runInjected({
-    without: store.throughputs.without.lines,
-    with: store.throughputs.with.lines.slice(0, 12),
+    without: thrp38,
+    with: thrp38.slice(0, 12),
   });
   assert.equal(
     countLines(await readCase4(b, THROUGHPUT_FILES.without)),
-    store.throughputs.without.lines.length,
+    thrp38.length,
   );
   assert.equal(countLines(await readCase4(b, THROUGHPUT_FILES.with)), 12);
 
@@ -770,11 +823,9 @@ test("轨迹 30 / 吞吐 38 不被截断；38/12 与单路空、双路空可 com
 test("合法 fixture 目录 base 38 / 三轨迹 30 可 complete", async (t) => {
   const dir = await copyFixtures(t);
   const store = await loadFixtureStore({ fixtureDir: DEFAULT_FIXTURE_DIR });
+  await writeLines(path.join(dir, BASE_FILE), coordLines(38));
   for (const scheme of ["traditional", "commercial", "dt"]) {
-    await writeLines(
-      path.join(dir, TRAJECTORY_FILES[scheme]),
-      store.trajectories[scheme].lines.slice(0, 30),
-    );
+    await writeLines(path.join(dir, TRAJECTORY_FILES[scheme]), coordLines(30));
   }
   const sharedDir = await createSharedDir(t, START_CONTROL);
   const loaded = await loadFixtureStore({ fixtureDir: dir });
@@ -787,7 +838,7 @@ test("合法 fixture 目录 base 38 / 三轨迹 30 可 complete", async (t) => {
   await startStub(t, sharedDir, { fixtureDir: dir, dataMode: "replay" });
   await waitTerminal(sharedDir, "case complete");
   assert.equal(countLines(await readCase4(sharedDir, TRAJECTORY_FILES.dt)), 30);
-  assert.equal(countLines(await readCase4(sharedDir, BASE_FILE)), store.base.lines.length);
+  assert.equal(countLines(await readCase4(sharedDir, BASE_FILE)), loaded.base.lines.length);
 });
 
 test("发布器注入 5/3/4 发完后 execute fail，不写 complete", async (t) => {
@@ -1014,9 +1065,9 @@ test("注入 30/30/31 发完后不得 complete", async (t) => {
     createDataset: () =>
       createInjectedDataset({
         trajectories: {
-          traditional: store.trajectories.traditional.lines.slice(0, 30),
-          commercial: store.trajectories.commercial.lines.slice(0, 30),
-          dt: store.trajectories.dt.lines.slice(0, 31),
+          traditional: coordLines(30),
+          commercial: coordLines(30, 10),
+          dt: coordLines(31, 20),
         },
         throughputs: {
           without: store.throughputs.without.lines.slice(0, 2),
@@ -1065,8 +1116,12 @@ test("每轮 random 只构造一次数据集，幅度与统计约束成立", asy
     .trim()
     .split("\n");
   for (const [index, line] of published.entries()) {
-    const [x, y, z] = line.split(",");
     const original = store.trajectories.dt.points[index];
+    if (original.passthrough) {
+      assert.equal(line, original.line);
+      continue;
+    }
+    const [x, y, z] = line.split(",");
     assert.equal(z, original.tokens[2]);
     if (original.values[0] === 65535) assert.equal(x, original.tokens[0]);
     else {

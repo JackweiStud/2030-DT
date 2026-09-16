@@ -92,6 +92,7 @@ function randomFromStore(fixtureStore, resolvedSeed) {
   for (const scheme of SCHEMES) {
     trajectories[scheme] = fixtureStore.trajectories[scheme].points.map(
       (point) => {
+        if (point.passthrough) return point.line;
         const [x, y, z] = point.values;
         const xOut = isSentinel(x)
           ? point.tokens[0]

@@ -18,6 +18,14 @@ import type {
   TrajectorySnapshot,
 } from "../types";
 
+/** 控制列 `c4-ctrl-status`：异常场景统一短文案；详情走横幅。 */
+export const CASE4_CTRL_ABNORMAL_STATUS = "异常请重试";
+
+function isControlAbnormal(state: Case4State): boolean {
+  if (state.adapterError) return true;
+  return state.ui === "failed-start" || state.ui === "failed-reinit";
+}
+
 export type Case4Presentation = {
   ui: Case4UiState;
   dataState: Case4DataState;
@@ -52,7 +60,7 @@ function statusText(state: Case4State): string {
       return "未开始";
     case "running":
     case "finalizing":
-      return "测试中...";
+      return "测试中";
     case "completed":
       return "已完成";
     case "resetting":
@@ -95,8 +103,9 @@ export function selectCase4Presentation(state: Case4State): Case4Presentation {
     : state.liveThrp.with;
 
   let status = statusText(state);
-  if (exhausted) status = "结果不完整已自动回退";
-  if (state.adapterError) status = "适配异常";
+  if (isControlAbnormal(state)) {
+    status = CASE4_CTRL_ABNORMAL_STATUS;
+  }
 
   return {
     ui: state.ui,
