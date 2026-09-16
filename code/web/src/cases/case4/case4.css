@@ -541,7 +541,8 @@
   padding: 14px 16px;
   border-radius: 14px;
   background: #ffffff66;
-  overflow: hidden;
+  /* 误差悬停卡向上探出底栏叠到地图；hidden 会裁掉 */
+  overflow: visible;
   -webkit-backdrop-filter: blur(80px);
   backdrop-filter: blur(80px);
 }
@@ -610,6 +611,9 @@
   gap: 2px;
   width: 1898px;
   height: 162px;
+  position: relative;
+  z-index: 4;
+  overflow: visible;
 }
 
 /* 回溯控制列：横排 控制左区 + 轴标题条 */
@@ -880,6 +884,10 @@
   background: url("../../../assets/case4/point-done.png") center / 100% 100% no-repeat;
 }
 
+.case4-page .c4-col-head.is-hover {
+  box-shadow: inset 0 0 0 1px #ffffff55;
+}
+
 .case4-page .c4-progress {
   position: absolute;
   left: -2px;
@@ -942,6 +950,10 @@
   background: #2a2a2a99;
 }
 
+.case4-page .c4-col-slot.is-hover {
+  background: #3d414acc;
+}
+
 .case4-page .c4-error-svg {
   position: absolute;
   left: 0;
@@ -950,6 +962,67 @@
   width: 1748px;
   height: 110px;
   overflow: visible;
+  pointer-events: none;
+}
+
+.case4-page .c4-error-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  z-index: 6;
+  box-sizing: border-box;
+  width: 268px;
+  padding: 12px 16px 14px;
+  border-radius: 12px;
+  background: #1c1f27f5;
+  box-shadow: 0 10px 28px #00000073;
+  color: var(--c4-primary-text);
+  pointer-events: none;
+}
+
+.case4-page .c4-error-tip__title {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.case4-page .c4-error-tip__row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  height: 22px;
+  color: #c5c9d3;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.case4-page .c4-error-tip__row b {
+  margin-left: auto;
+  color: var(--c4-primary-text);
+  font-family: var(--c4-font-data);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.case4-page .c4-error-tip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.case4-page .c4-error-tip__arrow {
+  position: absolute;
+  left: var(--c4-tip-arrow-left, 50%);
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: #1c1f27f5;
+  transform: translateX(-50%) rotate(45deg);
 }
 
 /* ---- 指标卡行：横排 gap12 1900×225 ---- */

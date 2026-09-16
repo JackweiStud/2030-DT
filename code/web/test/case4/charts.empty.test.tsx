@@ -31,7 +31,11 @@ if (typeof PointerEvent === "undefined") {
 }
 import { CdfChart } from "../../src/cases/case4/components/CdfChart";
 import { CepBars } from "../../src/cases/case4/components/CepBars";
-import { ErrorReplay, CASE4_ERROR_REPLAY_SLOT_PITCH } from "../../src/cases/case4/components/ErrorReplay";
+import {
+  ErrorReplay,
+  CASE4_ERROR_REPLAY_DRAG_THRESHOLD_PX,
+  CASE4_ERROR_REPLAY_SLOT_PITCH,
+} from "../../src/cases/case4/components/ErrorReplay";
 import { NlosGauge } from "../../src/cases/case4/components/NlosGauge";
 import { ThroughputChart } from "../../src/cases/case4/components/ThroughputChart";
 import {
@@ -415,4 +419,142 @@ describe("ErrorReplay", () => {
     expect(board?.getAttribute("data-replay-can-drag")).toBe("0");
     expect(board?.classList.contains("is-scrollable")).toBe(false);
   });
+
+  it("悬停有数据槽弹出三方案误差，空槽与离开均关闭", () => {
+    const base = sampleBaseRoute(3).map((p, i) =>
+      i === 0 ? { ...p, x: 0, y: 0, z: 0 } : p,
+    );
+    const p1 = base[0]!;
+    const points = [
+      trajPoint(p1.no, p1, {
+        traditional: { x: 0.017, y: 0, z: 0 },
+        commercial: { x: 0.012, y: 0, z: 0 },
+        dt: { x: 0.011, y: 0, z: 0 },
+      }),
+      trajPoint(base[1]!.no, base[1]!),
+      trajPoint(base[2]!.no, base[2]!),
+    ];
+    const view = render(
+      <ErrorReplay
+        baseRoute={base}
+        points={points}
+        statusText="测试中"
+        startEnabled={false}
+        resetEnabled={false}
+        busy
+        onStart={() => undefined}
+        onReset={() => undefined}
+      />,
+    );
+    const board = mockReplayBoard(view.container);
+
+    fireEvent.pointerMove(board, { clientX: 40, clientY: 40 });
+    const tip = view.container.querySelector("[data-error-tip]");
+    expect(tip?.getAttribute("data-error-tip-no")).toBe("1");
+    expect(board.getAttribute("data-hover-no")).toBe("1");
+    expect(tip?.textContent).toContain("P1定位误差");
+    expect(tip?.textContent).toContain("传统基站定位轨迹");
+    expect(tip?.textContent).toContain("商用方案定位轨迹");
+    expect(tip?.textContent).toContain("数字孪生辅助定位轨迹");
+    expect(tip?.textContent).toContain("0.017m");
+    expect(tip?.textContent).toContain("0.012m");
+    expect(tip?.textContent).toContain("0.011m");
+
+    fireEvent.pointerMove(board, { clientX: 1700, clientY: 40 });
+    expect(view.container.querySelector("[data-error-tip]")).toBeNull();
+    expect(board.getAttribute("data-hover-no")).toBe("");
+
+    fireEvent.pointerMove(board, { clientX: 40, clientY: 40 });
+    expect(view.container.querySelector("[data-error-tip]")).not.toBeNull();
+    fireEvent.pointerLeave(board);
+    expect(view.container.querySelector("[data-error-tip]")).toBeNull();
+  });
+
+  it("N=21 悬停跟当前列点号，拖过阈值才滑窗并收起浮层", async () => {
+    const base = sampleBaseRoute(21);
+    const points = base.map((p) => trajPoint(p.no, p));
+    const view = render(
+      <ErrorReplay
+        baseRoute={base}
+        points={points}
+        statusText="测试中"
+        startEnabled={false}
+        resetEnabled={false}
+        busy
+        onStart={() => undefined}
+        onReset={() => undefined}
+      />,
+    );
+    const board = mockReplayBoard(view.container);
+    const heads = () =>
+      [...view.container.querySelectorAll(".c4-col-head")].map(
+        (el) => el.textContent,
+      );
+
+    fireEvent.pointerMove(board, { clientX: 40, clientY: 20 });
+    expect(board.getAttribute("data-hover-no")).toBe("2");
+    expect(
+      view.container.querySelector("[data-error-tip]")?.textContent,
+    ).toContain("P2定位误差");
+
+    fireEvent.pointerDown(board, {
+      button: 0,
+      buttons: 1,
+      pointerId: 1,
+      clientX: 800,
+      clientY: 20,
+    });
+    fireEvent.pointerMove(board, {
+      pointerId: 1,
+      buttons: 1,
+      clientX: 800 + CASE4_ERROR_REPLAY_DRAG_THRESHOLD_PX - 1,
+      clientY: 20,
+    });
+    expect(heads()[0]).toBe("P2");
+    expect(board.getAttribute("data-replay-window-start")).toBe("1");
+
+    fireEvent.pointerMove(board, {
+      pointerId: 1,
+      buttons: 1,
+      clientX: 800 + CASE4_ERROR_REPLAY_SLOT_PITCH,
+      clientY: 20,
+    });
+    expect(view.container.querySelector("[data-error-tip]")).toBeNull();
+    await waitFor(() => {
+      expect(heads()[0]).toBe("P1");
+    });
+    expect(board.getAttribute("data-replay-window-start")).toBe("0");
+
+    fireEvent.pointerUp(board, {
+      pointerId: 1,
+      button: 0,
+      clientX: 40,
+      clientY: 20,
+    });
+    expect(board.getAttribute("data-hover-no")).toBe("1");
+    expect(
+      view.container.querySelector("[data-error-tip]")?.textContent,
+    ).toContain("P1定位误差");
+  });
 });
+
+function mockReplayBoard(container: HTMLElement): HTMLElement {
+  const board = container.querySelector("[data-replay-surface]") as HTMLElement;
+  Object.defineProperty(board, "offsetWidth", {
+    configurable: true,
+    value: 1748,
+  });
+  board.getBoundingClientRect = () =>
+    ({
+      width: 1748,
+      height: 147,
+      top: 0,
+      left: 0,
+      right: 1748,
+      bottom: 147,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+  return board;
+}

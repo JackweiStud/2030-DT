@@ -2,6 +2,7 @@
  * 误差回溯：开始/重置、Y 轴、最近 20 槽与折线。
  * 列几何与静态一致：gap=3，点落在列中心；每点画圆，避免只靠细折线。
  * 超过 20 点可在回放板上拖动，P 列头与误差折线共用同一窗口。
+ * 悬停有数据的槽弹出该点三方案误差；拖过阈值后优先滑动并收起浮层。
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +19,7 @@ import {
   errorWindowRows,
   errorWindowYMax,
   formatErrorAxisTick,
+  formatFixed,
 } from "../metrics/case4Metrics";
 import type { BasePoint, TrajectoryPoint } from "../types";
 
@@ -36,10 +38,14 @@ const PLOT_W = 1748;
 const PLOT_H = 110;
 const COL_GAP = 3;
 const POINT_R = 5;
+const TIP_W = 268;
 
 /** 列心间距，与拖动换算一致（测试可 import）。 */
 export const CASE4_ERROR_REPLAY_SLOT_PITCH =
   (PLOT_W - (CASE4_POINT_WINDOW - 1) * COL_GAP) / CASE4_POINT_WINDOW + COL_GAP;
+
+/** 超过该位移才进入拖窗，避免和悬停抢手势。 */
+export const CASE4_ERROR_REPLAY_DRAG_THRESHOLD_PX = 6;
 
 type SchemeKey = "traditional" | "commercial" | "dt";
 
@@ -48,6 +54,12 @@ const SCHEME_COLOR: Record<SchemeKey, string> = {
   commercial: "#F0A12E",
   dt: "#7A6BFF",
 };
+
+const TIP_ROWS: Array<{ scheme: SchemeKey; name: string }> = [
+  { scheme: "traditional", name: "传统基站定位轨迹" },
+  { scheme: "commercial", name: "商用方案定位轨迹" },
+  { scheme: "dt", name: "数字孪生辅助定位轨迹" },
+];
 
 function colWidth(slotCount: number): number {
   return slotCount > 0
@@ -58,6 +70,14 @@ function colWidth(slotCount: number): number {
 function slotCenterX(index: number, slotCount: number): number {
   const w = colWidth(slotCount);
   return index * (w + COL_GAP) + w / 2;
+}
+
+function slotIndexFromLocalX(localX: number, slotCount: number): number | null {
+  if (slotCount <= 0 || localX < 0) return null;
+  const pitch = colWidth(slotCount) + COL_GAP;
+  const index = Math.floor(localX / pitch);
+  if (index < 0 || index >= slotCount) return null;
+  return index;
 }
 
 function seriesPoints(
@@ -106,6 +126,26 @@ function slotHeaderLabel(
   return `P${no}`;
 }
 
+function boardScale(el: HTMLElement): number {
+  const cssWidth = el.getBoundingClientRect().width;
+  const layoutWidth = el.offsetWidth;
+  return cssWidth > 0 && layoutWidth > 0 ? cssWidth / layoutWidth : 1;
+}
+
+function localXFromClient(el: HTMLElement, clientX: number): number {
+  const rect = el.getBoundingClientRect();
+  const scale = boardScale(el);
+  return (clientX - rect.left) / scale;
+}
+
+type DragState = {
+  pointerId: number;
+  originX: number;
+  originStart: number;
+  scale: number;
+  active: boolean;
+};
+
 /**
  * ErrorReplay。
  */
@@ -115,17 +155,14 @@ export function ErrorReplay(props: Props) {
   const [followLatest, setFollowLatest] = useState(true);
   const [userStart, setUserStart] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const dragRef = useRef<{
-    pointerId: number;
-    originX: number;
-    originStart: number;
-    scale: number;
-  } | null>(null);
+  const [hoverSlot, setHoverSlot] = useState<number | null>(null);
+  const dragRef = useRef<DragState | null>(null);
 
   useEffect(() => {
     if (completeCount <= 0) {
       setFollowLatest(true);
       setUserStart(0);
+      setHoverSlot(null);
     }
   }, [completeCount]);
 
@@ -157,6 +194,8 @@ export function ErrorReplay(props: Props) {
   const progW = n > 0 ? n * w + Math.max(0, n - 1) * COL_GAP + 2 : 0;
   const cursorLeft = n > 0 ? -2 + progW - 24 : 0;
   const canDrag = range.maxStart > 0;
+  const hovered = hoverSlot != null ? slots[hoverSlot] : null;
+  const hoverNo = hovered?.no ?? null;
 
   const trad = seriesPoints(
     slots.map((s) => s?.traditional ?? null),
@@ -196,44 +235,68 @@ export function ErrorReplay(props: Props) {
     return event.pointerId === pointerId;
   }
 
+  function applyHover(event: React.PointerEvent<HTMLDivElement>) {
+    if (dragRef.current?.active) {
+      setHoverSlot(null);
+      return;
+    }
+    const index = slotIndexFromLocalX(
+      localXFromClient(event.currentTarget, event.clientX),
+      nCols,
+    );
+    const next = index != null && slots[index] ? index : null;
+    setHoverSlot(next);
+  }
+
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if (event.button > 0 || !canDrag) return;
+    if (event.button > 0) return;
+    applyHover(event);
+    if (!canDrag) return;
     event.preventDefault();
     event.stopPropagation();
     const el = event.currentTarget;
-    const cssWidth = el.getBoundingClientRect().width;
-    const layoutWidth = el.offsetWidth;
-    const scale =
-      cssWidth > 0 && layoutWidth > 0 ? cssWidth / layoutWidth : 1;
     dragRef.current = {
       pointerId: event.pointerId,
       originX: event.clientX,
       originStart: windowStart,
-      scale,
+      scale: boardScale(el),
+      active: false,
     };
     try {
       el.setPointerCapture(event.pointerId);
     } catch {
       /* jsdom 可能未实现 pointer capture */
     }
-    setDragging(true);
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     const drag = dragRef.current;
-    if (!drag || !samePointer(event, drag.pointerId)) return;
-    const localDx = (event.clientX - drag.originX) / drag.scale;
-    const next = clampStart(
-      drag.originStart - localDx / CASE4_ERROR_REPLAY_SLOT_PITCH,
-      range.maxStart,
-    );
-    setFollowLatest(next >= range.maxStart);
-    setUserStart(next);
+    if (drag && samePointer(event, drag.pointerId)) {
+      const localDx = (event.clientX - drag.originX) / drag.scale;
+      if (!drag.active) {
+        if (Math.abs(localDx) < CASE4_ERROR_REPLAY_DRAG_THRESHOLD_PX) {
+          applyHover(event);
+          return;
+        }
+        drag.active = true;
+        setDragging(true);
+        setHoverSlot(null);
+      }
+      const next = clampStart(
+        drag.originStart - localDx / CASE4_ERROR_REPLAY_SLOT_PITCH,
+        range.maxStart,
+      );
+      setFollowLatest(next >= range.maxStart);
+      setUserStart(next);
+      return;
+    }
+    applyHover(event);
   }
 
   function endDrag(event: React.PointerEvent<HTMLDivElement>) {
     const drag = dragRef.current;
-    if (!drag || !samePointer(event, drag.pointerId)) return;
+    if (drag && !samePointer(event, drag.pointerId)) return;
+    const wasActive = drag?.active === true;
     dragRef.current = null;
     try {
       if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
@@ -242,8 +305,29 @@ export function ErrorReplay(props: Props) {
     } catch {
       /* jsdom 可能未实现 pointer capture */
     }
-    setDragging(false);
+    if (wasActive) setDragging(false);
+    applyHover(event);
   }
+
+  function onPointerLeave(event: React.PointerEvent<HTMLDivElement>) {
+    if (dragRef.current?.active) return;
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) {
+      return;
+    }
+    setHoverSlot(null);
+  }
+
+  const tipStyle = hovered
+    ? (() => {
+        const center = slotCenterX(hoverSlot!, nCols);
+        const left = Math.max(0, Math.min(PLOT_W - TIP_W, center - TIP_W / 2));
+        return {
+          left: `${left}px`,
+          ["--c4-tip-arrow-left" as string]: `${center - left}px`,
+        };
+      })()
+    : undefined;
 
   return (
     <div className="c4-error-replay" data-region="ErrorReplay">
@@ -293,18 +377,44 @@ export function ErrorReplay(props: Props) {
         data-replay-can-drag={canDrag ? "1" : "0"}
         data-replay-window-start={String(windowStart)}
         data-replay-follow-latest={followLatest ? "1" : "0"}
+        data-hover-no={hoverNo == null ? "" : String(hoverNo)}
         title={canDrag ? "拖动查看更早的点位" : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onPointerLeave={onPointerLeave}
       >
+        {hovered ? (
+          <div
+            className="c4-error-tip"
+            data-error-tip
+            data-error-tip-no={String(hovered.no)}
+            style={tipStyle}
+            aria-hidden
+          >
+            <div className="c4-error-tip__title">{hovered.label}定位误差</div>
+            {TIP_ROWS.map((row) => (
+              <div key={row.scheme} className="c4-error-tip__row">
+                <i
+                  className="c4-error-tip__dot"
+                  style={{ background: SCHEME_COLOR[row.scheme] }}
+                />
+                <span>{row.name}</span>
+                <b>{formatFixed(hovered[row.scheme] ?? Number.NaN, 3)}m</b>
+              </div>
+            ))}
+            <i className="c4-error-tip__arrow" />
+          </div>
+        ) : null}
         <div className="c4-replay-head">
           <div className="c4-col-headers">
             {slots.map((slot, i) => (
               <div
                 key={i}
-                className={`c4-col-head${slot ? " is-done" : ""}`}
+                className={`c4-col-head${slot ? " is-done" : ""}${
+                  hoverSlot === i && slot ? " is-hover" : ""
+                }`}
               >
                 {slotHeaderLabel(i, slot, props.baseRoute)}
               </div>
@@ -320,7 +430,12 @@ export function ErrorReplay(props: Props) {
         <div className="c4-error-plot">
           <div className="c4-col-slots" aria-hidden>
             {slots.map((_, i) => (
-              <div key={i} className="c4-col-slot" />
+              <div
+                key={i}
+                className={`c4-col-slot${
+                  hoverSlot === i && slots[i] ? " is-hover" : ""
+                }`}
+              />
             ))}
           </div>
           <svg
