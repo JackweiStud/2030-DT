@@ -1,0 +1,43 @@
+/**
+ * case4 业务视觉 token。
+ * Owner: case4。只给 .case4-page 消费，不得改写 --shell-*。
+ * 数值来自冻结 Pencil `03-design/case4/case4.pen` GetVariables。
+ */
+
+.case4-page {
+  --c4-font-ui: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --c4-font-data: "Geist Mono", "SF Mono", "Menlo", ui-monospace, monospace;
+
+  --c4-text: #f4f7fb;
+  --c4-primary-text: #ffffff;
+  --c4-muted: #8b93a7;
+  --c4-muted-2: #94a3b8;
+  --c4-wait: #94a3b8;
+
+  --c4-plan: #3ddc97;
+  --c4-bs: #97aac4;
+  --c4-gaode: #f0a12e;
+  --c4-dt: #7a6bff;
+
+  --c4-dock: #2a2e36;
+  --c4-page: #4a4e56;
+  --c4-card: #2a2a2a99;
+  --c4-grid: #ffffff33;
+  --c4-axis: #939393;
+  --c4-error: #f07178;
+  --c4-badge-running: #0ea5e9;
+  --c4-success: #3ddc97;
+  --c4-without: #4c8dff;
+  --c4-disabled: #5c6370;
+
+  --c4-radius-card: 16px;
+  --c4-radius-dock: 14px;
+  --c4-gap-row: 12px;
+
+  /* Pencil c0EO9c / 实例 nkOCa「路线点位」 */
+  --c4-pin-w: 35px;
+  --c4-pin-h: 42px;
+  --c4-pin-no-h: 31px;
+  --c4-pin-label-size: 12px;
+  --c4-pin-label-weight: 700;
+}

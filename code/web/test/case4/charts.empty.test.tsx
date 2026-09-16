@@ -1,0 +1,259 @@
+/**
+ * 底栏图表：空态骨架、刻度与折线共用映射、误差圆点。
+ */
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { CdfChart } from "../../src/cases/case4/components/CdfChart";
+import { CepBars } from "../../src/cases/case4/components/CepBars";
+import { ErrorReplay } from "../../src/cases/case4/components/ErrorReplay";
+import { NlosGauge } from "../../src/cases/case4/components/NlosGauge";
+import { ThroughputChart } from "../../src/cases/case4/components/ThroughputChart";
+import {
+  sampleBaseRoute,
+  sampleStatistics,
+  thrpSamples,
+  trajPoint,
+} from "./fixtures";
+
+describe("ThroughputChart", () => {
+  it("空态 Y0–10 与 X1–20 带 left/top，不堆在原点", () => {
+    const view = render(<ThroughputChart without={[]} withSamples={[]} />);
+    const ys = [
+      ...view.container.querySelectorAll(".c4-thrp-y span"),
+    ] as HTMLSpanElement[];
+    const xs = [
+      ...view.container.querySelectorAll(".c4-thrp-x span"),
+    ] as HTMLSpanElement[];
+    expect(ys.map((el) => el.textContent)).toEqual([
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1",
+      "0",
+    ]);
+    expect(xs).toHaveLength(20);
+    expect(xs[0]?.textContent).toBe("1");
+    expect(xs[19]?.textContent).toBe("20");
+    const x0 = Number.parseFloat(xs[0]?.style.left ?? "");
+    const xLast = Number.parseFloat(xs[19]?.style.left ?? "");
+    const yTop = Number.parseFloat(ys[0]?.style.top ?? "");
+    const yBot = Number.parseFloat(ys[10]?.style.top ?? "");
+    expect(x0).toBeGreaterThan(20);
+    expect(xLast).toBeGreaterThan(x0 + 400);
+    expect(yBot).toBeGreaterThan(yTop + 100);
+  });
+
+  it("N≤20 横轴仍是 1–20，不按样点数拉伸", () => {
+    const empty = render(<ThroughputChart without={[]} withSamples={[]} />);
+    const live = render(
+      <ThroughputChart without={thrpSamples(5)} withSamples={[]} />,
+    );
+    const emptyXs = [
+      ...empty.container.querySelectorAll(".c4-thrp-x span"),
+    ] as HTMLSpanElement[];
+    const liveXs = [
+      ...live.container.querySelectorAll(".c4-thrp-x span"),
+    ] as HTMLSpanElement[];
+    expect(liveXs).toHaveLength(20);
+    expect(liveXs[0]?.textContent).toBe("1");
+    expect(liveXs[19]?.textContent).toBe("20");
+    expect(liveXs[0]?.style.left).toBe(emptyXs[0]?.style.left);
+    expect(liveXs[19]?.style.left).toBe(emptyXs[19]?.style.left);
+    expect(live.container.querySelectorAll(".c4-thrp-dot")).toHaveLength(5);
+  });
+
+  it("峰值≤10 时 Y 锁 0–10 整数", () => {
+    const view = render(
+      <ThroughputChart without={[{ no: 1, gbps: 9.5 }]} withSamples={[]} />,
+    );
+    const ys = [
+      ...view.container.querySelectorAll(".c4-thrp-y span"),
+    ].map((el) => el.textContent);
+    expect(ys).toEqual([
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1",
+      "0",
+    ]);
+  });
+
+  it("峰值刚过 10 时 Y 为 12…0 整数，横网格条数跟刻度走", () => {
+    const view = render(
+      <ThroughputChart without={[{ no: 1, gbps: 10.5 }]} withSamples={[]} />,
+    );
+    const ys = [
+      ...view.container.querySelectorAll(".c4-thrp-y span"),
+    ].map((el) => el.textContent);
+    expect(ys).toEqual([
+      "12",
+      "11",
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1",
+      "0",
+    ]);
+    expect(ys).not.toContain("10.8");
+    expect(
+      view.container.querySelectorAll(".c4-thrp-grid-svg rect[data-thrp-yline]"),
+    ).toHaveLength(13);
+  });
+
+  it("有数据时横轴序号与折线同一窗口", () => {
+    const view = render(
+      <ThroughputChart without={thrpSamples(25)} withSamples={thrpSamples(22)} />,
+    );
+    const xs = [
+      ...view.container.querySelectorAll(".c4-thrp-x span"),
+    ] as HTMLSpanElement[];
+    expect(xs[0]?.textContent).toBe("6");
+    expect(xs.at(-1)?.textContent).toBe("25");
+    const path = view.container.querySelector(".c4-thrp-svg path");
+    expect(path?.getAttribute("d")?.startsWith("M ")).toBe(true);
+  });
+});
+
+describe("CdfChart empty", () => {
+  it("空态无中心 --，保留 Y 轴与 X 骨架", () => {
+    const view = render(<CdfChart cdf={null} />);
+    expect(view.container.querySelector(".c4-cdf-empty")).toBeNull();
+    expect(view.container.textContent).not.toContain("--");
+    const ys = [...view.container.querySelectorAll(".c4-cdf-y span")].map(
+      (el) => el.textContent,
+    );
+    expect(ys).toEqual(["1.0", "0.8", "0.6", "0.4", "0.2", "0.0"]);
+    const xs = [...view.container.querySelectorAll(".c4-cdf-x span")].map(
+      (el) => el.textContent,
+    );
+    expect(xs[0]).toBe("0");
+    expect(xs.at(-1)).toBe("4.5");
+  });
+
+  it("有数据时 X 为 0～max 十档、一位小数", () => {
+    const view = render(<CdfChart cdf={sampleStatistics().cdf} />);
+    expect(view.container.querySelector(".c4-cdf-svg path")).toBeTruthy();
+    const xs = [...view.container.querySelectorAll(".c4-cdf-x span")].map(
+      (el) => el.textContent,
+    );
+    expect(xs).toHaveLength(10);
+    expect(xs[0]).toBe("0.0");
+    expect(xs.at(-1)).toBe("0.8");
+  });
+});
+
+describe("CepBars empty", () => {
+  it("空态保留传统/商用/DT 与数字刻度，不用 --", () => {
+    const view = render(<CepBars cep={null} kind="p50M" />);
+    expect(view.container.textContent).toContain("传统");
+    expect(view.container.textContent).toContain("商用");
+    expect(view.container.textContent).toContain("DT");
+    expect(view.container.textContent).not.toContain("--");
+    const ticks = [...view.container.querySelectorAll(".c4-cep-y span")].map(
+      (el) => el.textContent,
+    );
+    expect(ticks).toEqual(["4.0", "3.0", "2.0", "1.0", "0.0"]);
+    expect(view.container.querySelectorAll(".c4-cep-bar.is-empty")).toHaveLength(
+      3,
+    );
+  });
+
+  it("有数据时 Y 刻度与柱顶均为一位小数", () => {
+    const view = render(<CepBars cep={sampleStatistics().cep} kind="p50M" />);
+    const ticks = [...view.container.querySelectorAll(".c4-cep-y span")].map(
+      (el) => el.textContent,
+    );
+    expect(ticks).toEqual(["0.4", "0.3", "0.2", "0.1", "0.0"]);
+    const values = [...view.container.querySelectorAll(".c4-cep-value")].map(
+      (el) => el.textContent,
+    );
+    expect(values).toEqual(["0.4", "0.3", "0.1"]);
+  });
+});
+
+describe("NlosGauge ticks", () => {
+  it("空态中心 --，内侧仍有 0/25/50/75/100", () => {
+    const view = render(<NlosGauge nlosRatio={null} />);
+    expect(view.container.querySelector(".c4-nlos-value")?.textContent).toBe(
+      "--",
+    );
+    const ticks = [
+      ...view.container.querySelectorAll(".c4-nlos-ticks span"),
+    ].map((el) => el.textContent);
+    expect(ticks).toEqual(["0", "25", "50", "75", "100"]);
+    const first = view.container.querySelector(
+      ".c4-nlos-ticks span",
+    ) as HTMLSpanElement | null;
+    expect(first?.style.left).toBe("32.28%");
+    expect(first?.style.top).toBe("73.91%");
+  });
+});
+
+describe("ErrorReplay", () => {
+  it("空态标题为点位/定位误差/(m)，Y 轴为 5.5…0 六刻度", () => {
+    const view = render(
+      <ErrorReplay
+        baseRoute={sampleBaseRoute(3)}
+        points={[]}
+        statusText="未开始"
+        startEnabled
+        resetEnabled={false}
+        busy={false}
+        onStart={() => undefined}
+        onReset={() => undefined}
+      />,
+    );
+    const title = view.container.querySelector(".c4-axis-title");
+    expect(title?.textContent).toBe("点位定位误差(m)");
+    const ticks = [...view.container.querySelectorAll(".c4-y-axis span")].map(
+      (el) => el.textContent,
+    );
+    expect(ticks).toEqual(["5.5", "4.5", "3.5", "2.5", "1.5", "0"]);
+    const heads = [...view.container.querySelectorAll(".c4-col-head")].map(
+      (el) => el.textContent,
+    );
+    expect(heads).toHaveLength(20);
+    expect(heads[0]).toBe("P1");
+    expect(heads[19]).toBe("P20");
+  });
+
+  it("有点时画折线与圆点，圆点 x 随列递增", () => {
+    const base = sampleBaseRoute(3);
+    const view = render(
+      <ErrorReplay
+        baseRoute={base}
+        points={base.map((p) => trajPoint(p.no, p))}
+        statusText="测试中..."
+        startEnabled={false}
+        resetEnabled={false}
+        busy
+        onStart={() => undefined}
+        onReset={() => undefined}
+      />,
+    );
+    const circles = [
+      ...view.container.querySelectorAll(".c4-error-svg circle"),
+    ] as SVGCircleElement[];
+    expect(circles.length).toBeGreaterThanOrEqual(3);
+    const xs = circles.slice(0, 3).map((c) => Number(c.getAttribute("cx")));
+    expect(xs[1]! - xs[0]!).toBeGreaterThan(50);
+  });
+});

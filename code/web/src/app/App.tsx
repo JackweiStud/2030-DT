@@ -1,6 +1,7 @@
 /**
- * 应用入口：加载 Case2/Case3 配置；仅激活 Tab 挂载对应页面；汇总跨 Case busy。
- * 「DT for Comm new」挂 Case3 V2 页面，复用 Case3 控制链；旧 case3 页仍保留但不进导航。
+ * 应用入口：加载 Case2/Case3/Case4 配置；仅激活 Tab 挂载对应页面；汇总跨 Case busy。
+ * 「DT for Comm」挂 Case3 V2（tab=case5）；「DT for positioning」挂 Case4。
+ * 旧 case3 页仍保留但不进导航。
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -8,6 +9,7 @@ import { ComingSoon, Shell, type CaseTabId } from "../shell/Shell";
 import { Case2Page } from "../cases/case2/Case2Page";
 import { Case3Page } from "../cases/case3/Case3Page";
 import { Case3V2Page } from "../cases/case3-v2/Case3V2Page";
+import { Case4Page } from "../cases/case4/Case4Page";
 import {
   HeatmapConfigError,
   loadCase2RuntimeConfig,
@@ -16,6 +18,10 @@ import {
   Case3ConfigError,
   loadCase3RuntimeConfig,
 } from "../cases/case3/config/case3RuntimeConfig";
+import {
+  Case4ConfigError,
+  loadCase4RuntimeConfig,
+} from "../cases/case4/config/case4RuntimeConfig";
 import "../../assets/shell/tokens.css";
 import "../../assets/case2/tokens.css";
 
@@ -25,6 +31,7 @@ export function App() {
   const [case2Busy, setCase2Busy] = useState(false);
   const [case3Busy, setCase3Busy] = useState(false);
   const [case3V2Busy, setCase3V2Busy] = useState(false);
+  const [case4Busy, setCase4Busy] = useState(false);
 
   const case2Config = useMemo(() => {
     try {
@@ -44,10 +51,20 @@ export function App() {
     }
   }, []);
 
+  const case4Config = useMemo(() => {
+    try {
+      return { ok: true as const, config: loadCase4RuntimeConfig(import.meta.env) };
+    } catch (err) {
+      const field = err instanceof Case4ConfigError ? err.field : "unknown";
+      return { ok: false as const, field, message: String(err) };
+    }
+  }, []);
+
   const navigationLocked =
     (tab === "case2" && case2Busy) ||
     (tab === "case3" && case3Busy) ||
-    (tab === "case5" && case3V2Busy);
+    (tab === "case5" && case3V2Busy) ||
+    (tab === "case4" && case4Busy);
 
   const onTabChange = useCallback(
     (next: CaseTabId) => {
@@ -97,6 +114,20 @@ export function App() {
       <main className="case3v2-page">
         <p className="case3v2-config-error">
           case3 配置错误：{case3Config.field}
+        </p>
+      </main>
+    );
+  } else if (tab === "case4") {
+    body = case4Config.ok ? (
+      <Case4Page
+        config={case4Config.config}
+        stageElementRef={stageRef}
+        onBusyChange={setCase4Busy}
+      />
+    ) : (
+      <main className="case4-page">
+        <p className="case4-config-error">
+          case4 配置错误：{case4Config.field}
         </p>
       </main>
     );

@@ -1,0 +1,1278 @@
+/* case4 正式运行样式。根作用域 .case4-page；资源走 assets/case4。
+   视觉规则迁自已接受静态页；去掉评审条、Pencil 组偏移与底图 cover。 */
+
+.case4-page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #070a0f;
+  color: var(--c4-text);
+  font-family: var(--c4-font-ui);
+}
+
+.case4-page button {
+  font-family: inherit;
+}
+
+.case4-page .case4-config-error {
+  position: relative;
+  z-index: 2;
+  padding: 80px 24px;
+  color: #ffffff;
+}
+
+/* ---- MapStage：y60 h766 clip；变换层 1920×782 ---- */
+.case4-page .c4-map-stage {
+  position: absolute;
+  left: 0;
+  top: 60px;
+  z-index: 0;
+  width: 1920px;
+  height: 766px;
+  overflow: hidden;
+}
+
+.case4-page .c4-map-interact {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+}
+
+.case4-page .c4-map-transform {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+.case4-page .c4-map-image-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  transform-origin: center center;
+}
+
+.case4-page .c4-map-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.case4-page .c4-map-reset {
+  position: absolute;
+  top: 28px;
+  right: 16px;
+  z-index: 6;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 8px;
+  background: #0b1220cc;
+  color: #ffffff;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.case4-page .c4-map-reset img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.case4-page .c4-map-reset:hover {
+  background: #1e293be6;
+  border-color: #ffffff99;
+}
+
+.case4-page .c4-route-base,
+.case4-page .c4-route-walked {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.case4-page .c4-route-walked {
+  z-index: 2;
+}
+
+/* Pencil DeaVV 层序：走廊 < 动态(UE) < 点位 < 侧标 < 实测轨迹(iD2DE) */
+.case4-page .c4-ue {
+  position: absolute;
+  z-index: 2;
+  /* Pencil 当前UE标记：36×48（非 case3 的 36×38） */
+  width: 36px;
+  height: 48px;
+  display: none;
+  background: url("../../../assets/case4/ue-2d.png") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.case4-page[data-state="running"] .c4-ue,
+.case4-page[data-state="completed"] .c4-ue,
+.case4-page .c4-ue.is-on {
+  display: block;
+}
+
+.case4-page .c4-route-points {
+  /* 与走廊/已走共用投影系；勿再加 Pencil 示意层 (+1,-1) 偏移 */
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.case4-page .c4-pin {
+  position: absolute;
+  width: var(--c4-pin-w);
+  height: var(--c4-pin-h);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Pencil E7BWF：35×42 矩形内 image mode fit */
+.case4-page .c4-pin__icon {
+  position: absolute;
+  inset: 0;
+  width: var(--c4-pin-w);
+  height: var(--c4-pin-h);
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+
+.case4-page .c4-pin__no {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--c4-pin-w);
+  height: var(--c4-pin-no-h);
+  color: #fff;
+  font-size: var(--c4-pin-label-size);
+  font-weight: var(--c4-pin-label-weight);
+  line-height: normal;
+  pointer-events: none;
+}
+
+/* Pencil iD2DE：12,-36 · 1895×782；路径坐标在其局部系 */
+.case4-page .c4-tracks {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ---- MapHud：absolute @0,80 1920×570 ---- */
+.case4-page .c4-map-hud {
+  position: absolute;
+  left: 0;
+  top: 80px;
+  z-index: 2;
+  width: 1920px;
+  height: 570px;
+  pointer-events: none;
+}
+
+.case4-page .c4-map-hud > * {
+  pointer-events: auto;
+}
+
+.case4-page .c4-top-mask {
+  position: absolute;
+  left: 0;
+  top: -20px;
+  z-index: 0;
+  width: 1920px;
+  height: 72px;
+  background: url("../../../assets/case4/top-mask.png") center / cover no-repeat;
+  pointer-events: none;
+}
+
+.case4-page .c4-compare {
+  position: absolute;
+  left: 25px;
+  top: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: 160px;
+  height: 44px;
+  pointer-events: none;
+}
+
+.case4-page .c4-compare__icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  background: url("../../../assets/case4/compare-icon.png") center / contain no-repeat;
+}
+
+.case4-page .c4-compare__text {
+  color: #f4f7fb;
+  font-size: 28px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.case4-page .c4-site-env-link {
+  position: absolute;
+  left: 1770px;
+  top: 14px;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f4f7fb;
+  font-size: 26px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.case4-page .c4-view-toggle {
+  position: absolute;
+  left: 882px;
+  top: 10px;
+  z-index: 4;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 126px;
+  height: 32px;
+  padding: 2px;
+  border-radius: 5px;
+  background: #f3f3f333;
+}
+
+.case4-page .c4-view-toggle__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 59px;
+  height: 26px;
+  border-radius: 5px;
+  color: #f4f7fb;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.case4-page .c4-view-toggle__item.is-active {
+  background: #4c8dff;
+  font-weight: 700;
+}
+
+.case4-page .c4-view-toggle__item.is-disabled {
+  cursor: not-allowed;
+}
+
+.case4-page .c4-legend {
+  position: absolute;
+  left: 1690px;
+  top: 373px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 196px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #11151ccc;
+  pointer-events: none;
+}
+
+.case4-page .c4-legend__item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  height: 18px;
+  color: #f4f7fb;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.case4-page .c4-legend__swatch {
+  position: relative;
+  width: 28px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.case4-page .c4-legend__swatch::before,
+.case4-page .c4-legend__swatch::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.case4-page .c4-legend__swatch::before {
+  left: 0;
+}
+
+.case4-page .c4-legend__swatch::after {
+  right: 0;
+}
+
+.case4-page .c4-legend__swatch--bs::before,
+.case4-page .c4-legend__swatch--bs::after {
+  background: #97aac4;
+}
+
+.case4-page .c4-legend__swatch--gaode::before,
+.case4-page .c4-legend__swatch--gaode::after {
+  background: #f0a12e;
+}
+
+.case4-page .c4-legend__swatch--dt::before,
+.case4-page .c4-legend__swatch--dt::after {
+  background: #7a6bff;
+}
+
+.case4-page .c4-legend__swatch--bs {
+  background: radial-gradient(circle at 14px 6px, #97aac4 0 5px, transparent 6px);
+}
+
+.case4-page .c4-legend__swatch--gaode {
+  background: radial-gradient(circle at 14px 6px, #f0a12e 0 5px, transparent 6px);
+}
+
+.case4-page .c4-legend__swatch--dt {
+  background: radial-gradient(circle at 14px 6px, #7a6bff 0 5px, transparent 6px);
+}
+
+/* ---- 底部数据浮层：vertical gap12 pad[14,16] r14 fill #ffffff66；Pencil background_blur 80 ---- */
+.case4-page .c4-dock {
+  position: absolute;
+  left: 0;
+  top: 640px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 1920px;
+  height: 439px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #ffffff66;
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(80px);
+  backdrop-filter: blur(80px);
+}
+
+.case4-page .c4-banner {
+  /* 相对 case4-page；底边贴在 dock(y640) 上方 8px，避免叠入底栏 */
+  /* Apple 深色告警条：中性材质 + 橙左边线；正文主色白 */
+  position: absolute;
+  left: 16px;
+  top: 640px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  max-width: 560px;
+  padding: 8px 14px 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left-width: 3px;
+  border-left-color: #ff9f0a;
+  background: #2c2c2eee;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  font-family: var(--c4-font-ui);
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translateY(calc(-100% - 8px));
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+}
+
+.case4-page .c4-banner[hidden] {
+  display: none !important;
+}
+
+.case4-page .c4-banner__title {
+  color: var(--c4-error);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.case4-page .c4-banner__detail {
+  color: var(--c4-text);
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.92;
+}
+
+.case4-page .c4-banner.is-wait {
+  border-color: rgba(14, 165, 233, 0.45);
+  border-left-color: var(--c4-badge-running);
+  background: rgba(14, 165, 233, 0.16);
+}
+
+.case4-page .c4-banner.is-wait .c4-banner__title {
+  color: var(--c4-badge-running);
+}
+
+/* 定位误差回溯区：横排 flex gap2 1898×162 */
+.case4-page .c4-error-replay {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  width: 1898px;
+  height: 162px;
+}
+
+/* 回溯控制列：横排 控制左区 + 轴标题条 */
+.case4-page .c4-ctrl-col {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* 定稿帧实例 gap=5、w=fit_content（主件曾写 4/123） */
+  gap: 5px;
+  width: fit-content;
+  height: 147px;
+}
+
+.case4-page .c4-ctrl-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 83px;
+  height: 91px;
+}
+
+.case4-page .c4-ctrl-btns {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 76px;
+  height: 43px;
+}
+
+.case4-page .c4-icon-btn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 26px;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  cursor: pointer;
+}
+
+.case4-page .c4-icon-btn:disabled {
+  cursor: default;
+}
+
+.case4-page .c4-icon-btn--play.is-ready {
+  background-image: url("../../../assets/case4/btn-play.png");
+}
+
+.case4-page .c4-icon-btn--play.is-busy {
+  background-image: url("../../../assets/case4/btn-playing.png");
+}
+
+.case4-page .c4-icon-btn--play.is-off {
+  background-image: url("../../../assets/case4/btn-play-disabled.png");
+}
+
+.case4-page .c4-icon-btn--reset.is-ready {
+  background-image: url("../../../assets/case4/btn-reset.png");
+}
+
+.case4-page .c4-icon-btn--reset.is-off {
+  background-image: url("../../../assets/case4/btn-reset-disabled.png");
+}
+
+.case4-page .c4-ctrl-status {
+  width: 76px;
+  height: 31px;
+  margin-top: 0;
+  color: #2a2e36;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 31px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.case4-page[data-state="running"] .c4-ctrl-status {
+  color: #0ea5e9;
+}
+
+.case4-page[data-state="completed"] .c4-ctrl-status {
+  color: #3ddc97;
+}
+
+.case4-page[data-state="resetting"] .c4-ctrl-status {
+  color: #94a3b8;
+}
+
+.case4-page[data-state="failed-start"] .c4-ctrl-status,
+.case4-page[data-state="failed-reinit"] .c4-ctrl-status {
+  color: #f07178;
+}
+
+.case4-config-error {
+  padding: 96px 32px;
+  color: #f07178;
+  font-size: 18px;
+}
+
+.case4-page .c4-axis-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 29px;
+  height: 137px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  background: #ffffffb3;
+  color: #2a2e36;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+.case4-page .c4-axis-title > span:last-child {
+  font-weight: 400;
+}
+
+.case4-page .c4-axis-title__err {
+  box-sizing: border-box;
+  width: 11px;
+  height: 51px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0;
+  word-break: break-all;
+}
+
+/* 误差Y轴：基线 29px 再多留 1 位数字；内组 110 高 space-between 六刻度 */
+.case4-page .c4-y-axis {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 36px;
+  height: 147px;
+  padding: 29px 0 8px;
+  color: #1e293b;
+  font-family: var(--c4-font-data);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.case4-page .c4-y-axis span {
+  width: 28px;
+  text-align: right;
+}
+
+/* 回放列区：vertical gap5 1748×147 */
+.case4-page .c4-replay-board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  gap: 5px;
+  min-width: 0;
+  width: 1748px;
+  height: 147px;
+  /* Pencil 列头 fill 均分，不裁圆角；勿用 overflow:hidden 裁 P20 */
+  overflow: visible;
+}
+
+.case4-page .c4-replay-head {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.case4-page .c4-col-headers {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  height: 18px;
+}
+
+.case4-page .c4-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 18px;
+  border-radius: 8px;
+  background: #2a2a2a99;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.case4-page .c4-col-head.is-done {
+  background: url("../../../assets/case4/point-done.png") center / 100% 100% no-repeat;
+}
+
+.case4-page .c4-progress {
+  position: absolute;
+  left: -2px;
+  top: 0;
+  z-index: 1;
+  height: 18px;
+  display: none;
+  background: url("../../../assets/case4/progress-overlay.png") 0 0 / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.case4-page .c4-cursor {
+  position: absolute;
+  top: -2.5px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  display: none;
+  background: url("../../../assets/case4/cursor-car.png") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.case4-page[data-state="running"] .c4-progress,
+.case4-page[data-state="completed"] .c4-progress,
+.case4-page[data-state="site-env"] .c4-progress {
+  display: block;
+}
+
+.case4-page[data-state="running"] .c4-cursor,
+.case4-page[data-state="completed"] .c4-cursor,
+.case4-page[data-state="site-env"] .c4-cursor {
+  display: block;
+}
+
+.case4-page .c4-error-plot {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  overflow: hidden;
+}
+
+.case4-page .c4-col-slots {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  height: 109px;
+  top: 1px;
+  pointer-events: none;
+}
+
+.case4-page .c4-col-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 109px;
+  border-radius: 5px;
+  background: #2a2a2a99;
+}
+
+.case4-page .c4-error-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 1748px;
+  height: 110px;
+  overflow: visible;
+}
+
+/* ---- 指标卡行：横排 gap12 1900×225 ---- */
+.case4-page .c4-kpi-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+  width: 1900px;
+  height: 225px;
+}
+
+.case4-page .c4-kpi--pos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 975px;
+  height: 225px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: #2a2a2a99;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.case4-page .c4-kpi--nlos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 272px;
+  height: 225px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #2a2a2a99;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.case4-page .c4-thrp-shell {
+  width: 623px;
+  height: 225px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.case4-page .c4-kpi--thrp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 622px;
+  height: 225px;
+  padding: 2px 10px 8px;
+  border-radius: 16px;
+  background: #2a2a2a99;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.case4-page .c4-kpi__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.case4-page .c4-kpi__title--pos,
+.case4-page .c4-kpi__title--nlos {
+  color: #f4f7fb;
+  font-size: 14px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.case4-page .c4-kpi__title--thrp {
+  color: #f4f7fb;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.case4-page .c4-kpi__legend {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  color: #8b93a7;
+  font-size: 10px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.case4-page .c4-kpi__legend--thrp {
+  gap: 16px;
+  font-size: 12px;
+}
+
+.case4-page .c4-kpi__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.case4-page .c4-kpi__legend--thrp span {
+  gap: 2px;
+}
+
+.case4-page .c4-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.case4-page .c4-kpi__legend--thrp .c4-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.case4-page .c4-dot--bs {
+  background: #97aac4;
+}
+
+.case4-page .c4-dot--gaode {
+  background: #f0a12e;
+}
+
+.case4-page .c4-dot--dt {
+  background: #7a6bff;
+}
+
+.case4-page .c4-pos-body {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 947px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.case4-page .c4-cdf {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 320px;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+.case4-page .c4-cep {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 300px;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+.case4-page .c4-cep[data-cep="90"] {
+  width: 299px;
+}
+
+.case4-page .c4-subhead {
+  color: #f4f7fb;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.case4-page .c4-cdf-plot {
+  position: relative;
+  width: 320px;
+  height: 157px;
+  flex: 1 1 auto;
+}
+
+.case4-page .c4-cdf-grid {
+  position: absolute;
+  left: 28px;
+  top: 4px;
+  width: 284px;
+  height: 141px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #ffffff33 0,
+    #ffffff33 1px,
+    transparent 1px,
+    transparent 28px
+  );
+  pointer-events: none;
+}
+
+.case4-page .c4-cdf-svg {
+  position: absolute;
+  left: 28px;
+  top: 8px;
+  width: 280px;
+  height: 136px;
+}
+
+.case4-page .c4-cdf-y {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 22px;
+  height: 152px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #939393;
+  font-family: var(--c4-font-data);
+  font-size: 9px;
+  font-weight: 400;
+  text-align: left;
+  pointer-events: none;
+}
+
+.case4-page .c4-cdf-x {
+  position: absolute;
+  left: 24px;
+  top: 145px;
+  width: 270px;
+  height: 12px;
+  display: flex;
+  justify-content: space-between;
+  color: #939393;
+  font-family: var(--c4-font-data);
+  font-size: 9px;
+  pointer-events: none;
+}
+
+.case4-page .c4-cdf-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 20px;
+  font-weight: 600;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.case4-page .c4-cdf-empty[hidden] {
+  display: none !important;
+}
+
+.case4-page .c4-cep-slot {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 8px;
+  width: 100%;
+  height: 162px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+}
+
+.case4-page .c4-cep-grid {
+  position: absolute;
+  left: 34px;
+  top: 17px;
+  right: 8px;
+  height: 133px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #ffffff33 0,
+    #ffffff33 1px,
+    transparent 1px,
+    transparent 33px
+  );
+  pointer-events: none;
+}
+
+.case4-page .c4-cep-y {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-shrink: 0;
+  width: 22px;
+  height: 100%;
+  padding: 11px 0 7px;
+  box-sizing: border-box;
+  color: #939393;
+  font-family: var(--c4-font-data);
+  font-size: 9px;
+  z-index: 1;
+}
+
+.case4-page .c4-cep-plot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-around;
+  flex: 1 1 auto;
+  gap: 8px;
+  height: 100%;
+  min-width: 0;
+}
+
+.case4-page .c4-cep-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  height: 100%;
+  gap: 0;
+}
+
+.case4-page .c4-cep-value {
+  color: #f4f7fb;
+  font-family: var(--c4-font-data);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.2;
+  min-height: 0;
+  margin-bottom: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.case4-page .c4-cep-bar {
+  width: 28px;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
+.case4-page .c4-cep-bar.is-empty {
+  height: 0 !important;
+  min-height: 0;
+  opacity: 0;
+}
+
+.case4-page .c4-cep-label {
+  width: 100%;
+  height: 13px;
+  flex-shrink: 0;
+  color: #f4f7fb;
+  font-size: 9px;
+  font-weight: 400;
+  text-align: center;
+  line-height: 13px;
+}
+
+.case4-page .c4-nlos-gauge {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 表盘区 fill；内部按主件 256×173 比例定位（定稿实例宽 272） */
+.case4-page .c4-nlos-gauge-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.case4-page .c4-nlos-svg {
+  position: absolute;
+  left: calc(38 / 256 * 100%);
+  top: calc(3 / 173 * 100%);
+  width: calc(178 / 256 * 100%);
+  height: calc(178 / 173 * 100%);
+  overflow: visible;
+}
+
+.case4-page .c4-nlos-tick-marks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.case4-page .c4-nlos-ring,
+.case4-page .c4-nlos-arc {
+  /* 描边与 dash 写在 SVG 属性上，CSS 不再覆盖 stroke / dashoffset */
+}
+
+/* Pencil 空闲/测试中：值弧 enabled=false */
+.case4-page .c4-nlos-arc.is-off {
+  visibility: hidden;
+}
+
+.case4-page .c4-nlos-center {
+  position: absolute;
+  left: calc(49 / 256 * 100%);
+  top: calc(48 / 173 * 100%);
+  width: calc(156 / 256 * 100%);
+  height: calc(88 / 173 * 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  z-index: 2;
+}
+
+.case4-page .c4-nlos-value {
+  color: #f4f7fb;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.case4-page .c4-nlos-caption {
+  color: #f4f7fb;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.case4-page .c4-nlos-ticks {
+  position: absolute;
+  inset: 0;
+  color: #8b93a7;
+  font-family: var(--c4-font-data);
+  font-size: 9px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.case4-page .c4-nlos-ticks span {
+  position: absolute;
+}
+
+.case4-page .c4-thrp-plot {
+  /* Pencil AFTrn：602×171 clip */
+  position: relative;
+  width: 602px;
+  height: 171px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.case4-page .c4-thrp-art {
+  /* 网格/轴/曲线同构 602×176；底部约 5px 被 AFTrn 裁切 */
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 602px;
+  height: 176px;
+}
+
+.case4-page .c4-thrp-grid-svg {
+  position: absolute;
+  inset: 0;
+  width: 602px;
+  height: 176px;
+  pointer-events: none;
+}
+
+.case4-page .c4-thrp-svg {
+  position: absolute;
+  inset: 0;
+  width: 602px;
+  height: 176px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.case4-page .c4-thrp-dots {
+  position: absolute;
+  inset: 0;
+  width: 602px;
+  height: 176px;
+  pointer-events: none;
+}
+
+.case4-page .c4-thrp-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.case4-page .c4-thrp-y {
+  position: absolute;
+  inset: 0;
+  color: #939393;
+  font-family: var(--c4-font-ui);
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 11px;
+  pointer-events: none;
+}
+
+.case4-page .c4-thrp-y span {
+  position: absolute;
+  transform: translateY(-0.1em);
+}
+
+.case4-page .c4-thrp-x {
+  position: absolute;
+  inset: 0;
+  color: #939393;
+  font-family: var(--c4-font-ui);
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 11px;
+  pointer-events: none;
+}
+
+.case4-page .c4-thrp-x span {
+  position: absolute;
+}
