@@ -1,0 +1,216 @@
+/**
+ * 静态页共享 Shell：1920×1080 舞台 + 80px 四 Tab 顶栏。
+ * 对齐正式 `code/web/src/shell/shell.css` / Shell.tsx。
+ * 不包含任何 case 业务样式。Tab 文案不含 case3-v2 开发期「DT for Comm new」。
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: var(--shell-font-ui);
+}
+
+.stage-viewport {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.stage {
+  width: var(--shell-stage-width);
+  height: var(--shell-stage-height);
+  position: relative;
+  flex-shrink: 0;
+  transform-origin: center center;
+  background: var(--shell-color-page);
+  overflow: hidden;
+  color: var(--shell-color-text);
+}
+
+.shell-header {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  width: 1920px;
+  height: var(--shell-header-height);
+  overflow: hidden;
+}
+
+.nav-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: 1920px;
+  height: var(--shell-header-height);
+  background: url("../../04-runtime-assets/shell/nav-bg.png") center / cover no-repeat;
+  pointer-events: none;
+}
+
+.brand-area {
+  position: absolute;
+  left: var(--shell-brand-left);
+  top: var(--shell-brand-top);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: var(--shell-brand-gap);
+  height: var(--shell-brand-height);
+  pointer-events: none;
+}
+
+.brand-logo {
+  width: var(--shell-brand-mark-size);
+  height: var(--shell-brand-mark-size);
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.brand-sub {
+  color: var(--shell-nav-color-text);
+  font-size: var(--shell-font-size-brand-sub);
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.case-nav {
+  position: absolute;
+  top: var(--shell-nav-top);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  height: var(--shell-nav-height);
+}
+
+.case-nav--left {
+  left: var(--shell-nav-left-left);
+  width: var(--shell-nav-left-width);
+  justify-content: space-between;
+  gap: var(--shell-nav-gap);
+}
+
+.case-nav--right {
+  left: var(--shell-nav-right-left);
+  width: var(--shell-nav-right-width);
+  justify-content: space-between;
+  gap: var(--shell-nav-gap);
+}
+
+.case-tab {
+  appearance: none;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--shell-nav-color-muted);
+  font-family: var(--shell-font-ui);
+  font-size: var(--shell-font-size-tab);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: normal;
+  text-align: left;
+  white-space: nowrap;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.case-tab:disabled {
+  cursor: not-allowed;
+}
+
+.case-tab.is-active {
+  position: relative;
+  width: var(--shell-tab-active-width);
+  height: var(--shell-nav-height);
+  flex-shrink: 0;
+  color: var(--shell-nav-color-text);
+}
+
+.case-tab.is-active .case-tab__label {
+  position: absolute;
+  left: 0;
+  top: 14px;
+}
+
+.tab-underline {
+  display: none;
+}
+
+.case-tab.is-active .tab-underline {
+  display: block;
+  position: absolute;
+  left: var(--shell-tab-underline-left);
+  top: var(--shell-tab-underline-top);
+  width: var(--shell-tab-underline-width);
+  height: var(--shell-tab-underline-height);
+  border-radius: var(--shell-radius-tab-underline);
+  background: var(--shell-nav-color-text);
+}
+
+.shell-title {
+  position: absolute;
+  left: var(--shell-title-left);
+  top: var(--shell-title-top);
+  z-index: 1;
+  width: var(--shell-title-width);
+  color: var(--shell-nav-color-text);
+  font-size: var(--shell-font-size-brand-title);
+  font-weight: 600;
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.shell-corner {
+  position: absolute;
+  left: var(--shell-corner-left);
+  top: var(--shell-corner-top);
+  z-index: 2;
+  width: var(--shell-corner-size);
+  height: var(--shell-corner-size);
+  pointer-events: none;
+}
+
+.shell-corner__mark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.placeholder-page {
+  position: absolute;
+  left: 0;
+  top: var(--shell-header-height);
+  width: 1920px;
+  height: calc(1080px - var(--shell-header-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--shell-color-muted);
+  font-size: 28px;
+  margin: 0;
+}
+
+.placeholder-page[hidden] {
+  display: none !important;
+}

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>case4 DT for positioning — Gate 1.5 Static</title>
+  <link rel="stylesheet" href="../../04-runtime-assets/shell/tokens.css" />
+  <link rel="stylesheet" href="../../04-runtime-assets/case4/tokens.css" />
+  <link rel="stylesheet" href="../shared/shell.css" />
+  <link rel="stylesheet" href="../shared/site-env-window.css" />
+  <link rel="stylesheet" href="./case4.css" />
+</head>
+<body>
+  <!-- Gate 1.5 静态验收页。假状态/示意数据不得迁入正式 React。 -->
+  <div class="stage-viewport">
+    <div class="stage" id="stage">
+      <header class="shell-header" data-layer="ShellHeader">
+        <div class="nav-bg" aria-hidden="true"></div>
+        <div class="brand-area">
+          <img
+            class="brand-logo"
+            src="../../04-runtime-assets/shell/cloud-site.png"
+            width="36"
+            height="36"
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="brand-sub">云上外场</span>
+        </div>
+        <nav class="case-nav case-nav--left" aria-label="左侧 Case">
+          <button type="button" class="case-tab" data-tab="case1">
+            <span class="case-tab__label">DT Construction</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="case-tab" data-tab="case2">
+            <span class="case-tab__label">DT Calibration</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+        </nav>
+        <div class="shell-title">IMT-2030 DT测试</div>
+        <nav class="case-nav case-nav--right" aria-label="右侧 Case">
+          <button type="button" class="case-tab" data-tab="case5">
+            <span class="case-tab__label">DT for Comm</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="case-tab is-active" data-tab="case4" aria-current="page">
+            <span class="case-tab__label">DT for positioning</span>
+            <span class="tab-underline" aria-hidden="true"></span>
+          </button>
+        </nav>
+        <div class="shell-corner" aria-hidden="true">
+          <img
+            class="shell-corner__mark"
+            src="../../04-runtime-assets/shell/huawei-logo.png"
+            width="36"
+            height="36"
+            alt=""
+          />
+        </div>
+      </header>
+
+      <section class="placeholder-page" id="placeholder-page" hidden>
+        <p>建设中</p>
+      </section>
+
+      <main class="case4-page" id="case4-page" data-state="initial" data-dataset="pencilCep">
+        <!-- MapStage：裁切视口；变换层是唯一坐标原点 -->
+        <section class="c4-map-stage" data-region="MapStage">
+          <div class="c4-map-transform" data-map-transform>
+            <div class="c4-map-image" aria-hidden="true"></div>
+            <!-- Pencil DeaVV：走廊 → 动态 → 点位 → 侧标 → 实测轨迹 -->
+            <svg class="c4-route-base" data-route-base aria-hidden="true"></svg>
+            <svg class="c4-route-walked" data-route-walked aria-hidden="true"></svg>
+            <div class="c4-route-points" data-route-points>
+              <div class="c4-ue" data-ue aria-hidden="true"></div>
+            </div>
+            <div class="c4-side-label" data-side-label aria-hidden="true">
+              <span class="c4-side-label__bg" aria-hidden="true"></span>
+              <span class="c4-side-label__text">预期路径</span>
+            </div>
+            <svg class="c4-tracks" data-tracks aria-hidden="true"></svg>
+          </div>
+        </section>
+
+        <!-- MapHud：钉在舞台，不进地图 transform -->
+        <section class="c4-map-hud" data-region="MapHud">
+          <div class="c4-top-mask" aria-hidden="true"></div>
+          <div class="c4-compare">
+            <span class="c4-compare__icon" aria-hidden="true"></span>
+            <span class="c4-compare__text">测试对比</span>
+          </div>
+          <button type="button" class="c4-site-env-link" data-site-env-trigger>
+            现场环境 &gt;
+          </button>
+          <div class="c4-view-toggle" data-region="ViewModeToggle">
+            <span class="c4-view-toggle__item is-active">2D视图</span>
+            <span class="c4-view-toggle__item is-disabled" aria-disabled="true">3D视图</span>
+          </div>
+          <div class="c4-legend" data-region="TrackLegend" aria-hidden="true">
+            <div class="c4-legend__item">
+              <i class="c4-legend__swatch c4-legend__swatch--bs" aria-hidden="true"></i>
+              <span>传统基站定位轨迹</span>
+            </div>
+            <div class="c4-legend__item">
+              <i class="c4-legend__swatch c4-legend__swatch--gaode" aria-hidden="true"></i>
+              <span>商用方案定位轨迹</span>
+            </div>
+            <div class="c4-legend__item">
+              <i class="c4-legend__swatch c4-legend__swatch--dt" aria-hidden="true"></i>
+              <span>数字孪生辅助定位轨迹</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 异常/等待横幅：dock 外叠层，避免被 dock overflow:hidden 裁切 -->
+        <div class="c4-banner" data-banner hidden></div>
+
+        <!-- 底部数据浮层 -->
+        <section class="c4-dock" data-region="BottomDock">
+          <div class="c4-error-replay" data-region="ErrorReplay">
+            <div class="c4-ctrl-col" data-region="ReplayControls">
+              <div class="c4-ctrl-left">
+                <div class="c4-ctrl-btns">
+                  <button
+                    type="button"
+                    class="c4-icon-btn c4-icon-btn--play is-ready"
+                    data-action="start"
+                    title="开始"
+                  ></button>
+                  <button
+                    type="button"
+                    class="c4-icon-btn c4-icon-btn--reset is-off"
+                    data-action="reset"
+                    title="重置"
+                    disabled
+                  ></button>
+                </div>
+                <div class="c4-ctrl-status" data-status-text>未开始</div>
+              </div>
+              <div class="c4-axis-title" aria-hidden="true">
+                <span>点位</span>
+                <span class="c4-axis-title__err">定位误差</span>
+                <span>(m)</span>
+              </div>
+            </div>
+
+            <div class="c4-y-axis" data-region="ErrorYAxis" data-y-axis></div>
+
+            <div class="c4-replay-board">
+              <div class="c4-replay-head" data-replay-head>
+                <!-- Pencil：列头行 → 进度叠层 → 光标（后绘在上） -->
+                <div class="c4-col-headers" data-col-headers></div>
+                <div class="c4-progress" data-progress aria-hidden="true"></div>
+                <div class="c4-cursor" data-cursor aria-hidden="true"></div>
+              </div>
+              <div class="c4-error-plot">
+                <div class="c4-col-slots" data-col-slots aria-hidden="true"></div>
+                <svg class="c4-error-svg" data-error-svg viewBox="0 0 1748 110" preserveAspectRatio="none"></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="c4-kpi-row" data-region="KpiRow">
+            <article class="c4-kpi c4-kpi--pos" data-region="CdfCepCard">
+              <div class="c4-kpi__head">
+                <span class="c4-kpi__title c4-kpi__title--pos">定位误差(m)</span>
+                <div class="c4-kpi__legend">
+                  <span><i class="c4-dot c4-dot--bs"></i>传统基站定位</span>
+                  <span><i class="c4-dot c4-dot--gaode"></i>商用方案定位</span>
+                  <span><i class="c4-dot c4-dot--dt"></i>数字孪生辅助定位</span>
+                </div>
+              </div>
+              <div class="c4-pos-body">
+                <div class="c4-cdf" data-region="CDF">
+                  <div class="c4-subhead">CDF图对比</div>
+                  <div class="c4-cdf-plot" data-cdf-plot>
+                    <div class="c4-cdf-grid" data-cdf-grid aria-hidden="true"></div>
+                    <div class="c4-cdf-empty" data-cdf-empty>--</div>
+                    <svg class="c4-cdf-svg" data-cdf-svg viewBox="0 0 280 136" preserveAspectRatio="none"></svg>
+                    <div class="c4-cdf-y" data-cdf-y></div>
+                    <div class="c4-cdf-x" data-cdf-x></div>
+                  </div>
+                </div>
+                <div class="c4-cep" data-region="CEP" data-cep="50">
+                  <div class="c4-subhead">CEP(50%)</div>
+                  <div class="c4-cep-slot">
+                    <div class="c4-cep-grid" data-cep50-grid aria-hidden="true"></div>
+                    <div class="c4-cep-y" data-cep50-y></div>
+                    <div class="c4-cep-plot" data-cep50-plot></div>
+                  </div>
+                </div>
+                <div class="c4-cep" data-region="CEP" data-cep="90">
+                  <div class="c4-subhead">CEP(90%)</div>
+                  <div class="c4-cep-slot">
+                    <div class="c4-cep-grid" data-cep90-grid aria-hidden="true"></div>
+                    <div class="c4-cep-y" data-cep90-y></div>
+                    <div class="c4-cep-plot" data-cep90-plot></div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="c4-kpi c4-kpi--nlos" data-region="NLOS">
+              <div class="c4-kpi__title c4-kpi__title--nlos">NLOS占比(%)</div>
+              <div class="c4-nlos-gauge" data-nlos-gauge>
+                <!-- 坐标基准 256×173；底环/值弧同构 Pencil path（底部开口 270°，非整圆） -->
+                <div class="c4-nlos-gauge-art">
+                  <svg class="c4-nlos-svg" viewBox="38 3 178 178" aria-hidden="true">
+                    <path
+                      class="c4-nlos-ring"
+                      d="M71.84567 147.15433a78 78 0 1 1 110.30866 0"
+                    />
+                    <path
+                      class="c4-nlos-arc"
+                      data-nlos-arc
+                      d="M71.84567 147.15433a78 78 0 1 1 110.30866 0"
+                      pathLength="100"
+                      stroke-dasharray="0 100"
+                    />
+                  </svg>
+                  <svg class="c4-nlos-tick-marks" viewBox="0 0 256 173" aria-hidden="true">
+                    <g stroke="#8B93A7" stroke-width="1.5" stroke-linecap="round" fill="none">
+                      <path d="M77.14897 141.85103l4.24264-4.24264" />
+                      <path d="M61.86649 65.02082l5.54328 2.2961" />
+                      <path d="M127 21.5l0 6" />
+                      <path d="M192.13351 65.02082l-5.54328 2.2961" />
+                      <path d="M176.85103 141.85103l-4.24264-4.24264" />
+                    </g>
+                  </svg>
+                  <div class="c4-nlos-center">
+                    <div class="c4-nlos-value" data-nlos-value>--</div>
+                    <div class="c4-nlos-caption">平均NLOS径占比</div>
+                  </div>
+                  <div class="c4-nlos-ticks" aria-hidden="true">
+                    <span style="left:32.28%;top:73.91%">0</span>
+                    <span style="left:27.33%;top:37.06%">25</span>
+                    <span style="left:47.27%;top:16.76%">50</span>
+                    <span style="left:67.60%;top:36.48%">75</span>
+                    <span style="left:59.91%;top:74.49%">100</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <div class="c4-thrp-shell">
+              <article class="c4-kpi c4-kpi--thrp" data-region="Throughput">
+                <div class="c4-kpi__head">
+                  <span class="c4-kpi__title c4-kpi__title--thrp">吞吐率对比(Gbps)</span>
+                  <div class="c4-kpi__legend c4-kpi__legend--thrp">
+                    <span><i class="c4-dot c4-dot--bs"></i>传统基站定位</span>
+                    <span><i class="c4-dot c4-dot--dt"></i>数字孪生辅助定位</span>
+                  </div>
+                </div>
+                <div class="c4-thrp-plot" data-thrp-plot>
+                  <!-- Pencil AFTrn 171 clip；内层 602×176 同构网格/轴/曲线坐标系 -->
+                  <div class="c4-thrp-art">
+                    <svg class="c4-thrp-grid-svg" viewBox="0 0 602 176" aria-hidden="true">
+                      <g fill="#ffffff14" stroke="none">
+                        <rect x="29.264" y="159.165" width="564.375" height="1" />
+                        <rect x="29.264" y="143.708" width="564.375" height="1" />
+                        <rect x="29.264" y="128.250" width="564.375" height="1" />
+                        <rect x="29.264" y="112.793" width="564.375" height="1" />
+                        <rect x="29.264" y="97.336" width="564.375" height="1" />
+                        <rect x="29.264" y="81.878" width="564.375" height="1" />
+                        <rect x="29.264" y="66.421" width="564.375" height="1" />
+                        <rect x="29.264" y="50.963" width="564.375" height="1" />
+                        <rect x="29.264" y="35.506" width="564.375" height="1" />
+                        <rect x="29.264" y="20.049" width="564.375" height="1" />
+                        <rect x="29.264" y="4.591" width="564.375" height="1" />
+                        <rect x="29.264" y="4.591" width="1" height="154.574" />
+                        <rect x="58.968" y="4.591" width="1" height="154.574" />
+                        <rect x="88.672" y="4.591" width="1" height="154.574" />
+                        <rect x="118.376" y="4.591" width="1" height="154.574" />
+                        <rect x="148.080" y="4.591" width="1" height="154.574" />
+                        <rect x="177.784" y="4.591" width="1" height="154.574" />
+                        <rect x="207.488" y="4.591" width="1" height="154.574" />
+                        <rect x="237.192" y="4.591" width="1" height="154.574" />
+                        <rect x="266.895" y="4.591" width="1" height="154.574" />
+                        <rect x="296.599" y="4.591" width="1" height="154.574" />
+                        <rect x="326.303" y="4.591" width="1" height="154.574" />
+                        <rect x="356.007" y="4.591" width="1" height="154.574" />
+                        <rect x="385.711" y="4.591" width="1" height="154.574" />
+                        <rect x="415.415" y="4.591" width="1" height="154.574" />
+                        <rect x="445.119" y="4.591" width="1" height="154.574" />
+                        <rect x="474.823" y="4.591" width="1" height="154.574" />
+                        <rect x="504.527" y="4.591" width="1" height="154.574" />
+                        <rect x="534.231" y="4.591" width="1" height="154.574" />
+                        <rect x="563.935" y="4.591" width="1" height="154.574" />
+                        <rect x="593.639" y="4.591" width="1" height="154.574" />
+                      </g>
+                    </svg>
+                    <div class="c4-thrp-y" data-thrp-y></div>
+                    <div class="c4-thrp-x" data-thrp-x></div>
+                    <svg class="c4-thrp-svg" data-thrp-svg viewBox="0 0 602 176" overflow="visible"></svg>
+                    <div class="c4-thrp-dots" data-thrp-dots></div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <aside class="c4-review" id="review-controls" data-visible="false" data-static-only="true">
+    <p class="c4-review__title" data-review-drag>Gate 1.5 评审（仅静态）</p>
+    <div class="c4-review__states" data-review-states></div>
+    <label class="c4-review__dataset">
+      示意数据集
+      <select data-dataset-select>
+        <option value="pencilCep" selected>pencilCep（Pencil 示意 CEP）</option>
+        <option value="visual20">visual20（设计窗 20 / 接口 CEP）</option>
+        <option value="n38c30">n38c30（预期38 / 收齐30）</option>
+        <option value="over20">over20（&gt;20 滚动）</option>
+        <option value="thrpUneven">thrpUneven（吞吐不等长）</option>
+      </select>
+    </label>
+    <p class="c4-review__hint">?controls=1 或键盘 1–5</p>
+  </aside>
+
+  <script src="../shared/site-env-window.js"></script>
+  <script src="./js/map-projection.js"></script>
+  <script src="./js/demo-data.js"></script>
+  <script src="./js/pencil-map-art.js"></script>
+  <script src="./case4.js"></script>
+</body>
+</html>
