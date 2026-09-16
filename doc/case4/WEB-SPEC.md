@@ -1,6 +1,6 @@
 # case4 正式 Web 施工规格
 
-> status: `DRAFT — 2026-09-15 按 case2 / case3-v2 对照检视后重写；状态流程、目录、轮询、归属校验、截图放弃终态与视觉对照证据已收口。待批准交给实现 agent`
+> status: `已实现 — 2026-09-16 用户确认 2D 功能及本地自测完成，待真实后端联调`
 >
 > 使用者：正式 React Web 实现 agent。
 >
@@ -8,9 +8,11 @@
 
 开工前必读：`state.md`、契约 §0 / §3 / §4 / §7 / §8 / §9 / §11、本文、`doc/case4/STATIC-HTML-ACCEPTANCE.md`（已接受效果、可复用成果、留给 React 的地图/图表问题），以及 `code/web/src/app/App.tsx`、`shell/Shell.tsx`、`cases/case3/hooks/useCase3Controller.ts`、`cases/case3-v2/mapProjectionV2.ts`、`cases/case3-v2/Case3V2Page.tsx`。
 
-本文不表示代码已实现。首版不做 CEP 增减百分比、完成态悬停、3D、反射。
+正式代码已实现；当前不做 CEP 增减百分比、3D、反射。误差悬停已追加落地，覆盖此前后置决定；阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
 
 ---
+
+实现及验收证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。下列清单保留为施工核对项，本次文档收尾不将其批量勾选为独立复测通过。
 
 ## 0. 出口条件
 
@@ -740,7 +742,7 @@ type Case4MapView = {
 - 空槽不画 0。当前点光标/进度叠层对齐静态（absolute，不是第三 flex 列）。
 - Y 轴与点共用线性 mapping：`yMax = max(窗口内有限误差, ε)`；无点时只保留轴 chrome（可用占位 0～1），不画点。
 - 连线用 SVG path，禁止照抄示意小矩形。
-- 首版无悬停。
+- 2026-09-16 增量：有数据的误差槽可悬停显示点号、三方案误差（XY 派生值、三位小数、米单位）；空槽不显示，移出或进入拖动时收起，不新增接口。当前实现未限定 completed；运行中已有数据槽也可显示。
 
 ### 9.3 CDF
 
@@ -925,7 +927,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 
 ## 12. 明确不做
 
-- CEP Δ%、完成态 Pi 悬停、3D、反射路径、单方案图例显隐、暂停/取消/队列/业务超时/自动重发命令。
+- CEP Δ%、3D、反射路径、单方案图例显隐、暂停/取消/队列/业务超时/自动重发命令。
 - 地图不实现触摸手势、双指、全屏；缩放/旋转/平移仅桌面鼠标，与 case3-v2 主路径一致。
 - WebSocket、直读写共享目录、localStorage 恢复。
 - 把静态 `dataset=pencilCep` / `visual20` 当运行数据。
@@ -948,9 +950,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 - [x] Codex 续查已收口：控制快照归属校验先于 flag/status；放弃清零失败保留完成结果、禁按钮、停截图与轮询、不 POST init、busy=false；视觉对照证据不能用组件测试代替。
 - [x] 组件树对齐静态 `data-region`；CSS 迁正式 assets；`STATIC-HTML-ACCEPTANCE.md` 为开工必读。
 - [x] App 只加 case4 挂载与 busy；case3-v2 留在 `case5`。
-- [x] 首版无百分比/悬停/3D/反射。
+- [x] 当前不做百分比/3D/反射；悬停已追加实现。
 - [x] Case2/Case3/Case4 API 前缀各自写死同源路径。
 
-仍待用户确认：
-
-- [ ] 批准本文交给 Web 实现 agent（实现前再 YES 一次即可开工代码）。
+2026-09-16 阶段收口：实现已完成，用户确认本地自测完成，下一步为真实后端联调。

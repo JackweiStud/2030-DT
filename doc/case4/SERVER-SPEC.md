@@ -1,6 +1,6 @@
 # case4 Node 文件适配服务施工规格
 
-> status: `DRAFT — 待实现`
+> status: `已实现 — 2026-09-16 用户确认 2D 功能及本地自测完成，待真实后端联调`
 >
 > 使用者：前端 PC Node 适配服务实现 agent。
 >
@@ -9,6 +9,8 @@
 > case3-v2 **没有**独立 Node 文件服务。应对齐现行 `code/server` 的 case3 路由、共享 control store、截图原语与 `app.mjs` 接线，只换 case4 文件语义。
 >
 > 开工前必读：`state.md`、契约 §2～§10、本文、以及 `code/server/src/app.mjs`、`shared/control-file-store.mjs`、`shared/png-screenshot.mjs`、`cases/case3/control-file.mjs`、`cases/case3/side-files.mjs`。
+
+实现及验收证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。下列清单保留为施工核对项，本次文档收尾不将其批量勾选为独立复测通过。
 
 ## 0. 出口条件
 
@@ -240,7 +242,7 @@ queue.run:
 - 完整 token：`^[+-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[eE][+-]?\d+)?$`，再 `Number` 必须有限；拒绝 NaN/Infinity/空字段/半数字/`parseFloat` 垃圾后缀。
 - 记录间空行 = 格式错误，不删空行重编号。
 - 物理尾行：无换行但字段完整合法 → 计入 complete；无换行且不完整 → `hasPendingTail`；已换行的非法行 → 对应 422，不能装成 pending。
-- 坐标：恰好 3 个**逗号**字段。
+- base：3 个逗号字段；实时坐标：3 个逗号或空白字段，兼容单行 `65535`，展开为 XYZ 三个哨兵后按 §6.3 归一。
 - 吞吐：单字段。
 - CDF / CEP 汇总：2 列；**同一文件**内空白或逗号二选一，按首条非空记录检测，其后混用 → 非法。
 
