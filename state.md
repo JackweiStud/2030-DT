@@ -3,7 +3,9 @@
 ## 当前阶段
 
 - case4 Gate 1：2026-09-15 用户确认主线 2D 设计及文件校验完成；设计源 `03-design/case4/case4.pen` 已冻结，帧索引见同目录 `Freeze_Note.md`。仅同步用户验收事实，本会话未重做 Pencil 校验。首版不做 CEP 增减百分比或单点悬停，待基础功能完成并交后端联调后再开发。
-- case4 Gate 1.5：2026-09-15 已交付静态页 `web-static/case4/`（同构初始/运行/完成/现场环境 + 适配异常派生；共享 Shell + case3 地图投影语义；示意数据可切换）。用户已确认静态验收不纳入等待统计、开始失败、重置失败、结果不完整。实现方已做 Chrome 1920×1080 自检与结构验证，**尚待用户人工对照 Pencil 验收**；记录见 `doc/case4/STATIC-HTML-ACCEPTANCE.md`。不伪造通过。CEP%/悬停仍后置。
+- case4 Gate 1.5：2026-09-15 用户已接受静态视觉与结构交付；地图动态坐标/点数及 CDF/CEP 数值映射转正式 React 验收，静态不补建业务绘图。记录见 `doc/case4/STATIC-HTML-ACCEPTANCE.md`。
+
+- case4 Gate 2：2026-09-15 API 契约 v1 经 Cursor 检视和 Codex 复核，按用户“复核通过后提交并继续”的授权定稿；进入三份施工规格编写，尚未实现。
 
 - 项目 Gate 0：已于 2026-07-29 获用户批准。
 - case2 Gate 1：已于 2026-07-30 经用户视觉审阅冻结（`APPROVED`）。
@@ -69,7 +71,7 @@
 - case4 逐点偏差（2026-09-13 用户确认）：base 为预期轨迹；2D 按 XY 欧氏距离计算，后续 3D 加入 Z。三种定位结果均按文件行号与 base 配对，第 i 行对应 Pi；用户已确认同一行三方案收齐后同步展示轨迹及误差，按连续完整点位推进，吞吐独立；无效坐标 65535 已由用户澄清：同方案逐分量以上个点对应值替代，保留其余分量和点号并记录原值/替代值；P1 无前值时用户已确认使用 base P1 对应分量；连续无效沿用前一点已归一值；底部 CDF/CEP 保持后端统计来源。
 - case4 打桩模式（2026-09-13 用户确认）：同时支持 `01-参考资料/case4/data/` 原始数据回放和基于参考的随机动态测试；已核对 case2/case3 实现，随机字段已确认：吞吐率/定位轨迹小幅变化，误差统计和 NLOS 每轮变化；CDF/CEP 已确认按参考统计小幅扰动、与随机轨迹独立，最终定位统计已确认不强制三方案优劣排序，用户要求简单小幅扰动、不增加专门幅度配置，具体保守幅度由实现处理，不继承 case3 吞吐更优规则。
 - case4 本次验收范围（2026-09-13 用户确认）：前端 + Node 文件适配服务 + case4 打桩端/数据，本地接口流程、前端交互、基本异常通过；不以真实后端/真实挂载/真实采集验收为完成条件。基本异常清单与验证方式尚待明确。
-- 当前焦点：case4 Gate 1.5 静态页已交付并完成实现方自检，等待用户人工视觉/结构验收；百分比和悬停后置。case2/case3 已有验收口径保持不变，真实环境 QA 仍待外部条件。
+- 当前焦点：case4 Gate 1.5 静态视觉与结构已 ACCEPTED；Gate 2 API 契约已定稿，下一步编写 Web/Server/打桩施工规格。百分比和悬停后置。case2/case3 已有验收口径保持不变，真实环境 QA 仍待外部条件。
 
 ## 一句话演示承诺
 
@@ -134,6 +136,9 @@
 
 ## 关键文档
 
+- [case4 API 契约](doc/case4/API-CONTRACT.md)
+- [case4 契约自查](doc/case4/API-CONTRACT-REVIEW.md)
+
 - [case4 后端待确认问题（独立咨询清单）](doc/case4/BACKEND-QUESTIONS.md)
 - [case4 Gate 1.5 静态 HTML 验收](doc/case4/STATIC-HTML-ACCEPTANCE.md)
 
@@ -172,7 +177,7 @@
 
 ## 最小下一步与停止条件
 
-case4：Gate 1.5 静态页已在 `web-static/case4/` 交付，打开方式与自检见 `doc/case4/STATIC-HTML-ACCEPTANCE.md`；下一步由用户人工对照 Pencil 验收。四项后端问题已于 2026-09-15 核对澄清，结论见 doc/case4/BACKEND-QUESTIONS.md。静态/正式实现均不纳入已后置的百分比与悬停；用户验收通过前不宣称 Gate 1.5 完成，亦不进入正式 React/Node/打桩。
+case4：静态视觉与结构交付已接受；`doc/case4/API-CONTRACT.md` v1 已完成复核并按用户授权定稿；检查记录见 `API-CONTRACT-REVIEW.md`。用户已确认吞吐文件存在但整轮为空允许完成、保持空态。下一步编写 Web/Server/打桩施工规格；尚未实现或验收正式 case4 功能。
 
 case2/case3：若目标是继续本地演示，可使用 `code/scripts/dev-web-server.sh` 启动 Web + Node，并另开 `code/back` 的 `start:case2` 或 `start:case3` 打桩；若目标是真实环境交付，必须接真实后端和真实挂载路径，并分别追加 case2/case3 真实环境 QA 记录。
 
