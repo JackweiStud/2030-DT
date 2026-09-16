@@ -108,7 +108,7 @@ type ControlSnapshot = {
   dt_type: "" | "without dt" | "with dt";
   status: string;
   save_picture_flag: 0 | 1;
-  debug_flag?: number;
+  debug_flag?: number; // 若出现必须 Number.isInteger，与现网 control-file-store 一致
   scene_type?: string;
   [key: string]: unknown;
 };
@@ -116,7 +116,7 @@ type ControlSnapshot = {
 
 业务 `status` 合法字面值只有：`""`、`execute success`、`execute fail`、`case complete`、`reinit complete`。未知字符串透传，Web 不能当作 success/fail/complete。GET 可看到其他 Case 控制，不强改归属；case4 开轮 **只写** `dt_type="with dt"`，读到其他 Case 的 `"without dt"` 不得当作 case4 本轮。
 
-若快照中存在 `debug_flag` 且非 number，或存在 `scene_type` 且非 string，视为控制文件非法，返回 `CONTROL_READ_FAILED`。这两字段不出现在 POST 请求体中。
+若快照中存在 `debug_flag` 且不是整数（`Number.isInteger`），或存在 `scene_type` 且非 string，视为控制文件非法，返回 `CONTROL_READ_FAILED`。浮点如 `0.5`、字符串 `"0"` 均非法。这两字段不出现在 POST 请求体中。
 
 | 数据/状态 | 权威源 | Web 可派生 | 说明 |
 |---|---|---|---|
@@ -290,7 +290,7 @@ type Statistics = {
 | CEP `p50M`/`p90M` | 非负有限数；各方案 p50M ≤ p90M；不检查三方案优势排序 | **保留解析精度** |
 | NLOS `nlosRatio` | 比例 0～1；不接受 89.7 表示 89.7% | **保留解析精度** |
 
-显示精度由 Web 决定：坐标/吞吐标签 2 位，概率/NLOS 可按 0.001 显示，CEP 可按 3 位显示，均不得反向要求 Node 先截断。坐标/吞吐四舍五入使用 `sign(x)*Math.round(abs(x)*10^2)/10^2`，负零归一为 0；先检查原始范围，禁止负数靠舍入变零后通过。
+显示精度由 Web 决定：坐标/吞吐标签 2 位，概率/NLOS 可按 0.001 显示，CEP 可按 3 位显示，均不得反向要求 Node 先截断。坐标/吞吐四舍五入 **复用现网** `roundSemanticNumber`（case2 `numeric-file.mjs` / case3 `numeric-line.mjs`）：`sign(x) * Math.round((abs(x) + Number.EPSILON) * 10^n) / 10^n`，`n=2`，结果为负零时归一为 0。先检查原始范围，禁止负数靠舍入变零后通过。不要另写一套不含 `Number.EPSILON` 的公式。
 
 CDF 与 CEP 分别由对应文件提供，不交叉重算，也不因参考样本与逐点误差不一致而篡改数据。只验证各文件内部的结构和合法性。
 

@@ -7,6 +7,8 @@
 
 - case4 Gate 2：2026-09-15 API 契约 v1 经 Cursor 检视和 Codex 复核，按用户“复核通过后提交并继续”的授权定稿；进入三份施工规格编写，尚未实现。
 
+- case4 Gate 3：2026-09-15 已编写 `SERVER-SPEC.md` 施工草稿，并对照 case2/case3 重写 `realback_no.md`。同日按 Codex 检视收口打桩数字与发布路径。`WEB-SPEC.md` 已按 case2 / case3-v2 重写，并连续收口：完成画面与解锁分离、result 耗尽锁定到 init、ReInit 不确定 POST、扁目录、四路独立定时器、控制归属先于 flag/status、截图放弃清零失败终态、视觉对照证据。`STATIC-HTML-ACCEPTANCE.md` 已列入开工必读。仍待用户批准交给 Web 实现，尚未开始实现。Gate 2 契约已提交为 `2ae88a4`。
+
 - 项目 Gate 0：已于 2026-07-29 获用户批准。
 - case2 Gate 1：已于 2026-07-30 经用户视觉审阅冻结（`APPROVED`）。
 - case2 Gate 1.5：四态静态 HTML 已由用户人工检查并接受；Shell 与 case2 资源/token 归属已分离，验收记录见 `doc/case2/STATIC-HTML-ACCEPTANCE.md`。
@@ -69,9 +71,9 @@
 - case4 刷新恢复（用户确认）：与 case3 一致，撤销旧轮、清空前端本轮展示，初始化成功后回初始，由用户重新开始，不续跑旧轮。
 - case4 最终统计门槛（用户确认）：完成信号后，三份 CDF 与一份 CEP/NLOS 汇总文件全部读取、校验成功，才一起显示最终统计并启用重置；用户确认沿用 case3 最终读取失败恢复：累计失败 10 次后提示结果不完整并退出测试，尝试 init，适配正常后可重新开始；init 失败标适配异常。
 - case4 逐点偏差（2026-09-13 用户确认）：base 为预期轨迹；2D 按 XY 欧氏距离计算，后续 3D 加入 Z。三种定位结果均按文件行号与 base 配对，第 i 行对应 Pi；用户已确认同一行三方案收齐后同步展示轨迹及误差，按连续完整点位推进，吞吐独立；无效坐标 65535 已由用户澄清：同方案逐分量以上个点对应值替代，保留其余分量和点号并记录原值/替代值；P1 无前值时用户已确认使用 base P1 对应分量；连续无效沿用前一点已归一值；底部 CDF/CEP 保持后端统计来源。
-- case4 打桩模式（2026-09-13 用户确认）：同时支持 `01-参考资料/case4/data/` 原始数据回放和基于参考的随机动态测试；已核对 case2/case3 实现，随机字段已确认：吞吐率/定位轨迹小幅变化，误差统计和 NLOS 每轮变化；CDF/CEP 已确认按参考统计小幅扰动、与随机轨迹独立，最终定位统计已确认不强制三方案优劣排序，用户要求简单小幅扰动、不增加专门幅度配置，具体保守幅度由实现处理，不继承 case3 吞吐更优规则。
+- case4 打桩模式（2026-09-13 用户确认，2026-09-15 规格收口）：**与 case3 一样**，仅 `CASE4_STUB_DATA_MODE=random|replay` 切换，默认 random；不增加 `SOURCE_DIR`。replay 回放包内 fixtures，random 相对同一套 fixtures 小幅扰动。换用户样本靠替换 `code/back/case4/fixtures/`。随机字段为吞吐/轨迹小幅变化，CDF/CEP/NLOS 独立扰动，不强制三方案优劣，不增加幅度配置。施工默认幅度见 `doc/case4/realback_no.md`。实现期把 `01-参考资料/case4/data/` 复制进包内 fixtures，运行时不读 `01-参考资料`。启动遇 `execute success` 按 case3 清空九动态文件从第 1 行重放。共享 base 与 fixture 不一致则 `SEED_BASE_MISMATCH` 退出。
 - case4 本次验收范围（2026-09-13 用户确认）：前端 + Node 文件适配服务 + case4 打桩端/数据，本地接口流程、前端交互、基本异常通过；不以真实后端/真实挂载/真实采集验收为完成条件。基本异常清单与验证方式尚待明确。
-- 当前焦点：case4 Gate 1.5 静态视觉与结构已 ACCEPTED；Gate 2 API 契约已定稿，下一步编写 Web/Server/打桩施工规格。百分比和悬停后置。case2/case3 已有验收口径保持不变，真实环境 QA 仍待外部条件。
+- 当前焦点：case4 Gate 1.5 静态视觉与结构已 ACCEPTED；Gate 2 API 契约已定稿。`WEB-SPEC.md` 已收口流程、目录、轮询、控制归属、截图放弃终态与视觉对照；待再批准后交给 Web 实现 agent。`SERVER-SPEC.md` / `realback_no.md` 仍为施工草稿。百分比和悬停后置。case2/case3 已有验收口径保持不变，真实环境 QA 仍待外部条件。
 
 ## 一句话演示承诺
 
@@ -136,6 +138,10 @@
 
 ## 关键文档
 
+- [case4 Web施工规格](doc/case4/WEB-SPEC.md)
+- [case4 文件服务施工规格](doc/case4/SERVER-SPEC.md)
+- [case4 打桩施工规格](doc/case4/realback_no.md)
+
 - [case4 API 契约](doc/case4/API-CONTRACT.md)
 - [case4 契约自查](doc/case4/API-CONTRACT-REVIEW.md)
 
@@ -177,7 +183,7 @@
 
 ## 最小下一步与停止条件
 
-case4：静态视觉与结构交付已接受；`doc/case4/API-CONTRACT.md` v1 已完成复核并按用户授权定稿；检查记录见 `API-CONTRACT-REVIEW.md`。用户已确认吞吐文件存在但整轮为空允许完成、保持空态。下一步编写 Web/Server/打桩施工规格；尚未实现或验收正式 case4 功能。
+case4：静态视觉与结构交付已接受；`doc/case4/API-CONTRACT.md` v1 已完成复核并按用户授权定稿；检查记录见 `API-CONTRACT-REVIEW.md`。用户已确认吞吐文件存在但整轮为空允许完成、保持空态。`doc/case4/WEB-SPEC.md` 已收口状态流程、扁目录、四路轮询、控制归属、截图放弃终态与视觉对照证据，仍待批准交给 Web 实现 agent。`doc/case4/realback_no.md` 已按 case2/case3 实现对照重写，待批准交给打桩实现 agent；`SERVER-SPEC` 仍待审阅。尚未实现或验收正式 case4 功能。
 
 case2/case3：若目标是继续本地演示，可使用 `code/scripts/dev-web-server.sh` 启动 Web + Node，并另开 `code/back` 的 `start:case2` 或 `start:case3` 打桩；若目标是真实环境交付，必须接真实后端和真实挂载路径，并分别追加 case2/case3 真实环境 QA 记录。
 
