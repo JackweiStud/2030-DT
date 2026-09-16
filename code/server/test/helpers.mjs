@@ -29,8 +29,10 @@ export async function createSharedDir(testContext, control = {}) {
   const sharedDir = await fs.mkdtemp(path.join(os.tmpdir(), "case2-adapter-"));
   await fs.mkdir(path.join(sharedDir, "case2"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "case3"), { recursive: true });
+  await fs.mkdir(path.join(sharedDir, "case4"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "out", "case2"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "out", "case3"), { recursive: true });
+  await fs.mkdir(path.join(sharedDir, "out", "case4"), { recursive: true });
   await writeControl(sharedDir, { ...DEFAULT_CONTROL, ...control });
   testContext.after(() => fs.rm(sharedDir, { recursive: true, force: true }));
   return sharedDir;

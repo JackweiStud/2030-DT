@@ -1,6 +1,6 @@
 /**
  * 全进程唯一控制文件存储：负责结构校验、串行 patch、原子替换和跨 Case guard。
- * Case2/Case3 只能通过本对象修改 case_control.json，避免两套队列覆盖彼此字段。
+ * Case2/Case3/Case4 只能通过本对象修改 case_control.json，避免多套队列覆盖彼此字段。
  */
 
 import { promises as defaultFs } from "node:fs";
@@ -156,12 +156,16 @@ export function assertScreenshotOwnership(control, caseId) {
       "save_picture_flag is not 1",
     );
   }
+  const dtTypeAllowed =
+    caseId === "case2" || caseId === "case4"
+      ? control.dt_type === "with dt"
+      : caseId === "case3"
+        ? control.dt_type === "without dt" || control.dt_type === "with dt"
+        : false;
   const valid =
     control.case === caseId &&
     control.command === "start" &&
-    (caseId === "case2"
-      ? control.dt_type === "with dt"
-      : control.dt_type === "without dt" || control.dt_type === "with dt");
+    dtTypeAllowed;
   if (!valid) {
     throw new AppError(
       409,

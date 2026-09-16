@@ -9,6 +9,6 @@
   "scripts": {
     "start": "node --enable-source-maps scripts/run.mjs",
     "dev": "node --enable-source-maps scripts/run.mjs",
-    "test": "node --test --test-reporter=spec test/shared/*.test.mjs test/case2/*.test.mjs test/case3/*.test.mjs"
+    "test": "node --test --test-reporter=spec test/shared/*.test.mjs test/case2/*.test.mjs test/case3/*.test.mjs test/case4/*.test.mjs"
   }
 }

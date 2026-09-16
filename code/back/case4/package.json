@@ -1,0 +1,13 @@
+{
+  "name": "2030-dt-case4-back-stub",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node --enable-source-maps scripts/run.mjs",
+    "test": "node --test --test-reporter=spec test/*.test.mjs"
+  }
+}

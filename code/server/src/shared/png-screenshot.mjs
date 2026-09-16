@@ -1,5 +1,5 @@
 /**
- * Case2/Case3 共用 PNG 截图原语。
+ * Case2/Case3/Case4 共用 PNG 截图原语。
  * 负责 Base64/PNG 校验、串行编号、原子落盘和成功后受控清 flag。
  */
 

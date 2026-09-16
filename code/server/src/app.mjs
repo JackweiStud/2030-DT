@@ -10,14 +10,23 @@ import { createInitDataService } from "./cases/case3/init-data.mjs";
 import { createCase3Router } from "./cases/case3/routes.mjs";
 import { createCase3ScreenshotService } from "./cases/case3/screenshot.mjs";
 import { createSideFilesService } from "./cases/case3/side-files.mjs";
+import { createCase4ControlFileService } from "./cases/case4/control-file.mjs";
+import { createCase4DebugJsonlService } from "./cases/case4/debug-jsonl.mjs";
+import { createCase4InitDataService } from "./cases/case4/init-data.mjs";
+import { createSubstitutionLogger } from "./cases/case4/numeric-file.mjs";
+import { createCase4ResultService } from "./cases/case4/result.mjs";
+import { createCase4Router } from "./cases/case4/routes.mjs";
+import { createCase4ScreenshotService } from "./cases/case4/screenshot.mjs";
+import { createCase4ThroughputService } from "./cases/case4/throughput.mjs";
+import { createCase4TrajectoryService } from "./cases/case4/trajectory.mjs";
 import { createControlFileStore } from "./shared/control-file-store.mjs";
 import { isAppError } from "./shared/errors.mjs";
 import { sendJson } from "./shared/http.mjs";
 import { createLogger } from "./shared/logger.mjs";
 
 /**
- * 组装 Case2 + Case3 适配依赖而不启动监听。
- * 两个 Case 共享同一个控制文件 store 和串行写队列，避免跨 Case 覆盖。
+ * 组装 Case2 + Case3 + Case4 适配依赖而不启动监听。
+ * 三个 Case 共享同一个控制文件 store 和串行写队列，避免跨 Case 覆盖。
  */
 export function createAdapterApp(options) {
   const fsOps = options.fsOps ?? defaultFs;
@@ -88,6 +97,58 @@ export function createAdapterApp(options) {
     screenshot: case3Screenshot,
   });
 
+  const case4DebugJsonl = createCase4DebugJsonlService({
+    sharedDir: options.sharedDir,
+    fsOps,
+    logger,
+  });
+  const case4ControlFile = createCase4ControlFileService({
+    sharedDir: options.sharedDir,
+    store: controlStore,
+    debugJsonl: case4DebugJsonl,
+    fsOps,
+    logger,
+  });
+  const case4SubstitutionLog = createSubstitutionLogger(logger);
+  const case4InitData = createCase4InitDataService({
+    sharedDir: options.sharedDir,
+    fsOps,
+  });
+  const case4Trajectory = createCase4TrajectoryService({
+    sharedDir: options.sharedDir,
+    debugJsonl: case4DebugJsonl,
+    logSubstitution: case4SubstitutionLog,
+    fsOps,
+    logger,
+  });
+  const case4Throughput = createCase4ThroughputService({
+    sharedDir: options.sharedDir,
+    fsOps,
+    logger,
+  });
+  const case4Result = createCase4ResultService({
+    sharedDir: options.sharedDir,
+    controlFile: case4ControlFile,
+    debugJsonl: case4DebugJsonl,
+    logSubstitution: case4SubstitutionLog,
+    fsOps,
+    logger,
+  });
+  const case4Screenshot = createCase4ScreenshotService({
+    sharedDir: options.sharedDir,
+    controlFile: case4ControlFile,
+    fsOps,
+    logger,
+  });
+  const routeCase4 = createCase4Router({
+    controlFile: case4ControlFile,
+    initData: case4InitData,
+    trajectory: case4Trajectory,
+    throughput: case4Throughput,
+    result: case4Result,
+    screenshot: case4Screenshot,
+  });
+
   // 高频 control GET 仅在状态或截图标志变化时记录摘要。
   const controlGetSampler = createControlGetSampler();
 
@@ -96,6 +157,7 @@ export function createAdapterApp(options) {
     await Promise.all([
       case2Screenshot.cleanupTemporaryFiles(),
       case3Screenshot.cleanupTemporaryFiles(),
+      case4Screenshot.cleanupTemporaryFiles(),
     ]);
   }
 
@@ -109,6 +171,9 @@ export function createAdapterApp(options) {
       let result = await routeCase2(request, response, url);
       if (!result?.handled) {
         result = await routeCase3(request, response, url);
+      }
+      if (!result?.handled) {
+        result = await routeCase4(request, response, url);
       }
       if (!result?.handled) {
         sendJson(response, 404, {
@@ -179,6 +244,15 @@ export function createAdapterApp(options) {
         screenshot: case3Screenshot,
         debugJsonl: case3DebugJsonl,
       },
+      case4: {
+        controlFile: case4ControlFile,
+        initData: case4InitData,
+        trajectory: case4Trajectory,
+        throughput: case4Throughput,
+        result: case4Result,
+        screenshot: case4Screenshot,
+        debugJsonl: case4DebugJsonl,
+      },
     },
   };
 }
@@ -222,12 +296,12 @@ function logRequestSummary(options) {
   const durationMs = Math.max(0, Date.now() - startedAt);
   const path = `${url.pathname}${url.search}`;
   const caseId =
-    accessExtra.caseId ??
-    (url.pathname.startsWith("/api/case3/") ? "case3" : "case2");
+    accessExtra.caseId ?? caseIdFromPath(url.pathname);
   const isQuietControlGet =
     request.method === "GET" &&
     (url.pathname === "/api/case2/control-file" ||
-      url.pathname === "/api/case3/control-file") &&
+      url.pathname === "/api/case3/control-file" ||
+      url.pathname === "/api/case4/control-file") &&
     statusCode === 200;
 
   if (isQuietControlGet) {
@@ -256,4 +330,11 @@ function logRequestSummary(options) {
   const level =
     statusCode >= 500 ? "error" : statusCode >= 400 ? "warn" : "info";
   logger[level]("dt adapter request", context);
+}
+
+function caseIdFromPath(pathname) {
+  if (pathname.startsWith("/api/case4/")) return "case4";
+  if (pathname.startsWith("/api/case3/")) return "case3";
+  if (pathname.startsWith("/api/case2/")) return "case2";
+  return "shared";
 }

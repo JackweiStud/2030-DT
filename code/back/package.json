@@ -6,6 +6,7 @@
   "scripts": {
     "start:case2": "npm --prefix case2 start",
     "start:case3": "npm --prefix case3 start",
-    "test": "npm --prefix case2 test && npm --prefix case3 test"
+    "start:case4": "npm --prefix case4 start",
+    "test": "node scripts/run-all-tests.mjs"
   }
 }
