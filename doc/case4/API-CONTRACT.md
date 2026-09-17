@@ -114,7 +114,7 @@ type ControlSnapshot = {
 };
 ```
 
-业务 `status` 合法字面值只有：`""`、`execute success`、`execute fail`、`case complete`、`reinit complete`。未知字符串透传，Web 不能当作 success/fail/complete。GET 可看到其他 Case 控制，不强改归属；case4 开轮 **只写** `dt_type="all"`，读到其他 Case 的 `"without dt"` 不得当作 case4 本轮。
+业务 `status` 合法字面值只有：`""`、`execute success`、`execute fail`、`case complete`、`reinit complete`。未知字符串透传，Web 不能当作 success/fail/complete。GET 可看到其他 Case 控制（含 case2/case3 的 `"with dt"` / `"without dt"`），不强改归属；**case4 开轮只写** `dt_type="all"`（start/reinit），init 写 `""`。旧值 `"with dt"` / `"without dt"` 对 case4 **非法**（Node 拒收、后端不接单）；读到其他 Case 的 `"with dt"` / `"without dt"` 不得当作 case4 本轮。
 
 若快照中存在 `debug_flag` 且不是整数（`Number.isInteger`），或存在 `scene_type` 且非 string，视为控制文件非法，返回 `CONTROL_READ_FAILED`。浮点如 `0.5`、字符串 `"0"` 均非法。这两字段不出现在 POST 请求体中。
 

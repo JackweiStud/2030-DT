@@ -33,7 +33,7 @@
 
 ## 控制命令与状态（用户确认）
 
-case4 沿用 case2/case3 的命令及状态语义：`init` 空闲/初始化、`start` 开始、`reinit` 重置；状态为空、`execute success`、`execute fail`、`case complete`、`reinit complete`。开始正常链路为 execute success → case complete，重置为 execute success → reinit complete；execute success 只表示命令成功，不表示测试或重置完成，execute fail 为命令失败。业务 case 标识为 case4；单次启动的 dt_type 已由用户确认使用精确字符串 `"all"`（Issue #1）；reinit 同样使用 `"all"`，init 使用空字符串 `""`。旧值 `"with dt"` 对 case4 非法。
+case4 沿用 case2/case3 的命令及状态语义：`init` 空闲/初始化、`start` 开始、`reinit` 重置；状态为空、`execute success`、`execute fail`、`case complete`、`reinit complete`。开始正常链路为 execute success → case complete，重置为 execute success → reinit complete；execute success 只表示命令成功，不表示测试或重置完成，execute fail 为命令失败。业务 case 标识为 case4；单次启动的 dt_type 已由用户确认使用精确字符串 `"all"`（Issue #1）；reinit 同样使用 `"all"`，init 使用空字符串 `""`。旧值 `"with dt"` / `"without dt"` 对 case4 非法。
 
 ## 最终轨迹门槛（用户确认）
 

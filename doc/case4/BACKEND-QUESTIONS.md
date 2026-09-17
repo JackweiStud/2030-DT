@@ -8,7 +8,7 @@ case4 一次开始覆盖商用方案（高德）、传统基站（无 DT）、�
 
 **请确认：** `case=case4, command=start` 时，`dt_type` 的准确取值是什么？`reinit` 和 `init` 时该字段分别填什么？
 
-用户澄清：原约定为 `"with dt"`。Issue #1（2026-09-17）起改为精确字符串 `"all"`：start、reinit 均填 `"all"`；init 仍填空字符串 `""`。旧值 `"with dt"` 对 case4 非法。
+用户澄清：原约定为 `"with dt"`。Issue #1（2026-09-17）起改为精确字符串 `"all"`：start、reinit 均填 `"all"`；init 仍填空字符串 `""`。旧值 `"with dt"` / `"without dt"` 对 case4 均非法。
 
 ## 2. 无效坐标 65535 如何处理
 
