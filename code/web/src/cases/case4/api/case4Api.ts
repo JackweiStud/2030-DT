@@ -315,8 +315,8 @@ export function createCase4Api(options: ApiClientOptions = {}) {
     async postControl(
       payload:
         | { command: "init" }
-        | { case: "case4"; command: "start"; dt_type: "with dt" }
-        | { case: "case4"; command: "reinit"; dt_type: "with dt" }
+        | { case: "case4"; command: "start"; dt_type: "all" }
+        | { case: "case4"; command: "reinit"; dt_type: "all" }
         | { save_picture_flag: 0 },
       signal?: AbortSignal,
       opts?: { keepalive?: boolean },

@@ -89,12 +89,12 @@ code/server/test/case4/*.test.mjs
 |---|---|
 | `case2` | `command=start` 且 `dt_type="with dt"` |
 | `case3` | `command=start` 且 `dt_type` 为 `"without dt"` 或 `"with dt"` |
-| `case4` | `command=start` 且 `dt_type="with dt"` |
+| `case4` | `command=start` 且 `dt_type="all"` |
 | 其他 | 一律 `SCREENSHOT_NOT_REQUESTED` |
 
 仍要求 `control.case === caseId` 且 `save_picture_flag === 1`。不锁死 `status`（允许 success→complete）。
 
-`assertCommandAvailable` 对 case4 无需新特殊分支：start/reinit 请求都带 `dtType="with dt"`；case2 `reinit` 的「不比 dt_type」例外保持不动。补测试：case4 `execute fail` 同动作重试可通过；其他 Case 活动/完成命令返回 `CONTROL_BUSY`。
+`assertCommandAvailable` 对 case4 无需新特殊分支：start/reinit 请求都带 `dtType="all"`；case2 `reinit` 的「不比 dt_type」例外保持不动。补测试：case4 `execute fail` 同动作重试可通过；其他 Case 活动/完成命令返回 `CONTROL_BUSY`。
 
 ### 2.2 `createAdapterApp`
 
@@ -177,10 +177,10 @@ code/server/test/case4/*.test.mjs
 { "command": "init" }
 ```
 ```json
-{ "case": "case4", "command": "start", "dt_type": "with dt" }
+{ "case": "case4", "command": "start", "dt_type": "all" }
 ```
 ```json
-{ "case": "case4", "command": "reinit", "dt_type": "with dt" }
+{ "case": "case4", "command": "reinit", "dt_type": "all" }
 ```
 ```json
 { "save_picture_flag": 0 }
@@ -201,12 +201,12 @@ patch：`case=case4, command=init, dt_type="", status="", save_picture_flag=0`�
 ```text
 queue.run:
   read control
-  assertCommandAvailable({ caseId:"case4", command, dtType:"with dt" })
+  assertCommandAvailable({ caseId:"case4", command, dtType:"all" })
   mkdir case4/
   白名单 9 文件 writeFile("")（缺失则创建）
   任一失败 → DATA_CLEAR_FAILED，不 patch
   再 read + 再 guard
-  patch { case:"case4", command, dt_type:"with dt", status:"", save_picture_flag:0 }
+  patch { case:"case4", command, dt_type:"all", status:"", save_picture_flag:0 }
   原子写 + 回读校验
 ```
 
@@ -228,7 +228,7 @@ queue.run:
 
 ### 5.4 截图清零
 
-`{save_picture_flag:0}`：只 patch flag。flag 已为 0 幂等成功、不要求归属。flag 为 1 时必须 `case4/start/with dt`，否则 `SCREENSHOT_NOT_REQUESTED`。清零走 store 的 `rereadBeforeWrite` + `FLAG_CLEAR_CONFLICT_ATTEMPTS`（与 case3 截图保存后清零相同）。Web 放弃清零打 §4 的 warn 日志。
+`{save_picture_flag:0}`：只 patch flag。flag 已为 0 幂等成功、不要求归属。flag 为 1 时必须 `case4/start/all`，否则 `SCREENSHOT_NOT_REQUESTED`。清零走 store 的 `rereadBeforeWrite` + `FLAG_CLEAR_CONFLICT_ATTEMPTS`（与 case3 截图保存后清零相同）。Web 放弃清零打 §4 的 warn 日志。
 
 可选 `debug_flag` / `scene_type` **遵循现有 store 校验**（`debug_flag` 必须是 integer，不是任意 number）。
 
@@ -331,7 +331,7 @@ ENOENT → `DATA_FILE_MISSING`。其他读失败 → `DATA_FILE_READ_FAILED`。
 
 ```text
 controlBefore 与 controlAfter 均为
-  case=case4 AND command=start AND dt_type="with dt" AND status="case complete"
+  case=case4 AND command=start AND dt_type="all" AND status="case complete"
 且 case/command/dt_type/status 窗口内不变
 且 10 个文件 stat 窗口内不变（第 3 次仍变 → RESULT_NOT_READY）
 ```

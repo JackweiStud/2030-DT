@@ -56,7 +56,7 @@ export type Case4Result = {
 export type ControlSnapshot = {
   case: string;
   command: "init" | "start" | "reinit" | string;
-  dt_type: "" | "without dt" | "with dt" | string;
+  dt_type: "" | "all" | "without dt" | "with dt" | string;
   status: string;
   save_picture_flag: 0 | 1 | number;
   debug_flag?: number;

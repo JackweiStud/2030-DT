@@ -5,7 +5,7 @@
 
 export const CONTROL_FILE = "case_control.json";
 export const CASE_ID = "case4";
-export const REQUIRED_DT_TYPE = "with dt";
+export const REQUIRED_DT_TYPE = "all";
 
 export const BASE_FILE = "ue_position_coordinates_base.txt";
 

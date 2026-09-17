@@ -20,7 +20,7 @@
 - [ ] 导航仍是四可见 Tab：`case1` / `case2` / `case5`（文案 `DT for Comm` = 现行 case3-v2）/ `case4`（`DT for positioning`）。**不**把 case3-v2 迁回 `case3` Tab，不删除第五 Tab 映射。
 - [ ] `case4` 取代自身「建设中」；`App.test.tsx` 中「case1 与 case4 仍为建设中」改为只断言 case1。
 - [ ] 进入 / 刷新 / 切回固定 `GET control → POST init → GET init-data`；完成握手前不读 `/trajectory`、`/throughput`、`/result`。
-- [ ] 一次 Start 覆盖三方案；POST body 精确为 `{case:"case4",command:"start",dt_type:"with dt"}`。
+- [ ] 一次 Start 覆盖三方案；POST body 精确为 `{case:"case4",command:"start",dt_type:"all"}`。
 - [ ] 本轮见 `execute success` 后才启动 **轨迹 + 两路吞吐** 各自独立的 500ms 串行轮询（吞吐 **两个定时器、两次 GET**，禁止合并）；complete 后停这三条 live，**继续** control 与 `/result`。
 - [ ] `case complete` 且同拍 `flag=1`：先登记截图任务，再读 `/result`。`/result` 通过后**立即**切完成画面（含统计）；PNG 必须在该完成画面提交并 `prepareCapture()` 之后生成，不得截 running 空统计。截图与 POST init 期间 **busy 保持**，开始/重置/其他 Tab 仍锁。
 - [ ] `/result` 完整门槛通过才展示完成统计；连续 10 次失败回退，**busy 保持到 POST init 返回**后再决定能否再开始。
@@ -442,13 +442,13 @@ Web 本地门槛失败日志码可用 `CASE4_RESULT_NOT_READY`，与 HTTP `error
 2. POST 精确 payload：
 
 ```json
-{ "case": "case4", "command": "start", "dt_type": "with dt" }
+{ "case": "case4", "command": "start", "dt_type": "all" }
 ```
 
 3. POST 成功才启动 **control** 轮询（此时还不见 success，**不要**开轨迹/吞吐）。截图 `lastFlag` 初值 0。
 4. POST 普通失败：回退点击前相，`adapterError=true`，busy=false，不启轮询，不自动重发。步骤 1 已清的结果不恢复。
 5. `409 CONTROL_BUSY`：`CLEAR_ACTIVE` 回到可点 Start 的相（通常 `initial` 或 `failed-start`），**不**置 `adapterError`，打 `command.control_busy`，busy=false。
-6. POST 响应不确定：先 GET control。若已是 `case4/start/with dt` 且 `status=""` 或本轮合法推进，视为成功并启表；若仍是 init 空闲，视为失败并按 4 处理。**禁止**再 POST 一条 start。
+6. POST 响应不确定：先 GET control。若已是 `case4/start/all` 且 `status=""` 或本轮合法推进，视为成功并启表；若仍是 init 空闲，视为失败并按 4 处理。**禁止**再 POST 一条 start。
 
 ### 6.2 运行中四条独立串行链（+ finalizing 的 result）
 
@@ -478,7 +478,7 @@ Web 本地门槛失败日志码可用 `CASE4_RESULT_NOT_READY`，与 HTTP `error
 
 规则：
 
-1. **先做归属校验，再碰 flag 与 status。** 当前 `activeAction` 存在时，控制快照必须属于本轮 case4 动作：`control.case==="case4"`，且 `command`/`dt_type` 与本动作一致（Start：`start` + `"with dt"`；ReInit：`reinit` + `"with dt"`）。归属不匹配：打 `poll.control_context_mismatch`，**不得**登记截图、不得认 `execute fail` / `case complete` / `reinit complete`、不得改 busy。其他 case 的 `flag=1` 或 `execute fail` 不影响 case4。继续轮询，等待本轮快照回来。
+1. **先做归属校验，再碰 flag 与 status。** 当前 `activeAction` 存在时，控制快照必须属于本轮 case4 动作：`control.case==="case4"`，且 `command`/`dt_type` 与本动作一致（Start：`start` + `"all"`；ReInit：`reinit` + `"all"`）。归属不匹配：打 `poll.control_context_mismatch`，**不得**登记截图、不得认 `execute fail` / `case complete` / `reinit complete`、不得改 busy。其他 case 的 `flag=1` 或 `execute fail` 不影响 case4。继续轮询，等待本轮快照回来。
 2. 归属已匹配后：控制 tick **先**把 `save_picture_flag` 交给截图机（仅 Start 的 running 窗口认 0→1），**再**解释 status。同拍 `complete+flag=1` 仍是「先登记截图、再转入 finalizing / 读 result」，但这一顺序排在归属校验之后。
 3. `execute success` 且归属已匹配 → `seenExecuteSuccess=true`，再启动三条 live（轨迹 + 两路吞吐，已在跑不重复开）。
 4. 未见 success 的 `case complete`（即使归属匹配）：忽略并打日志，不停表、不读 result。
@@ -529,9 +529,9 @@ Web 本地门槛失败日志码可用 `CASE4_RESULT_NOT_READY`，与 HTTP `error
 
 1. 仅 `ui=completed` **且** `busy=false` **且** 无 `adapterError`，或 `failed-reinit`，可点。`completed` 但 busy（截图/init 收尾中）不可点。
 2. 点击立即清空 `result` / live / 派生误差，`ui=resetting`，`busy=true`，`generation++`，`seenExecuteSuccess=false`。骨架不拆（空轴保留）。顺带 abort 任何残留截图任务。
-3. POST `{case:"case4",command:"reinit",dt_type:"with dt"}`。
+3. POST `{case:"case4",command:"reinit",dt_type:"all"}`。
 4. POST 失败不恢复步骤 2 已清结果；普通失败 `adapterError`，busy=false；`CONTROL_BUSY` 进入 `failed-reinit` 以便只重试 ReInit，不置连接异常，busy=false。
-5. POST 响应不确定：与 Start 相同，先 GET control。若已是 `case4/reinit/with dt` 且 `status=""` 或本轮合法推进（success / `reinit complete`），视为成功并只启 control；若仍是 init 空闲，视为失败并按 4 处理。**禁止**再 POST 一条 reinit。
+5. POST 响应不确定：与 Start 相同，先 GET control。若已是 `case4/reinit/all` 且 `status=""` 或本轮合法推进（success / `reinit complete`），视为成功并只启 control；若仍是 init 空闲，视为失败并按 4 处理。**禁止**再 POST 一条 reinit。
 6. 只轮询 control。success 只置 latch。seen 后 `reinit complete`：停 control，**busy 保持**，`await POST init`。
    - init 成功：回可操作 `initial`（Start 可用），`busy=false`。
    - init 失败：保留空画面（`ui` 可停在 `resetting` 或空 `initial` 骨架，但 **Start/ReInit 都禁用**），`adapterError=true`，`busy=false`。不得宣称已恢复可点 Start 的 initial。
@@ -570,7 +570,7 @@ sequenceDiagram
     participant W as Case4 Web
     participant N as Node 适配
     participant B as 后端打桩
-    W->>N: POST start with dt
+    W->>N: POST start dt_type=all
     N-->>W: 200 status=""
     W->>W: 只启 control 500ms
     B->>N: execute success
@@ -603,7 +603,7 @@ sequenceDiagram
     participant W as Case4 Web
     participant N as Node 适配
     W->>W: 立即清空本轮 UI（busy=true）
-    W->>N: POST reinit with dt
+    W->>N: POST reinit dt_type=all
     alt 响应不确定
         W->>N: GET control 确认本轮 reinit，禁止再 POST
     end

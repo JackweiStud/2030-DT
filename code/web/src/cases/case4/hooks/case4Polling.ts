@@ -14,9 +14,9 @@ export function controlMatchesAction(
 ): boolean {
   if (control.case !== "case4") return false;
   if (kind === "start") {
-    return control.command === "start" && control.dt_type === "with dt";
+    return control.command === "start" && control.dt_type === "all";
   }
-  return control.command === "reinit" && control.dt_type === "with dt";
+  return control.command === "reinit" && control.dt_type === "all";
 }
 
 export function isInitIdle(control: {

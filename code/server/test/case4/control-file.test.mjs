@@ -36,10 +36,10 @@ test("Case4 四种精确 payload；多余字段和错 dt_type 拒绝", async (t)
   const started = await controlFile.updateFromHttp({
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
   });
   assert.equal(started.command, "start");
-  assert.equal(started.dt_type, "with dt");
+  assert.equal(started.dt_type, "all");
   assert.equal(started.status, "");
 
   await assert.rejects(
@@ -47,6 +47,14 @@ test("Case4 四种精确 payload；多余字段和错 dt_type 拒绝", async (t)
       case: "case4",
       command: "start",
       dt_type: "without dt",
+    }),
+    { code: "INVALID_REQUEST", status: 400 },
+  );
+  await assert.rejects(
+    controlFile.updateFromHttp({
+      case: "case4",
+      command: "start",
+      dt_type: "with dt",
     }),
     { code: "INVALID_REQUEST", status: 400 },
   );
@@ -75,7 +83,7 @@ test("Start 先清九文件再写命令；base 与白名单外文件保留", asy
   await service(sharedDir).updateFromHttp({
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
   });
 
   assert.equal(await fs.readFile(basePath, "utf8"), baseBefore);
@@ -101,7 +109,7 @@ test("init 不清动态文件；ReInit 同样只清白名单", async (t) => {
   await service(sharedDir).updateFromHttp({
     case: "case4",
     command: "reinit",
-    dt_type: "with dt",
+    dt_type: "all",
   });
   for (const filename of CASE4_DYNAMIC_FILES) {
     assert.equal(await fs.readFile(path.join(sharedDir, "case4", filename), "utf8"), "");
@@ -131,7 +139,7 @@ test("清理失败不写新命令", async (t) => {
     service(sharedDir, { fsOps }).updateFromHttp({
       case: "case4",
       command: "start",
-      dt_type: "with dt",
+      dt_type: "all",
     }),
     { code: "DATA_CLEAR_FAILED", status: 500 },
   );
@@ -143,7 +151,7 @@ test("跨 Case busy；case4 execute fail 同动作可重试；init 撤权", asyn
   const sharedDir = await createSharedDir(t, {
     case: "case2",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "case complete",
   });
   const controlFile = service(sharedDir);
@@ -151,7 +159,7 @@ test("跨 Case busy；case4 execute fail 同动作可重试；init 撤权", asyn
     controlFile.updateFromHttp({
       case: "case4",
       command: "start",
-      dt_type: "with dt",
+      dt_type: "all",
     }),
     { code: "CONTROL_BUSY", status: 409 },
   );
@@ -160,13 +168,13 @@ test("跨 Case busy；case4 execute fail 同动作可重试；init 撤权", asyn
     ...(await readControl(sharedDir)),
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "execute fail",
   });
   const retried = await controlFile.updateFromHttp({
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
   });
   assert.equal(retried.status, "");
   assert.equal(retried.command, "start");
@@ -186,7 +194,7 @@ test("截图清零 flag=0 幂等，错误 owner 拒绝；未知字段保留", as
     ...(await readControl(sharedDir)),
     case: "case3",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     save_picture_flag: 1,
   });
   await assert.rejects(
@@ -197,7 +205,7 @@ test("截图清零 flag=0 幂等，错误 owner 拒绝；未知字段保留", as
   await writeControl(sharedDir, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "execute success",
     save_picture_flag: 1,
     future_field: "keep",

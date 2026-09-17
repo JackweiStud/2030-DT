@@ -16,7 +16,7 @@ describe("controlMatchesAction", () => {
   it("只接受本 case 本动作元组", () => {
     expect(
       controlMatchesAction(
-        { case: "case4", command: "start", dt_type: "with dt" },
+        { case: "case4", command: "start", dt_type: "all" },
         "start",
       ),
     ).toBe(true);
@@ -34,7 +34,7 @@ describe("controlMatchesAction", () => {
     ).toBe(false);
     expect(
       controlMatchesAction(
-        { case: "case4", command: "reinit", dt_type: "with dt" },
+        { case: "case4", command: "reinit", dt_type: "all" },
         "start",
       ),
     ).toBe(false);

@@ -14,7 +14,7 @@ test("Case4 截图按 case4-{seq}.png 保存并清零", async (t) => {
   const sharedDir = await createSharedDir(t, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "case complete",
     save_picture_flag: 1,
   });
@@ -40,7 +40,7 @@ test("Case2/Case3 不能消费 case4 的 flag=1，反之亦然", async (t) => {
   const sharedDir = await createSharedDir(t, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "execute success",
     save_picture_flag: 1,
   });
@@ -72,7 +72,7 @@ test("case3 flag=1 时 case4 截图拒绝", async (t) => {
   const sharedDir = await createSharedDir(t, {
     case: "case3",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "execute success",
     save_picture_flag: 1,
   });
@@ -89,7 +89,7 @@ test("Case4 截图序号不覆盖已有文件", async (t) => {
   const sharedDir = await createSharedDir(t, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "execute success",
     save_picture_flag: 1,
   });

@@ -41,7 +41,7 @@ describe("useCase4Controller failure", () => {
         return {
           case: "case2",
           command: "start",
-          dt_type: "with dt",
+          dt_type: "all",
           status: "execute fail",
           save_picture_flag: 1,
         };

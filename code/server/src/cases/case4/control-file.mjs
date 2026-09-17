@@ -41,19 +41,19 @@ function classifyPayload(payload) {
     exactKeys(payload, ["case", "command", "dt_type"]) &&
     payload.case === "case4" &&
     (payload.command === "start" || payload.command === "reinit") &&
-    payload.dt_type === "with dt"
+    payload.dt_type === "all"
   ) {
     return {
       kind: payload.command,
       descriptor: {
         caseId: "case4",
         command: payload.command,
-        dtType: "with dt",
+        dtType: "all",
       },
       patch: {
         case: "case4",
         command: payload.command,
-        dt_type: "with dt",
+        dt_type: "all",
         status: "",
         save_picture_flag: 0,
       },
@@ -73,7 +73,7 @@ function classifyPayload(payload) {
   throw new AppError(
     400,
     "INVALID_REQUEST",
-    "control payload must be exactly init, case4 start/reinit with dt, or save_picture_flag=0",
+    "control payload must be exactly init, case4 start/reinit with dt_type=all, or save_picture_flag=0",
   );
 }
 

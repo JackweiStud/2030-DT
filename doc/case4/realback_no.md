@@ -15,7 +15,7 @@
 ## 0. 出口条件
 
 - [ ] 独立实现于 `code/back/case4/`，与 Case2/Case3 stub 可分别启动/停止/测试；同一共享根上一次只跑一个 stub。
-- [ ] 只识别 `case4 + start|reinit + dt_type="with dt" + status=""` 新轮元组；不依赖 command 变化或 mtime。`without dt` 对 case4 非法，只诊断不接单。
+- [ ] 只识别 `case4 + start|reinit + dt_type="all" + status=""` 新轮元组；不依赖 command 变化或 mtime。`without dt` 对 case4 非法，只诊断不接单。
 - [ ] 观察到 init、其他 Case 或新空 status 命令时，旧任务立即失去写入权。
 - [ ] 先写 `execute success` 并保持至少 3000ms，**之后**才按步 append；失败路径不再写完成终态。
 - [ ] Start 用双指针发布轨迹/吞吐；禁止按三轨迹最短行数截吞吐；禁止整文件覆盖发布实时数据。
@@ -177,11 +177,11 @@ Windows 瞬时 `EPERM` / `EACCES` / `EBUSY` 对 rename 有限重试（建议 8 �
 ```text
 case=case4
 command=start
-dt_type=with dt
+dt_type=all
 status=""
 ```
 
-合法 ReInit 同上，但 `command=reinit`。`dt_type` 必须是精确字符串 `"with dt"`（小写、含空格）。
+合法 ReInit 同上，但 `command=reinit`。`dt_type` 必须是精确字符串 `"all"`。
 
 `status=""` 是每次新轮门沿；因此同一 command 在 `execute fail` 后由 Node 再次清空 status 也可被识别。不以 command 是否变化、文件 mtime 或固定延时猜新轮。
 
@@ -414,10 +414,10 @@ ReInit：
 | 控制文件缺失/暂不可读 | 按 §3.2 等待，不创建控制文件。 |
 | `command=init,status=""` | 空闲，不动作。 |
 | 合法 Case4 Start/ReInit 元组且 `status=""` | 尚未接单，按新命令执行。 |
-| 精确 `case4 + start + with dt + execute success` | 新建日志 `operationId,recovery:true`；清空九个动态文件；从第 1 行完整重放（replay 原样，random 重新构造；固定 seed 可复现，空 seed 重启后允许变化）。恢复 Start **跳过** success patch 与 dwell，直接发布。全部关闭后按当前截图配置写 complete；若控制中 flag 已为 1，最终写必须保留高电平。 |
-| 精确 `case4 + reinit + with dt + execute success` 且 `save_picture_flag=0` | 新建日志 `operationId,recovery:true`；跳过再写 success，重新保持完整 dwell，再写 `reinit complete`。 |
+| 精确 `case4 + start + all + execute success` | 新建日志 `operationId,recovery:true`；清空九个动态文件；从第 1 行完整重放（replay 原样，random 重新构造；固定 seed 可复现，空 seed 重启后允许变化）。恢复 Start **跳过** success patch 与 dwell，直接发布。全部关闭后按当前截图配置写 complete；若控制中 flag 已为 1，最终写必须保留高电平。 |
+| 精确 `case4 + reinit + all + execute success` 且 `save_picture_flag=0` | 新建日志 `operationId,recovery:true`；跳过再写 success，重新保持完整 dwell，再写 `reinit complete`。 |
 | 合法 Case4 元组的 `execute fail` / `case complete` / `reinit complete` | 本轮已终止，不动作。 |
-| 非 Case4、`dt_type` 不是 `with dt`、启动恢复见到 `reinit + execute success + flag=1`、未知 status 或其他不合法元组 | 记录诊断，不猜测、不动作。 |
+| 非 Case4、`dt_type` 不是 `all`、启动恢复见到 `reinit + execute success + flag=1`、未知 status 或其他不合法元组 | 记录诊断，不猜测、不动作。 |
 
 说明：`reinit + flag=1` 仅作为**启动恢复分类**的非法快照；活体新轮门沿仍只认 §3.3。正常路径 Node 开轮会写 `flag=0`。
 

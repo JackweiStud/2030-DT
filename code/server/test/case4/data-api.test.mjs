@@ -67,7 +67,7 @@ test("运行中 5/3/4 返回前 3 点 pending，不看 complete", async (t) => {
   const sharedDir = await createSharedDir(t, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "",
   });
   await writeCase4Base(sharedDir, xyzLines(5));
@@ -179,7 +179,7 @@ test("/result：38/30 同长通过，30/30/31 拒绝，双空吞吐通过", asyn
   const sharedDir = await createSharedDir(t, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "case complete",
   });
   await writeCase4Base(sharedDir, xyzLines(38));
@@ -218,7 +218,7 @@ test("/result 空轨迹、非 complete、缺 CDF 分别 409/409/404", async (t) 
   const sharedDir = await createSharedDir(t, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "execute success",
   });
   await writeCase4All(sharedDir, {
@@ -234,7 +234,7 @@ test("/result 空轨迹、非 complete、缺 CDF 分别 409/409/404", async (t) 
   await writeControl(sharedDir, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "case complete",
     save_picture_flag: 0,
   });
@@ -268,7 +268,7 @@ test("/result 吞吐半行 pending 为 409，已换行非法为 422", async (t) 
   const sharedDir = await createSharedDir(t, {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "case complete",
   });
   await writeCase4All(sharedDir, { without: "8.5\n9," });
@@ -287,7 +287,7 @@ test("/result 吞吐文件尾空白仍可完成，记录间空行仍 422", async
   const complete = {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "case complete",
   };
   const sharedDir = await createSharedDir(t, complete);
@@ -336,7 +336,7 @@ test("JSONL 随 completeCount 写出归一点；start 后清空；写失败不�
 
   await jsonRequest(baseUrl, "/api/case4/control-file", {
     method: "POST",
-    body: { case: "case4", command: "start", dt_type: "with dt" },
+    body: { case: "case4", command: "start", dt_type: "all" },
   });
   assert.equal(await fs.readFile(jsonlPath, "utf8"), "");
 
@@ -362,7 +362,7 @@ test("JSONL 随 completeCount 写出归一点；start 后清空；写失败不�
   assert.equal(live.status, 200);
   const started = await jsonRequest(second.baseUrl, "/api/case4/control-file", {
     method: "POST",
-    body: { case: "case4", command: "start", dt_type: "with dt" },
+    body: { case: "case4", command: "start", dt_type: "all" },
   });
   assert.equal(started.status, 200);
   assert.equal(started.body.control.command, "start");
@@ -398,7 +398,7 @@ test("/result 读取期间文件或控制漂移返回 409 且无部分结果", a
   const complete = {
     case: "case4",
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "case complete",
     save_picture_flag: 0,
   };

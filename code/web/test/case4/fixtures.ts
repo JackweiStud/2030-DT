@@ -60,7 +60,7 @@ export function startControl(
 ): ControlSnapshot {
   return idleControl({
     command: "start",
-    dt_type: "with dt",
+    dt_type: "all",
     status,
     ...extra,
   });
@@ -72,7 +72,7 @@ export function reinitControl(
 ): ControlSnapshot {
   return idleControl({
     command: "reinit",
-    dt_type: "with dt",
+    dt_type: "all",
     status,
     ...extra,
   });

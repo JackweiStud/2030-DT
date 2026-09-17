@@ -571,7 +571,7 @@ export function useCase4Controller(options: Options) {
       case4Log(`command.${kind}_click`, { roundGeneration: generation });
       try {
         await apiRef.current.postControl(
-          { case: "case4", command: kind, dt_type: "with dt" },
+          { case: "case4", command: kind, dt_type: "all" },
           ac.signal,
         );
         case4Log(`command.${kind}_ok`, { roundGeneration: generation });

@@ -37,7 +37,7 @@ function isCompleteContext(control) {
   return (
     control.case === "case4" &&
     control.command === "start" &&
-    control.dt_type === "with dt" &&
+    control.dt_type === "all" &&
     control.status === "case complete"
   );
 }

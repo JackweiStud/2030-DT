@@ -37,7 +37,7 @@ const DEFAULT_CONTROL = Object.freeze({
 const START_CONTROL = Object.freeze({
   ...DEFAULT_CONTROL,
   command: "start",
-  dt_type: "with dt",
+  dt_type: "all",
   future_field: { keep: true },
 });
 
@@ -426,7 +426,7 @@ test("控制 patch 只写 owned 字段、保留未知字段并复验 ownership",
   const task = {
     operationId: "test",
     command: "start",
-    dtType: "with dt",
+    dtType: "all",
     recovery: false,
     signal: new AbortController().signal,
   };
@@ -467,7 +467,7 @@ test("控制 patch 遇 Windows 瞬时 rename 锁会重试", async (t) => {
   const task = {
     operationId: "windows-rename-lock",
     command: "start",
-    dtType: "with dt",
+    dtType: "all",
     recovery: false,
     signal: new AbortController().signal,
   };
@@ -505,7 +505,7 @@ async function patchDuringRenameRetry(t, mutateControl) {
   const task = {
     operationId: "rename-retry-revoke",
     command: "start",
-    dtType: "with dt",
+    dtType: "all",
     recovery: false,
     signal: abortController.signal,
   };
@@ -879,7 +879,7 @@ test("ReInit 经过 success 窗口到 reinit complete，永不截图或写数据
   const sharedDir = await createSharedDir(t, {
     ...DEFAULT_CONTROL,
     command: "reinit",
-    dt_type: "with dt",
+    dt_type: "all",
   });
   await seedBaseFromDefault(sharedDir);
   await emptyDynamics(sharedDir);
@@ -936,7 +936,7 @@ test("启动遇到 ReInit execute success 时重新保持完整 dwell 再完成"
   const sharedDir = await createSharedDir(t, {
     ...DEFAULT_CONTROL,
     command: "reinit",
-    dt_type: "with dt",
+    dt_type: "all",
     status: "execute success",
   });
   await startStub(t, sharedDir, { successDwellMs: 15 });
@@ -951,14 +951,14 @@ test("启动恢复表：idle/终态/非法 dt_type/reinit+flag1 均不动作", a
     {
       ...DEFAULT_CONTROL,
       command: "reinit",
-      dt_type: "with dt",
+      dt_type: "all",
       status: "reinit complete",
     },
     { ...START_CONTROL, dt_type: "without dt", status: "" },
     {
       ...DEFAULT_CONTROL,
       command: "reinit",
-      dt_type: "with dt",
+      dt_type: "all",
       status: "execute success",
       save_picture_flag: 1,
     },

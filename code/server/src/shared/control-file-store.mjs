@@ -157,11 +157,13 @@ export function assertScreenshotOwnership(control, caseId) {
     );
   }
   const dtTypeAllowed =
-    caseId === "case2" || caseId === "case4"
+    caseId === "case2"
       ? control.dt_type === "with dt"
-      : caseId === "case3"
-        ? control.dt_type === "without dt" || control.dt_type === "with dt"
-        : false;
+      : caseId === "case4"
+        ? control.dt_type === "all"
+        : caseId === "case3"
+          ? control.dt_type === "without dt" || control.dt_type === "with dt"
+          : false;
   const valid =
     control.case === caseId &&
     control.command === "start" &&

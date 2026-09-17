@@ -55,7 +55,7 @@ describe("runCase4Screenshot", () => {
       getControl: vi.fn(async () => ({
         case: "case4",
         command: "start",
-        dt_type: "with dt",
+        dt_type: "all",
         status: "case complete",
         save_picture_flag: 1,
       })),
@@ -83,14 +83,14 @@ describe("runCase4Screenshot", () => {
       postControl: vi.fn(async () => ({
         case: "case4",
         command: "start",
-        dt_type: "with dt",
+        dt_type: "all",
         status: "case complete",
         save_picture_flag: 0,
       })),
       getControl: vi.fn(async () => ({
         case: "case4",
         command: "start",
-        dt_type: "with dt",
+        dt_type: "all",
         status: "case complete",
         save_picture_flag: 1,
       })),
@@ -123,7 +123,7 @@ describe("runCase4Screenshot", () => {
       getControl: vi.fn(async () => ({
         case: "case4",
         command: "start",
-        dt_type: "with dt",
+        dt_type: "all",
         status: "case complete",
         save_picture_flag: 1,
       })),

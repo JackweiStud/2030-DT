@@ -39,7 +39,7 @@ base 只读 ──────────────────► GET init-d
 
 - 沿用 case3：共享 control store、串行控制写、跨 Case busy、init 撤权、最终读取有限重试、截图 ownership 与有限重试。
 - case4 不继承：双侧启动/重置、历史侧配对、BeamID/Cost/BA、反射必需文件、吞吐与轨迹行号绑定。
-- 一次 Start 覆盖三方案；`dt_type="with dt"` 是控制值，不是“只读取 DT 方案”的筛选条件。
+- 一次 Start 覆盖三方案；`dt_type="all"` 是控制值，不是“只读取 DT 方案”的筛选条件。
 - `/trajectory`、两路 `/throughput` 分开读取，避免一类数据的等待或错误阻塞其他运行中数据；`/result` 承担最终统一提交门槛。响应均为全量替换快照，不是 append 事件。
 - Node 对 `/trajectory`、`/throughput` **不做** complete 门槛。complete 后九个动态文件仍留在磁盘，直到下一轮 start/reinit 才清；刷新回到 initial 时旧文件仍可能可读。**Web 纪律**：仅本轮已见 `execute success`、且尚未因 complete 转入最终读取时才调用这两类接口；进页、initial、刷新后的初始化握手完成前禁止调用。
 
@@ -105,7 +105,7 @@ Node 仅清空表中标“是”的 9 个文件；缺失时创建为空文件。
 type ControlSnapshot = {
   case: string;
   command: "init" | "start" | "reinit";
-  dt_type: "" | "without dt" | "with dt";
+  dt_type: "" | "all" | "without dt" | "with dt";
   status: string;
   save_picture_flag: 0 | 1;
   debug_flag?: number; // 若出现必须 Number.isInteger，与现网 control-file-store 一致
@@ -114,7 +114,7 @@ type ControlSnapshot = {
 };
 ```
 
-业务 `status` 合法字面值只有：`""`、`execute success`、`execute fail`、`case complete`、`reinit complete`。未知字符串透传，Web 不能当作 success/fail/complete。GET 可看到其他 Case 控制，不强改归属；case4 开轮 **只写** `dt_type="with dt"`，读到其他 Case 的 `"without dt"` 不得当作 case4 本轮。
+业务 `status` 合法字面值只有：`""`、`execute success`、`execute fail`、`case complete`、`reinit complete`。未知字符串透传，Web 不能当作 success/fail/complete。GET 可看到其他 Case 控制，不强改归属；case4 开轮 **只写** `dt_type="all"`，读到其他 Case 的 `"without dt"` 不得当作 case4 本轮。
 
 若快照中存在 `debug_flag` 且不是整数（`Number.isInteger`），或存在 `scene_type` 且非 string，视为控制文件非法，返回 `CONTROL_READ_FAILED`。浮点如 `0.5`、字符串 `"0"` 均非法。这两字段不出现在 POST 请求体中。
 
@@ -150,19 +150,19 @@ POST 只接受以下精确 shape，额外字段拒绝：
 { "command": "init" }
 ```
 ```json
-{ "case": "case4", "command": "start", "dt_type": "with dt" }
+{ "case": "case4", "command": "start", "dt_type": "all" }
 ```
 ```json
-{ "case": "case4", "command": "reinit", "dt_type": "with dt" }
+{ "case": "case4", "command": "reinit", "dt_type": "all" }
 ```
 ```json
 { "save_picture_flag": 0 }
 ```
 
 - init 写 `case=case4,command=init,dt_type="",status="",save_picture_flag=0`；是撤销旧轮信号，不启动任务，不要求后端再写 success。
-- start/reinit 先通过共享 busy guard，再在共享串行队列内清 §2 九文件，最后合并控制：指定命令、`dt_type="with dt",status="",save_picture_flag=0`。
+- start/reinit 先通过共享 busy guard，再在共享串行队列内清 §2 九文件，最后合并控制：指定命令、`dt_type="all",status="",save_picture_flag=0`。
 - Web 不提交业务 status，不提交 flag=1。业务终态由后端写；Node 仅在开轮/init 清空 status。
-- flag 清零不改变其他字段。flag 已为 0 时幂等成功；为 1 时必须仍属于 `case4/start/with dt`，否则 `SCREENSHOT_NOT_REQUESTED`。
+- flag 清零不改变其他字段。flag 已为 0 时幂等成功；为 1 时必须仍属于 `case4/start/all`，否则 `SCREENSHOT_NOT_REQUESTED`。
 - 每次控制写重新读最新 JSON，只合并本方字段，保留未知字段；同目录临时文件、fsync、关闭、原子 rename、回读验证。沿用现有 Windows 瞬时替换容错，不等于重发业务命令。
 
 共享 busy guard 沿用 case2/case3：仅 idle `init + status=""` 或同 Case、同动作、同 dt_type 的 `execute fail` 手动重试可开启 start/reinit。未消费活动/完成命令、其他 Case 失败或未知活动状态均返回 `409 CONTROL_BUSY`。init 始终允许撤权。case4 加入现有共享保护，不能建立独立队列绕过 case2/case3。
@@ -324,7 +324,7 @@ type ResultResponse = {
 };
 ```
 
-读取前后控制必须均为 `case4/start/with dt/case complete`。Node 对 base、三轨迹、两吞吐、四统计文件记录读取前后 size/高精度 mtime，并校验该读取窗口内文件与 `controlBefore`/`controlAfter` 的 case/command/dt_type/status 均未变化。Node **不**保存某次 Web `init-data` 会话，也不对账“本页初始化时的 base 内容”。
+读取前后控制必须均为 `case4/start/all/case complete`。Node 对 base、三轨迹、两吞吐、四统计文件记录读取前后 size/高精度 mtime，并校验该读取窗口内文件与 `controlBefore`/`controlAfter` 的 case/command/dt_type/status 均未变化。Node **不**保存某次 Web `init-data` 会话，也不对账“本页初始化时的 base 内容”。
 
 - 后端只允许在空闲期更换 base。运行中改 base 视为违规；Web 误差始终用本页 `init-data.baseRoute`，与 Node 当时磁盘 base 可能不一致，不要求 Node 补救。
 - 最终轨迹快照同样经过 §6 的 65535 归一，规则与 `/trajectory` 相同。
@@ -418,7 +418,7 @@ ReInit → 本轮UI结果立即失效 → Node清九文件并写命令 → succe
 - 登记后不立即截运行态。最终 result 通过、completed 至少完成一帧渲染、renderer 准备好后才生成 PNG。
 - 同一任务最多 3 次：生成失败可重生成，上传失败复用同一 Base64；第三次仍失败 POST flag=0 放弃并记日志，不改变业务结果。放弃清零/收尾失败显示适配异常，不假装已解除。
 - POST screenshot 仅接受 `{image_base64:string}`，纯 Base64 或 PNG data URL；解码验证 PNG signature。沿用请求体上限 20 MiB。
-- 保存与清零前均核对当前 `case4/start/with dt,flag=1`；不限定 status 必须恰好 success，允许保存时推进到 complete。其他 Case 路由不得消费 case4 请求，反之亦然。
+- 保存与清零前均核对当前 `case4/start/all,flag=1`；不限定 status 必须恰好 success，允许保存时推进到 complete。其他 Case 路由不得消费 case4 请求，反之亦然。
 - 输出 `out/case4/case4-000.png`，seq 从 0 递增、至少三位补零、不覆盖；响应为 `{ok:true,path:"out/case4/case4-000.png",seq:0}`。
 - 同目录临时文件、fsync、关闭、原子 rename、stat 成功后在共享队列重读控制并清 flag。截图逻辑复用现有原语，不引入持久事务或重启恢复。
 - 截图逻辑舞台 1920×1080，沿用 pixelRatio=2；文件成功不等于内容正确，正式验收需检查实际 PNG 中曲线、仪表、文字和最终状态。
