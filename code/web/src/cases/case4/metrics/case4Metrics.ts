@@ -21,7 +21,7 @@ import { CASE4_POINT_WINDOW } from "../config/case4RuntimeConfig";
 
 const EPS = 1e-9;
 
-/** 欧氏距离。2D 时 z 为 0，公式与 3D 相同。 */
+/** XYZ 三维欧氏距离；2D 仅指地图投影，误差计算仍保留 Z 分量。 */
 export function pointErrorM(measured: XYZ, base: XYZ): number {
   return Math.hypot(
     measured.x - base.x,
@@ -308,6 +308,29 @@ export function cepFromStatistics(
     traditional: cep.traditional[kind],
     commercial: cep.commercial[kind],
     dt: cep.dt[kind],
+  };
+}
+
+export type CepImprovement = {
+  direction: "down" | "up";
+  label: string;
+};
+
+/**
+ * DT 相对传统基站的 CEP 变化百分比。
+ * 用原值计算；传统为 0 或两者相等时不展示。标签一位小数，不含箭头字符。
+ */
+export function cepImprovement(
+  traditional: number,
+  dt: number,
+): CepImprovement | null {
+  if (!Number.isFinite(traditional) || !Number.isFinite(dt)) return null;
+  if (traditional === 0 || traditional === dt) return null;
+  const raw = ((traditional - dt) / traditional) * 100;
+  const direction: CepImprovement["direction"] = raw > 0 ? "down" : "up";
+  return {
+    direction,
+    label: `${Math.abs(raw).toFixed(1)}%`,
   };
 }
 

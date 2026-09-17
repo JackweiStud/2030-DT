@@ -1291,6 +1291,7 @@
   padding: 0 4px;
   box-sizing: border-box;
   flex: 1 1 auto;
+  overflow: visible;
 }
 
 .case4-page .c4-cep-grid {
@@ -1338,7 +1339,18 @@
   min-width: 0;
 }
 
+.case4-page .c4-cep-baseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 0;
+  border-top: 1px dashed #c5c9d899;
+  pointer-events: none;
+}
+
 .case4-page .c4-cep-col {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1348,6 +1360,90 @@
   width: auto;
   height: 100%;
   gap: 0;
+}
+
+.case4-page .c4-cep-delta {
+  position: absolute;
+  left: 50%;
+  z-index: 3;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 34px;
+  padding: 0 8px 0 6px;
+  border-radius: 10px;
+  background: #5a6270b3;
+  box-shadow: 0 6px 16px #00000059;
+  color: #f4f7fb;
+  font-family: var(--c4-font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 34px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.case4-page .c4-cep-delta::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #5a6270b3;
+  transform: translateX(-50%);
+}
+
+.case4-page .c4-cep-delta__arrow {
+  display: block;
+  flex-shrink: 0;
+  align-self: center;
+  width: 16px;
+  height: 16px;
+}
+
+.case4-page .c4-cep-delta[data-cep-delta-dir="down"] .c4-cep-delta__arrow {
+  color: #3ddc97;
+}
+
+.case4-page .c4-cep-delta[data-cep-delta-dir="up"] .c4-cep-delta__arrow {
+  color: #f07178;
+}
+
+.case4-page .c4-cep-delta__readout {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  padding-right: 12px;
+  line-height: 1;
+}
+
+.case4-page .c4-cep-delta__num {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.case4-page .c4-cep-delta__pct {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.case4-page .c4-cep-value-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .case4-page .c4-cep-value {

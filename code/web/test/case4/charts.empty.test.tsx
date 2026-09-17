@@ -217,6 +217,101 @@ describe("CepBars empty", () => {
     );
     expect(values).toEqual(["0.4", "0.3", "0.1"]);
   });
+
+  it("空态与相等/零基准不画百分比；50/90 各自相对传统计算", () => {
+    const empty = render(<CepBars cep={null} kind="p50M" />);
+    expect(empty.container.querySelector("[data-cep-delta]")).toBeNull();
+    expect(empty.container.querySelector("[data-cep-baseline]")).toBeNull();
+    empty.unmount();
+
+    const equal = render(
+      <CepBars
+        cep={{
+          traditional: { p50M: 10, p90M: 0 },
+          commercial: { p50M: 1, p90M: 1 },
+          dt: { p50M: 10, p90M: 5 },
+        }}
+        kind="p50M"
+      />,
+    );
+    expect(equal.container.querySelector("[data-cep-delta]")).toBeNull();
+    equal.unmount();
+
+    const mixed = {
+      traditional: { p50M: 10, p90M: 10 },
+      commercial: { p50M: 1, p90M: 1 },
+      dt: { p50M: 2, p90M: 15 },
+    };
+    const p50 = render(<CepBars cep={mixed} kind="p50M" />);
+    const d50 = p50.container.querySelector("[data-cep-delta]");
+    expect(d50?.textContent).toBe("80.0%");
+    expect(d50?.querySelector(".c4-cep-delta__num")?.textContent).toBe("80.0");
+    expect(d50?.querySelector(".c4-cep-delta__pct")?.textContent).toBe("%");
+    expect(d50?.getAttribute("data-cep-delta-dir")).toBe("down");
+    expect(p50.container.querySelectorAll("[data-cep-delta]")).toHaveLength(1);
+    const base50 = p50.container.querySelector(
+      "[data-cep-baseline]",
+    ) as HTMLElement | null;
+    expect(base50).not.toBeNull();
+    expect(base50?.style.bottom).toBe("122px");
+    expect((d50 as HTMLElement).style.bottom).toBe("130px");
+    p50.unmount();
+
+    const p90 = render(<CepBars cep={mixed} kind="p90M" />);
+    const d90 = p90.container.querySelector("[data-cep-delta]");
+    expect(d90?.textContent).toBe("50.0%");
+    expect(d90?.getAttribute("data-cep-delta-dir")).toBe("up");
+    const base90 = p90.container.querySelector(
+      "[data-cep-baseline]",
+    ) as HTMLElement | null;
+    expect(base90?.style.bottom).toBe(`${13 + 109 * (10 / 15)}px`);
+    expect((d90 as HTMLElement).style.bottom).toBe("137.2px");
+    p90.unmount();
+  });
+
+  it("DT 接近或高于传统时气泡让开数值，虚线仍锚传统柱顶", () => {
+    const near = render(
+      <CepBars
+        cep={{
+          traditional: { p50M: 10, p90M: 1 },
+          commercial: { p50M: 1, p90M: 1 },
+          dt: { p50M: 9.9, p90M: 1 },
+        }}
+        kind="p50M"
+      />,
+    );
+    const nearBase = near.container.querySelector(
+      "[data-cep-baseline]",
+    ) as HTMLElement | null;
+    const nearDelta = near.container.querySelector(
+      "[data-cep-delta]",
+    ) as HTMLElement | null;
+    expect(nearBase?.style.bottom).toBe("122px");
+    expect(nearDelta?.style.bottom).toBe(
+      `${13 + 109 * (9.9 / 10) + 13.2 + 2}px`,
+    );
+    near.unmount();
+
+    const tall = render(
+      <CepBars
+        cep={{
+          traditional: { p50M: 10, p90M: 1 },
+          commercial: { p50M: 1, p90M: 1 },
+          dt: { p50M: 15, p90M: 1 },
+        }}
+        kind="p50M"
+      />,
+    );
+    const tallBase = tall.container.querySelector(
+      "[data-cep-baseline]",
+    ) as HTMLElement | null;
+    const tallDelta = tall.container.querySelector(
+      "[data-cep-delta]",
+    ) as HTMLElement | null;
+    expect(tallBase?.style.bottom).toBe(`${13 + 109 * (10 / 15)}px`);
+    expect(tallDelta?.style.bottom).toBe("137.2px");
+    tall.unmount();
+  });
 });
 
 describe("NlosGauge ticks", () => {

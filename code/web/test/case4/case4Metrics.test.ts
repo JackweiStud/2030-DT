@@ -8,6 +8,7 @@ import {
   cdfXTicks,
   cepFromStatistics,
   cepGroupGeometry,
+  cepImprovement,
   errorAxisTicks,
   errorPlotYMax,
   errorPlotYMin,
@@ -205,6 +206,36 @@ describe("cepGroupGeometry", () => {
     const p90b = cepGroupGeometry(cepFromStatistics(mutated, "p90M"));
     expect(p50b.yMax).toBe(p50.yMax);
     expect(p90b.yMax).toBeCloseTo(2);
+  });
+});
+
+describe("cepImprovement", () => {
+  it("传统10、DT2 为下降 80.0%；9.5 为 5.0%；15 为上升 50.0%", () => {
+    expect(cepImprovement(10, 2)).toEqual({
+      direction: "down",
+      label: "80.0%",
+    });
+    expect(cepImprovement(10, 9.5)).toEqual({
+      direction: "down",
+      label: "5.0%",
+    });
+    expect(cepImprovement(10, 15)).toEqual({
+      direction: "up",
+      label: "50.0%",
+    });
+  });
+
+  it("传统为 0 或两者原值相等时隐藏，不显示 0% 或 —", () => {
+    expect(cepImprovement(0, 5)).toBeNull();
+    expect(cepImprovement(10, 10)).toBeNull();
+    expect(cepImprovement(Number.NaN, 2)).toBeNull();
+  });
+
+  it("可见性按原值，舍入成 0.0% 仍显示", () => {
+    expect(cepImprovement(10, 9.999)).toEqual({
+      direction: "down",
+      label: "0.0%",
+    });
   });
 });
 
