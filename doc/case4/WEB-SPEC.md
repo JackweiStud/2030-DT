@@ -8,7 +8,7 @@
 
 开工前必读：`state.md`、契约 §0 / §3 / §4 / §7 / §8 / §9 / §11、本文、`doc/case4/STATIC-HTML-ACCEPTANCE.md`（已接受效果、可复用成果、留给 React 的地图/图表问题），以及 `code/web/src/app/App.tsx`、`shell/Shell.tsx`、`cases/case3/hooks/useCase3Controller.ts`、`cases/case3-v2/mapProjectionV2.ts`、`cases/case3-v2/Case3V2Page.tsx`。
 
-正式代码已实现；当前不做 CEP 增减百分比、3D、反射。误差悬停已追加落地，覆盖此前后置决定；阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
+正式代码已实现；CEP 增减百分比已实现并由用户接受（c4382a3）；3D、反射仍保留。误差悬停已追加落地，覆盖此前后置决定；阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
 
 ---
 
@@ -62,7 +62,7 @@ code/web/
 │       │   ├── case4Handshake.ts        # GET control → POST init → GET init-data / 探活
 │       │   ├── case4Polling.ts          # 串行原语 + 运行中 4 链 + result；export 只要启停
 │       │   └── case4Screenshot.ts       # 截图状态机 + toPng + 放弃清 flag
-│       ├── metrics/case4Metrics.ts  # XY、20 窗、CDF/CEP 几何、吞吐窗口；分区注释，先不拆 5 文件
+│       ├── metrics/case4Metrics.ts  # XYZ、20 窗、CDF/CEP 几何、吞吐窗口；分区注释，先不拆 5 文件
 │       └── components/
 │           ├── MapStage.tsx         # 视口、挂鼠标；复位钮小则放这里，不进 transform
 │           ├── map/MapRenderer2D.tsx    # 变换层 + 底图/路线/点/UE
@@ -737,12 +737,22 @@ type Case4MapView = {
 
 ### 9.2 ErrorReplay
 
-- `errors[scheme][i] = hypot(p[scheme].x - base[i].x, p[scheme].y - base[i].y)`，base 用本页 `init-data`，不计 Z。
+- `errors[scheme][i] = hypot(p[scheme].x - base[i].x, p[scheme].y - base[i].y, p[scheme].z - base[i].z)`，base 用本页 `init-data`，计入 Z。
 - `visible = points.slice(-20)`；标签 `P${no}`；N≤20 左起填、右侧空槽；N>20 滑到最新。
 - 空槽不画 0。当前点光标/进度叠层对齐静态（absolute，不是第三 flex 列）。
 - Y 轴与点共用线性 mapping：`yMax = max(窗口内有限误差, ε)`；无点时只保留轴 chrome（可用占位 0～1），不画点。
 - 连线用 SVG path，禁止照抄示意小矩形。
-- 2026-09-16 增量：有数据的误差槽可悬停显示点号、三方案误差（XY 派生值、三位小数、米单位）；空槽不显示，移出或进入拖动时收起，不新增接口。当前实现未限定 completed；运行中已有数据槽也可显示。
+- 2026-09-16 增量：有数据的误差槽可悬停显示点号、三方案误差（XYZ 派生值、三位小数、米单位）；空槽不显示，移出或进入拖动时收起，不新增接口。当前实现未限定 completed；运行中已有数据槽也可显示。
+
+### CEP 改善百分比增量（2026-09-17，已实现：c4382a3）
+
+- 分别使用最终统计中传统基站与 DT 的 CEP50、CEP90，计算 `(traditional - dt) / traditional * 100`；不新增后端数据、不从逐点误差重算、不使用已舍入标签参与计算。
+- 仅在传统值非零且两者原值不相等时显示；传统值为零或两者相等时隐藏整个百分比标记，不显示 `—` 或 `0%`。初始/运行中无最终统计时不显示旧轮标记。
+- 百分比保留 1 位小数，例如 `80.0%`。可见性按原值判断，不因显示舍入为 0.0 而改写条件。
+- 位置：CEP50 和 CEP90 各自 DT 柱及数值上方，水平对齐 DT 列；参考用户本次红圈标注的灰色气泡与下降箭头，红圈/红箭头是标注，不是页面元素；商用列不增加百分比。示意图数字不能硬编码。
+- 当前交付：DT 更优用绿色下降箭头，DT 更差用红色上升箭头；百分比取变化绝对值，不重复加正负号。用户已确认效果和意图满意；该项不再列为开发遗留。
+- 布局：保留传统柱顶虚线；气泡底边取传统基准位置与DT数值避让位置两者较高值，包含三角高度与2px间距，避免接近传统值或DT更差时覆盖数字。
+- 最小验收：传统10、DT2得到80.0%；传统0时隐藏；两者相等时隐藏；CEP50/90独立；复位后清除；气泡不遮挡数值、图例，截图保留。覆盖DT更差时的上升箭头。
 
 ### 9.3 CDF
 
@@ -849,7 +859,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 
 ### 11.1 纯函数 `metrics/case4Metrics.ts`
 
-- XY 误差：不计 Z；已知点断言 `hypot`。
+- XYZ 误差：计入 Z；已知点断言 `hypot`。
 - 20 窗：N=0/20/21/30；标签为真实 no。
 - 投影：用 config 符号断言 `x/y` 交换；不出现 905 硬编码。
 - 地图交互：滚轮以指针为中心且 scale clamp 0.5～5；左键旋转 clamp ±90°；右键平移；`clientDeltaToStageLogical` 在非 1:1 Shell 缩放下正确；复位回到 config `baseView` 而不是 `{scale:1,offset:0}`；底图与轨迹共用同一 transform。
@@ -927,7 +937,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 
 ## 12. 明确不做
 
-- CEP Δ%、3D、反射路径、单方案图例显隐、暂停/取消/队列/业务超时/自动重发命令。
+- 3D、反射路径、单方案图例显隐、暂停/取消/队列/业务超时/自动重发命令。
 - 地图不实现触摸手势、双指、全屏；缩放/旋转/平移仅桌面鼠标，与 case3-v2 主路径一致。
 - WebSocket、直读写共享目录、localStorage 恢复。
 - 把静态 `dataset=pencilCep` / `visual20` 当运行数据。
@@ -950,7 +960,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 - [x] Codex 续查已收口：控制快照归属校验先于 flag/status；放弃清零失败保留完成结果、禁按钮、停截图与轮询、不 POST init、busy=false；视觉对照证据不能用组件测试代替。
 - [x] 组件树对齐静态 `data-region`；CSS 迁正式 assets；`STATIC-HTML-ACCEPTANCE.md` 为开工必读。
 - [x] App 只加 case4 挂载与 busy；case3-v2 留在 `case5`。
-- [x] 当前不做百分比/3D/反射；悬停已追加实现。
+- [x] CEP 百分比已实现并由用户接受（见 §9 增量）；3D/反射保留；悬停已实现。
 - [x] Case2/Case3/Case4 API 前缀各自写死同源路径。
 
 2026-09-16 阶段收口：实现已完成，用户确认本地自测完成，下一步为真实后端联调。

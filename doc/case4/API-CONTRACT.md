@@ -21,7 +21,7 @@ Web ──POST control──► Node ──原子写──► case_control.json 
 
 case4/ 文件                     REST                         Web 展示
 base 只读 ──────────────────► GET init-data.baseRoute ──► 预期轨迹；误差基准
-3 路 realtime xyz append ──► GET /trajectory 共同前缀 K ──► 三轨迹 / 当前点 / XY 误差
+3 路 realtime xyz append ──► GET /trajectory 共同前缀 K ──► 三轨迹 / 当前点 / XYZ 误差
 2 路 thrp 独立 append ─────► GET /throughput?side= ─────► 两条曲线，样点序号
 3 CDF + 1 汇总 仅最终 ─────► GET /result 整批快照 ──────► CDF / CEP / NLOS
                                                     hypot 只在 Web；不回写文件
@@ -48,7 +48,7 @@ base 只读 ──────────────────► GET init-d
 | 层 | 负责 |
 |---|---|
 | Shell | 共用导航、固定 1920×1080 缩放、跨 Case 忙态锁；接入现有现场环境展示机制 |
-| case4 Web | 用户动作、本轮状态、串行轮询、展示、XY 偏差派生、最终结果一次提交、截图；REST shape 防御 |
+| case4 Web | 用户动作、本轮状态、串行轮询、展示、XYZ 偏差派生、最终结果一次提交、截图；REST shape 防御 |
 | Node 文件服务 | 唯一浏览器侧文件 I/O；控制保护、限定清理、解析/校验、65535 归一、完整前缀、稳定最终快照、截图落盘与诊断日志 |
 | 后端 / 本地打桩 | 响应合法命令、停止旧轮写入、追加实时数据、完整发布统计、写业务 status、按窗口请求截图 |
 
@@ -56,7 +56,7 @@ base 只读 ──────────────────► GET init-d
 
 原始样本为 `01-参考资料/case4/data/`，仅供回放和格式参考。底图与投影复用现行 Case3 V2 运行资源（`site-2d.jpg` 与 `mapProjectionV2`）；图标/token 使用正式运行资源。不要求后端补地图文件，初始化接口不返回地图 URL。
 
-首版仅 2D，三方案同时展示。百分比、3D、反射后置；2026-09-16 误差回溯悬停已追加实现，不增加接口。静态页面只提供视觉、样式和组件结构；固定 Pencil 坐标、示意 CDF/CEP、URL 假状态不能进入正式运行路径。
+首版仅 2D，三方案同时展示。CEP 百分比已于2026-09-17实现（c4382a3），仅 Web 派生展示，规则见 WEB-SPEC.md；3D、反射仍保留；2026-09-16 误差回溯悬停已追加实现，不增加接口。静态页面只提供视觉、样式和组件结构；固定 Pencil 坐标、示意 CDF/CEP、URL 假状态不能进入正式运行路径。
 
 ## 2. 文件合同与清理边界
 
@@ -81,7 +81,7 @@ base 只读 ──────────────────► GET init-d
 |---|---|---|---|---|
 | base / 三路 realtime | 1 | X，米 | `x` | Node 四舍五入到 **2 位** |
 | | 2 | Y，米 | `y` | **2 位** |
-| | 3 | Z，米；首版误差不用 | `z` | **2 位**；65535 仍按分量替换 |
+| | 3 | Z，米；参与三维误差计算 | `z` | **2 位**；65535 仍按分量替换 |
 | 两路 thrp | 1 | 吞吐，Gbps，≥0 | `gbps` | **2 位** |
 | 三份 CDF | 1 | 定位误差，米，CDF 横轴 | `errorM` | **保留解析精度**，不量化到 0.01 |
 | | 2 | 累计概率 **0～1**，不是百分数 | `probability` | **保留解析精度**；校验 0～1 |
@@ -91,7 +91,7 @@ base 只读 ──────────────────► GET init-d
 | | 第 4 行第 1 列 | 平均 NLOS **比例 0～1** | `nlosRatio` | **保留解析精度**；UI 再 `×100` |
 | | 第 4 行第 2 列 | 无业务含义 | 不进 REST | 只要求有限数 |
 
-`errorM` 不得按 0.01 截进 JSON：参考 DT CDF 首点为 `5.71e-05`，截到 2 位会变成 0。`p50M` / `p90M` 不得先截到 2 位，否则完成态三位小数显示末位恒为 0。Web 派生逐点误差 `hypot(x-baseX,y-baseY)` 不是文件列，精度跟 2 位坐标走。
+`errorM` 不得按 0.01 截进 JSON：参考 DT CDF 首点为 `5.71e-05`，截到 2 位会变成 0。`p50M` / `p90M` 不得先截到 2 位，否则完成态三位小数显示末位恒为 0。Web 派生逐点误差 `hypot(x-baseX,y-baseY,z-baseZ)` 不是文件列，精度跟 2 位坐标走。
 
 反射文件 `ue_position_with_dt_coordinates_reflection_point.txt` 首版不读取、不清理、不参与收齐或完成门槛，不进入上述 REST 结构。
 
@@ -126,7 +126,7 @@ type ControlSnapshot = {
 | 截图 PNG 与 flag 清零 | Node | 否 | Web 只提交 Base64 |
 | 轨迹 / 吞吐 / 统计文件语义与 65535 归一 | Node | 否 | Web 不重复解析文件 |
 | 当前动作、是否见过 success、截图任务 | Web 本地 | 是 | 刷新后全部丢弃 |
-| 逐点 XY 误差 | Web | 是 | 只用本页 `init-data.baseRoute` |
+| 逐点 XYZ 误差 | Web | 是 | 只用本页 `init-data.baseRoute` |
 | 地图、图标、投影 | Web 运行资源 | 否 | 不来自共享目录 REST |
 
 GET 只读，无写副作用。成功样例：
@@ -303,7 +303,7 @@ CDF 与 CEP 分别由对应文件提供，不交叉重算，也不因参考样�
 1. Pi 的某一分量为 65535，使用同方案 P(i−1) 已归一的对应分量。
 2. P1 无前点，使用 **当前磁盘 base** P1 对应分量。
 3. 其余合法分量保持原值，再做统一精度归一。
-4. 连续无效沿用上一个已修复值；XYZ 均按此规则归一，首版误差只用 XY。
+4. 连续无效沿用上一个已修复值；XYZ 均按此规则归一，2D/3D 误差均使用 XYZ。
 5. base 本身无合法替代来源，含无效值时初始化失败；原始文件不回写修复值。
 
 日志至少含 case、文件、方案、Pi、无效分量、原始值、替代值和替代来源。重复轮询同一修复事件不应刷屏；去重仅为进程内日志实现，不改变数据响应。
@@ -458,7 +458,7 @@ Node 是文件语义校验权威；Web 检查 envelope、对象/数组、必填�
 |---|---|---|
 | 预期轨迹/预置点 | init-data.baseRoute；现行 Case3 V2 物理坐标映射 | 初始化后 |
 | 三方案轨迹/当前点/进度 | trajectory.points；no对齐；最终由result替换 | 运行及完成 |
-| 逐点误差 | Web对每方案Pi计算 `hypot(x-baseX,y-baseY)`，base 取本页 init-data，不计Z | 同完整点一起推进 |
+| 逐点误差 | Web对每方案Pi计算 `hypot(x-baseX,y-baseY,z-baseZ)`，base 取本页 init-data，计入 Z | 同完整点一起推进 |
 | 吞吐两条曲线 | 独立throughput.samples，no为样点序号 | 运行及完成 |
 | 三条CDF | result.statistics.cdf，直接使用文件横纵值 | 完成后统一显示 |
 | CEP50/90 | result.statistics.cep，不由轨迹或CDF反算 | 完成后统一显示 |

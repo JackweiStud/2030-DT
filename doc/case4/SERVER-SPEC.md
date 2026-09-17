@@ -442,5 +442,5 @@ cd code/server && npm test
 - 不把 case4 输出写进 `case2/`、`case3/`、`out/case2/`、`out/case3/`。
 - 不修改 case2/case3 成功 shape 或合法主线。
 - 不把参考资料当运行目录，不在测试里改原始样本。
-- 不算 XY 误差、不投影地图（Web 的事）。
+- 不算 XYZ 误差、不投影地图（Web 的事）。
 - 不把内部 3 次稳定重读计进 Web 的 10 次最终失败。
