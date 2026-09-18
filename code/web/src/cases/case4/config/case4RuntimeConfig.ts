@@ -14,6 +14,8 @@ export type Case4RuntimeConfig = {
   mapImageOffsetX: number;
   mapImageOffsetY: number;
   mapDebugShow: boolean;
+  reflectionEnable: boolean;
+  bsXyz: { x: number; y: number; z: number };
 };
 
 const DEFAULTS: Case4RuntimeConfig = {
@@ -26,6 +28,8 @@ const DEFAULTS: Case4RuntimeConfig = {
   mapImageOffsetX: 205,
   mapImageOffsetY: -670,
   mapDebugShow: true,
+  reflectionEnable: false,
+  bsXyz: { x: 1, y: 5, z: 7 },
 };
 
 export class Case4ConfigError extends Error {
@@ -102,12 +106,58 @@ function readBooleanFlag(
   throw new Case4ConfigError(key, `${key} must be 0 or 1`);
 }
 
+function readReflectionEnable(env: EnvLike): boolean {
+  const raw = env.CASE4_REFLECTION_ENABLE;
+  if (raw === undefined || raw.trim() === "") return DEFAULTS.reflectionEnable;
+  const trimmed = raw.trim();
+  if (trimmed === "1" || trimmed.toLowerCase() === "true") return true;
+  if (trimmed === "0" || trimmed.toLowerCase() === "false") return false;
+  throw new Case4ConfigError(
+    "CASE4_REFLECTION_ENABLE",
+    "CASE4_REFLECTION_ENABLE must be 0/1 or true/false",
+  );
+}
+
+const SENTINEL = 65535;
+
+function readBsXyz(env: EnvLike, required: boolean): {
+  x: number;
+  y: number;
+  z: number;
+} {
+  const raw = env.CASE4_BS_XYZ;
+  if (raw === undefined || raw.trim() === "") {
+    if (!required) return DEFAULTS.bsXyz;
+    throw new Case4ConfigError(
+      "CASE4_BS_XYZ",
+      "CASE4_BS_XYZ is required when CASE4_REFLECTION_ENABLE is on",
+    );
+  }
+  const trimmed = raw.trim().replace(/^[(\[]/, "").replace(/[)\]]$/, "");
+  const tokens = trimmed.split(",").map((token) => token.trim());
+  if (tokens.length !== 3 || tokens.some((token) => token === "")) {
+    throw new Case4ConfigError(
+      "CASE4_BS_XYZ",
+      "CASE4_BS_XYZ must be 3 finite numbers, e.g. (1.0,5.0,7.0)",
+    );
+  }
+  const values = tokens.map((token) => Number(token));
+  if (values.some((value) => !Number.isFinite(value) || value === SENTINEL)) {
+    throw new Case4ConfigError(
+      "CASE4_BS_XYZ",
+      "CASE4_BS_XYZ must be 3 finite non-sentinel numbers",
+    );
+  }
+  return { x: values[0]!, y: values[1]!, z: values[2]! };
+}
+
 /**
  * 解析 Case4 Vite env。键已提供但非法 → 抛键名，禁止静默 fallback。
  */
 export function loadCase4RuntimeConfig(
   env: EnvLike = import.meta.env,
 ): Case4RuntimeConfig {
+  const reflectionEnable = readReflectionEnable(env);
   return {
     pollMs: readPositiveSafeInt(env, "VITE_CASE4_POLL_MS", DEFAULTS.pollMs),
     mapOriginX: readFiniteNumber(
@@ -150,6 +200,8 @@ export function loadCase4RuntimeConfig(
       "VITE_CASE4_MAP_DEBUG_SHOW",
       DEFAULTS.mapDebugShow,
     ),
+    reflectionEnable,
+    bsXyz: readBsXyz(env, reflectionEnable),
   };
 }
 

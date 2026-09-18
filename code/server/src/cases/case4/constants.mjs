@@ -23,7 +23,10 @@ export const CASE4_CDF_FILES = Object.freeze({
 
 export const CASE4_SUMMARY_FILE = "ue_position_with_dt_error_and_nlos.txt";
 
-/** Start/ReInit 只清这 9 个动态文件；不含 base、反射、截图或 JSONL。 */
+export const CASE4_REFLECTION_FILE =
+  "ue_position_with_dt_coordinates_reflection_point.txt";
+
+/** Start/ReInit 必清的 9 个动态文件；不含 base、截图或 JSONL。 */
 export const CASE4_DYNAMIC_FILES = Object.freeze([
   CASE4_TRAJECTORY_FILES.traditional,
   CASE4_TRAJECTORY_FILES.commercial,

@@ -18,6 +18,17 @@ describe("loadCase4RuntimeConfig", () => {
     expect(c.mapImageOffsetX).toBe(205);
     expect(c.mapImageOffsetY).toBe(-670);
     expect(c.mapDebugShow).toBe(true);
+    expect(c.reflectionEnable).toBe(false);
+    expect(c.bsXyz).toEqual({ x: 1, y: 5, z: 7 });
+  });
+
+  it("Vite 注入空字符串视为未配置，不抛错", () => {
+    const c = loadCase4RuntimeConfig({
+      CASE4_REFLECTION_ENABLE: "",
+      CASE4_BS_XYZ: "",
+    });
+    expect(c.reflectionEnable).toBe(false);
+    expect(c.bsXyz).toEqual({ x: 1, y: 5, z: 7 });
   });
 
   it("接受合法覆盖", () => {
@@ -50,5 +61,23 @@ describe("loadCase4RuntimeConfig", () => {
     expect(() =>
       loadCase4RuntimeConfig({ VITE_CASE4_MAP_IMAGE_SCALE: "abc" }),
     ).toThrow(/VITE_CASE4_MAP_IMAGE_SCALE/);
+  });
+
+  it("开启 Reflection 时要求合法 BS，示例坐标仅作模拟", () => {
+    const c = loadCase4RuntimeConfig({
+      CASE4_REFLECTION_ENABLE: "true",
+      CASE4_BS_XYZ: "(1.0,5.0,7.0)",
+    });
+    expect(c.reflectionEnable).toBe(true);
+    expect(c.bsXyz).toEqual({ x: 1, y: 5, z: 7 });
+    expect(() =>
+      loadCase4RuntimeConfig({ CASE4_REFLECTION_ENABLE: "1" }),
+    ).toThrow(/CASE4_BS_XYZ/);
+    expect(() =>
+      loadCase4RuntimeConfig({
+        CASE4_REFLECTION_ENABLE: "true",
+        CASE4_BS_XYZ: "1,65535,7",
+      }),
+    ).toThrow(/CASE4_BS_XYZ/);
   });
 });

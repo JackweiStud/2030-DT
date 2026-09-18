@@ -20,7 +20,7 @@
 - [ ] `GET /trajectory`、`GET /throughput` 无 complete 门槛；`GET /result` 才做最终门槛。
 - [ ] 65535 在四舍五入前判定；坐标/吞吐 2 位；CDF/CEP/NLOS 保留解析精度。
 - [ ] 截图输出 `out/case4/case4-000.png`；ownership 与 case2/case3 对称隔离。
-- [ ] 调试 JSONL 只镜像 `/trajectory` 的 `points` 到 `out/case4/points/trajectory.jsonl`；Web 不回读；写/清失败不得挡住 REST 或开轮。
+- [ ] 调试 JSONL 镜像 `/trajectory` 与最终 `/result` 的 `points`（含可选 reflection）到 `out/case4/points/trajectory.jsonl`；内容指纹变更才覆盖；最终快照封印后 live 不得覆盖；Web 不回读；写/清失败不得挡住 REST 或开轮。
 - [ ] `npm test` 脚本纳入 `test/case4/*.test.mjs`，且 shared/case2/case3 回归仍过。
 - [ ] 结构化日志带 `caseId`；控制 GET 降噪覆盖 case4；不打印 Base64。
 
@@ -222,7 +222,7 @@ queue.run:
 8. `ue_position_with_dt_coordinates_realtime_cdf.txt`
 9. `ue_position_with_dt_error_and_nlos.txt`
 
-禁止清：`ue_position_coordinates_base.txt`、反射文件、截图 PNG、其他 Case、参考资料。禁止 `rm -r` 共享根。已清部分不回填；下次重试重新清全表。
+禁止清：`ue_position_coordinates_base.txt`、截图 PNG、其他 Case、参考资料。禁止 `rm -r` 共享根。已清部分不回填；下次重试重新清全表。反射文件为第 10 个**可选**清理目标：存在则清空，ENOENT 忽略；其他失败仍 `DATA_CLEAR_FAILED`。不要把反射加入最终九文件门槛。
 
 调试 JSONL（§8.5）在开轮成功后另清，**不得**放进这 9 文件白名单，也不得因 JSONL 失败返回 `DATA_CLEAR_FAILED`（case3 曾因 `out/case3/points` 清失败挡住 Start）。
 
@@ -361,11 +361,12 @@ Node 内部 3 次重读 **不** 计入 Web 的 10 次。成功返回前同样 `w
 
 规则：
 
-1. `completeCount` 变化才整文件原子替换（空数组写成空文件）；未变化跳过。
-2. 仅在 `/trajectory` 或 `/result` **HTTP 200** 之后写；422/404/409 不改旧文件。
-3. Start/ReInit 控制 patch **成功之后** 再 `clear()` 成空文件；与九文件清理解耦。
-4. `clear` / `writeIfChanged` 失败只 `logger.warn("case4 debug JSONL write failed", { reason })`，**必须仍返回成功 REST / 成功开轮**。
-5. 不要 without/with 两份，不要把吞吐绑进同一行，不要写进 `out/case3/`。
+1. 文件是完整快照原子覆盖。变更判断用坐标+反射内容指纹，不只比较点数；同点数反射变化也要覆盖。
+2. `/result` 成功后强制写出并封印；之后 live 写入忽略，避免晚到 live 覆盖最终尾点。Start/ReInit 成功 `clear()` 解除封印。
+3. 仅在 `/trajectory` 或 `/result` **HTTP 200** 之后写；422/404/409 不改旧文件。
+4. Start/ReInit 控制 patch **成功之后** 再 `clear()` 成空文件；与九文件清理解耦。
+5. `clear` / `writeIfChanged` 失败只 `logger.warn("case4 debug JSONL write failed", { reason })`，**必须仍返回成功 REST / 成功开轮**。
+6. 开启反射时行内附加 `reflection`；关闭时保持原三方案字段。不要 without/with 两份，不要把吞吐绑进同一行，不要写进 `out/case3/`。
 
 ## 9. 截图
 
@@ -438,7 +439,7 @@ cd code/server && npm test
 - 不写业务 `status`，不置 `save_picture_flag=1`。
 - 不新开端口/进程/控制队列。
 - 不实现 WebSocket、SSE、manifest、batch_id。
-- 不读反射文件。调试 JSONL 只按 §8.5 镜像轨迹 `points`；不把 JSONL 当业务真值，Web 不回读。
+- 反射文件按 [REFLECTION-SPEC.md](REFLECTION-SPEC.md) 可选读取与开轮清理；调试 JSONL 按 §8.5 镜像轨迹 `points`（可含 reflection）；不把 JSONL 当业务真值，Web 不回读。
 - 不把 case4 输出写进 `case2/`、`case3/`、`out/case2/`、`out/case3/`。
 - 不修改 case2/case3 成功 shape 或合法主线。
 - 不把参考资料当运行目录，不在测试里改原始样本。

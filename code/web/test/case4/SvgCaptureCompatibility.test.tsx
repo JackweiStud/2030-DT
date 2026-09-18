@@ -5,9 +5,12 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { CdfChart } from "../../src/cases/case4/components/CdfChart";
 import { ErrorReplay } from "../../src/cases/case4/components/ErrorReplay";
+import { MapRenderer2D } from "../../src/cases/case4/components/map/MapRenderer2D";
 import { NlosGauge } from "../../src/cases/case4/components/NlosGauge";
 import { ThroughputChart } from "../../src/cases/case4/components/ThroughputChart";
 import {
+  CASE4_TEST_CONFIG,
+  basePoint,
   sampleBaseRoute,
   sampleStatistics,
   trajPoint,
@@ -73,5 +76,56 @@ describe("Case4 SVG screenshot compatibility", () => {
     const path = clonedChild(view.container, ".c4-thrp-svg", "path");
     expect(path.getAttribute("fill")).toBe("none");
     expect(path.getAttribute("stroke")).toBeTruthy();
+  });
+
+  it("反射层克隆后波纹有 stroke，点与字有 fill，亮段有 dash", () => {
+    const reflection = {
+      state: "ready" as const,
+      los: true,
+      points: [
+        { id: 1, x: 2, y: 14, z: 0 },
+        { id: 2, x: 3, y: 13, z: 0 },
+      ],
+    };
+    const view = render(
+      <MapRenderer2D
+        config={{ ...CASE4_TEST_CONFIG, reflectionEnable: true }}
+        stageElementRef={{ current: document.createElement("div") }}
+        baseRoute={[basePoint(1, 1, 15)]}
+        livePoints={[trajPoint(1, { x: 1, y: 15, z: 0 }, { reflection })]}
+        playback="running"
+      />,
+    );
+    const los = clonedChild(
+      view.container,
+      ".c4-reflection",
+      ".c4-reflection__wave--los",
+    );
+    expect(los.getAttribute("fill")).toBe("none");
+    expect(los.getAttribute("stroke")).toBe("#22c55e");
+    expect(los.getAttribute("stroke-width")).toBe("2.2");
+    const hop = clonedChild(
+      view.container,
+      ".c4-reflection",
+      ".c4-reflection__wave--hop",
+    );
+    expect(hop.getAttribute("stroke")).toBe("url(#c4-refl-grad)");
+    const ri = clonedChild(view.container, ".c4-reflection", ".c4-reflection__ri");
+    expect(ri.getAttribute("fill")).toBe("#c084fc");
+    expect(ri.getAttribute("stroke")).toBe("#f5d0fe");
+    const label = clonedChild(
+      view.container,
+      ".c4-reflection",
+      ".c4-reflection__label",
+    );
+    expect(label.getAttribute("fill")).toBe("#e0f2fe");
+    const beam = clonedChild(
+      view.container,
+      ".c4-reflection",
+      ".c4-reflection__beam",
+    );
+    expect(beam.getAttribute("stroke")).toBe("#f8fafc");
+    expect(beam.getAttribute("stroke-dasharray")).toBe("0.13 0.93");
+    expect((beam as SVGElement).style.strokeDasharray).toBe("0.13 0.93");
   });
 });

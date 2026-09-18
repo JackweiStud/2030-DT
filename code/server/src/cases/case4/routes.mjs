@@ -3,6 +3,7 @@
 import { AppError } from "../../shared/errors.mjs";
 import { readJsonBody, sendJson } from "../../shared/http.mjs";
 import { CASE4_API_PREFIX } from "./constants.mjs";
+import { parseReflectionQuery } from "./query.mjs";
 
 function rejectQuery(url, endpoint) {
   if ([...url.searchParams].length > 0) {
@@ -50,9 +51,13 @@ export function createCase4Router(services) {
       request.method === "GET" &&
       url.pathname === `${CASE4_API_PREFIX}/trajectory`
     ) {
-      rejectQuery(url, "trajectory");
-      sendJson(response, 200, await services.trajectory.read());
-      return { handled: true, access: { caseId: "case4" } };
+      const reflection = parseReflectionQuery(url, "trajectory");
+      sendJson(
+        response,
+        200,
+        await services.trajectory.read({ reflection }),
+      );
+      return { handled: true, access: { caseId: "case4", reflection } };
     }
 
     if (
@@ -79,9 +84,9 @@ export function createCase4Router(services) {
       request.method === "GET" &&
       url.pathname === `${CASE4_API_PREFIX}/result`
     ) {
-      rejectQuery(url, "result");
-      sendJson(response, 200, await services.result.read());
-      return { handled: true, access: { caseId: "case4" } };
+      const reflection = parseReflectionQuery(url, "result");
+      sendJson(response, 200, await services.result.read({ reflection }));
+      return { handled: true, access: { caseId: "case4", reflection } };
     }
 
     if (

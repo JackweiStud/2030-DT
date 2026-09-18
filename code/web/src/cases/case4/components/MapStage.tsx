@@ -14,6 +14,7 @@ type Props = {
   mapRef: React.RefObject<MapRendererHandle | null>;
   baseRoute: BasePoint[];
   livePoints: TrajectoryPoint[];
+  playback?: "running" | "static";
 };
 
 /**
@@ -36,6 +37,7 @@ export function MapStage(props: Props) {
         stageElementRef={props.stageElementRef}
         baseRoute={props.baseRoute}
         livePoints={props.livePoints}
+        playback={props.playback}
       />
     </section>
   );

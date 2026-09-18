@@ -78,7 +78,7 @@ code/back/
 | `fixture-store` | 预检、seed 缺失 base | import Node 解析器 |
 | `control-store` | 拥有字段 patch + ownership | 写 command / 空 status / flag=0 |
 | `kpi-generator` | 构造本轮不可变数据集；本地复制契约 `roundSemanticNumber`（含 `Number.EPSILON`） | 从随机轨迹重算 CDF/CEP；另写不含 EPSILON 的公式；import Node 解析器 |
-| `publisher` | 双指针 append + 原子统计 | 波束/Cost/反射 |
+| `publisher` | 双指针 append + 原子统计 + 可选反射按 Pi 追加 | 波束/Cost |
 | `runner` | 门沿、dwell、恢复表、撤权 | REST、断点续写 |
 
 ## 2. 配置与命令
@@ -421,7 +421,7 @@ ReInit：
 
 说明：`reinit + flag=1` 仅作为**启动恢复分类**的非法快照；活体新轮门沿仍只认 §3.3。正常路径 Node 开轮会写 `flag=0`。
 
-恢复 Start 时允许 truncate 九个动态文件，因为本进程只用于无真实后端的本地 stub，且 `case complete` 前这些文件仍属于未完成轮。禁止与真实后端同时运行。**永远不清** base、反射、`out/`、控制文件和其他 Case。
+恢复 Start 时允许 truncate 九个动态文件，并对**已存在**的反射文件同步清空，因为本进程只用于无真实后端的本地 stub，且 `case complete` 前这些文件仍属于未完成轮。禁止与真实后端同时运行。**永远不清** base、`out/`、控制文件和其他 Case。反射不是 complete 门槛。
 
 恢复沿用当前进程 `CASE4_STUB_REQUEST_PICTURE` 和 dataMode。`CASE4_STUB_OUTCOME=fail` 不得把已经处于 `execute success` 的旧轮改写为 fail。恢复过程中仍按 §3.4 在每次清空、append、等待和终态 patch 前复验 ownership。
 
@@ -540,7 +540,7 @@ Web+Node 一键仍用现有 `code/scripts/dev-web-server.sh`（Windows `.bat`）
 - 不把 stub 自动并入适配服务启动命令。
 - 不引入持久 task token 或从 K+1 断点续写；启动恢复采用清空九动态文件后全量重放。
 - 不把本文延时、参考样本路径或编排命令写进真实后端交接文档。
-- 不实现 65535 归一（那是 Node）、不重算 CDF/CEP、不处理反射、不强制 DT 优势。
+- 不实现 65535 归一（那是 Node）、不重算 CDF/CEP、不强制 DT 优势。反射按包内模拟 fixture 原样发布，不把模拟称为真实采集。
 - 不增加随机幅度配置、产品徽标或 case2 式 `SOURCE_DIR`。
 
 ## 13. 已确认的 stub 决策

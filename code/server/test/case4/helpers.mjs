@@ -98,4 +98,18 @@ export async function writeCase4All(sharedDir, options = {}) {
   await writeCase4Trajectory(sharedDir, options);
   await writeCase4Throughput(sharedDir, options);
   await writeCase4Statistics(sharedDir, options);
+  if (options.reflection !== undefined && options.reflection !== false) {
+    await writeCase4Reflection(sharedDir, options.reflection);
+  }
+}
+
+export async function writeCase4Reflection(sharedDir, content) {
+  await fs.writeFile(
+    path.join(
+      sharedDir,
+      "case4",
+      "ue_position_with_dt_coordinates_reflection_point.txt",
+    ),
+    content,
+  );
 }

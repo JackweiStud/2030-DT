@@ -169,4 +169,30 @@ describe("case4Api", () => {
     expect(result.statistics.nlosRatio).toBe(0.897);
     expect(result.throughput.with.samples).toHaveLength(1);
   });
+
+  it("开启 reflection 时校验字段并带 query", async () => {
+    const urls: string[] = [];
+    const api = createCase4Api({
+      fetchImpl: async (input) => {
+        urls.push(String(input));
+        return okJson({
+          ok: true,
+          points: [
+            {
+              no: 1,
+              traditional: { x: 1, y: 2, z: 0 },
+              commercial: { x: 1, y: 2, z: 0 },
+              dt: { x: 1, y: 2, z: 0 },
+              reflection: { state: "ready", los: true, points: [] },
+            },
+          ],
+          completeCount: 1,
+          pendingTail: false,
+        });
+      },
+    });
+    const snap = await api.getTrajectory(undefined, true);
+    expect(urls[0]).toContain("reflection=true");
+    expect(snap.points[0]?.reflection?.los).toBe(true);
+  });
 });

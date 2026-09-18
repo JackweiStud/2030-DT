@@ -75,6 +75,7 @@ function replayFromStore(fixtureStore) {
       },
       summary: [...fixtureStore.statistics.summary.lines],
     },
+    reflection: [...(fixtureStore.reflection?.lines ?? [])],
     dataMode: "replay",
     dataSource: "fixture-replay",
     resolvedSeed: null,
@@ -163,6 +164,7 @@ function randomFromStore(fixtureStore, resolvedSeed) {
     trajectories,
     throughputs,
     statistics: { cdf, summary },
+    reflection: [...(fixtureStore.reflection?.lines ?? [])],
     dataMode: "random",
     dataSource: "synthetic-perturbation",
     resolvedSeed,
@@ -217,6 +219,7 @@ export function createInjectedDataset(options) {
     trajectories,
     throughputs,
     statistics: options.statistics,
+    reflection: [...(options.reflection ?? [])],
     dataMode: options.dataMode ?? "replay",
     dataSource: options.dataSource ?? "fixture-replay",
     resolvedSeed: options.resolvedSeed ?? null,
@@ -231,5 +234,6 @@ export function datasetLengths(dataset) {
     dt: dataset.trajectories.dt.length,
     without: dataset.throughputs.without.length,
     with: dataset.throughputs.with.length,
+    reflection: (dataset.reflection ?? []).length,
   };
 }

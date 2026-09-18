@@ -20,6 +20,7 @@ import {
   roundSemanticNumber,
   seedInitFiles,
   SUMMARY_FILE,
+  REFLECTION_FILE,
   THROUGHPUT_FILES,
   TRAJECTORY_FILES,
 } from "../case4-stub.mjs";
@@ -1230,4 +1231,92 @@ test("complete 后无继续写入；without dt 不接单", async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal((await readControl(other)).status, "");
   assert.equal(countLines(await readCase4(other, TRAJECTORY_FILES.dt)), 0);
+});
+
+test("反射 fixture 按 Pi 发布；短反射不挡 complete；恢复清空", async (t) => {
+  const store = await loadFixtureStore({ fixtureDir: DEFAULT_FIXTURE_DIR });
+  assert.ok(store.reflection.lines.length > 0);
+
+  const demo = await createSharedDir(t, START_CONTROL);
+  await seedBaseFromDefault(demo);
+  await emptyDynamics(demo);
+  await startStub(t, demo, { dataMode: "replay" });
+  await waitTerminal(demo, "case complete");
+  assert.equal(
+    countLines(await readCase4(demo, REFLECTION_FILE)),
+    store.reflection.lines.length,
+  );
+
+  const sharedDir = await createSharedDir(t, START_CONTROL);
+  await seedBaseLineCount(sharedDir, 5);
+  await emptyDynamics(sharedDir);
+  const logger = createSilentLogger();
+  const controlStore = createControlStore({
+    sharedDir,
+    logger,
+    readRetryMs: 1,
+  });
+  const publisher = createPublisher({
+    sharedDir,
+    fixtureStore: store,
+    controlStore,
+    logger,
+    stepMs: 1,
+    pollMs: 1,
+    dataMode: "replay",
+  });
+  const task = {
+    operationId: "reflection-short",
+    command: "start",
+    dtType: "all",
+    recovery: false,
+    signal: new AbortController().signal,
+  };
+  await controlStore.patch({ status: "execute success" }, task, [""]);
+  await publisher.publish(task, {
+    dataset: createInjectedDataset({
+      trajectories: {
+        traditional: coordLines(3),
+        commercial: coordLines(3, 10),
+        dt: coordLines(3, 20),
+      },
+      throughputs: { without: ["1.0"], with: ["1.0"] },
+      statistics: {
+        cdf: {
+          traditional: store.statistics.cdf.traditional.lines,
+          commercial: store.statistics.cdf.commercial.lines,
+          dt: store.statistics.cdf.dt.lines,
+        },
+        summary: store.statistics.summary.lines,
+      },
+      reflection: ["1 0", "0 0"],
+    }),
+  });
+  assert.equal(countLines(await readCase4(sharedDir, REFLECTION_FILE)), 2);
+  assert.equal(countLines(await readCase4(sharedDir, TRAJECTORY_FILES.dt)), 3);
+
+  await fs.writeFile(
+    path.join(sharedDir, "case4", REFLECTION_FILE),
+    "stale-row\n1 0\n",
+  );
+  const recoverTask = {
+    ...task,
+    operationId: "reflection-recover",
+    recovery: true,
+  };
+  await publisher.clearForRecovery(recoverTask);
+  assert.equal(await readCase4(sharedDir, REFLECTION_FILE), "");
+});
+
+test("缺失反射 fixture 仍可加载主线", async (t) => {
+  const dir = await copyFixtures(t);
+  await fs.unlink(path.join(dir, REFLECTION_FILE));
+  const store = await loadFixtureStore({ fixtureDir: dir });
+  assert.deepEqual(store.reflection.lines, []);
+  const dataset = createRoundDataset({
+    fixtureStore: store,
+    dataMode: "replay",
+    operationId: "no-reflection",
+  });
+  assert.deepEqual(dataset.reflection, []);
 });

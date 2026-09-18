@@ -68,7 +68,7 @@ test("Case4 四种精确 payload；多余字段和错 dt_type 拒绝", async (t)
   );
 });
 
-test("Start 先清九文件再写命令；base 与白名单外文件保留", async (t) => {
+test("Start 先清九文件及反射；base 保留；反射缺失可发命令", async (t) => {
   const sharedDir = await createSharedDir(t);
   await writeCase4All(sharedDir);
   const basePath = path.join(sharedDir, "case4", CASE4_BASE_FILE);
@@ -87,10 +87,19 @@ test("Start 先清九文件再写命令；base 与白名单外文件保留", asy
   });
 
   assert.equal(await fs.readFile(basePath, "utf8"), baseBefore);
-  assert.equal(await fs.readFile(reflection, "utf8"), "keep-me\n");
+  assert.equal(await fs.readFile(reflection, "utf8"), "");
   for (const filename of CASE4_DYNAMIC_FILES) {
     assert.equal(await fs.readFile(path.join(sharedDir, "case4", filename), "utf8"), "");
   }
+
+  await fs.unlink(reflection);
+  await service(sharedDir).updateFromHttp({ command: "init" });
+  await service(sharedDir).updateFromHttp({
+    case: "case4",
+    command: "reinit",
+    dt_type: "all",
+  });
+  await assert.rejects(fs.stat(reflection), { code: "ENOENT" });
 });
 
 test("init 不清动态文件；ReInit 同样只清白名单", async (t) => {

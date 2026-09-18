@@ -20,11 +20,28 @@ export type ControlStatus =
 export type XYZ = { x: number; y: number; z: number };
 export type BasePoint = XYZ & { no: number };
 
+export type ReflectionRi = {
+  id: number;
+  x: number;
+  y: number;
+  z: number;
+};
+
+export type ReflectionPayload = {
+  state: "ready" | "invalid" | "missing";
+  los: boolean | null;
+  points: ReflectionRi[];
+  n?: number;
+  raw?: string;
+  reason?: string;
+};
+
 export type TrajectoryPoint = {
   no: number;
   traditional: XYZ;
   commercial: XYZ;
   dt: XYZ;
+  reflection?: ReflectionPayload;
 };
 
 export type TrajectorySnapshot = {

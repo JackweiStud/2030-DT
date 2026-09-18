@@ -175,8 +175,19 @@ export function case4Reducer(
         },
       };
 
-    case "LIVE_TRAJECTORY":
+    case "LIVE_TRAJECTORY": {
+      const previous = state.liveTrajectory;
+      if (
+        previous &&
+        action.snapshot.completeCount < previous.completeCount
+      ) {
+        return {
+          ...state,
+          liveReadHint: "轨迹暂时不可读，保留上次结果",
+        };
+      }
       return { ...state, liveTrajectory: action.snapshot, liveReadHint: null };
+    }
 
     case "LIVE_THRP":
       return {

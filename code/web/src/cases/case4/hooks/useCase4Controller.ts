@@ -240,7 +240,10 @@ export function useCase4Controller(options: Options) {
         case4Log("result.fetch_begin", { roundGeneration: generation });
         const nextFailCount = cur.resultFailCount + 1;
         try {
-          const snapshot = await apiRef.current.getResult(signal);
+          const snapshot = await apiRef.current.getResult(
+            signal,
+            config.reflectionEnable,
+          );
           if (stateRef.current.generation !== generation || signal.aborted) {
             return;
           }
@@ -297,6 +300,7 @@ export function useCase4Controller(options: Options) {
   }, [
     abortScreenshot,
     config.pollMs,
+    config.reflectionEnable,
     postInitAndFinish,
     runPendingScreenshotThenInit,
     stopResultPoll,
@@ -312,7 +316,10 @@ export function useCase4Controller(options: Options) {
           return;
         }
         try {
-          const snap = await apiRef.current.getTrajectory(signal);
+          const snap = await apiRef.current.getTrajectory(
+            signal,
+            config.reflectionEnable,
+          );
           if (signal.aborted || stateRef.current.generation !== cur.generation) {
             return;
           }
@@ -380,7 +387,7 @@ export function useCase4Controller(options: Options) {
     trajPollRef.current.start();
     thrpWithoutPollRef.current.start();
     thrpWithPollRef.current.start();
-  }, [config.pollMs]);
+  }, [config.pollMs, config.reflectionEnable]);
 
   const onControlTick = useCallback(
     async (control: ControlSnapshot) => {

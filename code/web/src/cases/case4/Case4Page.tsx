@@ -46,6 +46,7 @@ export function Case4Page(props: Props) {
         mapRef={mapRef}
         baseRoute={ctrl.baseRoute}
         livePoints={ctrl.trajectory?.points ?? []}
+        playback={ctrl.ui === "running" ? "running" : "static"}
       />
       <MapHud onOpenSiteEnv={openSiteEnv} />
       <Banner text={liveHintBanner} />

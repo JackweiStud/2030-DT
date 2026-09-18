@@ -37,6 +37,7 @@ import {
   type Case3V2MapImageTransform,
 } from "../../../case3-v2/mapProjectionV2";
 import { formatCase4MapEnv } from "./case4MapEnv";
+import { ReflectionOverlay } from "./ReflectionOverlay";
 import {
   clientDeltaToStageLogical,
   dragPan,
@@ -50,6 +51,7 @@ type Props = {
   stageElementRef: React.RefObject<HTMLElement>;
   baseRoute: BasePoint[];
   livePoints: TrajectoryPoint[];
+  playback?: "running" | "static";
 };
 
 type CaptureWaiter = {
@@ -106,7 +108,8 @@ function clampSampleCount(value: number): number {
  */
 export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
   function MapRenderer2D(props, ref) {
-    const { config, stageElementRef, baseRoute, livePoints } = props;
+    const { config, stageElementRef, baseRoute, livePoints, playback = "running" } =
+      props;
     const rootRef = useRef<HTMLDivElement>(null);
     const baseView: Case3V2MapImageTransform = {
       scale: config.mapImageScale,
@@ -485,6 +488,13 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
               </>
             ) : null}
           </svg>
+          <ReflectionOverlay
+            config={config}
+            viewBox={viewBox}
+            livePoints={livePoints}
+            playback={playback}
+            transform={view}
+          />
           {config.mapDebugShow ? (
             <div className="c4-route-debug" data-debug-route aria-hidden>
               {drawPoints.length > 1 ? (

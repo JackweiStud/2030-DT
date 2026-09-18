@@ -25,6 +25,8 @@ export const CASE4_TEST_CONFIG: Case4RuntimeConfig = {
   mapImageOffsetX: 205,
   mapImageOffsetY: -670,
   mapDebugShow: true,
+  reflectionEnable: false,
+  bsXyz: { x: 1, y: 5, z: 7 },
 };
 
 export function xyz(x: number, y: number, z = 0): XYZ {
@@ -81,7 +83,9 @@ export function reinitControl(
 export function trajPoint(
   no: number,
   base: XYZ,
-  extras?: Partial<Pick<TrajectoryPoint, "traditional" | "commercial" | "dt">>,
+  extras?: Partial<
+    Pick<TrajectoryPoint, "traditional" | "commercial" | "dt" | "reflection">
+  >,
 ): TrajectoryPoint {
   return {
     no,
@@ -96,6 +100,7 @@ export function trajPoint(
       z: base.z,
     },
     dt: extras?.dt ?? { x: base.x + 0.1, y: base.y, z: base.z },
+    reflection: extras?.reflection,
   };
 }
 

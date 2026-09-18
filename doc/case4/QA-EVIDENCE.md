@@ -16,7 +16,7 @@
 
 悬停不再后置：当前 `ErrorReplay` 对有数据槽显示点号与三方案 XYZ 误差，精度三位小数、单位米；移出或拖动时收起。当前实现运行中已有数据槽也可悬停，并未限定 completed。这是相对早期“仅完成后”的实现差异，随本次用户整体验收记录保留，后续专项验收应显式覆盖。
 
-CEP 增减百分比、3D 和反射路径仍不纳入本阶段。设计和静态文档保留历史验收范围，不因正式 Web 增量重写原冻结设计。
+CEP 增减百分比、3D 仍不纳入本阶段。2D Reflection 已于 2026-09-18 完成本地三端实现与隔离目录联调，证据见下方增量；真实后端反射样本与实际 BS 标定仍未验收。设计和静态文档保留历史验收范围，不因正式 Web 增量重写原冻结设计。
 
 ## 真实后端联调最小检查
 
@@ -41,3 +41,38 @@ CEP 增减百分比、3D 和反射路径仍不纳入本阶段。设计和静态�
 - 前次审查的P2遮挡问题已加入数值避让实现与回归用例；传统虚线保留，气泡抬高避开DT数值。未重做整套视觉或Pencil。
 - 本次未修改业务代码、打桩配置或共享数据；完整截图上传及真实后端流程不在本次复验范围。
 - 本次独立验证：`cd code/web && npm test -- --run test/case4/case4Metrics.test.ts test/case4/charts.empty.test.tsx test/case4/SvgCaptureCompatibility.test.tsx`：3文件、45测试通过；`npm run typecheck`通过。验证对象为c4382a3代码，不等于完整浏览器截图联调复测。
+
+## 2026-09-18 Reflection 本地三端
+
+范围：React Web + Node 文件服务 + case4 打桩；隔离共享根 `code/.tmp/case4-e2e-shared`。未改 Pencil/静态页/真实参考反射文件/comdatafiles 运行数据。未 git add/commit/push，未关 Issue #3。
+
+### 命令与结果
+
+| 命令 | 结果 |
+|---|---|
+| `cd code/server && npm test` | 111/111 通过（含 case2/case3 共享适配与新增 `test/case4/reflection.test.mjs`） |
+| `cd code/back/case4 && npm test` | 41/41 通过 |
+| `cd code/web && npm run typecheck` | 通过 |
+| `cd code/web && npm test -- --run test/case4` | 18 文件、112 测试通过 |
+| `cd code/web && npm run build` | 通过 |
+| `cd code/web && npm test -- --run test/case3 test/case3-v2 test/case2` | 28 文件、223 测试通过 |
+| `cd code/web && npm run test:e2e:case4` | 2/2 通过（进页不读旧完成态；Start 完成→截图→重置→再 Start） |
+| `cd code/back && npm test` | case2 29/29 通过；case4 41/41 通过；**case3 17/21 失败 4**，见下方既有失败 |
+
+### 联调证据（运行输出，不入库）
+
+- 运行中：Playwright 等到 `[data-reflection-state=ready]` 且 `.c4-reflection__beam` 可见；请求含 `reflection=true`。
+- 完成静态：`.c4-reflection.is-static`，亮段为 0；截图 `case4-000.png` / `case4-001.png` 可见 BS、R1/R2 与完成态路径（无移动亮段）。
+- 落盘：`code/.tmp/case4-e2e-shared/out/case4/case4-000.png`、`case4-001.png`（PNG 签名、>10KB）。
+- JSONL：`code/.tmp/case4-e2e-shared/out/case4/points/trajectory.jsonl` 21 行；P1 `los=false`，P21 `los=true`，均含有效 Ri。
+
+### 既有失败（未改预期掩盖）
+
+`code/back npm test` 中 case3 stub 4 项断言 `21 !== 31`（`ue_comm_without_dt_coordinates` 等当前为 21 行，测试仍期望 31）。本轮未改 `code/back/case3/`；与 Reflection 实现无关，保持基线记录。
+
+### 未解决问题
+
+- 实际 BS 标定：当前 `(1.0,5.0,7.0)` 仅为模拟配置。
+- 真实后端、真实挂载、真实反射样本未在本轮验证；不得宣称已验收。
+- 参考目录 `01-参考资料/case4/data/ue_position_with_dt_coordinates_reflection_point.txt` 保持原文件，未自动补齐。
+

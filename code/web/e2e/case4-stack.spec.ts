@@ -46,7 +46,15 @@ test.describe("case4 three-process stack", () => {
     const start = page.getByRole("button", { name: "开始" });
     const reset = page.getByRole("button", { name: "重置" });
     await expect(start).toBeEnabled({ timeout: 15_000 });
+    const trajUrls: string[] = [];
+    page.on("request", (req) => {
+      if (req.url().includes("/api/case4/trajectory")) trajUrls.push(req.url());
+    });
     await start.click();
+    await expect(page.locator("[data-reflection-state='ready']")).toBeVisible({
+      timeout: 60_000,
+    });
+    await expect(page.locator(".c4-reflection__beam").first()).toBeVisible();
     await expect(page.locator(".case4-page")).toHaveAttribute(
       "data-state",
       "completed",
@@ -55,6 +63,18 @@ test.describe("case4 three-process stack", () => {
     await expect(page.locator(".c4-nlos-value")).not.toHaveText("--");
     await expect(reset).toBeEnabled({ timeout: 30_000 });
     assertPng(pngPath("000"));
+    const jsonlPath = resolve(sharedDir, "out/case4/points/trajectory.jsonl");
+    expect(existsSync(jsonlPath)).toBe(true);
+    const jsonl = readFileSync(jsonlPath, "utf8").trim();
+    expect(jsonl.length).toBeGreaterThan(0);
+    const last = JSON.parse(jsonl.split("\n").at(-1) ?? "{}") as {
+      reflection?: { state?: string };
+    };
+    expect(last.reflection?.state).toMatch(/ready|invalid|missing/);
+    await expect(page.locator("[data-reflection]")).toBeVisible();
+    await expect(page.locator(".c4-reflection.is-static")).toBeVisible();
+    await expect(page.locator(".c4-reflection__beam")).toHaveCount(0);
+    expect(trajUrls.some((url) => url.includes("reflection=true"))).toBe(true);
 
     await reset.click();
     await expect(start).toBeEnabled({ timeout: 30_000 });

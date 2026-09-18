@@ -9,11 +9,19 @@ import { AppError } from "../../shared/errors.mjs";
 import {
   CASE4_BASE_FILE,
   CASE4_CDF_FILES,
+  CASE4_REFLECTION_FILE,
   CASE4_SCHEMES,
   CASE4_SUMMARY_FILE,
   CASE4_THROUGHPUT_FILES,
   CASE4_TRAJECTORY_FILES,
 } from "./constants.mjs";
+import {
+  attachResultReflection,
+  emptyReflectionRead,
+  logReflectionDiagnostics,
+  readReflectionWindow,
+  toPublicReflection,
+} from "./reflection-file.mjs";
 import {
   assembleThroughput,
   assembleTrajectory,
@@ -83,6 +91,11 @@ export function createCase4ResultService(options) {
   const debugJsonl = options.debugJsonl;
   const logSubstitution = options.logSubstitution;
   const dataDir = path.join(sharedDir, "case4");
+  const seenReflection = new Set();
+  const reflectionFile = {
+    filename: CASE4_REFLECTION_FILE,
+    path: path.join(dataDir, CASE4_REFLECTION_FILE),
+  };
 
   const files = [
     { key: "base", filename: CASE4_BASE_FILE, invalidCode: "INIT_DATA_INVALID" },
@@ -116,7 +129,42 @@ export function createCase4ResultService(options) {
     path: path.join(dataDir, file.filename),
   }));
 
-  async function read() {
+  async function readReflectionInWindow() {
+    try {
+      return await readReflectionWindow(reflectionFile, fsOps);
+    } catch (error) {
+      logger?.warn("case4 reflection result attach failed", {
+        caseId: "case4",
+        reason: error?.message ?? String(error),
+      });
+      return {
+        changed: false,
+        read: emptyReflectionRead({ unread: true }),
+      };
+    }
+  }
+
+  async function attachReflectionBestEffort(trajectory, reflectionRead) {
+    try {
+      logReflectionDiagnostics(logger, reflectionRead.complete, seenReflection);
+      return attachResultReflection(trajectory, reflectionRead);
+    } catch (error) {
+      logger?.warn("case4 reflection result attach failed", {
+        caseId: "case4",
+        reason: error?.message ?? String(error),
+      });
+      return {
+        ...trajectory,
+        points: trajectory.points.map((point) => ({
+          ...point,
+          reflection: toPublicReflection(null),
+        })),
+      };
+    }
+  }
+
+  async function read(optionsForRead = {}) {
+    const reflectionEnabled = Boolean(optionsForRead.reflection);
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const controlBefore = await controlFile.read();
       const before = await Promise.all(
@@ -128,13 +176,20 @@ export function createCase4ResultService(options) {
       const after = await Promise.all(
         files.map((file) => statRequiredFile(file, fsOps)),
       );
+      let reflectionWindow = null;
+      if (reflectionEnabled) {
+        reflectionWindow = await readReflectionInWindow();
+      }
       const controlAfter = await controlFile.read();
       const filesChanged = before.some(
         (item, index) => !sameFileSnapshot(item, after[index]),
       );
+      const reflectionChanged = Boolean(reflectionWindow?.changed);
       const controlChanged = !sameControlWindow(controlBefore, controlAfter);
-      if ((filesChanged || controlChanged) && attempt < 3) continue;
-      if (filesChanged || controlChanged) {
+      if ((filesChanged || reflectionChanged || controlChanged) && attempt < 3) {
+        continue;
+      }
+      if (filesChanged || reflectionChanged || controlChanged) {
         throw notReady("final case4 snapshot changed while being read");
       }
       if (!isCompleteContext(controlBefore) || !isCompleteContext(controlAfter)) {
@@ -202,17 +257,27 @@ export function createCase4ResultService(options) {
         CASE4_SUMMARY_FILE,
       );
 
-      await debugJsonl?.writeIfChanged(trajectory.points);
+      let finalTrajectory = trajectory;
+      if (reflectionEnabled) {
+        finalTrajectory = await attachReflectionBestEffort(
+          trajectory,
+          reflectionWindow.read,
+        );
+      }
+      await debugJsonl?.writeIfChanged(finalTrajectory.points, {
+        source: "result",
+      });
       logger?.info("case4 result snapshot read", {
         caseId: "case4",
-        completeCount: trajectory.completeCount,
+        completeCount: finalTrajectory.completeCount,
         thrpWithout: withoutThrp.samples.length,
         thrpWith: withThrp.samples.length,
+        reflection: reflectionEnabled,
         final: true,
       });
       return {
         ok: true,
-        trajectory,
+        trajectory: finalTrajectory,
         throughput: {
           without: {
             samples: withoutThrp.samples,

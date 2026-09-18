@@ -9,7 +9,7 @@ import {
   createInitialCase4State,
   isRoundBusy,
 } from "../../src/cases/case4/state/case4Reducer";
-import { sampleBaseRoute, sampleResult } from "./fixtures";
+import { liveTrajectory, sampleBaseRoute, sampleResult } from "./fixtures";
 
 function ready() {
   return case4Reducer(createInitialCase4State(), {
@@ -91,5 +91,19 @@ describe("case4Reducer 按钮", () => {
     let s = createInitialCase4State();
     s = case4Reducer(s, { type: "INIT_ERROR" });
     expect(canStart(s)).toBe(false);
+  });
+
+  it("live 前缀缩短时保留已展示点", () => {
+    let s = ready();
+    s = case4Reducer(s, {
+      type: "LIVE_TRAJECTORY",
+      snapshot: liveTrajectory(3),
+    });
+    s = case4Reducer(s, {
+      type: "LIVE_TRAJECTORY",
+      snapshot: liveTrajectory(1),
+    });
+    expect(s.liveTrajectory?.completeCount).toBe(3);
+    expect(s.liveReadHint).toBe("轨迹暂时不可读，保留上次结果");
   });
 });

@@ -31,6 +31,8 @@ interface ImportMetaEnv {
   readonly VITE_CASE4_MAP_IMAGE_OFFSET_X?: string;
   readonly VITE_CASE4_MAP_IMAGE_OFFSET_Y?: string;
   readonly VITE_CASE4_MAP_DEBUG_SHOW?: string;
+  readonly CASE4_REFLECTION_ENABLE?: string;
+  readonly CASE4_BS_XYZ?: string;
 }
 
 interface ImportMeta {

@@ -136,4 +136,106 @@ describe("Case4 MapRenderer2D", () => {
       expect(stageY).toBeLessThan(dockInStage - 40);
     }
   });
+
+  it("开启 Reflection 时画 LOS 与 hop，完成后去掉亮段", () => {
+    const reflection = {
+      state: "ready" as const,
+      los: true,
+      points: [
+        { id: 1, x: 2, y: 14, z: 0 },
+        { id: 2, x: 3, y: 13, z: 0 },
+      ],
+    };
+    const livePoints = [
+      trajPoint(1, { x: 1, y: 15, z: 0 }, { reflection }),
+    ];
+    const running = render(
+      <MapRenderer2D
+        config={{ ...CASE4_TEST_CONFIG, reflectionEnable: true }}
+        stageElementRef={{ current: document.createElement("div") }}
+        baseRoute={[basePoint(1, 1, 15)]}
+        livePoints={livePoints}
+        playback="running"
+      />,
+    );
+    expect(running.container.querySelector("[data-reflection-state='ready']")).toBeTruthy();
+    expect(running.container.querySelectorAll(".c4-reflection__wave--los")).toHaveLength(1);
+    expect(running.container.querySelectorAll(".c4-reflection__wave--hop")).toHaveLength(2);
+    expect(running.container.querySelectorAll(".c4-reflection__wave")).toHaveLength(3);
+    expect(running.container.querySelectorAll(".c4-reflection__los")).toHaveLength(0);
+    expect(running.container.querySelectorAll(".c4-reflection__hop")).toHaveLength(0);
+    expect(running.container.querySelectorAll(".c4-reflection__beam").length).toBeGreaterThan(0);
+    const losWave = running.container.querySelector(".c4-reflection__wave--los");
+    const losBeam = running.container.querySelector(
+      ".c4-reflection__wave--los + .c4-reflection__beam",
+    );
+    expect(losWave?.getAttribute("points")).toBe(losBeam?.getAttribute("points"));
+    const hopWaves = [...running.container.querySelectorAll(".c4-reflection__wave--hop")];
+    expect(hopWaves[0]?.getAttribute("points")).not.toBe(
+      hopWaves[1]?.getAttribute("points"),
+    );
+    const losLabels = [...running.container.querySelectorAll(".c4-reflection__label")].map(
+      (node) => node.textContent,
+    );
+    expect(losLabels).toContain("NLOS R1");
+    expect(losLabels).toContain("NLOS R2");
+    expect(losLabels).not.toContain("R1");
+    expect(losLabels).toContain("BS");
+    expect(losLabels).toContain("LOS");
+    expect(
+      [...running.container.querySelectorAll(".c4-reflection__beam")].every(
+        (node) => (node as HTMLElement).style.animationDelay === "",
+      ),
+    ).toBe(true);
+
+    const done = render(
+      <MapRenderer2D
+        config={{ ...CASE4_TEST_CONFIG, reflectionEnable: true }}
+        stageElementRef={{ current: document.createElement("div") }}
+        baseRoute={[basePoint(1, 1, 15)]}
+        livePoints={livePoints}
+        playback="static"
+      />,
+    );
+    expect(done.container.querySelector(".c4-reflection.is-static")).toBeTruthy();
+    expect(done.container.querySelectorAll(".c4-reflection__beam")).toHaveLength(0);
+    expect(
+      done.container.querySelector(".c4-reflection")?.getAttribute("data-reflection-beam"),
+    ).toBe("static");
+  });
+
+  it("反射点标签为 NLOS R1", () => {
+    const livePoints = [
+      trajPoint(
+        1,
+        { x: 1, y: 15, z: 0 },
+        {
+          reflection: {
+            state: "ready",
+            los: false,
+            points: [
+              { id: 1, x: 2, y: 14, z: 0 },
+              { id: 2, x: 3, y: 13, z: 0 },
+            ],
+          },
+        },
+      ),
+    ];
+    const view = render(
+      <MapRenderer2D
+        config={{ ...CASE4_TEST_CONFIG, reflectionEnable: true }}
+        stageElementRef={{ current: document.createElement("div") }}
+        baseRoute={[basePoint(1, 1, 15)]}
+        livePoints={livePoints}
+        playback="static"
+      />,
+    );
+    const labels = [...view.container.querySelectorAll(".c4-reflection__label")].map(
+      (node) => node.textContent,
+    );
+    expect(labels).toContain("NLOS R1");
+    expect(labels).toContain("NLOS R2");
+    expect(labels).not.toContain("R1");
+    expect(labels).not.toContain("LOS");
+  });
 });

@@ -60,6 +60,21 @@ export async function statRequiredFile(file, fsOps) {
   }
 }
 
+export async function statOptionalFile(file, fsOps) {
+  try {
+    return await statRequiredFile(file, fsOps);
+  } catch (error) {
+    if (isAppError(error) && error.code === "DATA_FILE_MISSING") return null;
+    throw error;
+  }
+}
+
+export function sameOptionalFileSnapshot(left, right) {
+  if (left == null && right == null) return true;
+  if (left == null || right == null) return false;
+  return sameFileSnapshot(left, right);
+}
+
 export async function readRequiredUtf8(file, fsOps, invalidCode) {
   try {
     const bytes = await fsOps.readFile(file.path);

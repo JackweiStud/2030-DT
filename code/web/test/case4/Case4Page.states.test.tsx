@@ -14,7 +14,7 @@ import {
   createInitialCase4State,
 } from "../../src/cases/case4/state/case4Reducer";
 import { SiteEnvWindowContext } from "../../src/shell/siteEnvWindowContext";
-import { CASE4_TEST_CONFIG, sampleBaseRoute, sampleResult } from "./fixtures";
+import { CASE4_TEST_CONFIG, sampleBaseRoute, sampleResult, trajPoint, trajectorySnapshot } from "./fixtures";
 
 vi.mock("../../src/cases/case4/hooks/useCase4Controller", async () => {
   const actual = await vi.importActual<
@@ -48,13 +48,16 @@ function fromState(
   };
 }
 
-function renderPage(ctrl: Case4Controller) {
+function renderPage(
+  ctrl: Case4Controller,
+  config: typeof CASE4_TEST_CONFIG = CASE4_TEST_CONFIG,
+) {
   vi.mocked(useCase4Controller).mockImplementation(() => ctrl);
   const open = vi.fn();
   const view = render(
     <SiteEnvWindowContext.Provider value={{ open, close: vi.fn() }}>
       <Case4Page
-        config={CASE4_TEST_CONFIG}
+        config={config}
         stageElementRef={{ current: document.createElement("div") }}
       />
     </SiteEnvWindowContext.Provider>,
@@ -130,6 +133,50 @@ describe("Case4Page", () => {
       (view.getByRole("button", { name: "重置" }) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(view.getByText("已完成")).toBeTruthy();
+  });
+
+  it("仅 running 播放反射亮段，finalizing 停止", () => {
+    const snapshot = trajectorySnapshot([
+      trajPoint(1, { x: 1, y: 15, z: 0 }, {
+        reflection: {
+          state: "ready",
+          los: true,
+          points: [{ id: 1, x: 2, y: 14, z: 0 }],
+        },
+      }),
+    ]);
+    let s = readyState();
+    s = case4Reducer(s, { type: "ACTION_BEGIN", kind: "start", generation: 1 });
+    s = case4Reducer(s, { type: "LIVE_TRAJECTORY", snapshot });
+    const config = { ...CASE4_TEST_CONFIG, reflectionEnable: true };
+    const running = renderPage(fromState(s), config);
+    fireEvent.load(
+      running.view.container.querySelector("img.c4-map-image") as HTMLImageElement,
+    );
+    expect(
+      running.view.container
+        .querySelector("[data-reflection-beam]")
+        ?.getAttribute("data-reflection-beam"),
+    ).toBe("running");
+    expect(
+      running.view.container.querySelectorAll(".c4-reflection__beam").length,
+    ).toBeGreaterThan(0);
+
+    s = case4Reducer(s, { type: "ENTER_FINALIZING" });
+    const finalizing = renderPage(fromState(s), config);
+    fireEvent.load(
+      finalizing.view.container.querySelector(
+        "img.c4-map-image",
+      ) as HTMLImageElement,
+    );
+    expect(
+      finalizing.view.container
+        .querySelector("[data-reflection-beam]")
+        ?.getAttribute("data-reflection-beam"),
+    ).toBe("static");
+    expect(
+      finalizing.view.container.querySelectorAll(".c4-reflection__beam"),
+    ).toHaveLength(0);
   });
 
   it("CSS 选择器落在 .case4-page 下，3D 不可点", () => {

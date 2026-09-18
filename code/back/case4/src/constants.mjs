@@ -31,6 +31,9 @@ export const CDF_FILES = Object.freeze({
 
 export const SUMMARY_FILE = "ue_position_with_dt_error_and_nlos.txt";
 
+export const REFLECTION_FILE =
+  "ue_position_with_dt_coordinates_reflection_point.txt";
+
 export const DYNAMIC_FILES = Object.freeze([
   TRAJECTORY_FILES.traditional,
   TRAJECTORY_FILES.commercial,

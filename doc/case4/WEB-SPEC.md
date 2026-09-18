@@ -8,7 +8,7 @@
 
 开工前必读：`state.md`、契约 §0 / §3 / §4 / §7 / §8 / §9 / §11、本文、`doc/case4/STATIC-HTML-ACCEPTANCE.md`（已接受效果、可复用成果、留给 React 的地图/图表问题），以及 `code/web/src/app/App.tsx`、`shell/Shell.tsx`、`cases/case3/hooks/useCase3Controller.ts`、`cases/case3-v2/mapProjectionV2.ts`、`cases/case3-v2/Case3V2Page.tsx`。
 
-正式代码已实现；CEP 增减百分比已实现并由用户接受（c4382a3）；3D、反射仍保留。误差悬停已追加落地，覆盖此前后置决定；阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
+正式代码已实现；CEP 增减百分比已实现并由用户接受（c4382a3）；2D Reflection 见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)；3D 仍保留。误差悬停已追加落地；阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
 
 ---
 
@@ -144,6 +144,8 @@ Case4Page (.case4-page)
 | `VITE_CASE4_MAP_IMAGE_ROTATION_DEG` | `0` | 显示层旋转，有限数 |
 | `VITE_CASE4_MAP_IMAGE_OFFSET_X` | `205` | 显示层平移 CSS px |
 | `VITE_CASE4_MAP_IMAGE_OFFSET_Y` | `-400` | 同上 |
+| `CASE4_REFLECTION_ENABLE` | 未设置=`false` | `true/false/1/0`。Vite 白名单注入，不是 `VITE_` 前缀。开启时请求 `reflection=true` |
+| `CASE4_BS_XYZ` | 开启时必填 | 如 `(1.0,5.0,7.0)`，三个有限非哨兵数。示例不是真实标定 |
 
 上述默认值拷贝 **2026-09-15 现行 case3-v2 运行 `.env`**（不是代码里的 905/445 缺省，也不是静态 `map-projection.js` 的 905/445/-447/-874）。同场地；case4 用自己的键，避免以后改通信标定误伤定位页。视觉 QA 若取景不够，只调 case4 的 display scale/offset，不动 origin。
 
@@ -851,7 +853,7 @@ POST `{save_picture_flag:0}` transport / 5xx / 补读后仍是本轮 `flag=1`，
 
 对照：清零**成功**（含补读确认本轮 `flag` 已是 0）只表示放弃这张 PNG，**继续** POST init；init 失败走已有「完成画面 + adapterError」分支，与本小节「清零失败不发 init」不同。
 
-NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 后子节点仍带 fill/stroke/dash」测试（对照 `test/case3/SvgCaptureCompatibility.test.tsx`）。
+NLOS/CDF/误差/吞吐/地图反射层的 stroke、fill、dash 必须经得起「整棵 SVG `cloneNode(true)` 后子节点仍带这些属性」测试（对照 `test/case4/SvgCaptureCompatibility.test.tsx`）。反射波纹/Ri/BS/标签不得只靠外部 CSS，否则 html-to-image 深克隆会变成默认黑填或看不见描边。
 
 ---
 
@@ -903,7 +905,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 - CSS 无裸 `.metric-card`；选择器在 `.case4-page` 下。
 - 资源扫描：无 `web-static` / `04-runtime-assets` / `02-ux` import。
 - 无 `echarts` / `three` 新依赖。
-- SVG clone 兼容测试覆盖 NLOS 弧、CDF path、误差折线、吞吐折线。
+- SVG clone 兼容测试覆盖 NLOS 弧、CDF path、误差折线、吞吐折线、地图反射层波纹/点/标签/亮段。
 
 ### 11.3.1 视觉对照证据（人工，1920×1080）
 
@@ -937,7 +939,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 
 ## 12. 明确不做
 
-- 3D、反射路径、单方案图例显隐、暂停/取消/队列/业务超时/自动重发命令。
+- 3D、单方案图例显隐、暂停/取消/队列/业务超时/自动重发命令。2D Reflection 按 REFLECTION-SPEC 实施，不在此列。
 - 地图不实现触摸手势、双指、全屏；缩放/旋转/平移仅桌面鼠标，与 case3-v2 主路径一致。
 - WebSocket、直读写共享目录、localStorage 恢复。
 - 把静态 `dataset=pencilCep` / `visual20` 当运行数据。
@@ -960,7 +962,7 @@ NLOS/CDF/误差/吞吐的 stroke 必须经得起「整棵 SVG `cloneNode(true)` 
 - [x] Codex 续查已收口：控制快照归属校验先于 flag/status；放弃清零失败保留完成结果、禁按钮、停截图与轮询、不 POST init、busy=false；视觉对照证据不能用组件测试代替。
 - [x] 组件树对齐静态 `data-region`；CSS 迁正式 assets；`STATIC-HTML-ACCEPTANCE.md` 为开工必读。
 - [x] App 只加 case4 挂载与 busy；case3-v2 留在 `case5`。
-- [x] CEP 百分比已实现并由用户接受（见 §9 增量）；3D/反射保留；悬停已实现。
+- [x] CEP 百分比已实现并由用户接受（见 §9 增量）；2D Reflection 按 REFLECTION-SPEC 实施；3D 保留；悬停已实现。
 - [x] Case2/Case3/Case4 API 前缀各自写死同源路径。
 
 2026-09-16 阶段收口：实现已完成，用户确认本地自测完成，下一步为真实后端联调。

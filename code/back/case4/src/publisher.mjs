@@ -10,6 +10,7 @@ import {
   BASE_FILE,
   CDF_FILES,
   DYNAMIC_FILES,
+  REFLECTION_FILE,
   SCHEMES,
   SUMMARY_FILE,
   THROUGHPUT_FILES,
@@ -110,6 +111,26 @@ export function createPublisher(options) {
         operationId: task.operationId,
       }));
 
+  async function clearReflectionIfPresent(task) {
+    const targetPath = path.join(dataDir, REFLECTION_FILE);
+    try {
+      await fsOps.stat(targetPath);
+    } catch (error) {
+      if (error?.code === "ENOENT") return;
+      throw new StubError("DATA_WRITE_FAILED", `恢复清空失败：${REFLECTION_FILE}`, {
+        cause: error,
+      });
+    }
+    await controlStore.assertOwned(task);
+    try {
+      await truncateVisible(targetPath, fsOps);
+    } catch (error) {
+      throw new StubError("DATA_WRITE_FAILED", `恢复清空失败：${REFLECTION_FILE}`, {
+        cause: error,
+      });
+    }
+  }
+
   async function clearForRecovery(task) {
     await fsOps.mkdir(dataDir, { recursive: true });
     for (const filename of DYNAMIC_FILES) {
@@ -122,6 +143,7 @@ export function createPublisher(options) {
         });
       }
     }
+    await clearReflectionIfPresent(task);
   }
 
   async function appendLine(task, filename, line) {
@@ -205,12 +227,14 @@ export function createPublisher(options) {
       lengths.without,
       lengths.with,
     );
+    const reflectionLines = dataset.reflection ?? [];
     const cursor = {
       traditional: 0,
       commercial: 0,
       dt: 0,
       without: 0,
       with: 0,
+      reflection: 0,
     };
 
     for (let step = 0; step < totalSteps; step += 1) {
@@ -223,6 +247,14 @@ export function createPublisher(options) {
           );
           cursor[scheme] += 1;
         }
+      }
+      if (cursor.reflection < reflectionLines.length) {
+        await appendLine(
+          task,
+          REFLECTION_FILE,
+          reflectionLines[cursor.reflection],
+        );
+        cursor.reflection += 1;
       }
       for (const side of THR_SIDES) {
         if (cursor[side] < dataset.throughputs[side].length) {

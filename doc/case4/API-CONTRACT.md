@@ -32,9 +32,9 @@ base 只读 ──────────────────► GET init-d
 | GET | `/api/case4/control-file` | 无 | `ok, control` | 初始化及运行/重置/最终读取/截图收尾期间 |
 | POST | `/api/case4/control-file` | §3 四种精确请求体之一 | `ok, control` | init/start/reinit/截图放弃清零 |
 | GET | `/api/case4/init-data` | 无 | `ok, baseRoute` | init 成功后 |
-| GET | `/api/case4/trajectory` | 无 | `ok, points, completeCount, pendingTail` | 本轮已见 success、且尚未因 complete 转入最终读取 |
+| GET | `/api/case4/trajectory` | 可选 `reflection=true\|false`，缺省 false | `ok, points, completeCount, pendingTail` | 本轮已见 success、且尚未因 complete 转入最终读取 |
 | GET | `/api/case4/throughput?side=without` 或 `side=with` | 唯一 query：side | `ok, side, samples, pendingTail` | 同上，两路独立读取 |
-| GET | `/api/case4/result` | 无 | `ok, trajectory, throughput, statistics` | 本轮先见 success 再见 complete 后，最终统一快照 |
+| GET | `/api/case4/result` | 可选 `reflection=true\|false`，缺省 false | `ok, trajectory, throughput, statistics` | 本轮先见 success 再见 complete 后，最终统一快照 |
 | POST | `/api/case4/screenshot` | `{ image_base64 }` | `ok, path, seq` | 本轮已登记截图请求，且最终渲染完成后 |
 
 - 沿用 case3：共享 control store、串行控制写、跨 Case busy、init 撤权、最终读取有限重试、截图 ownership 与有限重试。
@@ -56,7 +56,7 @@ base 只读 ──────────────────► GET init-d
 
 原始样本为 `01-参考资料/case4/data/`，仅供回放和格式参考。底图与投影复用现行 Case3 V2 运行资源（`site-2d.jpg` 与 `mapProjectionV2`）；图标/token 使用正式运行资源。不要求后端补地图文件，初始化接口不返回地图 URL。
 
-首版仅 2D，三方案同时展示。CEP 百分比已于2026-09-17实现（c4382a3），仅 Web 派生展示，规则见 WEB-SPEC.md；3D、反射仍保留；2026-09-16 误差回溯悬停已追加实现，不增加接口。静态页面只提供视觉、样式和组件结构；固定 Pencil 坐标、示意 CDF/CEP、URL 假状态不能进入正式运行路径。
+首版仅 2D，三方案同时展示。CEP 百分比已于2026-09-17实现（c4382a3），仅 Web 派生展示，规则见 WEB-SPEC.md；3D 仍保留。Reflection 增量以 [REFLECTION-SPEC.md](REFLECTION-SPEC.md) 为准：扩展现有 `/trajectory` 与 `/result`，不新增单点反射接口。2026-09-16 误差回溯悬停已追加实现。静态页面只提供视觉、样式和组件结构；固定 Pencil 坐标、示意 CDF/CEP、URL 假状态不能进入正式运行路径。
 
 ## 2. 文件合同与清理边界
 
@@ -93,7 +93,7 @@ base 只读 ──────────────────► GET init-d
 
 `errorM` 不得按 0.01 截进 JSON：参考 DT CDF 首点为 `5.71e-05`，截到 2 位会变成 0。`p50M` / `p90M` 不得先截到 2 位，否则完成态三位小数显示末位恒为 0。Web 派生逐点误差 `hypot(x-baseX,y-baseY,z-baseZ)` 不是文件列，精度跟 2 位坐标走。
 
-反射文件 `ue_position_with_dt_coordinates_reflection_point.txt` 首版不读取、不清理、不参与收齐或完成门槛，不进入上述 REST 结构。
+反射文件 `ue_position_with_dt_coordinates_reflection_point.txt` 不是最终必需文件。开启 `reflection=true` 时运行中与三轨迹按行号共同前缀；关闭时不读取。Start/ReInit 额外清空该文件（ENOENT 忽略）。细节见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)。
 
 Node 仅清空表中标“是”的 9 个文件；缺失时创建为空文件。任一失败，不写新 start/reinit，返回 `DATA_CLEAR_FAILED`；已清部分不回填旧结果，下次手动重试重新清全表。保留 base、地图、原始参考目录、截图和其他 Case 数据。不得递归清空共享根。`init` 本身不清数据文件。
 
@@ -235,6 +235,7 @@ type Statistics = {
 - 已提交完整行非法则返回错误，不跳行、不用上一轮数据拼接。坐标超过 base 行数无法建立 Pi 对应，作为 `TRAJECTORY_DATA_INVALID`，不能静默截短。
 - 缺少必需文件返回错误，不把缺文件当成零点。
 - Web 替换快照，不累加轮询响应。地图、点位高亮与逐点误差消费同一份 points；误差配对用本页 `init-data.baseRoute`，不用再读文件。
+- 可选 query `reflection=true|false`，缺省 false；非法或多余 query 为 `400 INVALID_REQUEST`。开启时 K 再与反射完整行取 min，每个 point 带 `reflection`；关闭时不读反射文件、响应不带该字段。详见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)。
 
 ```json
 {

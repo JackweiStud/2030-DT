@@ -140,6 +140,8 @@ PIDS+=("$!")
   export DT_ADAPTER_PORT="$ADAPTER_PORT"
   export CASE2_ADAPTER_HOST="$ADAPTER_HOST"
   export CASE2_ADAPTER_PORT="$ADAPTER_PORT"
+  export CASE4_REFLECTION_ENABLE=true
+  export CASE4_BS_XYZ="(1.0,5.0,7.0)"
   npm run dev -- --host 127.0.0.1 --port "$WEB_PORT"
 ) &
 PIDS+=("$!")

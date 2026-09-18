@@ -1,5 +1,5 @@
 /**
- * Case4 控制请求：精确 payload、九文件白名单清理、截图清零。
+ * Case4 控制请求：精确 payload、九文件白名单 + 可选反射清理、截图清零。
  * JSONL 清理解耦：开轮成功后再清，失败不得挡住 Start/ReInit。
  */
 
@@ -12,7 +12,7 @@ import {
   assertScreenshotOwnership,
   createControlFileStore,
 } from "../../shared/control-file-store.mjs";
-import { CASE4_DYNAMIC_FILES } from "./constants.mjs";
+import { CASE4_DYNAMIC_FILES, CASE4_REFLECTION_FILE } from "./constants.mjs";
 
 function exactKeys(payload, expected) {
   const actual = Object.keys(payload).sort();
@@ -94,12 +94,38 @@ export function createCase4ControlFileService(options) {
     });
   const dataDir = path.join(sharedDir, "case4");
 
+  async function clearOptionalReflection() {
+    const target = path.join(dataDir, CASE4_REFLECTION_FILE);
+    try {
+      await fsOps.stat(target);
+    } catch (error) {
+      if (error?.code === "ENOENT") return;
+      throw new AppError(
+        500,
+        "DATA_CLEAR_FAILED",
+        "failed to clear case4 reflection file",
+        { cause: error },
+      );
+    }
+    try {
+      await fsOps.writeFile(target, "");
+    } catch (error) {
+      throw new AppError(
+        500,
+        "DATA_CLEAR_FAILED",
+        "failed to clear case4 reflection file",
+        { cause: error },
+      );
+    }
+  }
+
   async function clearDynamicFiles() {
     try {
       await fsOps.mkdir(dataDir, { recursive: true });
       for (const filename of CASE4_DYNAMIC_FILES) {
         await fsOps.writeFile(path.join(dataDir, filename), "");
       }
+      await clearOptionalReflection();
     } catch (error) {
       if (isAppError(error)) throw error;
       throw new AppError(

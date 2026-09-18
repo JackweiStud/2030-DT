@@ -10,6 +10,7 @@ import process from "node:process";
 import {
   BASE_FILE,
   CDF_FILES,
+  REFLECTION_FILE,
   SCHEMES,
   SUMMARY_FILE,
   THROUGHPUT_FILES,
@@ -175,6 +176,25 @@ async function readFixture(fixtureDir, filename, fsOps) {
   }
 }
 
+async function readOptionalFixture(fixtureDir, filename, fsOps) {
+  try {
+    return await fsOps.readFile(path.join(fixtureDir, filename), "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw new StubError("FIXTURE_INVALID", `无法读取 fixture ${filename}`, {
+      cause: error,
+      filename,
+    });
+  }
+}
+
+function parseReflectionFixture(text, filename) {
+  return {
+    filename,
+    lines: recordLines(text, filename, { allowEmpty: true }),
+  };
+}
+
 function parseTrajectory(text, filename) {
   const lines = recordLines(text, filename);
   const points = lines.map((line) => {
@@ -245,12 +265,22 @@ export async function loadFixtureStore(options) {
   const summaryText = await readFixture(fixtureDir, SUMMARY_FILE, fsOps);
   const summary = parseSummary(summaryText, SUMMARY_FILE);
 
+  const reflectionText = await readOptionalFixture(
+    fixtureDir,
+    REFLECTION_FILE,
+    fsOps,
+  );
+  const reflection = reflectionText
+    ? parseReflectionFixture(reflectionText, REFLECTION_FILE)
+    : { filename: REFLECTION_FILE, lines: [] };
+
   return {
     fixtureDir,
     base,
     trajectories,
     throughputs,
     statistics: { cdf, summary },
+    reflection,
     dataSource: "fixture-template",
   };
 }

@@ -8,6 +8,7 @@ import type {
   ApiErrorBody,
   BasePoint,
   ControlSnapshot,
+  ReflectionPayload,
   Statistics,
   ThroughputSide,
   ThroughputSnapshot,
@@ -109,24 +110,79 @@ function assertBaseRoute(body: unknown): BasePoint[] {
   return baseRoute;
 }
 
+function assertReflection(
+  value: unknown,
+  label: string,
+): ReflectionPayload {
+  if (!isObject(value)) throw new Error(`${label} must be object`);
+  if (
+    value.state !== "ready" &&
+    value.state !== "invalid" &&
+    value.state !== "missing"
+  ) {
+    throw new Error(`${label}.state`);
+  }
+  if (value.los !== null && typeof value.los !== "boolean") {
+    throw new Error(`${label}.los`);
+  }
+  if (!Array.isArray(value.points)) throw new Error(`${label}.points`);
+  const points = value.points.map((item, index) => {
+    if (!isObject(item)) throw new Error(`${label}.points[${index}]`);
+    return {
+      id: assertFiniteNumber(item.id, `${label}.points[${index}].id`),
+      x: assertFiniteNumber(item.x, `${label}.points[${index}].x`),
+      y: assertFiniteNumber(item.y, `${label}.points[${index}].y`),
+      z: assertFiniteNumber(item.z, `${label}.points[${index}].z`),
+    };
+  });
+  if (
+    (value.state === "invalid" || value.state === "missing") &&
+    (value.los !== null || points.length !== 0)
+  ) {
+    throw new Error(`${label} invalid/missing must have los=null and empty points`);
+  }
+  const payload: ReflectionPayload = {
+    state: value.state,
+    los: value.los,
+    points,
+  };
+  if (typeof value.n === "number") payload.n = value.n;
+  if (typeof value.raw === "string") payload.raw = value.raw;
+  if (typeof value.reason === "string") payload.reason = value.reason;
+  return payload;
+}
+
 function assertTrajectoryPoint(
   value: unknown,
   index: number,
+  reflectionRequired: boolean,
 ): TrajectorySnapshot["points"][number] {
   if (!isObject(value)) throw new Error(`points[${index}]`);
   const no = assertFiniteNumber(value.no, `points[${index}].no`);
-  return {
+  const point: TrajectorySnapshot["points"][number] = {
     no,
     traditional: assertXyz(value.traditional, `points[${index}].traditional`),
     commercial: assertXyz(value.commercial, `points[${index}].commercial`),
     dt: assertXyz(value.dt, `points[${index}].dt`),
   };
+  if (reflectionRequired) {
+    point.reflection = assertReflection(
+      value.reflection,
+      `points[${index}].reflection`,
+    );
+  }
+  return point;
 }
 
-function assertTrajectorySnapshot(value: unknown): TrajectorySnapshot {
+function assertTrajectorySnapshot(
+  value: unknown,
+  reflectionRequired = false,
+): TrajectorySnapshot {
   if (!isObject(value)) throw new Error("trajectory must be object");
   if (!Array.isArray(value.points)) throw new Error("points must be array");
-  const points = value.points.map(assertTrajectoryPoint);
+  const points = value.points.map((item, index) =>
+    assertTrajectoryPoint(item, index, reflectionRequired),
+  );
   const completeCount = assertFiniteNumber(value.completeCount, "completeCount");
   if (typeof value.pendingTail !== "boolean") {
     throw new Error("pendingTail must be boolean");
@@ -339,9 +395,13 @@ export function createCase4Api(options: ApiClientOptions = {}) {
       }));
     },
 
-    async getTrajectory(signal?: AbortSignal): Promise<TrajectorySnapshot> {
-      return request("/trajectory", { method: "GET", signal }, (body) =>
-        assertTrajectorySnapshot(body),
+    async getTrajectory(
+      signal?: AbortSignal,
+      reflection = false,
+    ): Promise<TrajectorySnapshot> {
+      const query = reflection ? "?reflection=true" : "?reflection=false";
+      return request(`/trajectory${query}`, { method: "GET", signal }, (body) =>
+        assertTrajectorySnapshot(body, reflection),
       );
     },
 
@@ -359,13 +419,20 @@ export function createCase4Api(options: ApiClientOptions = {}) {
       );
     },
 
-    async getResult(signal?: AbortSignal): Promise<{
+    async getResult(
+      signal?: AbortSignal,
+      reflection = false,
+    ): Promise<{
       trajectory: TrajectorySnapshot;
       throughput: { without: ThroughputSnapshot; with: ThroughputSnapshot };
       statistics: Statistics;
     }> {
-      return request("/result", { method: "GET", signal }, (body) => {
-        const trajectory = assertTrajectorySnapshot(body.trajectory);
+      const query = reflection ? "?reflection=true" : "?reflection=false";
+      return request(`/result${query}`, { method: "GET", signal }, (body) => {
+        const trajectory = assertTrajectorySnapshot(
+          body.trajectory,
+          reflection,
+        );
         if (!isObject(body.throughput)) throw new Error("throughput");
         const without = assertThroughputSnapshot(body.throughput.without);
         const withDt = assertThroughputSnapshot(body.throughput.with);
