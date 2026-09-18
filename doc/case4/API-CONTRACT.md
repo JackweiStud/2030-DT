@@ -56,7 +56,7 @@ base 只读 ──────────────────► GET init-d
 
 原始样本为 `01-参考资料/case4/data/`，仅供回放和格式参考。底图与投影复用现行 Case3 V2 运行资源（`site-2d.jpg` 与 `mapProjectionV2`）；图标/token 使用正式运行资源。不要求后端补地图文件，初始化接口不返回地图 URL。
 
-首版仅 2D，三方案同时展示。CEP 百分比已于2026-09-17实现（c4382a3），仅 Web 派生展示，规则见 WEB-SPEC.md；3D 仍保留。Reflection 增量以 [REFLECTION-SPEC.md](REFLECTION-SPEC.md) 为准：扩展现有 `/trajectory` 与 `/result`，不新增单点反射接口。2026-09-16 误差回溯悬停已追加实现。静态页面只提供视觉、样式和组件结构；固定 Pencil 坐标、示意 CDF/CEP、URL 假状态不能进入正式运行路径。
+首版仅 2D，三方案同时展示。CEP 百分比已于2026-09-17实现（c4382a3），仅 Web 派生展示，规则见 WEB-SPEC.md。2D Reflection 以 [REFLECTION-SPEC.md](REFLECTION-SPEC.md) 为准：扩展现有 `/trajectory` 与 `/result`，不新增单点反射接口。2026-09-16 误差回溯悬停、2026-09-18 吞吐/CDF 悬停已追加实现。**3D 仍不做。** 静态页面只提供视觉、样式和组件结构；固定 Pencil 坐标、示意 CDF/CEP、URL 假状态不能进入正式运行路径。
 
 ## 2. 文件合同与清理边界
 

@@ -2,6 +2,8 @@
 
 ## 当前阶段
 
+- case4 功能收口（2026-09-18）：用户确认除 3D 外全部功能已完成本地开发。已交付：正式 Web / Node / 打桩主线、XYZ 误差、CEP 百分比、2D Reflection、误差/吞吐/CDF 悬停、`/result` 反射漂移不挡完成。3D 开关保持可见禁用，不接业务、不引入 Three.js。真实后端/挂载/采集为用户此前提供 PASS，非本轮独立复验；打桩 fixture 与示例 BS 不得称为真实标定。Issue #3 未关闭。冲突以本条为准。
+
 - case4 Reflection（2026-09-18）：本地 Web + Node 文件服务 + case4 打桩已按 `doc/case4/REFLECTION-SPEC.md` 贯通。运行中四路共同前缀、完成尽力附加、JSONL 指纹覆盖/最终封印、开轮可选清理、地图当前 Pi 路径动画与完成静态截图均已在隔离共享目录三进程 E2E 验证。示例 BS `(1.0,5.0,7.0)` 与打桩 fixture 为模拟，**不是**真实标定或真实后端验收。Issue #3 未关闭。
 
 - case4 2026-09-17 增量：用户确认真实后端、共享挂载、真实采集验证 PASS（用户提供，非本轮独立复验）；当前为功能增强阶段。逐点误差统一 XYZ，现有公式已支持，本轮仅同步说明。Start/ReInit 已硬切换 `dt_type="all"`，init 为空，拒绝旧值；用户确认验证并上库，提交 `5067ffd`、`831984a`。CEP 百分比已实现并获用户接受，提交 `c4382a3`；用户报告已推 main、Issue #2 已关闭。包含上升/下降方向及DT数值避让，条件/精度/位置见 `doc/case4/WEB-SPEC.md`。下方带日期的旧阶段记录仅供追溯，冲突以本条为准。
@@ -9,8 +11,8 @@
 
 - case4 Gate 1/1.5：2D Pencil 已冻结，静态视觉与结构已由用户接受；静态验收历史见 `doc/case4/STATIC-HTML-ACCEPTANCE.md`。
 - case4 Gate 2/3：接口契约与 Web、Node 文件服务、模拟后端施工规格已完成检视并用于实现。
-- case4 Gate 4/本地自测：2026-09-16 用户确认 2D 场景全部功能开发、自测完成，准备与真实后端联调。正式 React、文件服务和独立打桩均已落地；误差回溯单点悬停已追加实现（`ee35d4e`），不再列为待开发。CEP 增减百分比、3D 和反射路径仍后置。
-- case4 Gate 5：真实后端、真实共享挂载和真实采集数据尚未验收。完成口径、证据来源及联调检查见 `doc/case4/QA-EVIDENCE.md`；本次文档收尾未重新执行全套测试。
+- case4 Gate 4/本地自测：2026-09-16 用户确认 2D 场景全部功能开发、自测完成，准备与真实后端联调。正式 React、文件服务和独立打桩均已落地；误差回溯单点悬停已追加实现（`ee35d4e`），不再列为待开发。当时 CEP 增减百分比、3D 和反射路径仍后置；此后 CEP、2D Reflection、图表悬停已落地，**仅 3D 仍后置**（见上方 2026-09-18 条）。
+- case4 Gate 5：用户此前提供真实后端/挂载/采集 PASS，非本仓库独立复验。完成口径、证据来源及联调检查见 `doc/case4/QA-EVIDENCE.md`；本次文档收尾未重新执行全套测试。3D 不在 Gate 5 关闭范围内。
 
 - 项目 Gate 0：已于 2026-07-29 获用户批准。
 - case2 Gate 1：已于 2026-07-30 经用户视觉审阅冻结（`APPROVED`）。
@@ -68,7 +70,7 @@
 - case4 误差悬停（2026-09-16）：已追加实现，显示点号与三方案该点 XYZ 误差，三位小数、米单位；当前组件对有数据槽提供悬停，拖动时收起浮层。详见 `doc/case4/QA-EVIDENCE.md`。
 - case4 三方案显示（用户确认）：首版轨迹与误差同时显示，不提供单方案显隐开关，Excel 的高德按需切换建议不纳入首版。
 - case4 地图复用（用户确认）：同场地，复用当前 case3（导航 DT for Comm 对应 Case3 V2）的地图和坐标映射；地图预置点位及误差区点位进度示意参考 case3，三方案收齐后共同推进。
-- case4 地图范围（用户确认）：首版仅预期轨迹和三种定位实时轨迹；反射后续支持，不将反射点文件纳入首版轨迹收齐门槛。
+- case4 地图范围（用户确认，2026-09-18 更新）：首版地图为预期轨迹和三种定位实时轨迹；2D Reflection 已按 `REFLECTION-SPEC.md` 落地。运行中开启时四路按 Pi 收齐；完成时不等反射、不把反射文件纳入九文件门槛。3D 仍不做。
 - case4 截图（用户确认）：沿用 case3 后端请求、Web 截图、Node 保存并清标志机制，输出隔离于 out/case4/；实现细节需核对现行 case3 后写入 case4 契约。
 - case4 命令失败（用户确认）：沿用 case3 思路，开始失败仅允许手动重试开始，重置失败仅允许手动重试重置，不自动重发业务命令。
 - case4 刷新恢复（用户确认）：与 case3 一致，撤销旧轮、清空前端本轮展示，初始化成功后回初始，由用户重新开始，不续跑旧轮。
@@ -76,7 +78,7 @@
 - case4 逐点偏差（2026-09-13 用户确认）：base 为预期轨迹；2D/3D 均按 XYZ 欧氏距离计算（2026-09-17 更新）。三种定位结果均按文件行号与 base 配对，第 i 行对应 Pi；用户已确认同一行三方案收齐后同步展示轨迹及误差，按连续完整点位推进，吞吐独立；无效坐标 65535 已由用户澄清：同方案逐分量以上个点对应值替代，保留其余分量和点号并记录原值/替代值；P1 无前值时用户已确认使用 base P1 对应分量；连续无效沿用前一点已归一值；底部 CDF/CEP 保持后端统计来源。
 - case4 打桩模式（2026-09-13 用户确认，2026-09-15 规格收口）：**与 case3 一样**，仅 `CASE4_STUB_DATA_MODE=random|replay` 切换，默认 random；不增加 `SOURCE_DIR`。replay 回放包内 fixtures，random 相对同一套 fixtures 小幅扰动。换用户样本靠替换 `code/back/case4/fixtures/`。随机字段为吞吐/轨迹小幅变化，CDF/CEP/NLOS 独立扰动，不强制三方案优劣，不增加幅度配置。施工默认幅度见 `doc/case4/realback_no.md`。实现期把 `01-参考资料/case4/data/` 复制进包内 fixtures，运行时不读 `01-参考资料`。启动遇 `execute success` 按 case3 清空九动态文件从第 1 行重放。共享 base 与 fixture 不一致则 `SEED_BASE_MISMATCH` 退出。
 - case4 本次验收范围（2026-09-13 用户确认）：前端 + Node 文件适配服务 + case4 打桩端/数据，本地接口流程、前端交互、基本异常通过；不以真实后端/真实挂载/真实采集验收为完成条件。基本异常清单与验证方式尚待明确。
-- 当前焦点：case4 XYZ口径、dt_type=all与CEP百分比已收口；本轮同步文档和验证证据。Reflection/T4继续保留，不开展实现。case2/case3既有验收口径不变。
+- 当前焦点：case4 除 3D 外功能已完成本地开发并收口文档。剩余产品功能仅 3D。case2/case3 既有验收口径不变。真实后端/真实挂载不在本轮关闭范围内。
 
 ## 一句话演示承诺
 
@@ -84,7 +86,7 @@
 
 ## 当前事实
 
-- 四个 case 通过同一 Web 入口的顶部 Tab 切换；case2、case3 当前已接入运行页，case1/case4 仍显示“建设中”。
+- 四个 case 通过同一 Web 入口的顶部 Tab 切换；case2、case3、case4 当前已接入运行页，仅 case1 仍显示“建设中”。
 - case2 控制参考文件为 `01-参考资料/case_control.json`；参考数据在 `01-参考资料/case2/前后端数据接口文件/`。
 - `command`、`case`、`dt_type` 由前端侧发起；进页/刷新/切回 case2 的诊断 GET 成功后，Web 经适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`，只表示空闲握手。启动轮读取 Calibrated 成功且截图保存/放弃收尾后、重置轮消费 `reinit complete` 并回 Initial 后，Web 也写回同一 init 空闲态。Gate 3 演示向：start/reinit 时适配服务强制清 `status=""`；合法 `start|reinit` 命令元组 + 空 status 是后端/打桩唯一的新轮命令门沿，不依赖 command 值变化或文件 mtime。其后业务 `status` 仍由后端写入。`case complete` 是测试完成信号，`reinit complete` 是重置完成信号；截图成功后前端侧适配服务将 `save_picture_flag` 从 `1` 清回 `0`。
 - P0-1 已确认：后端每轮启动后，先完整写完并关闭六个 Calibrated 文件，最后才写 `status=case complete`；前端只在本轮启动后已见 `execute success` 再见到 `case complete` 的链路上读取这六个文件。本地打桩若本轮请求截图，在六文件全部完成后将 `case complete + save_picture_flag=1` 合并为同一次最终原子控制写。
@@ -144,6 +146,8 @@
 - [case4 Web施工规格](doc/case4/WEB-SPEC.md)
 - [case4 文件服务施工规格](doc/case4/SERVER-SPEC.md)
 - [case4 打桩施工规格](doc/case4/realback_no.md)
+- [case4 Reflection 增量合同](doc/case4/REFLECTION-SPEC.md)
+- [case4 QA 证据](doc/case4/QA-EVIDENCE.md)
 
 - [case4 API 契约](doc/case4/API-CONTRACT.md)
 - [case4 契约自查](doc/case4/API-CONTRACT-REVIEW.md)
@@ -186,7 +190,7 @@
 
 ## 最小下一步与停止条件
 
-case4：静态视觉与结构交付已接受；`doc/case4/API-CONTRACT.md` v1 已完成复核并按用户授权定稿；检查记录见 `API-CONTRACT-REVIEW.md`。用户已确认吞吐文件存在但整轮为空允许完成、保持空态。`doc/case4/WEB-SPEC.md` 已收口状态流程、扁目录、四路轮询、控制归属、截图放弃终态与视觉对照证据，仍待批准交给 Web 实现 agent。`doc/case4/realback_no.md` 已按 case2/case3 实现对照重写，待批准交给打桩实现 agent；`SERVER-SPEC` 仍待审阅。尚未实现或验收正式 case4 功能。
+case4：除 3D 外功能已完成本地开发（正式 Web + Node + 打桩）。3D 不在本轮范围。真实后端/真实挂载若需由本仓库独立复验，应追加 `doc/case4/QA-EVIDENCE.md`，不覆盖本地打桩记录。
 
 case2/case3：若目标是继续本地演示，可使用 `code/scripts/dev-web-server.sh` 启动 Web + Node，并另开 `code/back` 的 `start:case2` 或 `start:case3` 打桩；若目标是真实环境交付，必须接真实后端和真实挂载路径，并分别追加 case2/case3 真实环境 QA 记录。
 

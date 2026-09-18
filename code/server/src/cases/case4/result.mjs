@@ -1,6 +1,7 @@
 /**
  * Case4 最终结果：一次读取 base + 九个动态文件。
  * 仅本接口执行 complete 控制上下文与稳定性门槛。
+ * 反射不进入该门槛：九文件快照成功后再尽力附加。
  */
 
 import { promises as defaultFs } from "node:fs";
@@ -176,20 +177,15 @@ export function createCase4ResultService(options) {
       const after = await Promise.all(
         files.map((file) => statRequiredFile(file, fsOps)),
       );
-      let reflectionWindow = null;
-      if (reflectionEnabled) {
-        reflectionWindow = await readReflectionInWindow();
-      }
       const controlAfter = await controlFile.read();
       const filesChanged = before.some(
         (item, index) => !sameFileSnapshot(item, after[index]),
       );
-      const reflectionChanged = Boolean(reflectionWindow?.changed);
       const controlChanged = !sameControlWindow(controlBefore, controlAfter);
-      if ((filesChanged || reflectionChanged || controlChanged) && attempt < 3) {
+      if ((filesChanged || controlChanged) && attempt < 3) {
         continue;
       }
-      if (filesChanged || reflectionChanged || controlChanged) {
+      if (filesChanged || controlChanged) {
         throw notReady("final case4 snapshot changed while being read");
       }
       if (!isCompleteContext(controlBefore) || !isCompleteContext(controlAfter)) {
@@ -259,6 +255,13 @@ export function createCase4ResultService(options) {
 
       let finalTrajectory = trajectory;
       if (reflectionEnabled) {
+        const reflectionWindow = await readReflectionInWindow();
+        if (reflectionWindow.changed) {
+          logger?.warn("case4 reflection result snapshot drifted", {
+            caseId: "case4",
+            reason: "reflection file changed while being read",
+          });
+        }
         finalTrajectory = await attachReflectionBestEffort(
           trajectory,
           reflectionWindow.read,

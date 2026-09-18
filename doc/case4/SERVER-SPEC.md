@@ -1,6 +1,6 @@
 # case4 Node 文件适配服务施工规格
 
-> status: `已实现 — 2026-09-16 用户确认 2D 功能及本地自测完成，待真实后端联调`
+> status: `已实现 — 2026-09-18 用户确认除 3D 外功能全部完成本地开发`
 >
 > 使用者：前端 PC Node 适配服务实现 agent。
 >
@@ -335,6 +335,8 @@ controlBefore 与 controlAfter 均为
 且 case/command/dt_type/status 窗口内不变
 且 10 个文件 stat 窗口内不变（第 3 次仍变 → RESULT_NOT_READY）
 ```
+
+开启反射时，上述门槛满足后再尽力读反射文件；反射漂移/缺失不构成 `RESULT_NOT_READY`，详见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)。
 
 门槛：
 

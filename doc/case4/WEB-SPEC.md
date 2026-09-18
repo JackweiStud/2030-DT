@@ -1,6 +1,6 @@
 # case4 正式 Web 施工规格
 
-> status: `已实现 — 2026-09-16 用户确认 2D 功能及本地自测完成，待真实后端联调`
+> status: `已实现 — 2026-09-18 用户确认除 3D 外功能全部完成本地开发`
 >
 > 使用者：正式 React Web 实现 agent。
 >
@@ -8,7 +8,7 @@
 
 开工前必读：`state.md`、契约 §0 / §3 / §4 / §7 / §8 / §9 / §11、本文、`doc/case4/STATIC-HTML-ACCEPTANCE.md`（已接受效果、可复用成果、留给 React 的地图/图表问题），以及 `code/web/src/app/App.tsx`、`shell/Shell.tsx`、`cases/case3/hooks/useCase3Controller.ts`、`cases/case3-v2/mapProjectionV2.ts`、`cases/case3-v2/Case3V2Page.tsx`。
 
-正式代码已实现；CEP 增减百分比已实现并由用户接受（c4382a3）；2D Reflection 见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)；3D 仍保留。误差悬停已追加落地；阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
+正式代码已实现；CEP 增减百分比已实现并由用户接受（c4382a3）；2D Reflection 见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)；误差/吞吐/CDF 悬停已落地。**仅 3D 未实现**（按钮可见禁用）。阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
 
 ---
 
@@ -766,6 +766,7 @@ type Case4MapView = {
 - 空态：只轴，隐藏 `--` 覆盖层（对齐已接受静态 / Pencil 空闲）。
 - 禁止固定 0–4.5 再把越界 X clamp 到右缘。
 - 轴标签按范围选可读格式（小值科学计数或 3 位，大值 1～2 位），与点位置同一 scale。
+- 2026-09-18 增量：悬停画水平概率虚线，浮层显示该 P 对应误差（1 位小数、米）；空图不响应。不引入 ECharts。
 
 ### 9.4 CEP
 
@@ -792,6 +793,7 @@ type Case4MapView = {
 - Y 从 0；空图默认 `yMax=10`；有数据 `niceCeil(max*1.1)`（可复用 case3 `niceCeilThroughput` 思路，默认上限按 case4 空轴 10 档，不要 import case3 图表组件）。
 - 折线不平滑。颜色：without=`--c4-bs`，with=`--c4-dt`（静态图例：传统基站 / 数字孪生辅助）。
 - 运行中即可画 live；completed 改吃 result.throughput。
+- 2026-09-18 增量：悬停显示该样点两路 Gbps（2 位）；缺测 `--`。标题为 `吞吐率(Gbps)`，无「对比」。
 
 ### 9.7 数值格式
 
@@ -962,7 +964,8 @@ NLOS/CDF/误差/吞吐/地图反射层的 stroke、fill、dash 必须经得起�
 - [x] Codex 续查已收口：控制快照归属校验先于 flag/status；放弃清零失败保留完成结果、禁按钮、停截图与轮询、不 POST init、busy=false；视觉对照证据不能用组件测试代替。
 - [x] 组件树对齐静态 `data-region`；CSS 迁正式 assets；`STATIC-HTML-ACCEPTANCE.md` 为开工必读。
 - [x] App 只加 case4 挂载与 busy；case3-v2 留在 `case5`。
-- [x] CEP 百分比已实现并由用户接受（见 §9 增量）；2D Reflection 按 REFLECTION-SPEC 实施；3D 保留；悬停已实现。
+- [x] CEP 百分比已实现并由用户接受（见 §9 增量）；2D Reflection 按 REFLECTION-SPEC 实施；误差/吞吐/CDF 悬停已实现；**3D 保留未做**。
 - [x] Case2/Case3/Case4 API 前缀各自写死同源路径。
 
 2026-09-16 阶段收口：实现已完成，用户确认本地自测完成，下一步为真实后端联调。
+2026-09-18 功能收口：用户确认除 3D 外全部功能已完成本地开发。

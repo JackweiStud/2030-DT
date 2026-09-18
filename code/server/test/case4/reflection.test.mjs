@@ -2,7 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { createSharedDir, jsonRequest, startTestServer } from "../helpers.mjs";
+import {
+  createLogCollector,
+  createSharedDir,
+  jsonRequest,
+  startTestServer,
+} from "../helpers.mjs";
 import { createSilentLogger } from "../../src/shared/logger.mjs";
 import { createCase4DebugJsonlService } from "../../src/cases/case4/debug-jsonl.mjs";
 import {
@@ -261,6 +266,51 @@ test("JSONL 串行写入：live 在途时 result 封印后不得覆盖", async (
     { source: "live" },
   );
   assert.equal(await fs.readFile(jsonl.filePath, "utf8"), after);
+});
+
+test("/result 反射读取期间变化仍 200，warn 后尽力附加", async (t) => {
+  const sharedDir = await createSharedDir(t, COMPLETE_CONTROL);
+  await writeCase4All(sharedDir);
+  await writeCase4Reflection(sharedDir, "1 0\n1 0\n1 0\n");
+  let arm = false;
+  let reflectionStats = 0;
+  const reflectionName = "ue_position_with_dt_coordinates_reflection_point.txt";
+  const fsOps = {
+    ...fs,
+    stat: async (filePath, opts) => {
+      if (arm && String(filePath).endsWith(reflectionName)) {
+        reflectionStats += 1;
+        if (reflectionStats === 1) {
+          const previous = await fs.stat(filePath, opts);
+          await writeCase4Reflection(sharedDir, "0 0\n1 0\n1 0\n");
+          return previous;
+        }
+      }
+      return fs.stat(filePath, opts);
+    },
+  };
+  const logs = createLogCollector();
+  const { baseUrl } = await startTestServer(t, {
+    sharedDir,
+    fsOps,
+    logger: logs.logger,
+  });
+  arm = true;
+  const on = await jsonRequest(baseUrl, "/api/case4/result?reflection=true");
+  assert.equal(on.status, 200);
+  assert.equal(on.body.trajectory.completeCount, 3);
+  assert.equal(on.body.trajectory.points[0].reflection.state, "ready");
+  assert.equal(on.body.trajectory.points[0].reflection.los, false);
+  assert.equal(on.body.trajectory.points[2].reflection.state, "ready");
+  assert.equal(reflectionStats, 2);
+  assert.equal(
+    logs.entries.some(
+      (entry) =>
+        entry.level === "warn" &&
+        entry.message === "case4 reflection result snapshot drifted",
+    ),
+    true,
+  );
 });
 
 test("反射读取期间变化则重试后取稳定快照", async (t) => {

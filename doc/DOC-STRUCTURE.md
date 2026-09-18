@@ -19,15 +19,7 @@
 | `doc/case2/realback_no.md` | 本地无真实后端时的模拟打桩行为（非真实后端合同） | 适配服务 REST / 截图落盘算法 |
 | `doc/case2/QA-EVIDENCE.md` | 本地自动测试、人工联调、截图输出、残余风险 | 未验证的真实后端或真实挂载结论 |
 | `doc/case2/RETRO-METHOD.md` | case2 可复用流程、检查清单、下一 case 复用边界 | 具体实现代码或新的业务契约 |
-
-## case4 文档落点
-
-- `doc/case4/PHASE0-SCOPE.md`：用户明确范围、演示主线、职责及数据真实性。
-- `doc/case4/UX-STATE-MAP.md`：三态展示意图、图片差异及设计交接依据。
-- `doc/case4/INPUT-AND-OPEN-QUESTIONS.md`：接口样本、UI 数据映射与未决事项，不代替冻结契约。
-- `doc/case4/DESIGN-NOTES.md`：Pencil 审阅用设计说明；相对 UX 的纠正与未决定项。设计文件存在不等于冻结。
-- `03-design/case4/`：Pencil 设计源与重建文档；未经用户确认不得标记 Gate 1 冻结。
-- case4 当前 Gate 与下一步只在 `state.md` 记录；后续契约/SPEC/QA 按对应阶段补齐。
+| `doc/case4/`（已完成本地开发） | case4 范围、UX 状态、静态验收、API 契约、SPEC、Reflection 合同、QA | case2/case3 指标语义、打桩结果冒充真实采集、把 3D 写成已交付 |
 
 ## 三轨资源纪律
 
@@ -44,12 +36,13 @@
 - 当前事实与风险：`state.md`
 - case2 业务入口：`doc/case2/MAINLINE.md`
 - case3 业务入口：`doc/case3/MAINLINE.md`
-- case4 业务入口：`doc/case4/PHASE0-SCOPE.md`
+- case4 业务入口：`doc/case4/PHASE0-SCOPE.md` / `WEB-SPEC.md` / `QA-EVIDENCE.md`
 
 ## 创建规则
 
 - case2 Gate 5 本地 QA 证据已创建；后续真实后端/真实挂载验收若发生，应追加到 `doc/case2/QA-EVIDENCE.md`，不得覆盖本地打桩记录。
 - case3 已完成本地开发；后续若接真实后端/真实挂载，应追加 `doc/case3/QA-EVIDENCE.md` 的真实环境记录，不覆盖本地打桩证据。
+- case4 已完成本地开发（除 3D）；后续若由本仓库独立验收真实后端/真实挂载，应追加 `doc/case4/QA-EVIDENCE.md`，不覆盖本地打桩证据。
 - `03-design/case2/` 只在目标 `.pen` 路径经用户确认、准备进入 Pencil Phase 3 时创建。
 - API、施工、QA 文档仅在对应 Gate 获批准后创建；不为“以后可能需要”预建空文档。
 - 行为变化必须同步更新相关 case 文档和 `state.md`。

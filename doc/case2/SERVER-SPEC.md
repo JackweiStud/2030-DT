@@ -44,7 +44,7 @@
 
 实现根为仓库已建的 `code/`（与 [WEB-SPEC.md](WEB-SPEC.md) 共用）。Gate 4 创建 `code/server/`；本地共享根已存在为 `code/comdatafiles/`。
 
-**规划原则：** 一个 Node 适配进程、一个监听端口；HTTP 与共享目录均按 **case 命名空间** 隔离。本文冻结时本阶段只实现 `case2`；截至 2026-08-11，`case3` 已按独立规格接入同一适配服务，`case4` 仍只占位。
+**规划原则：** 一个 Node 适配进程、一个监听端口；HTTP 与共享目录均按 **case 命名空间** 隔离。本文冻结时本阶段只实现 `case2`；截至 2026-08-11，`case3` 已按独立规格接入同一适配服务；截至 2026-09-18，`case4` 已按 `doc/case4/SERVER-SPEC.md` 接入，不再只占位。
 
 ```text
 code/
@@ -57,7 +57,7 @@ code/
 │   │   └── cases/
 │   │       ├── case2/   # /api/case2/* 与 case2 文件语义
 │   │       ├── case3/   # /api/case3/* 与 case3 文件语义（见 doc/case3/SERVER-SPEC.md）
-│   │       └── case4/   # 预留（本阶段不实现、不挂路由）
+│   │       └── case4/   # /api/case4/* 与 case4 文件语义（见 doc/case4/SERVER-SPEC.md）
 │   ├── scripts/         # 本阶段仅 case2 联调辅助（如种子共享目录；不含后端状态机）
 │   └── test/
 │       ├── shared/
@@ -77,7 +77,7 @@ code/
 | `src/shared/` | 多 case 可复用的传输与文件原语（响应 JSON、串行队列、`fsync+rename`、env 加载） | case2 字段枚举、六文件名、截图序号规则；后端 status 状态机 |
 | `src/cases/case2/` | case2 控制/数据/截图与路由注册 | 读取 `case3/` 数据；模拟后端推进 `status` |
 | `src/cases/case3/` | case3 控制/初始化/逐点 side/截图与路由注册，详见 `doc/case3/SERVER-SPEC.md` | 读取 `case2/` 数据；模拟后端推进 `status` |
-| `src/cases/case4/` | 仅预留；可放空目录或一句 README | 当前任何业务代码或路由 |
+| `src/cases/case4/` | case4 控制/轨迹/吞吐/最终快照/反射与路由注册，详见 `doc/case4/SERVER-SPEC.md` | 读取 `case2/` 或 `case3/` 数据；模拟后端推进 `status` |
 | `comdatafiles/caseN/` / `out/caseN/` | 各 case 数据与输出隔离 | case2 代码写到别的 case 目录 |
 
 补充：

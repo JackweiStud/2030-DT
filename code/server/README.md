@@ -1,6 +1,6 @@
 # Node 文件适配服务
 
-本服务运行在前端 PC，向 Web 提供 `/api/case2/*` 与 `/api/case3/*` REST，并独占浏览器侧的共享目录文件 I/O。
+本服务运行在前端 PC，向 Web 提供 `/api/case2/*`、`/api/case3/*` 与 `/api/case4/*` REST，并独占浏览器侧的共享目录文件 I/O。
 
 ## 运行
 
@@ -39,10 +39,11 @@ npm test
 
 ## 边界
 
-- 已实现 case2 与 case3 文件适配；不推进业务 `status`。
+- 已实现 case2、case3 与 case4 文件适配；不推进业务 `status`。
 - 不启动模拟后端，不读取 `01-参考资料/`。
-- `src/shared/` 只放通用基础能力；case2/case3 字段、文件名、数值校验和截图规则分别位于 `src/cases/case2/`、`src/cases/case3/`。
+- `src/shared/` 只放通用基础能力；各 case 字段、文件名、数值校验和截图规则分别位于 `src/cases/case2/`、`src/cases/case3/`、`src/cases/case4/`。
 - Case3 负责单侧文件清空、多 txt 收编、最终快照门槛、调试 JSONL 输出和 `out/case3/case3-{seq}.png` 截图落盘。
+- Case4 负责九个动态文件清理、轨迹/吞吐/最终快照、可选反射尽力附加和 `out/case4/case4-{seq}.png` 截图落盘；反射不挡 `/result` 200。详见 [../../doc/case4/SERVER-SPEC.md](../../doc/case4/SERVER-SPEC.md)。
 
 ## 特别注意：Case3 `GET /api/case3/side` 终态门槛
 

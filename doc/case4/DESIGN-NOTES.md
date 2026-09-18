@@ -1,6 +1,6 @@
 # case4 设计说明（Gate 1 审阅用）
 
-> 当前范围更新（2026-09-17）：用户确认 2D 功能、本地自测及真实后端/共享挂载/采集验证通过；证据来源见 QA-EVIDENCE.md。误差回溯悬停已追加实现，覆盖下文历史后置约定；2026-09-17 CEP 增减百分比已实现并由用户接受（提交 c4382a3，规则见 WEB-SPEC.md）；3D、反射仍保留。设计源与静态验收历史保持原记录，当前实现和证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
+> 当前范围更新（2026-09-18）：用户确认 case4 除 3D 外全部功能已完成本地开发。已交付主线、XYZ 误差、CEP 百分比、2D Reflection、误差/吞吐/CDF 悬停，以及 `/result` 反射不挡完成。3D 开关可见禁用。真实后端/挂载/采集为用户此前提供 PASS，非本轮独立复验。下文「反射仍保留 / 后置」以本条为准。设计源与静态验收历史保持原记录，当前实现和证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
 
 本文记录 Pencil 制作时已采用的展示规则。不是冻结记录，也不是 API 契约。设计源：`03-design/case4/case4.pen`。分析/计划：`03-design/case4/Design_Analysis.md`、`Pen_Plan.md`。
 

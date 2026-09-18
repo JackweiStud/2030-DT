@@ -1,6 +1,6 @@
 # case4 接口输入与待确认项
 
-> 当前范围更新（2026-09-17）：用户确认 2D 功能、本地自测及真实后端/共享挂载/采集验证通过；证据来源见 QA-EVIDENCE.md。误差回溯悬停已追加实现，覆盖下文历史后置约定；2026-09-17 CEP 增减百分比已实现并由用户接受（提交 c4382a3，规则见 WEB-SPEC.md）；3D、反射仍保留。设计源与静态验收历史保持原记录，当前实现和证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
+> 当前范围更新（2026-09-18）：用户确认 case4 除 3D 外全部功能已完成本地开发。已交付主线、XYZ 误差、CEP 百分比、2D Reflection、误差/吞吐/CDF 悬停，以及 `/result` 反射不挡完成。3D 开关可见禁用。真实后端/挂载/采集为用户此前提供 PASS，非本轮独立复验。下文「反射仍保留 / 后置」以本条为准。设计源与静态验收历史保持原记录，当前实现和证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
 
 本文是资料核对与契约准备记录，不是已批准的 API 契约。Excel 的 CASE4 页第 18–29 行为后一组说明；前一组在第 2–13 行，不能混用冲突字段。
 
@@ -19,7 +19,7 @@
 | `ue_position_with_dt_coordinates_realtime_cdf.txt` | 100×2，空白 | 完成后 DT 辅助 CDF |
 | `ue_position_without_dt_thrp.txt` | 38×1 | 独立时间序列，传统基站吞吐率 |
 | `ue_position_with_dt_thrp.txt` | 38×1 | 独立时间序列，DT 辅助吞吐率 |
-| `ue_position_with_dt_coordinates_reflection_point.txt` | 20×8，空白 | 反射点数据；用户确认后续支持，首版不渲染路径 |
+| `ue_position_with_dt_coordinates_reflection_point.txt` | 20×8，空白 | 2D 反射点数据；运行中按 Pi 与三轨迹共同前缀收齐，完成时尽力附加、不挡 `/result`。合同见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md) |
 | `ue_position_with_dt_error_and_nlos.txt` | 4×2，空白 | 前三行为传统基站/商用/DT 的 CEP50、CEP90；第四行首列为平均 NLOS 比例 |
 
 Excel 另列 `ue_position_map.png`，上述两次提交未提供该文件。用户已确认 case3/case4 同场地，直接复用当前 case3 地图及坐标映射；因此该缺失不再阻塞首版底图。地图和误差区点位推进示意也参考当前 case3。
@@ -72,7 +72,7 @@ Excel 另列 `ue_position_map.png`，上述两次提交未提供该文件。用�
 |---|---|---|
 | 随机关联与幅度 | 用户确认吞吐率、定位轨迹小幅变化，误差统计与 NLOS 每轮变化；CDF/CEP 沿用后端参考统计小幅扰动，不从随机轨迹重算 | 用户已明确最终定位统计不强制三方案优劣排序；用户明确只需简单小幅变化，不新增专门的幅度配置项，具体保守幅度由实现处理；CDF 单调性、概率范围等数据有效性仍应满足；基准轨迹及反射点未获随机化授权；须标记轨迹与统计为独立模拟数据 |
 | 逐点偏差与配对 | 用户明确 base 为预期轨迹，realtime 为定位结果；2D/3D 欧氏距离均计 XYZ（2026-09-17 新口径）；不把预期轨迹认定为实测真值 | 用户确认按文件行号与 base 对应，第 i 行为 Pi；65535 已由用户澄清为同方案按分量用上个点对应值替代并记日志，不跳点；首点无前值时已确认使用 base P1 对应分量；连续无效沿用前一点已归一值；逐点偏差不替代后端 CDF/CEP |
-| 反射点格式 | 旧说明为 x,y,z,losFlag；新说明为 losFlag,n,多组 XYZ，但维度仍写 N×4；样本 n=2、8 列 | 首版不渲染直射/反射路径，不将该文件纳入三方案轨迹收齐门槛；可变列格式及 20 行如何对应 38 轨迹点留待后续反射功能处理 |
+| 反射点格式 | 旧说明为 x,y,z,losFlag；新说明为 losFlag,n,多组 XYZ，但维度仍写 N×4；样本 n=2、8 列 | 2D Reflection 已按 REFLECTION-SPEC 落地：运行中计入四路前缀，完成时不纳入九文件门槛。3D Reflection 仍不做 |
 | 实时发布 | 用户已确认实时文件 append | 已确认三方案同一行收齐后同步展示，按连续完整点位推进，吞吐率独立；用户已确认轨迹及吞吐文件均 append 新行；用户已确认开始/重置前由 Node 清空 case4 本轮动态文件，保留预期轨迹、地图及原始参考样本；半行处理、具体清理清单仍待明确；用户已明确确认最终轨迹沿用 case3：不要求等于 base 点数，但三方案须相互收齐并通过完整性门槛，不补造缺点 |
 | 吞吐率横轴 | 用户明确显示“1、2、3…样点”，按各吞吐文件的采样序号排列，不换算秒数、不绑定地图 Pi；约每秒一个样本 | 后端已明确两条曲线各自有数据就更新，不互相收齐；重复轮询不得重复造点；不要求文件新增时间戳 |
 | 控制与终态 | 未有 case4 冻结控制契约 | start 的 dt_type 已确认使用精确字符串 `"all"`，reinit 同为 `"all"`，init 为 `""`，已确认；case4 已确认沿用 case2/case3 的 init/start/reinit 与 execute success/execute fail/case complete/reinit complete 状态语义；文件关闭顺序仍需写入契约，最终轨迹按 case3 原则不要求等于 base 点数（最终统计四文件门槛已确认） |
