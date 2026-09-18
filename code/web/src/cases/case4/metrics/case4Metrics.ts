@@ -271,6 +271,28 @@ export function cdfXTicks(
   return Array.from({ length: n }, (_, i) => (xMax * i) / (n - 1));
 }
 
+/**
+ * 阶梯 CDF 分位：第一条 probability ≥ P 的 errorM。
+ * 不插值、不从轨迹重算。
+ */
+export function cdfQuantileErrorM(
+  points: ReadonlyArray<CdfPoint>,
+  probability: number,
+): number | null {
+  if (!(Number.isFinite(probability) && points.length > 0)) return null;
+  const p = Math.min(1, Math.max(0, probability));
+  for (const pt of points) {
+    if (
+      Number.isFinite(pt.probability) &&
+      Number.isFinite(pt.errorM) &&
+      pt.probability >= p
+    ) {
+      return pt.errorM;
+    }
+  }
+  return null;
+}
+
 export type CepBar = {
   scheme: Scheme;
   value: number;

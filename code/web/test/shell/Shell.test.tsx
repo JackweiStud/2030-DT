@@ -55,7 +55,7 @@ describe("Shell 可见 Tab 导航", () => {
     const { view } = renderShell();
     expect(tabButtons(view).map((el) => el.textContent)).toEqual([...TAB_LABELS]);
     expect(view.getByText("云上外场")).toBeTruthy();
-    expect(view.getByText("IMT-2030 DT测试")).toBeTruthy();
+    expect(view.getByText("IMT2030(6G)无线数字孪生")).toBeTruthy();
   });
 
   it("当前 Tab 带 is-active 与 aria-current=page", () => {

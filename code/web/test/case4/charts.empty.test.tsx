@@ -29,7 +29,7 @@ if (typeof PointerEvent === "undefined") {
     value: PointerEventPolyfill,
   });
 }
-import { CdfChart } from "../../src/cases/case4/components/CdfChart";
+import { CdfChart, cdfHoverProbFromLocalY } from "../../src/cases/case4/components/CdfChart";
 import { CepBars } from "../../src/cases/case4/components/CepBars";
 import {
   ErrorReplay,
@@ -37,7 +37,7 @@ import {
   CASE4_ERROR_REPLAY_SLOT_PITCH,
 } from "../../src/cases/case4/components/ErrorReplay";
 import { NlosGauge } from "../../src/cases/case4/components/NlosGauge";
-import { ThroughputChart } from "../../src/cases/case4/components/ThroughputChart";
+import { ThroughputChart, thrpHoverNoFromLocalX } from "../../src/cases/case4/components/ThroughputChart";
 import {
   sampleBaseRoute,
   sampleStatistics,
@@ -46,6 +46,14 @@ import {
 } from "./fixtures";
 
 describe("ThroughputChart", () => {
+  it("绘图区 X 映射到最近样点号，轴外为空", () => {
+    expect(thrpHoverNoFromLocalX(15, 1, 20)).toBeNull();
+    expect(thrpHoverNoFromLocalX(29.263888888888886, 1, 20)).toBe(1);
+    expect(thrpHoverNoFromLocalX(29.263888888888886 + 564.375, 1, 20)).toBe(20);
+    expect(thrpHoverNoFromLocalX(29.263888888888886, 6, 25)).toBe(6);
+    expect(thrpHoverNoFromLocalX(700, 1, 20)).toBeNull();
+  });
+
   it("空态 Y0–10 与 X1–20 带 left/top，不堆在原点", () => {
     const view = render(<ThroughputChart without={[]} withSamples={[]} />);
     const ys = [
@@ -160,6 +168,68 @@ describe("ThroughputChart", () => {
     const path = view.container.querySelector(".c4-thrp-svg path");
     expect(path?.getAttribute("d")?.startsWith("M ")).toBe(true);
   });
+
+  it("悬停有样点弹出双路读数，空槽与 leave 收起", () => {
+    const view = render(
+      <ThroughputChart
+        without={thrpSamples(5)}
+        withSamples={[{ no: 2, gbps: 7.25 }]}
+      />,
+    );
+    const surface = mockThrpSurface(view.container);
+
+    fireEvent.pointerMove(surface, { clientX: 30, clientY: 40 });
+    const tip = view.container.querySelector("[data-thrp-tip]");
+    expect(tip?.getAttribute("data-thrp-tip-no")).toBe("1");
+    expect(surface.getAttribute("data-hover-no")).toBe("1");
+    expect(tip?.textContent).not.toContain("样点");
+    expect(tip?.textContent).not.toContain("吞吐率");
+    expect(tip?.textContent).toContain("传统基站定位");
+    expect(tip?.textContent).toContain("数字孪生辅助定位");
+    expect(tip?.textContent).toContain("8.00Gbps");
+    expect(tip?.textContent).toContain("--");
+
+    fireEvent.pointerMove(surface, { clientX: 148, clientY: 40 });
+    expect(surface.getAttribute("data-hover-no")).toBe("5");
+    expect(
+      view.container.querySelector("[data-thrp-tip]")?.getAttribute("data-thrp-tip-no"),
+    ).toBe("5");
+
+    fireEvent.pointerMove(surface, { clientX: 445, clientY: 40 });
+    expect(view.container.querySelector("[data-thrp-tip]")).toBeNull();
+    expect(surface.getAttribute("data-hover-no")).toBe("");
+
+    fireEvent.pointerMove(surface, { clientX: 30, clientY: 40 });
+    expect(view.container.querySelector("[data-thrp-tip]")).not.toBeNull();
+    fireEvent.pointerLeave(surface);
+    expect(view.container.querySelector("[data-thrp-tip]")).toBeNull();
+  });
+
+  it("两路同序号都显示 2 位 Gbps", () => {
+    const view = render(
+      <ThroughputChart
+        without={[{ no: 1, gbps: 4.2 }]}
+        withSamples={[{ no: 1, gbps: 3.8 }]}
+      />,
+    );
+    const surface = mockThrpSurface(view.container);
+    fireEvent.pointerMove(surface, { clientX: 30, clientY: 40 });
+    const text = view.container.querySelector("[data-thrp-tip]")?.textContent;
+    expect(text).toContain("4.20Gbps");
+    expect(text).toContain("3.80Gbps");
+  });
+
+  it("N>20 悬停跟当前窗口样点号", () => {
+    const view = render(
+      <ThroughputChart without={thrpSamples(25)} withSamples={thrpSamples(22)} />,
+    );
+    const surface = mockThrpSurface(view.container);
+    fireEvent.pointerMove(surface, { clientX: 30, clientY: 40 });
+    expect(surface.getAttribute("data-hover-no")).toBe("6");
+    expect(
+      view.container.querySelector("[data-thrp-tip]")?.getAttribute("data-thrp-tip-no"),
+    ).toBe("6");
+  });
 });
 
 describe("CdfChart empty", () => {
@@ -187,6 +257,49 @@ describe("CdfChart empty", () => {
     expect(xs).toHaveLength(10);
     expect(xs[0]).toBe("0.0");
     expect(xs.at(-1)).toBe("0.8");
+  });
+
+  it("绘图区 Y 映射到一位小数概率", () => {
+    expect(cdfHoverProbFromLocalY(-1)).toBeNull();
+    expect(cdfHoverProbFromLocalY(0)).toBe(1);
+    expect(cdfHoverProbFromLocalY(68)).toBe(0.5);
+    expect(cdfHoverProbFromLocalY(136)).toBe(0);
+    expect(cdfHoverProbFromLocalY(200)).toBeNull();
+  });
+
+  it("空态无悬停热区", () => {
+    const view = render(<CdfChart cdf={null} />);
+    expect(view.container.querySelector("[data-cdf-surface]")).toBeNull();
+  });
+
+  it("悬停横线读三方案一位小数误差，leave 收起", () => {
+    const view = render(<CdfChart cdf={sampleStatistics().cdf} />);
+    const surface = mockCdfSurface(view.container);
+    fireEvent.pointerMove(surface, { clientX: 40, clientY: 68 });
+    const tip = view.container.querySelector("[data-cdf-tip]");
+    expect(tip?.getAttribute("data-cdf-tip-p")).toBe("0.5");
+    expect(surface.getAttribute("data-hover-p")).toBe("0.5");
+    expect(tip?.textContent).toContain("传统基站定位");
+    expect(tip?.textContent).toContain("商用方案定位");
+    expect(tip?.textContent).toContain("数字孪生辅助定位");
+    expect(tip?.textContent).toContain("0.8m");
+    expect(tip?.textContent).toContain("0.1m");
+    expect(view.container.querySelector(".c4-cdf-cursor")).toBeTruthy();
+    const top50 = Number.parseFloat((tip as HTMLElement).style.top);
+    expect((tip as HTMLElement).style.transform).toContain("-100%");
+    expect((tip as HTMLElement).style.transform).toContain("20px");
+    expect((tip as HTMLElement).style.left).toBe("68px");
+
+    fireEvent.pointerMove(surface, { clientX: 40, clientY: 0 });
+    expect(view.container.querySelector("[data-cdf-tip]")).toBeNull();
+
+    fireEvent.pointerMove(surface, { clientX: 40, clientY: 14 });
+    expect(surface.getAttribute("data-hover-p")).toBe("0.9");
+    const tip90 = view.container.querySelector("[data-cdf-tip]") as HTMLElement;
+    expect(tip90?.textContent).toContain("0.6m");
+    expect(Number.parseFloat(tip90.style.top)).toBeLessThan(top50);
+    fireEvent.pointerLeave(surface);
+    expect(view.container.querySelector("[data-cdf-tip]")).toBeNull();
   });
 });
 
@@ -652,4 +765,50 @@ function mockReplayBoard(container: HTMLElement): HTMLElement {
       toJSON: () => ({}),
     }) as DOMRect;
   return board;
+}
+
+function mockThrpSurface(container: HTMLElement): HTMLElement {
+  const surface = container.querySelector("[data-thrp-surface]") as HTMLElement;
+  Object.defineProperty(surface, "offsetWidth", {
+    configurable: true,
+    value: 602,
+  });
+  surface.getBoundingClientRect = () =>
+    ({
+      width: 602,
+      height: 171,
+      top: 0,
+      left: 0,
+      right: 602,
+      bottom: 171,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+  return surface;
+}
+
+function mockCdfSurface(container: HTMLElement): HTMLElement {
+  const surface = container.querySelector("[data-cdf-surface]") as HTMLElement;
+  Object.defineProperty(surface, "offsetWidth", {
+    configurable: true,
+    value: 280,
+  });
+  Object.defineProperty(surface, "offsetHeight", {
+    configurable: true,
+    value: 136,
+  });
+  surface.getBoundingClientRect = () =>
+    ({
+      width: 280,
+      height: 136,
+      top: 0,
+      left: 0,
+      right: 280,
+      bottom: 136,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+  return surface;
 }

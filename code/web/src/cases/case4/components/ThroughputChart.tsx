@@ -1,9 +1,15 @@
 /**
  * 吞吐折线。横轴样点序号；两路不等长不补 0。
  * 刻度 left/top 与折线共用 AFTrn 绘图区映射，禁止无坐标绝对定位叠在左上角。
+ * 悬停按样点号对齐两条曲线读数；窗口滑动时跟 no，不跟像素。
  */
 
-import { throughputWindow, throughputYTicks } from "../metrics/case4Metrics";
+import { useState } from "react";
+import {
+  formatFixed,
+  throughputWindow,
+  throughputYTicks,
+} from "../metrics/case4Metrics";
 import type { ThroughputSample } from "../types";
 
 type Props = {
@@ -29,6 +35,15 @@ const GRID_X = [
   29.264, 58.968, 88.672, 118.376, 148.08, 177.784, 207.488, 237.192, 266.895,
   296.599, 326.303, 356.007, 385.711, 415.415, 445.119, 474.823, 504.527,
   534.231, 563.935, 593.639,
+];
+
+const TIP_W = 200;
+const WITHOUT_COLOR = "#97AAC4";
+const WITH_COLOR = "#7A6BFF";
+
+const TIP_ROWS = [
+  { key: "without" as const, name: "传统基站定位", color: WITHOUT_COLOR },
+  { key: "with" as const, name: "数字孪生辅助定位", color: WITH_COLOR },
 ];
 
 function xOf(no: number, start: number, end: number): number {
@@ -73,21 +88,104 @@ function xLabelLeft(no: number, start: number, end: number): number {
   return PLOT.xLabel0 + (i / (slots - 1)) * ((20 - 1) * PLOT.xStep);
 }
 
+function sampleAt(
+  samples: ThroughputSample[],
+  no: number,
+): ThroughputSample | undefined {
+  return samples.find((s) => s.no === no);
+}
+
+function boardScale(el: HTMLElement): number {
+  const cssWidth = el.getBoundingClientRect().width;
+  const layoutWidth = el.offsetWidth;
+  return cssWidth > 0 && layoutWidth > 0 ? cssWidth / layoutWidth : 1;
+}
+
+function localXFromClient(el: HTMLElement, clientX: number): number {
+  const rect = el.getBoundingClientRect();
+  const scale = boardScale(el);
+  return (clientX - rect.left) / scale;
+}
+
+/** 绘图区 X → 最近整数样点号；落在轴外返回 null。 */
+export function thrpHoverNoFromLocalX(
+  localX: number,
+  windowStart: number,
+  windowEnd: number,
+): number | null {
+  if (localX < PLOT.left || localX > PLOT.left + PLOT.width) return null;
+  const slots = windowEnd - windowStart + 1;
+  if (slots <= 1) return windowStart;
+  const t = (localX - PLOT.left) / PLOT.width;
+  const no = Math.round(windowStart + t * (slots - 1));
+  if (no < windowStart || no > windowEnd) return null;
+  return no;
+}
+
+function gbpsLabel(sample: ThroughputSample | undefined): string {
+  if (!sample) return "--";
+  return `${formatFixed(sample.gbps, 2)}Gbps`;
+}
+
 /** 与 Pencil 空闲帧同构：空闲 Y 11 档 0–10；抬轴后横网格跟整数刻度走。 */
 export function ThroughputChart(props: Props) {
   const win = throughputWindow(props.without, props.withSamples);
+  const [hoverNo, setHoverNo] = useState<number | null>(null);
   const dWithout = pathOf(win.without, win.windowStart, win.windowEnd, win.yMax);
   const dWith = pathOf(win.with, win.windowStart, win.windowEnd, win.yMax);
   const labels: number[] = [];
   for (let n = win.windowStart; n <= win.windowEnd; n += 1) labels.push(n);
   const yLabels = throughputYTicks(win.yMax);
+  const hoveredWithout = hoverNo == null ? undefined : sampleAt(win.without, hoverNo);
+  const hoveredWith = hoverNo == null ? undefined : sampleAt(win.with, hoverNo);
+  const hovered =
+    hoverNo != null &&
+    hoverNo >= win.windowStart &&
+    hoverNo <= win.windowEnd &&
+    (hoveredWithout != null || hoveredWith != null)
+      ? hoverNo
+      : null;
+
+  function applyHover(event: React.PointerEvent<HTMLDivElement>) {
+    const no = thrpHoverNoFromLocalX(
+      localXFromClient(event.currentTarget, event.clientX),
+      win.windowStart,
+      win.windowEnd,
+    );
+    if (
+      no == null ||
+      (sampleAt(win.without, no) == null && sampleAt(win.with, no) == null)
+    ) {
+      setHoverNo(null);
+      return;
+    }
+    setHoverNo(no);
+  }
+
+  function onPointerLeave(event: React.PointerEvent<HTMLDivElement>) {
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) return;
+    setHoverNo(null);
+  }
+
+  const tipStyle =
+    hovered != null
+      ? (() => {
+          const center = xOf(hovered, win.windowStart, win.windowEnd);
+          const left = Math.max(0, Math.min(PLOT.artW - TIP_W, center - TIP_W / 2));
+          return {
+            left: `${left}px`,
+            ["--c4-tip-arrow-left" as string]: `${center - left}px`,
+          };
+        })()
+      : undefined;
 
   return (
-    <div className="c4-thrp-shell">
+    <div className={`c4-thrp-shell${hovered != null ? " is-hover" : ""}`}>
       <article className="c4-kpi c4-kpi--thrp" data-region="Throughput">
         <div className="c4-kpi__head">
           <span className="c4-kpi__title c4-kpi__title--thrp">
-            吞吐率对比(Gbps)
+            吞吐率(Gbps)
           </span>
           <div className="c4-kpi__legend c4-kpi__legend--thrp">
             <span>
@@ -137,31 +235,36 @@ export function ThroughputChart(props: Props) {
               <path
                 d={dWithout}
                 fill="none"
-                stroke="#97AAC4"
+                stroke={WITHOUT_COLOR}
                 strokeWidth="1.5"
               />
-              <path d={dWith} fill="none" stroke="#7A6BFF" strokeWidth="2.5" />
+              <path
+                d={dWith}
+                fill="none"
+                stroke={WITH_COLOR}
+                strokeWidth="2.5"
+              />
             </svg>
             <div className="c4-thrp-dots">
               {win.without.map((s) => (
                 <span
                   key={`wo-${s.no}`}
-                  className="c4-thrp-dot"
+                  className={`c4-thrp-dot${hovered === s.no ? " is-hover" : ""}`}
                   style={{
                     left: `${xOf(s.no, win.windowStart, win.windowEnd)}px`,
                     top: `${yOf(s.gbps, win.yMax)}px`,
-                    background: "#97AAC4",
+                    background: WITHOUT_COLOR,
                   }}
                 />
               ))}
               {win.with.map((s) => (
                 <span
                   key={`w-${s.no}`}
-                  className="c4-thrp-dot"
+                  className={`c4-thrp-dot${hovered === s.no ? " is-hover" : ""}`}
                   style={{
                     left: `${xOf(s.no, win.windowStart, win.windowEnd)}px`,
                     top: `${yOf(s.gbps, win.yMax)}px`,
-                    background: "#7A6BFF",
+                    background: WITH_COLOR,
                   }}
                 />
               ))}
@@ -193,6 +296,43 @@ export function ThroughputChart(props: Props) {
               ))}
             </div>
           </div>
+          {hovered != null ? (
+            <div
+              className="c4-thrp-cursor"
+              style={{ left: `${xOf(hovered, win.windowStart, win.windowEnd)}px` }}
+              aria-hidden
+            />
+          ) : null}
+          {hovered != null ? (
+            <div
+              className="c4-thrp-tip"
+              data-thrp-tip
+              data-thrp-tip-no={String(hovered)}
+              style={tipStyle}
+              aria-hidden
+            >
+              {TIP_ROWS.map((row) => (
+                <div key={row.key} className="c4-thrp-tip__row">
+                  <i
+                    className="c4-thrp-tip__dot"
+                    style={{ background: row.color }}
+                  />
+                  <span>{row.name}</span>
+                  <b>
+                    {gbpsLabel(row.key === "without" ? hoveredWithout : hoveredWith)}
+                  </b>
+                </div>
+              ))}
+              <i className="c4-thrp-tip__arrow" />
+            </div>
+          ) : null}
+          <div
+            className="c4-thrp-hit"
+            data-thrp-surface
+            data-hover-no={hovered == null ? "" : String(hovered)}
+            onPointerMove={applyHover}
+            onPointerLeave={onPointerLeave}
+          />
         </div>
       </article>
     </div>

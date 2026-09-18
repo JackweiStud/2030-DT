@@ -133,7 +133,7 @@ export function Shell(props: Props) {
             <nav className="case-nav case-nav--left" aria-label="左侧 Case">
               {LEFT_TABS.map(renderTab)}
             </nav>
-            <div className="shell-title">IMT-2030 DT测试</div>
+            <div className="shell-title">IMT2030(6G)无线数字孪生</div>
             <nav className="case-nav case-nav--right" aria-label="右侧 Case">
               {RIGHT_TABS.map(renderTab)}
             </nav>

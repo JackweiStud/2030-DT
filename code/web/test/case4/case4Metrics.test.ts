@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cdfGeometry,
+  cdfQuantileErrorM,
   cdfXTicks,
   cepFromStatistics,
   cepGroupGeometry,
@@ -186,6 +187,18 @@ describe("cdfXTicks", () => {
     expect(ticks[0]).toBe(0);
     expect(ticks.at(-1)).toBeCloseTo(0.8);
     expect(ticks[1]).toBeCloseTo(0.8 / 9);
+  });
+});
+
+describe("cdfQuantileErrorM", () => {
+  it("取第一条 probability ≥ P 的误差，不插值", () => {
+    const stats = sampleStatistics();
+    expect(cdfQuantileErrorM(stats.cdf.traditional, 0.4)).toBe(0.2);
+    expect(cdfQuantileErrorM(stats.cdf.traditional, 0.5)).toBe(0.8);
+    expect(cdfQuantileErrorM(stats.cdf.dt, 0.5)).toBe(0.05);
+    expect(cdfQuantileErrorM(stats.cdf.commercial, 0.9)).toBe(0.6);
+    expect(cdfQuantileErrorM(stats.cdf.dt, 1)).toBeNull();
+    expect(cdfQuantileErrorM([], 0.5)).toBeNull();
   });
 });
 
