@@ -9,3 +9,6 @@ code/comdatafiles/case3/ue_comm_with_dt_*
 !code/comdatafiles/case3/ue_comm_with_dt_beam_accuracy_rate.txt
 code/comdatafiles/out/
 
+# case1 参考资料：3D 模型体积过大，仅本地保留
+01-参考资料/case1/3d--case1/
+
