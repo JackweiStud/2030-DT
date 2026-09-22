@@ -1,4 +1,4 @@
-name: issue4-reference-export
+name: issue4-worktree-export
 on:
   push:
     branches: [issue-4-ux-sync]
@@ -9,8 +9,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/upload-artifact@v4
         with:
-          name: issue4-reference-images
+          name: issue4-worktree
           path: |
-            01-参考资料/更新/case2/*.png
-            01-参考资料/更新/case3/*.png
-            01-参考资料/更新/case4/*.png
+            code/web
+            package.json
+            package-lock.json
+            code/package.json
+            code/package-lock.json
