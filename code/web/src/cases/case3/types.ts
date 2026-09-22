@@ -12,6 +12,13 @@ export type BaseRoutePoint = {
   z: number;
 };
 
+export type ThroughputSample = { no: number; gbps: number };
+
+export type ThroughputSnapshot = {
+  samples: ThroughputSample[];
+  pendingTail: boolean;
+};
+
 export type Case3Point = {
   no: number;
   ue: { x: number; y: number; z: number };

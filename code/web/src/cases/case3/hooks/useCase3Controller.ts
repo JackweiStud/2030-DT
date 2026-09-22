@@ -874,6 +874,29 @@ export function useCase3Controller(options: Options) {
               side: action.side,
               snapshot,
             });
+            try {
+              const thrp = await api.getThroughput(action.side, ac.signal);
+              if (
+                stateRef.current.activeAction?.generation !== generation ||
+                ac.signal.aborted
+              ) {
+                return;
+              }
+              dispatch({
+                type: "LIVE_THROUGHPUT",
+                side: action.side,
+                snapshot: thrp,
+              });
+            } catch (err) {
+              if (isAbortError(err)) return;
+              case3Warn("thrp.live_fail", {
+                generation,
+                side: action.side,
+                endpoint: `/api/case3/throughput?side=${action.side}`,
+                code: err instanceof Case3ApiError ? err.code : undefined,
+                reason: err instanceof Error ? err.message : String(err),
+              });
+            }
             const progressCount = snapshot.completeCount;
             const previousProgress = lastProgressRef.current;
             if (

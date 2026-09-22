@@ -16,7 +16,7 @@ import {
 } from "../../src/cases/case3/state/case3Reducer";
 import { selectCase3Presentation } from "../../src/cases/case3/presentation/selectCase3Presentation";
 import { SiteEnvWindowContext } from "../../src/shell/siteEnvWindowContext";
-import type { BaseRoutePoint, SideSnapshot } from "../../src/cases/case3/types";
+import type { BaseRoutePoint, SideSnapshot, ThroughputSnapshot } from "../../src/cases/case3/types";
 
 vi.mock("../../src/cases/case3/hooks/useCase3Controller", async () => {
   const actual = await vi.importActual<
@@ -47,6 +47,15 @@ const L_ROUTE: BaseRoutePoint[] = [
   { no: 4, x: 9, y: 2, z: 0 },
   { no: 5, x: 18, y: 2, z: 0 },
 ];
+
+function thrpFromSnapshot(snapshot: SideSnapshot): ThroughputSnapshot {
+  return {
+    samples: snapshot.points
+      .slice(0, snapshot.completeCount)
+      .map((p) => ({ no: p.no, gbps: p.throughputGbps })),
+    pendingTail: snapshot.pendingTail,
+  };
+}
 
 function snap(count: number, extraPoints = 0, cost: number | null = 25): SideSnapshot {
   const total = count + extraPoints;
@@ -110,10 +119,16 @@ function running(count: number, extraPoints = 0, cost: number | null = 25) {
     generation: 1,
   });
   state = case3Reducer(state, { type: "SEEN_EXECUTE_SUCCESS" });
-  return case3Reducer(state, {
+  const snapshot = snap(count, extraPoints, cost);
+  state = case3Reducer(state, {
     type: "LIVE_SNAPSHOT",
     side: "without",
-    snapshot: snap(count, extraPoints, cost),
+    snapshot,
+  });
+  return case3Reducer(state, {
+    type: "LIVE_THROUGHPUT",
+    side: "without",
+    snapshot: thrpFromSnapshot(snapshot),
   });
 }
 

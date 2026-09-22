@@ -137,6 +137,7 @@ describe("useCase3Controller lifecycle", () => {
         sideReads += 1;
         return sideReads === 1 ? liveWithout(1) : secondSnapshot.promise;
       }),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -229,6 +230,7 @@ describe("useCase3Controller lifecycle", () => {
         sideReads += 1;
         return sideReads === 1 ? liveWithout(1) : secondSideRead.promise;
       }),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -292,6 +294,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(async () => ({
         path: "out/case3/case3-007.png",
         seq: 7,
@@ -374,6 +377,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -462,6 +466,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot,
     };
 
@@ -521,6 +526,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(async () => ({
         path: "out/case3/case3-000.png",
         seq: 0,
@@ -606,6 +612,7 @@ describe("useCase3Controller lifecycle", () => {
         sideReads += 1;
         return sideReads === 1 ? finalWithout() : finalSide.promise;
       }),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(async () => ({
         path: "out/case3/case3-000.png",
         seq: 0,
@@ -692,6 +699,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(async () => {
         screenshotPosted = true;
         return { path: "out/case3/case3-000.png", seq: 0 };
@@ -772,6 +780,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(async (base64) => {
         uploadedFrames.push(base64);
         screenshots += 1;
@@ -854,6 +863,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot,
     };
 
@@ -913,6 +923,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -973,6 +984,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => finalWithout()),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot,
     };
 
@@ -1057,6 +1069,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => incomplete),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -1194,6 +1207,7 @@ describe("useCase3Controller lifecycle", () => {
         if (side === "without") return withoutDone;
         return incompleteWith;
       }),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -1275,6 +1289,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => liveWithout(1)),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -1348,6 +1363,7 @@ describe("useCase3Controller lifecycle", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => liveWithout(1)),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 

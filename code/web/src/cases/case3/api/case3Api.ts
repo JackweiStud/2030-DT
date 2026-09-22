@@ -12,6 +12,7 @@ import type {
   Case3Side,
   ControlSnapshot,
   SideSnapshot,
+  ThroughputSnapshot,
 } from "../types";
 
 /** 同源 Case3 API 前缀；不得在组件散落 3102。 */
@@ -104,6 +105,22 @@ function assertPoint(value: unknown, side: Case3Side): Case3Point {
   }
 
   return point;
+}
+
+function assertThroughputSnapshot(body: unknown): ThroughputSnapshot {
+  if (!isObject(body)) throw new Error("throughput body must be object");
+  if (!Array.isArray(body.samples)) throw new Error("samples must be array");
+  const samples = body.samples.map((row, index) => {
+    if (!isObject(row)) throw new Error(`samples[${index}]`);
+    return {
+      no: assertFiniteNumber(row.no, `samples[${index}].no`),
+      gbps: assertFiniteNumber(row.gbps, `samples[${index}].gbps`),
+    };
+  });
+  if (typeof body.pendingTail !== "boolean") {
+    throw new Error("pendingTail must be boolean");
+  }
+  return { samples, pendingTail: body.pendingTail };
 }
 
 function assertSideSnapshot(body: unknown, expectedSide: Case3Side): SideSnapshot {
@@ -325,6 +342,17 @@ export function createCase3Api(options: ApiClientOptions = {}) {
         `/side?side=${side}`,
         { method: "GET", signal },
         (body) => assertSideSnapshot(body, side),
+      );
+    },
+
+    async getThroughput(
+      side: Case3Side,
+      signal?: AbortSignal,
+    ): Promise<ThroughputSnapshot> {
+      return request(
+        `/throughput?side=${side}`,
+        { method: "GET", signal },
+        (body) => assertThroughputSnapshot(body),
       );
     },
 

@@ -116,7 +116,7 @@ describe("Case3 SVG screenshot compatibility", () => {
         baseline={{ success: 222, total: 235 }}
         without={null}
         withSide={null}
-        pairValid={false}
+        roundCompareEnabled={false}
       />,
     );
 

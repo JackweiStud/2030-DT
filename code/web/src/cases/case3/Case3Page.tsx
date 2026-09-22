@@ -98,8 +98,8 @@ export function Case3Page(props: Props) {
             pairValid={view.pairValid}
           />
           <ThroughputChart
-            withoutPoints={view.withoutKpiSnapshot?.points ?? null}
-            withPoints={view.withKpiSnapshot?.points ?? null}
+            without={view.thrpWithout}
+            withSamples={view.thrpWith}
             routeNos={view.routeNos}
             showWithSeries={view.showWithThroughput}
           />
@@ -107,7 +107,7 @@ export function Case3Page(props: Props) {
             baseline={view.baseline}
             without={view.beamWithout}
             withSide={view.beamWith}
-            pairValid={view.pairValid}
+            roundCompareEnabled={view.beamCompareEnabled}
           />
         </div>
       </section>

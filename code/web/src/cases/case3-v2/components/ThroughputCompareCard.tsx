@@ -7,18 +7,18 @@ import { useMemo } from "react";
 import {
   CASE3_THRP_Y_MAX_DEFAULT,
   niceCeilThroughput,
-  throughputSeries,
+  throughputSeriesFromSnapshots,
   throughputXDomain,
   throughputXTicks,
 } from "../../case3/metrics/case3Metrics";
-import type { Case3Point } from "../../case3/types";
+import type { ThroughputSnapshot } from "../../case3/types";
 import { segmentedThroughputPath } from "../v2ThroughputPath";
 
 type Props = {
   /** init baseRoute 点号；用于固定 X 域。 */
   routeNos: ReadonlyArray<number>;
-  withoutPoints?: Case3Point[] | null;
-  withPoints?: Case3Point[] | null;
+  without?: ThroughputSnapshot | null;
+  withSamples?: ThroughputSnapshot | null;
   showWithSeries?: boolean;
 };
 
@@ -40,8 +40,9 @@ const DOT = 4;
  */
 export function ThroughputCompareCard(props: Props) {
   const series = useMemo(
-    () => throughputSeries(props.withoutPoints ?? [], props.withPoints ?? []),
-    [props.withoutPoints, props.withPoints],
+    () =>
+      throughputSeriesFromSnapshots(props.without, props.withSamples),
+    [props.without, props.withSamples],
   );
   const withSeries = props.showWithSeries ? series.with : [];
   const all = [...series.without, ...withSeries];

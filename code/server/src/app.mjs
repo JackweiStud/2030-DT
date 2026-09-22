@@ -11,6 +11,7 @@ import { createInitDataService } from "./cases/case3/init-data.mjs";
 import { createCase3Router } from "./cases/case3/routes.mjs";
 import { createCase3ScreenshotService } from "./cases/case3/screenshot.mjs";
 import { createSideFilesService } from "./cases/case3/side-files.mjs";
+import { createCase3ThroughputService } from "./cases/case3/throughput.mjs";
 import { createCase4ControlFileService } from "./cases/case4/control-file.mjs";
 import { createCase4DebugJsonlService } from "./cases/case4/debug-jsonl.mjs";
 import { createCase4InitDataService } from "./cases/case4/init-data.mjs";
@@ -86,6 +87,11 @@ export function createAdapterApp(options) {
     fsOps,
     logger,
   });
+  const case3Throughput = createCase3ThroughputService({
+    sharedDir: options.sharedDir,
+    fsOps,
+    logger,
+  });
   const case3Screenshot = createCase3ScreenshotService({
     sharedDir: options.sharedDir,
     controlFile: case3ControlFile,
@@ -96,6 +102,7 @@ export function createAdapterApp(options) {
     controlFile: case3ControlFile,
     initData: case3InitData,
     sideFiles: case3SideFiles,
+    throughput: case3Throughput,
     screenshot: case3Screenshot,
   });
 
@@ -244,6 +251,7 @@ export function createAdapterApp(options) {
         controlFile: case3ControlFile,
         initData: case3InitData,
         sideFiles: case3SideFiles,
+        throughput: case3Throughput,
         screenshot: case3Screenshot,
         debugJsonl: case3DebugJsonl,
       },

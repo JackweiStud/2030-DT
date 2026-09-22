@@ -59,6 +59,22 @@ describe("case3Api", () => {
     await expect(api.getControl()).resolves.toMatchObject({ command: "init" });
   });
 
+  it("解析吞吐快照", async () => {
+    const api = createCase3Api({
+      fetchImpl: async () =>
+        ok({
+          ok: true,
+          side: "without",
+          samples: [{ no: 1, gbps: 8.5 }],
+          pendingTail: true,
+        }),
+    });
+    await expect(api.getThroughput("without")).resolves.toEqual({
+      samples: [{ no: 1, gbps: 8.5 }],
+      pendingTail: true,
+    });
+  });
+
   it("拒绝无 reflection 的 with 点", async () => {
     const api = createCase3Api({
       fetchImpl: async () =>

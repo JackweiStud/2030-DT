@@ -8,15 +8,15 @@ import { useMemo } from "react";
 import {
   niceCeilThroughput,
   CASE3_THRP_Y_MAX_DEFAULT,
-  throughputSeries,
+  throughputSeriesFromSnapshots,
   throughputXDomain,
   throughputXTicks,
 } from "../metrics/case3Metrics";
-import type { Case3Point } from "../types";
+import type { ThroughputSnapshot } from "../types";
 
 type Props = {
-  withoutPoints: Case3Point[] | null;
-  withPoints: Case3Point[] | null;
+  without: ThroughputSnapshot | null;
+  withSamples: ThroughputSnapshot | null;
   /** init baseRoute 点号；用于固定 X 域。 */
   routeNos: ReadonlyArray<number> | null;
   /** 是否显示传入的 With 曲线；配对/历史策略由页面统一决定。 */
@@ -36,11 +36,8 @@ const BOTTOM = 210;
 export function ThroughputChart(props: Props) {
   const series = useMemo(
     () =>
-      throughputSeries(
-        props.withoutPoints ?? [],
-        props.withPoints ?? [],
-      ),
-    [props.withoutPoints, props.withPoints],
+      throughputSeriesFromSnapshots(props.without, props.withSamples),
+    [props.without, props.withSamples],
   );
 
   const withSeries = props.showWithSeries ? series.with : [];

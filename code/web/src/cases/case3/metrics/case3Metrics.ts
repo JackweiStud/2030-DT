@@ -7,6 +7,7 @@ import type {
   BeamAccuracyBaseline,
   Case3Point,
   SideSnapshot,
+  ThroughputSnapshot,
 } from "../types";
 
 /** 一位小数展示（不改变业务权威精度语义，仅 UI 格式）。 */
@@ -51,13 +52,13 @@ export function deriveBeamAccuracy(
   baseline: BeamAccuracyBaseline | null,
   without: SideSnapshot | null,
   withSide: SideSnapshot | null,
-  pairValid: boolean,
+  roundCompareEnabled: boolean,
 ): BeamAccuracyDisplay | null {
   if (!baseline) return null;
 
   let roundSuccess = 0;
   let roundTotal = 0;
-  if (pairValid && without && withSide) {
+  if (roundCompareEnabled && without && withSide) {
     const withoutByNo = new Map(
       without.points.map((p) => [p.no, p] as const),
     );
@@ -98,6 +99,36 @@ export function throughputSeries(
   return {
     without: sort(without ?? []),
     with: sort(withPoints ?? []),
+  };
+}
+
+/** 从独立吞吐快照构造曲线点；两路不等长不补 0。 */
+export function throughputSeriesFromSnapshots(
+  without: ThroughputSnapshot | null | undefined,
+  withSnap: ThroughputSnapshot | null | undefined,
+): ThroughputSeries {
+  const map = (snap: ThroughputSnapshot | null | undefined) =>
+    [...(snap?.samples ?? [])]
+      .filter((s) => Number.isFinite(s.gbps))
+      .sort((a, b) => a.no - b.no)
+      .map((s) => ({ no: s.no, value: s.gbps }));
+  return {
+    without: map(without),
+    with: map(withSnap),
+  };
+}
+
+/** 结构化侧快照 → 吞吐快照（终态回退）。 */
+export function sideSnapshotToThroughput(
+  snapshot: SideSnapshot | null | undefined,
+): ThroughputSnapshot | null {
+  if (!snapshot) return null;
+  return {
+    samples: [...snapshot.points]
+      .filter((p) => Number.isFinite(p.throughputGbps))
+      .sort((a, b) => a.no - b.no)
+      .map((p) => ({ no: p.no, gbps: p.throughputGbps })),
+    pendingTail: snapshot.pendingTail,
   };
 }
 

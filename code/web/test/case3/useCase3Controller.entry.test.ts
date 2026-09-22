@@ -59,6 +59,7 @@ describe("useCase3Controller entry", () => {
         baseline: { success: 1, total: 2 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -103,6 +104,7 @@ describe("useCase3Controller entry", () => {
         baseline: { success: 1, total: 2 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -134,6 +136,7 @@ describe("useCase3Controller entry", () => {
         );
       }),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -166,6 +169,7 @@ describe("useCase3Controller entry", () => {
       postControl: vi.fn(),
       getInitData: vi.fn(),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -203,6 +207,7 @@ describe("useCase3Controller entry", () => {
         baseline: { success: 8, total: 10 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -293,6 +298,7 @@ describe("useCase3Controller entry", () => {
         pendingTail: false,
         costPct: 25,
       })),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -339,6 +345,7 @@ describe("useCase3Controller entry", () => {
         baseline: { success: 1, total: 2 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 

@@ -193,7 +193,8 @@ describe("selectCase3Presentation", () => {
     expect(view.showWithThroughput).toBe(true);
     expect(view.pairValid).toBe(false);
     expect(view.beamWithout).toBe(without);
-    expect(view.beamWith).toBeNull();
+    expect(view.beamWith).toBe(liveWith);
+    expect(view.beamCompareEnabled).toBe(true);
   });
 
   it("With completed：pairValid 后两侧 KPI/BA/peer 均可比较", () => {

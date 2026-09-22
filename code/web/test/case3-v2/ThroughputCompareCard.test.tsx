@@ -6,16 +6,10 @@ import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { ThroughputCompareCard } from "../../src/cases/case3-v2/components/ThroughputCompareCard";
 import { segmentedThroughputPath } from "../../src/cases/case3-v2/v2ThroughputPath";
-import type { Case3Point } from "../../src/cases/case3/types";
+import type { ThroughputSnapshot } from "../../src/cases/case3/types";
 
-function point(no: number, value: number): Case3Point {
-  return {
-    no,
-    ue: { x: no, y: 0, z: 0 },
-    selectedBeamId: 1,
-    throughputGbps: value,
-    scanBeamIds: [0],
-  };
+function thrp(samples: Array<{ no: number; gbps: number }>): ThroughputSnapshot {
+  return { samples, pendingTail: false };
 }
 
 describe("segmentedThroughputPath", () => {
@@ -41,7 +35,10 @@ describe("ThroughputCompareCard without", () => {
     const { container } = render(
       <ThroughputCompareCard
         routeNos={[1, 2, 3, 4]}
-        withoutPoints={[point(1, 8), point(3, 9)]}
+        without={thrp([
+          { no: 1, gbps: 8 },
+          { no: 3, gbps: 9 },
+        ])}
       />,
     );
     const d = container.querySelector("[data-thr-wo]")?.getAttribute("d") ?? "";
@@ -60,7 +57,10 @@ describe("ThroughputCompareCard without", () => {
     const { container } = render(
       <ThroughputCompareCard
         routeNos={[1, 2, 3, 4]}
-        withoutPoints={[point(1, 8), point(2, 9)]}
+        without={thrp([
+          { no: 1, gbps: 8 },
+          { no: 2, gbps: 9 },
+        ])}
       />,
     );
     const d = container.querySelector("[data-thr-wo]")?.getAttribute("d") ?? "";
@@ -72,7 +72,7 @@ describe("ThroughputCompareCard without", () => {
     const { container } = render(
       <ThroughputCompareCard
         routeNos={[1, 2, 3, 4, 5]}
-        withoutPoints={[point(1, 20)]}
+        without={thrp([{ no: 1, gbps: 20 }])}
       />,
     );
     const yTicks = [...container.querySelectorAll("[data-thr-y-tick]")].map(

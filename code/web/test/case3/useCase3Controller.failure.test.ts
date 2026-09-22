@@ -105,6 +105,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -150,6 +151,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -211,6 +213,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => liveWithout(1)),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -277,6 +280,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => freshLive),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 

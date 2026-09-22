@@ -58,15 +58,15 @@ export function BottomDock(props: Props) {
         />
         <ThroughputCompareCard
           routeNos={view.routeNos}
-          withoutPoints={withoutComplete}
-          withPoints={withComplete}
+          without={view.thrpWithout}
+          withSamples={view.thrpWith}
           showWithSeries={view.showWithThroughput}
         />
         <BeamAccuracyCard
           baseline={view.baseline}
           without={view.beamWithout}
           withSide={view.beamWith}
-          pairValid={view.pairValid}
+          pairValid={view.beamCompareEnabled}
         />
       </div>
     </section>

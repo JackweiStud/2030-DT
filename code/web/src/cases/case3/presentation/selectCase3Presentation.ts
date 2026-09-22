@@ -4,9 +4,9 @@
  *
  * 快照规则：
  * - 地图点：live 优先于 result。
- * - Cost / Throughput：当前 Start 侧只用 live；With 单侧历史可独立展示；
- *   新 Without 一旦进入 Start 或已有 Without 数据，即隐藏旧 With KPI。
- * - BA：只用 completed results + pairValid，不用 live。
+ * - Cost：当前 Start 侧只用 live side 快照中的 cost。
+ * - Throughput：独立 thrp 快照；运行侧读 liveThrp，完成侧读 resultThrp（与 P 点完整度解耦）。
+ * - BA：baseline + 可比较时（pairValid 或 With 基于当前 Without 运行中）的 live/result 增量。
  * - 未配对历史不得进入跨侧比较（peer / pairValid）。
  */
 
@@ -22,6 +22,7 @@ import {
   sideStatusRetryHint,
   type Case3State,
 } from "../state/case3Reducer";
+import { sideSnapshotToThroughput } from "../metrics/case3Metrics";
 import type {
   ActiveAction,
   BaseRoutePoint,
@@ -30,6 +31,7 @@ import type {
   Case3Side,
   Case3VisibleState,
   SideSnapshot,
+  ThroughputSnapshot,
 } from "../types";
 
 /** CSS data-state：failed/resetting/未配对历史映射到旧页面当前视觉壳。 */
@@ -56,6 +58,9 @@ export type Case3Presentation = {
   withoutKpiSnapshot: SideSnapshot | null;
   withKpiSnapshot: SideSnapshot | null;
   showWithThroughput: boolean;
+  thrpWithout: ThroughputSnapshot | null;
+  thrpWith: ThroughputSnapshot | null;
+  beamCompareEnabled: boolean;
   beamWithout: SideSnapshot | null;
   beamWith: SideSnapshot | null;
   withoutBadge: string;
@@ -130,6 +135,46 @@ function selectWithKpiSnapshot(
   return null;
 }
 
+function selectThrpWithout(
+  state: Case3State,
+  withoutKpiSnapshot: SideSnapshot | null,
+): ThroughputSnapshot | null {
+  if (selectActiveStartSide(state) === "without") {
+    return state.liveThrp.without;
+  }
+  if (withoutKpiSnapshot) {
+    return (
+      state.resultThrp.without ?? sideSnapshotToThroughput(withoutKpiSnapshot)
+    );
+  }
+  return null;
+}
+
+function selectThrpWith(
+  state: Case3State,
+  withKpiSnapshot: SideSnapshot | null,
+  showWithThroughput: boolean,
+): ThroughputSnapshot | null {
+  if (!showWithThroughput) return null;
+  if (selectActiveStartSide(state) === "with") {
+    return state.liveThrp.with;
+  }
+  if (withKpiSnapshot) {
+    return state.resultThrp.with ?? sideSnapshotToThroughput(withKpiSnapshot);
+  }
+  return null;
+}
+
+function selectBeamWith(state: Case3State): SideSnapshot | null {
+  if (
+    state.activeAction?.kind === "start" &&
+    state.activeAction.side === "with"
+  ) {
+    return state.live.with;
+  }
+  return state.results.with;
+}
+
 /**
  * 从 Case3State 派生展示模型。
  */
@@ -137,6 +182,8 @@ export function selectCase3Presentation(state: Case3State): Case3Presentation {
   const visible = deriveVisibleState(state);
   const withoutKpiSnapshot = selectWithoutKpiSnapshot(state);
   const withKpiSnapshot = selectWithKpiSnapshot(state, withoutKpiSnapshot);
+  const showWithThroughput = withKpiSnapshot !== null;
+  const beamCompareEnabled = canCompareWithCurrentWithout(state);
 
   return {
     visible,
@@ -156,9 +203,12 @@ export function selectCase3Presentation(state: Case3State): Case3Presentation {
       : null,
     withoutKpiSnapshot,
     withKpiSnapshot,
-    showWithThroughput: withKpiSnapshot !== null,
+    showWithThroughput,
+    thrpWithout: selectThrpWithout(state, withoutKpiSnapshot),
+    thrpWith: selectThrpWith(state, withKpiSnapshot, showWithThroughput),
+    beamCompareEnabled,
     beamWithout: state.results.without,
-    beamWith: state.results.with,
+    beamWith: selectBeamWith(state),
     withoutBadge: sideStatusBadge(state, "without"),
     withBadge: sideStatusBadge(state, "with"),
     withoutBadgeError: sideStatusBadgeIsError(state, "without"),
