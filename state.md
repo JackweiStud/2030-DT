@@ -2,6 +2,16 @@
 
 ## 当前阶段
 
+- case1 Gate 1 设计交接（2026-09-21）：`03-design/case1/case1-dt-construction.pen` 已达 **REVIEW_READY**（未 APPROVED / 未冻结）。四主帧 home/geometry/material/rf + 局部状态样板；交接见 `03-design/case1/REVIEW-HANDOFF.md`、`Visual_Diff.md`、`Frontend_Spec.md`。已清理未引用重复资产；`_qa/` 过程证据不入库。`bg-left-*`、多余 swatch、备用 icon 暂留由用户自理。不进入静态 HTML 或正式实现；待用户视觉冻结。
+
+- case1 设计分工与独立预检（2026-09-21）：Cursor 完成 Pencil 设计轨；Codex 维护 `doc/case1/` 与本文件。转发入口 `doc/case1/CURSOR-PENCIL-PROMPT.md`。技术预检见 `doc/case1/TECHNICAL-PRECHECK.md`（GLB/TXT 只读检查、接口候选未冻结）。真实浏览器渲染、接口批准与实现均未开始。
+
+- case1 RF 热力映射（2026-09-21）：用户要求参考 case2 RSS 机制；已核对源码并记录单图 min/max 归一化、双线性插值、蓝→青→黄→红网格透明叠加，原始数值不取负，图例需与渲染一致。底图替换后仍需独立标定 case1 锚区与坐标；仅更新范围文档，未实现。
+
+- case1 3D 需求补充（2026-09-21）：用户确认两层模型鼠标旋转/缩放/平移、初始参数在 `code/web/.env` 配置，调整后视角写回该文件，跨 case 和重开 Web 保留，支持 Reset 回初始设置。初始基准与最近视角分开，需 Node 运行时读写，不能仅依赖 Vite 构建配置。已补入 `doc/case1/PHASE0-SCOPE.md`；仅更新需求，尚未添加配置或实现。
+
+- case1 范围梳理（更新于 2026-09-21）：用户已确认预置结果浏览、首页先呈现后依次预加载几何/电磁 GLB、按页加载离线 TXT、无需 Start/ReInit，3D 采用 Three.js。三层图片点击进入、再次点击返回；首页五图正常显示，详情当前层原色、其余变暗；仅几何/电磁材质/RF 可点击。需求与输入映射见 `doc/case1/PHASE0-SCOPE.md`。RF 无网格底图由用户后续替换，最终数据叠加验收待底图到位；设计未冻结、未开始实现。当前推进 case1，不扩大 case4 范围。
+
 - case4 功能收口（2026-09-18）：用户确认除 3D 外全部功能已完成本地开发。已交付：正式 Web / Node / 打桩主线、XYZ 误差、CEP 百分比、2D Reflection、误差/吞吐/CDF 悬停、`/result` 反射漂移不挡完成。3D 开关保持可见禁用，不接业务、不引入 Three.js。真实后端/挂载/采集为用户此前提供 PASS，非本轮独立复验；打桩 fixture 与示例 BS 不得称为真实标定。Issue #3 未关闭。冲突以本条为准。
 
 - case4 Reflection（2026-09-18）：本地 Web + Node 文件服务 + case4 打桩已按 `doc/case4/REFLECTION-SPEC.md` 贯通。运行中四路共同前缀、完成尽力附加、JSONL 指纹覆盖/最终封印、开轮可选清理、地图当前 Pi 路径动画与完成静态截图均已在隔离共享目录三进程 E2E 验证。示例 BS `(1.0,5.0,7.0)` 与打桩 fixture 为模拟，**不是**真实标定或真实后端验收。Issue #3 未关闭。
@@ -78,7 +88,7 @@
 - case4 逐点偏差（2026-09-13 用户确认）：base 为预期轨迹；2D/3D 均按 XYZ 欧氏距离计算（2026-09-17 更新）。三种定位结果均按文件行号与 base 配对，第 i 行对应 Pi；用户已确认同一行三方案收齐后同步展示轨迹及误差，按连续完整点位推进，吞吐独立；无效坐标 65535 已由用户澄清：同方案逐分量以上个点对应值替代，保留其余分量和点号并记录原值/替代值；P1 无前值时用户已确认使用 base P1 对应分量；连续无效沿用前一点已归一值；底部 CDF/CEP 保持后端统计来源。
 - case4 打桩模式（2026-09-13 用户确认，2026-09-15 规格收口）：**与 case3 一样**，仅 `CASE4_STUB_DATA_MODE=random|replay` 切换，默认 random；不增加 `SOURCE_DIR`。replay 回放包内 fixtures，random 相对同一套 fixtures 小幅扰动。换用户样本靠替换 `code/back/case4/fixtures/`。随机字段为吞吐/轨迹小幅变化，CDF/CEP/NLOS 独立扰动，不强制三方案优劣，不增加幅度配置。施工默认幅度见 `doc/case4/realback_no.md`。实现期把 `01-参考资料/case4/data/` 复制进包内 fixtures，运行时不读 `01-参考资料`。启动遇 `execute success` 按 case3 清空九动态文件从第 1 行重放。共享 base 与 fixture 不一致则 `SEED_BASE_MISMATCH` 退出。
 - case4 本次验收范围（2026-09-13 用户确认）：前端 + Node 文件适配服务 + case4 打桩端/数据，本地接口流程、前端交互、基本异常通过；不以真实后端/真实挂载/真实采集验收为完成条件。基本异常清单与验证方式尚待明确。
-- 当前焦点：case4 除 3D 外功能已完成本地开发并收口文档。剩余产品功能仅 3D。case2/case3 既有验收口径不变。真实后端/真实挂载不在本轮关闭范围内。
+- 当前焦点：case1 Gate 1 设计源 `REVIEW_READY`，待用户视觉冻结；case4 除 3D 外本地功能已收口，其剩余功能仅 3D。case2/case3 既有验收口径不变。真实后端/真实挂载不在本轮关闭范围内。
 
 ## 一句话演示承诺
 
@@ -189,6 +199,8 @@
 - [case3 QA 证据](doc/case3/QA-EVIDENCE.md)
 
 ## 最小下一步与停止条件
+
+case1：设计源已 `REVIEW_READY`（`03-design/case1/case1-dt-construction.pen`）。用户视觉冻结后再进入 Gate 1.5；Codex 可按 `REVIEW-HANDOFF.md` 与 `Frontend_Spec.md` 回查。RF 纯底图后补。不进入正式实现。
 
 case4：除 3D 外功能已完成本地开发（正式 Web + Node + 打桩）。3D 不在本轮范围。真实后端/真实挂载若需由本仓库独立复验，应追加 `doc/case4/QA-EVIDENCE.md`，不覆盖本地打桩记录。
 

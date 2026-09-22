@@ -4,7 +4,7 @@
 
 | Case | Tab 名 | 交付顺序 | 一句话故事 | 派生 / 独立判断 | 当前 Gate | 文档入口 |
 |---|---|---:|---|---|---|---|
-| case1 | DT Construction（按导航顺序推断，待确认） | 4 | 未提供 | 待判断 | 未启动 | `doc/case1/`（未来） |
+| case1 | DT Construction | 4 | 浏览五层架构与预置几何/电磁模型、RF 热力图和 RF off/on 离线指标 | 独立只读浏览 case；复用 Shell 和热力渲染机制，不继承其他 case 的业务控制状态 | Gate 1 设计源 `REVIEW_READY`（未冻结）；见 `state.md` | `doc/case1/PHASE0-SCOPE.md`；设计交接 `03-design/case1/REVIEW-HANDOFF.md` |
 | case2 | DT Calibration | 1 | Initial DT 基线经 `with dt` 校准后，以 Calibrated DT 的误差分布与均值下降证明校准有效 | 独立业务 case | 本地开发完成：正式 Web + Node 适配 + 打桩 QA 通过；真实后端/真实挂载待外部验收 | `doc/case2/` |
 | case3 | DT for Comm | 2 | Without DT 先跑通信基线，With DT 再跑数字孪生辅助通信，并对比 Cost、Throughput 与 Beam Accuracy | 独立业务 case；复用 Shell/Node 适配骨架和截图机制，不复用 case2 指标语义 | 本地开发完成：Gate 1/1.5/2/3 已冻结，正式 Web + Node 适配 + 打桩已实现并通过本地验证；真实后端/真实挂载待外部验收 | `doc/case3/` |
 | case4 | DT for positioning | 3 | 通过三方案轨迹与误差对比证明 DT 辅助定位更准确，同时展示吞吐率、NLOS 与 2D 反射路径 | 独立业务 case；沿用 Shell 与流程，首版 2D；3D 未做 | 本地开发完成：正式 Web + Node 适配 + 打桩；除 3D 外功能已交付；真实后端/真实挂载待独立验收 | `doc/case4/` |
