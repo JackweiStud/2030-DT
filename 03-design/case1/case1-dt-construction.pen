@@ -82,7 +82,7 @@
           "name": "case1-内容区",
           "width": "fill_container",
           "height": "fill_container",
-          "gap": 20,
+          "gap": 30,
           "padding": 20,
           "children": [
             {
@@ -99,7 +99,7 @@
               "y": 20,
               "descendants": {
                 "HPe1y": {
-                  "fontSize": 22
+                  "fontSize": 24
                 },
                 "w7e4Xl": {
                   "layout": "vertical",
@@ -230,8 +230,8 @@
               "type": "frame",
               "id": "XuH4B",
               "name": "首页分层内容区",
-              "width": 1340,
-              "height": 970,
+              "width": 1330,
+              "height": 960,
               "cornerRadius": 16,
               "layout": "vertical",
               "gap": 10,
@@ -287,7 +287,7 @@
                       "id": "T6Ajk",
                       "name": "基础四层说明区",
                       "width": "fill_container",
-                      "height": 714,
+                      "height": 715,
                       "fill": {
                         "type": "gradient",
                         "gradientType": "linear",
@@ -2032,7 +2032,7 @@
                       "id": "S8ibx",
                       "name": "说明行-数字孪生应用层",
                       "width": "fill_container",
-                      "height": 188,
+                      "height": 170,
                       "fill": {
                         "type": "gradient",
                         "gradientType": "linear",
@@ -2054,12 +2054,8 @@
                         ]
                       },
                       "cornerRadius": 16,
-                      "gap": 30,
-                      "padding": [
-                        10,
-                        12
-                      ],
-                      "justifyContent": "center",
+                      "gap": 15,
+                      "padding": 15,
                       "alignItems": "center",
                       "children": [
                         {
@@ -2543,32 +2539,11 @@
               "type": "frame",
               "id": "nogGY",
               "name": "几何层右侧内容",
-              "clip": true,
               "width": 1320,
               "height": "fill_container",
-              "fill": {
-                "type": "gradient",
-                "gradientType": "linear",
-                "enabled": true,
-                "opacity": 0.4,
-                "rotation": 135,
-                "size": {
-                  "height": 1.4142135623730951
-                },
-                "colors": [
-                  {
-                    "color": "#00000066",
-                    "position": 1
-                  },
-                  {
-                    "color": "#000000",
-                    "position": 0
-                  }
-                ]
-              },
-              "cornerRadius": 16,
+              "fill": "#00000000",
               "layout": "vertical",
-              "gap": 12,
+              "gap": 10,
               "padding": 14,
               "children": [
                 {
@@ -2606,109 +2581,217 @@
                 },
                 {
                   "type": "frame",
-                  "id": "XQ3Zt",
-                  "name": "概述与KPI行",
+                  "id": "WURB9",
+                  "name": "几何层内容卡",
+                  "clip": true,
                   "width": "fill_container",
-                  "height": 319,
+                  "height": "fill_container",
+                  "fill": {
+                    "type": "gradient",
+                    "gradientType": "linear",
+                    "enabled": true,
+                    "opacity": 0.4,
+                    "rotation": 135,
+                    "size": {
+                      "height": 1.4142135623730951
+                    },
+                    "colors": [
+                      {
+                        "color": "#00000066",
+                        "position": 1
+                      },
+                      {
+                        "color": "#000000",
+                        "position": 0
+                      }
+                    ]
+                  },
                   "cornerRadius": 16,
-                  "gap": 5,
-                  "padding": 5,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 14,
                   "children": [
                     {
                       "type": "frame",
-                      "id": "CWceW",
-                      "name": "层说明区",
-                      "width": 453,
-                      "height": "fill_container",
-                      "fill": "#00000000",
-                      "cornerRadius": 10,
-                      "layout": "vertical",
-                      "gap": 10,
-                      "padding": 10,
+                      "id": "XQ3Zt",
+                      "name": "概述与KPI行",
+                      "width": "fill_container",
+                      "height": 319,
+                      "cornerRadius": 16,
+                      "gap": 5,
+                      "padding": 5,
+                      "justifyContent": "center",
+                      "alignItems": "center",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "WsXfh",
-                          "name": "层标题",
-                          "fill": "$text-primary",
-                          "content": "环境几何层",
-                          "fontFamily": "Inter",
-                          "fontSize": 20,
-                          "fontWeight": "600"
-                        },
-                        {
-                          "type": "text",
-                          "id": "u8hVQ",
-                          "name": "层描述",
-                          "fill": "$text-primary",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "构建物理世界的三维实体数字重构",
-                          "lineHeight": 1.4,
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
+                          "type": "frame",
+                          "id": "CWceW",
+                          "name": "层说明区",
+                          "width": 435,
+                          "height": "fill_container",
+                          "fill": "#00000000",
+                          "cornerRadius": 10,
+                          "layout": "vertical",
+                          "gap": 10,
+                          "padding": 10,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WsXfh",
+                              "name": "层标题",
+                              "fill": "$text-primary",
+                              "content": "环境几何层",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "u8hVQ",
+                              "name": "层描述",
+                              "fill": "$text-primary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "构建物理世界的三维实体数字重构",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Nbnym",
+                              "name": "能力标签组",
+                              "width": "fill_container",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "Y7Vj7o",
+                                  "type": "ref",
+                                  "ref": "ky2W5",
+                                  "name": "标签-多源感知融合",
+                                  "x": 0,
+                                  "y": 0,
+                                  "descendants": {
+                                    "dWNnW": {
+                                      "content": "多源感知融合",
+                                      "name": "标签文案-多源感知融合"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "LDQ68",
+                                  "type": "ref",
+                                  "ref": "ky2W5",
+                                  "name": "标签-离散点云/3D表征",
+                                  "x": 90,
+                                  "y": 0,
+                                  "descendants": {
+                                    "dWNnW": {
+                                      "content": "离散点云/3D表征",
+                                      "name": "标签文案-离散点云/3D表征"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "k1kiBH",
+                                  "type": "ref",
+                                  "ref": "ky2W5",
+                                  "name": "标签-体素与空间网格表征",
+                                  "x": 199,
+                                  "y": 0,
+                                  "descendants": {
+                                    "dWNnW": {
+                                      "content": "体素与空间网格表征",
+                                      "name": "标签文案-体素与空间网格表征"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "mXUgq",
+                                  "type": "ref",
+                                  "ref": "ky2W5",
+                                  "name": "标签-结构与拓扑",
+                                  "x": 322,
+                                  "y": 0,
+                                  "descendants": {
+                                    "dWNnW": {
+                                      "content": "结构与拓扑",
+                                      "name": "标签文案-结构与拓扑"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "type": "frame",
-                          "id": "Nbnym",
-                          "name": "能力标签组",
+                          "id": "Js2Qe",
+                          "name": "KPI组",
                           "width": "fill_container",
-                          "gap": 8,
+                          "height": "fill_container",
+                          "fill": "#00000000",
+                          "gap": 20,
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
                           "children": [
                             {
-                              "id": "Y7Vj7o",
+                              "id": "Kpaun",
                               "type": "ref",
-                              "ref": "ky2W5",
-                              "name": "标签-多源感知融合",
+                              "ref": "k5buD9",
+                              "name": "KPI-几何保真度",
+                              "width": 400,
+                              "height": 300,
+                              "flipX": false,
+                              "flipY": false,
                               "x": 0,
-                              "y": 0,
+                              "y": 4.5,
+                              "gap": 5,
+                              "padding": 10,
+                              "cornerRadius": 16,
                               "descendants": {
-                                "dWNnW": {
-                                  "content": "多源感知融合",
-                                  "name": "标签文案-多源感知融合"
+                                "B5KAGV": {
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "assets/icon-geo-fidelity.png",
+                                    "mode": "fit"
+                                  },
+                                  "width": 26,
+                                  "height": 26
+                                },
+                                "z63n4b": {
+                                  "content": "几何保真度"
                                 }
                               }
                             },
                             {
-                              "id": "LDQ68",
+                              "id": "tA05J",
                               "type": "ref",
-                              "ref": "ky2W5",
-                              "name": "标签-离散点云/3D表征",
-                              "x": 90,
-                              "y": 0,
+                              "ref": "k5buD9",
+                              "name": "KPI-重构覆盖率",
+                              "width": 400,
+                              "height": 300,
+                              "flipX": false,
+                              "flipY": false,
+                              "x": 414,
+                              "y": 4.5,
+                              "padding": 10,
+                              "cornerRadius": 16,
                               "descendants": {
-                                "dWNnW": {
-                                  "content": "离散点云/3D表征",
-                                  "name": "标签文案-离散点云/3D表征"
-                                }
-                              }
-                            },
-                            {
-                              "id": "k1kiBH",
-                              "type": "ref",
-                              "ref": "ky2W5",
-                              "name": "标签-体素与空间网格表征",
-                              "x": 199,
-                              "y": 0,
-                              "descendants": {
-                                "dWNnW": {
-                                  "content": "体素与空间网格表征",
-                                  "name": "标签文案-体素与空间网格表征"
-                                }
-                              }
-                            },
-                            {
-                              "id": "mXUgq",
-                              "type": "ref",
-                              "ref": "ky2W5",
-                              "name": "标签-结构与拓扑",
-                              "x": 322,
-                              "y": 0,
-                              "descendants": {
-                                "dWNnW": {
-                                  "content": "结构与拓扑",
-                                  "name": "标签文案-结构与拓扑"
+                                "B5KAGV": {
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "assets/icon-recon-rate.png",
+                                    "mode": "fit"
+                                  },
+                                  "width": 26,
+                                  "height": 26
+                                },
+                                "z63n4b": {
+                                  "content": "重构覆盖率"
                                 }
                               }
                             }
@@ -2718,104 +2801,32 @@
                     },
                     {
                       "type": "frame",
-                      "id": "Js2Qe",
-                      "name": "KPI组",
+                      "id": "B6COAr",
+                      "name": "主视图区",
+                      "clip": true,
                       "width": "fill_container",
-                      "height": "fill_container",
-                      "fill": "#00000000",
-                      "gap": 20,
-                      "justifyContent": "space_between",
-                      "alignItems": "center",
+                      "height": 525,
+                      "fill": "#1F2123",
+                      "cornerRadius": 12,
+                      "layout": "none",
                       "children": [
                         {
-                          "id": "Kpaun",
-                          "type": "ref",
-                          "ref": "k5buD9",
-                          "name": "KPI-几何保真度",
-                          "width": 400,
-                          "height": 300,
-                          "flipX": false,
-                          "flipY": false,
+                          "type": "rectangle",
+                          "id": "IysGN",
                           "x": 0,
-                          "y": 4.5,
-                          "gap": 5,
-                          "padding": 10,
-                          "cornerRadius": 16,
-                          "descendants": {
-                            "B5KAGV": {
-                              "fill": {
-                                "type": "image",
-                                "enabled": true,
-                                "url": "assets/icon-geo-fidelity.png",
-                                "mode": "fit"
-                              },
-                              "width": 26,
-                              "height": 26
-                            },
-                            "z63n4b": {
-                              "content": "几何保真度"
-                            }
-                          }
-                        },
-                        {
-                          "id": "tA05J",
-                          "type": "ref",
-                          "ref": "k5buD9",
-                          "name": "KPI-重构覆盖率",
-                          "width": 400,
-                          "height": 300,
-                          "flipX": false,
-                          "flipY": false,
-                          "x": 424,
-                          "y": 4.5,
-                          "padding": 10,
-                          "cornerRadius": 16,
-                          "descendants": {
-                            "B5KAGV": {
-                              "fill": {
-                                "type": "image",
-                                "enabled": true,
-                                "url": "assets/icon-recon-rate.png",
-                                "mode": "fit"
-                              },
-                              "width": 26,
-                              "height": 26
-                            },
-                            "z63n4b": {
-                              "content": "重构覆盖率"
-                            }
-                          }
+                          "y": 0,
+                          "name": "几何层主视图底图",
+                          "context": "运行时用 Beijing_Geometry.glb + Three.js；此为设计代表图",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/geometry-3d.png",
+                            "mode": "fill"
+                          },
+                          "width": 1328,
+                          "height": 700
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "B6COAr",
-                  "name": "主视图区",
-                  "clip": true,
-                  "width": 1290,
-                  "height": 560,
-                  "fill": "#1F2123",
-                  "cornerRadius": 12,
-                  "layout": "none",
-                  "children": [
-                    {
-                      "type": "rectangle",
-                      "id": "IysGN",
-                      "x": 0,
-                      "y": 0,
-                      "name": "几何层主视图底图",
-                      "context": "运行时用 Beijing_Geometry.glb + Three.js；此为设计代表图",
-                      "fill": {
-                        "type": "image",
-                        "enabled": true,
-                        "url": "assets/geometry-3d.png",
-                        "mode": "fill"
-                      },
-                      "width": 1328,
-                      "height": 700
                     }
                   ]
                 }
@@ -2904,32 +2915,11 @@
               "type": "frame",
               "id": "HMM2P",
               "name": "电磁层右侧内容",
-              "clip": true,
               "width": 1320,
               "height": "fill_container",
-              "fill": {
-                "type": "gradient",
-                "gradientType": "linear",
-                "enabled": true,
-                "opacity": 0.4,
-                "rotation": 135,
-                "size": {
-                  "height": 1.4142135623730951
-                },
-                "colors": [
-                  {
-                    "color": "#00000066",
-                    "position": 1
-                  },
-                  {
-                    "color": "#000000",
-                    "position": 0
-                  }
-                ]
-              },
-              "cornerRadius": 16,
+              "fill": "#00000000",
               "layout": "vertical",
-              "gap": 12,
+              "gap": 10,
               "padding": 14,
               "children": [
                 {
@@ -2967,132 +2957,467 @@
                 },
                 {
                   "type": "frame",
-                  "id": "yHSDa",
-                  "name": "概述与KPI行",
+                  "id": "O7ORee",
+                  "name": "电磁层内容卡",
+                  "clip": true,
                   "width": "fill_container",
-                  "height": 319,
+                  "height": "fill_container",
+                  "fill": {
+                    "type": "gradient",
+                    "gradientType": "linear",
+                    "enabled": true,
+                    "opacity": 0.4,
+                    "rotation": 135,
+                    "size": {
+                      "height": 1.4142135623730951
+                    },
+                    "colors": [
+                      {
+                        "color": "#00000066",
+                        "position": 1
+                      },
+                      {
+                        "color": "#000000",
+                        "position": 0
+                      }
+                    ]
+                  },
                   "cornerRadius": 16,
-                  "gap": 5,
-                  "padding": 5,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 14,
                   "children": [
                     {
                       "type": "frame",
-                      "id": "PrfAp",
-                      "name": "层说明区",
-                      "width": 453,
-                      "height": "fill_container",
-                      "fill": "#00000000",
-                      "cornerRadius": 10,
-                      "layout": "vertical",
-                      "gap": 10,
-                      "padding": 10,
+                      "id": "yHSDa",
+                      "name": "概述与KPI行",
+                      "width": "fill_container",
+                      "height": 319,
+                      "cornerRadius": 16,
+                      "gap": 5,
+                      "padding": 5,
+                      "justifyContent": "center",
+                      "alignItems": "center",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "PKiCm",
-                          "name": "层标题",
-                          "fill": "$text-primary",
-                          "content": "电磁材质层",
-                          "fontFamily": "Inter",
-                          "fontSize": 20,
-                          "fontWeight": "600"
-                        },
-                        {
-                          "type": "text",
-                          "id": "fskQc",
-                          "name": "层描述",
-                          "fill": "$text-primary",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "赋予几何体真实的电磁属性",
-                          "lineHeight": 1.4,
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
-                        },
-                        {
                           "type": "frame",
-                          "id": "mNkGx",
-                          "name": "能力标签组",
-                          "width": "fill_container",
+                          "id": "PrfAp",
+                          "name": "层说明区",
+                          "width": 435,
+                          "height": "fill_container",
+                          "fill": "#00000000",
+                          "cornerRadius": 10,
                           "layout": "vertical",
-                          "gap": 8,
+                          "gap": 10,
+                          "padding": 10,
                           "children": [
                             {
+                              "type": "text",
+                              "id": "PKiCm",
+                              "name": "层标题",
+                              "fill": "$text-primary",
+                              "content": "电磁材质层",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "fskQc",
+                              "name": "层描述",
+                              "fill": "$text-primary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "赋予几何体真实的电磁属性",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            },
+                            {
                               "type": "frame",
-                              "id": "zUiuD",
-                              "name": "能力标签行",
-                              "gap": 6,
+                              "id": "mNkGx",
+                              "name": "能力标签组",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "jcXGX",
-                                  "name": "标签-介电常数",
-                                  "fill": "#a89ff91a",
-                                  "cornerRadius": 4,
-                                  "padding": [
-                                    4,
-                                    8
-                                  ],
+                                  "id": "zUiuD",
+                                  "name": "能力标签行",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "jcXGX",
+                                      "name": "标签-介电常数",
+                                      "fill": "#a89ff91a",
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        4,
+                                        8
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "AI431",
+                                          "name": "标签文案-介电常数",
+                                          "fill": "#a89ff9",
+                                          "content": "介电常数",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 11,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "grz3g",
+                                      "name": "标签-电导率",
+                                      "fill": "#a89ff91a",
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        4,
+                                        8
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "yil9O",
+                                          "name": "标签文案-电导率",
+                                          "fill": "#a89ff9",
+                                          "content": "电导率",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 11,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "QBzBc",
+                                      "name": "标签-粗糙度",
+                                      "fill": "#a89ff91a",
+                                      "cornerRadius": 4,
+                                      "padding": [
+                                        4,
+                                        8
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "LBt42",
+                                          "name": "标签文案-粗糙度",
+                                          "fill": "#a89ff9",
+                                          "content": "粗糙度",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 11,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ifeQQ",
+                          "name": "KPI组",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "fill": "#00000000",
+                          "gap": 20,
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "PZvse",
+                              "type": "ref",
+                              "ref": "k5buD9",
+                              "name": "KPI-电磁信道保真度",
+                              "width": 400,
+                              "height": 300,
+                              "flipX": false,
+                              "flipY": false,
+                              "x": 0,
+                              "y": 4.5,
+                              "padding": 10,
+                              "cornerRadius": 16,
+                              "gap": 5,
+                              "descendants": {
+                                "B5KAGV": {
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "assets/icon-em.png",
+                                    "mode": "fit"
+                                  }
+                                },
+                                "z63n4b": {
+                                  "content": "电磁信道保真度"
+                                }
+                              }
+                            },
+                            {
+                              "type": "frame",
+                              "id": "KkphE",
+                              "name": "材质图例",
+                              "width": 400,
+                              "height": 300,
+                              "fill": "#ffffff0d",
+                              "cornerRadius": 16,
+                              "layout": "vertical",
+                              "gap": 5,
+                              "padding": 10,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "O4CAeB",
+                                  "name": "材质标题行",
+                                  "width": "fill_container",
+                                  "gap": 8,
                                   "alignItems": "center",
                                   "children": [
                                     {
+                                      "type": "rectangle",
+                                      "cornerRadius": 8,
+                                      "id": "dFayQ",
+                                      "name": "材质图标",
+                                      "fill": {
+                                        "type": "image",
+                                        "enabled": true,
+                                        "url": "assets/icon-material.png",
+                                        "mode": "fit"
+                                      },
+                                      "width": 26,
+                                      "height": 26
+                                    },
+                                    {
                                       "type": "text",
-                                      "id": "AI431",
-                                      "name": "标签文案-介电常数",
-                                      "fill": "#a89ff9",
-                                      "content": "介电常数",
+                                      "id": "WkhB4",
+                                      "name": "材质标题",
+                                      "fill": "$text-primary",
+                                      "content": "材质",
                                       "fontFamily": "Inter",
-                                      "fontSize": 11,
-                                      "fontWeight": "500"
+                                      "fontSize": 22,
+                                      "fontWeight": "600"
                                     }
                                   ]
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "grz3g",
-                                  "name": "标签-电导率",
-                                  "fill": "#a89ff91a",
-                                  "cornerRadius": 4,
+                                  "id": "n8QRk5",
+                                  "name": "材质网格",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 14,
                                   "padding": [
-                                    4,
-                                    8
+                                    10,
+                                    40
                                   ],
+                                  "justifyContent": "center",
                                   "alignItems": "center",
                                   "children": [
                                     {
-                                      "type": "text",
-                                      "id": "yil9O",
-                                      "name": "标签文案-电导率",
-                                      "fill": "#a89ff9",
-                                      "content": "电导率",
-                                      "fontFamily": "Inter",
-                                      "fontSize": 11,
-                                      "fontWeight": "500"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "frame",
-                                  "id": "QBzBc",
-                                  "name": "标签-粗糙度",
-                                  "fill": "#a89ff91a",
-                                  "cornerRadius": 4,
-                                  "padding": [
-                                    4,
-                                    8
-                                  ],
-                                  "alignItems": "center",
-                                  "children": [
+                                      "type": "frame",
+                                      "id": "rEyfG",
+                                      "name": "材质行-玻璃混凝土木材",
+                                      "width": "fill_container",
+                                      "gap": 24,
+                                      "children": [
+                                        {
+                                          "type": "frame",
+                                          "id": "urLBr",
+                                          "name": "材质-玻璃",
+                                          "width": 80,
+                                          "layout": "vertical",
+                                          "gap": 6,
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "rectangle",
+                                              "cornerRadius": 5,
+                                              "id": "JuB1V",
+                                              "name": "缩略图",
+                                              "fill": {
+                                                "type": "image",
+                                                "enabled": true,
+                                                "url": "assets/material/玻璃.png",
+                                                "mode": "fill"
+                                              },
+                                              "width": 60,
+                                              "height": 60
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "pNI40",
+                                              "name": "材质名-玻璃",
+                                              "fill": "$text-primary",
+                                              "content": "玻璃",
+                                              "fontFamily": "Inter",
+                                              "fontSize": 18,
+                                              "fontWeight": "normal"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "SbmpO",
+                                          "name": "材质-混凝土",
+                                          "width": 80,
+                                          "layout": "vertical",
+                                          "gap": 6,
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "rectangle",
+                                              "cornerRadius": 5,
+                                              "id": "Z4jWal",
+                                              "name": "缩略图",
+                                              "fill": {
+                                                "type": "image",
+                                                "enabled": true,
+                                                "url": "assets/material/swatch-concrete.png",
+                                                "mode": "fill"
+                                              },
+                                              "width": 60,
+                                              "height": 60
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "Do0Ky",
+                                              "name": "材质名-混凝土",
+                                              "fill": "$text-primary",
+                                              "content": "混凝土",
+                                              "fontFamily": "Inter",
+                                              "fontSize": 18,
+                                              "fontWeight": "normal"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "fDJU9",
+                                          "name": "材质-木材",
+                                          "width": 80,
+                                          "layout": "vertical",
+                                          "gap": 6,
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "rectangle",
+                                              "cornerRadius": 5,
+                                              "id": "NAR1W",
+                                              "name": "缩略图",
+                                              "fill": {
+                                                "type": "image",
+                                                "enabled": true,
+                                                "url": "assets/material/木材.png",
+                                                "mode": "fill"
+                                              },
+                                              "width": 60,
+                                              "height": 60
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "GVpzf",
+                                              "name": "材质名-木材",
+                                              "fill": "$text-primary",
+                                              "content": "木材",
+                                              "fontFamily": "Inter",
+                                              "fontSize": 18,
+                                              "fontWeight": "normal"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
                                     {
-                                      "type": "text",
-                                      "id": "LBt42",
-                                      "name": "标签文案-粗糙度",
-                                      "fill": "#a89ff9",
-                                      "content": "粗糙度",
-                                      "fontFamily": "Inter",
-                                      "fontSize": 11,
-                                      "fontWeight": "500"
+                                      "type": "frame",
+                                      "id": "YOQLi",
+                                      "name": "材质行-金属其他",
+                                      "width": "fill_container",
+                                      "gap": 24,
+                                      "children": [
+                                        {
+                                          "type": "frame",
+                                          "id": "hBkI1",
+                                          "name": "材质-金属",
+                                          "width": 80,
+                                          "layout": "vertical",
+                                          "gap": 6,
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "rectangle",
+                                              "cornerRadius": 5,
+                                              "id": "DwQHO",
+                                              "name": "缩略图",
+                                              "fill": {
+                                                "type": "image",
+                                                "enabled": true,
+                                                "url": "assets/material/金属.png",
+                                                "mode": "fill"
+                                              },
+                                              "width": 60,
+                                              "height": 60
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "uo9X9",
+                                              "name": "材质名-金属",
+                                              "fill": "$text-primary",
+                                              "content": "金属",
+                                              "fontFamily": "Inter",
+                                              "fontSize": 18,
+                                              "fontWeight": "normal"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "e5x68",
+                                          "name": "材质-其他",
+                                          "width": 80,
+                                          "layout": "vertical",
+                                          "gap": 6,
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "rectangle",
+                                              "cornerRadius": 5,
+                                              "id": "dBay6",
+                                              "name": "缩略图",
+                                              "fill": {
+                                                "type": "image",
+                                                "enabled": true,
+                                                "url": "assets/material/其他.png",
+                                                "mode": "fill"
+                                              },
+                                              "width": 60,
+                                              "height": 60
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "no58A",
+                                              "name": "材质名-其他",
+                                              "fill": "$text-primary",
+                                              "content": "其他",
+                                              "fontFamily": "Inter",
+                                              "fontSize": 18,
+                                              "fontWeight": "normal"
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
@@ -3104,331 +3429,32 @@
                     },
                     {
                       "type": "frame",
-                      "id": "ifeQQ",
-                      "name": "KPI组",
+                      "id": "zOjrh",
+                      "name": "主视图区",
+                      "clip": true,
                       "width": "fill_container",
-                      "height": "fill_container",
-                      "fill": "#00000000",
-                      "gap": 20,
-                      "justifyContent": "space_between",
-                      "alignItems": "center",
+                      "height": 525,
+                      "fill": "#1F2123",
+                      "cornerRadius": 12,
+                      "layout": "none",
                       "children": [
                         {
-                          "id": "PZvse",
-                          "type": "ref",
-                          "ref": "k5buD9",
-                          "name": "KPI-电磁信道保真度",
-                          "width": 400,
-                          "height": 300,
-                          "flipX": false,
-                          "flipY": false,
+                          "type": "rectangle",
+                          "id": "pwI1g",
                           "x": 0,
-                          "y": 4.5,
-                          "padding": 10,
-                          "cornerRadius": 16,
-                          "gap": 5,
-                          "descendants": {
-                            "B5KAGV": {
-                              "fill": {
-                                "type": "image",
-                                "enabled": true,
-                                "url": "assets/icon-em.png",
-                                "mode": "fit"
-                              }
-                            },
-                            "z63n4b": {
-                              "content": "电磁信道保真度"
-                            }
-                          }
-                        },
-                        {
-                          "type": "frame",
-                          "id": "KkphE",
-                          "name": "材质图例",
-                          "width": 400,
-                          "height": 300,
-                          "fill": "#ffffff0d",
-                          "cornerRadius": 16,
-                          "layout": "vertical",
-                          "gap": 5,
-                          "padding": 10,
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "O4CAeB",
-                              "name": "材质标题行",
-                              "width": "fill_container",
-                              "gap": 8,
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "rectangle",
-                                  "cornerRadius": 8,
-                                  "id": "dFayQ",
-                                  "name": "材质图标",
-                                  "fill": {
-                                    "type": "image",
-                                    "enabled": true,
-                                    "url": "assets/icon-material.png",
-                                    "mode": "fit"
-                                  },
-                                  "width": 26,
-                                  "height": 26
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "WkhB4",
-                                  "name": "材质标题",
-                                  "fill": "$text-primary",
-                                  "content": "材质",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 22,
-                                  "fontWeight": "600"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "n8QRk5",
-                              "name": "材质网格",
-                              "width": "fill_container",
-                              "height": "fill_container",
-                              "layout": "vertical",
-                              "gap": 14,
-                              "padding": [
-                                10,
-                                40
-                              ],
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "frame",
-                                  "id": "rEyfG",
-                                  "name": "材质行-玻璃混凝土木材",
-                                  "width": "fill_container",
-                                  "gap": 24,
-                                  "children": [
-                                    {
-                                      "type": "frame",
-                                      "id": "urLBr",
-                                      "name": "材质-玻璃",
-                                      "width": 80,
-                                      "layout": "vertical",
-                                      "gap": 6,
-                                      "alignItems": "center",
-                                      "children": [
-                                        {
-                                          "type": "rectangle",
-                                          "cornerRadius": 5,
-                                          "id": "JuB1V",
-                                          "name": "缩略图",
-                                          "fill": {
-                                            "type": "image",
-                                            "enabled": true,
-                                            "url": "assets/material/玻璃.png",
-                                            "mode": "fill"
-                                          },
-                                          "width": 60,
-                                          "height": 60
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "pNI40",
-                                          "name": "材质名-玻璃",
-                                          "fill": "$text-primary",
-                                          "content": "玻璃",
-                                          "fontFamily": "Inter",
-                                          "fontSize": 18,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "type": "frame",
-                                      "id": "SbmpO",
-                                      "name": "材质-混凝土",
-                                      "width": 80,
-                                      "layout": "vertical",
-                                      "gap": 6,
-                                      "alignItems": "center",
-                                      "children": [
-                                        {
-                                          "type": "rectangle",
-                                          "cornerRadius": 5,
-                                          "id": "Z4jWal",
-                                          "name": "缩略图",
-                                          "fill": {
-                                            "type": "image",
-                                            "enabled": true,
-                                            "url": "assets/material/swatch-concrete.png",
-                                            "mode": "fill"
-                                          },
-                                          "width": 60,
-                                          "height": 60
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "Do0Ky",
-                                          "name": "材质名-混凝土",
-                                          "fill": "$text-primary",
-                                          "content": "混凝土",
-                                          "fontFamily": "Inter",
-                                          "fontSize": 18,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "type": "frame",
-                                      "id": "fDJU9",
-                                      "name": "材质-木材",
-                                      "width": 80,
-                                      "layout": "vertical",
-                                      "gap": 6,
-                                      "alignItems": "center",
-                                      "children": [
-                                        {
-                                          "type": "rectangle",
-                                          "cornerRadius": 5,
-                                          "id": "NAR1W",
-                                          "name": "缩略图",
-                                          "fill": {
-                                            "type": "image",
-                                            "enabled": true,
-                                            "url": "assets/material/木材.png",
-                                            "mode": "fill"
-                                          },
-                                          "width": 60,
-                                          "height": 60
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "GVpzf",
-                                          "name": "材质名-木材",
-                                          "fill": "$text-primary",
-                                          "content": "木材",
-                                          "fontFamily": "Inter",
-                                          "fontSize": 18,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "frame",
-                                  "id": "YOQLi",
-                                  "name": "材质行-金属其他",
-                                  "width": "fill_container",
-                                  "gap": 24,
-                                  "children": [
-                                    {
-                                      "type": "frame",
-                                      "id": "hBkI1",
-                                      "name": "材质-金属",
-                                      "width": 80,
-                                      "layout": "vertical",
-                                      "gap": 6,
-                                      "alignItems": "center",
-                                      "children": [
-                                        {
-                                          "type": "rectangle",
-                                          "cornerRadius": 5,
-                                          "id": "DwQHO",
-                                          "name": "缩略图",
-                                          "fill": {
-                                            "type": "image",
-                                            "enabled": true,
-                                            "url": "assets/material/金属.png",
-                                            "mode": "fill"
-                                          },
-                                          "width": 60,
-                                          "height": 60
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "uo9X9",
-                                          "name": "材质名-金属",
-                                          "fill": "$text-primary",
-                                          "content": "金属",
-                                          "fontFamily": "Inter",
-                                          "fontSize": 18,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "type": "frame",
-                                      "id": "e5x68",
-                                      "name": "材质-其他",
-                                      "width": 80,
-                                      "layout": "vertical",
-                                      "gap": 6,
-                                      "alignItems": "center",
-                                      "children": [
-                                        {
-                                          "type": "rectangle",
-                                          "cornerRadius": 5,
-                                          "id": "dBay6",
-                                          "name": "缩略图",
-                                          "fill": {
-                                            "type": "image",
-                                            "enabled": true,
-                                            "url": "assets/material/其他.png",
-                                            "mode": "fill"
-                                          },
-                                          "width": 60,
-                                          "height": 60
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "no58A",
-                                          "name": "材质名-其他",
-                                          "fill": "$text-primary",
-                                          "content": "其他",
-                                          "fontFamily": "Inter",
-                                          "fontSize": 18,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
+                          "y": 0,
+                          "name": "电磁层主视图底图",
+                          "context": "运行时用 Beijing_Material.glb + Three.js",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/material/地图.png",
+                            "mode": "fill"
+                          },
+                          "width": 1328,
+                          "height": 680
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "zOjrh",
-                  "name": "主视图区",
-                  "clip": true,
-                  "width": 1290,
-                  "height": 560,
-                  "fill": "#1F2123",
-                  "cornerRadius": 12,
-                  "layout": "none",
-                  "children": [
-                    {
-                      "type": "rectangle",
-                      "id": "pwI1g",
-                      "x": 0,
-                      "y": 0,
-                      "name": "电磁层主视图底图",
-                      "context": "运行时用 Beijing_Material.glb + Three.js",
-                      "fill": {
-                        "type": "image",
-                        "enabled": true,
-                        "url": "assets/material/地图.png",
-                        "mode": "fill"
-                      },
-                      "width": 1328,
-                      "height": 680
                     }
                   ]
                 }
@@ -3517,18 +3543,11 @@
               "type": "frame",
               "id": "O68h4Z",
               "name": "RF层右侧内容",
-              "clip": true,
               "width": 1320,
               "height": "fill_container",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "assets/bg-right.png",
-                "mode": "stretch"
-              },
-              "cornerRadius": 16,
+              "fill": "#00000000",
               "layout": "vertical",
-              "gap": 12,
+              "gap": 10,
               "padding": 14,
               "children": [
                 {
@@ -3566,371 +3585,394 @@
                 },
                 {
                   "type": "frame",
-                  "id": "RpBmI",
-                  "name": "概述与KPI行",
-                  "width": "fill_container",
-                  "height": 319,
-                  "gap": 16,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "q18Ooo",
-                      "name": "层说明区",
-                      "width": 484,
-                      "height": 300,
-                      "cornerRadius": 10,
-                      "layout": "vertical",
-                      "gap": 10,
-                      "padding": 10,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "g7DBI",
-                          "name": "层标题",
-                          "fill": "$text-primary",
-                          "content": "RF层",
-                          "fontFamily": "Inter",
-                          "fontSize": 20,
-                          "fontWeight": "600"
-                        },
-                        {
-                          "type": "text",
-                          "id": "p4UppC",
-                          "name": "层描述",
-                          "fill": "$text-primary",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "电磁层计算结果的空间网格化/可视化呈现",
-                          "lineHeight": 1.4,
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "vUAMJ",
-                          "name": "能力标签组",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "jOMBe",
-                              "name": "标签-接收信号强度(RSS)",
-                              "fill": "#62b42e26",
-                              "cornerRadius": 6,
-                              "padding": [
-                                5,
-                                10
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "i8ZsQP",
-                                  "name": "标签文案-接收信号强度(RSS)",
-                                  "fill": "#62b42e",
-                                  "content": "接收信号强度(RSS)",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 11,
-                                  "fontWeight": "500"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "d0fVoy",
-                              "name": "标签-信噪比(SINR)",
-                              "fill": "#62b42e26",
-                              "cornerRadius": 6,
-                              "padding": [
-                                5,
-                                10
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "q3ANmg",
-                                  "name": "标签文案-信噪比(SINR)",
-                                  "fill": "#62b42e",
-                                  "content": "信噪比(SINR)",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 11,
-                                  "fontWeight": "500"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "TNut5",
-                              "name": "标签-多径",
-                              "fill": "#62b42e26",
-                              "cornerRadius": 6,
-                              "padding": [
-                                5,
-                                10
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "ny2oV",
-                                  "name": "标签文案-多径",
-                                  "fill": "#62b42e",
-                                  "content": "多径",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 11,
-                                  "fontWeight": "500"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "J841md",
-                              "name": "标签-时延",
-                              "fill": "#62b42e26",
-                              "cornerRadius": 6,
-                              "padding": [
-                                5,
-                                10
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "Crxsh",
-                                  "name": "标签文案-时延",
-                                  "fill": "#62b42e",
-                                  "content": "时延",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 11,
-                                  "fontWeight": "500"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "Tyymc",
-                              "name": "标签-相位",
-                              "fill": "#62b42e26",
-                              "cornerRadius": 6,
-                              "padding": [
-                                5,
-                                10
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "CdrE9",
-                                  "name": "标签文案-相位",
-                                  "fill": "#62b42e",
-                                  "content": "相位",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 11,
-                                  "fontWeight": "500"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "id": "HiBxF",
-                      "type": "ref",
-                      "ref": "k5buD9",
-                      "name": "KPI-RSS误差",
-                      "width": 800,
-                      "height": 300,
-                      "flipX": false,
-                      "flipY": false,
-                      "x": 500,
-                      "y": 0,
-                      "descendants": {
-                        "B5KAGV": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "assets/icon-rf.png",
-                            "mode": "fit"
-                          }
-                        },
-                        "z63n4b": {
-                          "content": "RSS误差"
-                        },
-                        "EmFww": {
-                          "enabled": true,
-                          "width": 627,
-                          "height": 0,
-                          "flipX": false,
-                          "flipY": false,
-                          "x": 0,
-                          "y": 0
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "A6u7zs",
-                  "name": "主视图区",
+                  "id": "icFBx",
+                  "name": "RF层内容卡",
                   "clip": true,
-                  "width": 1290,
-                  "height": 560,
-                  "fill": "#1F2123",
-                  "cornerRadius": 12,
-                  "layout": "none",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "assets/bg-right.png",
+                    "mode": "stretch"
+                  },
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 14,
                   "children": [
                     {
-                      "type": "rectangle",
-                      "id": "d0j4D6",
-                      "x": 0,
-                      "y": 0,
-                      "name": "RF层主视图底图",
-                      "context": "当前含旧热力网格；纯底图待用户替换。正式渲染：case2蓝→青→黄→红 + 双线性插值马赛克透明叠加。旧色块不是TXT渲染。",
-                      "fill": {
-                        "type": "image",
-                        "enabled": true,
-                        "url": "assets/rf-map.png",
-                        "mode": "fill"
-                      },
-                      "width": 1328,
-                      "height": 700
-                    },
-                    {
                       "type": "frame",
-                      "id": "V9JdmP",
-                      "layoutPosition": "absolute",
-                      "x": 0,
-                      "y": 468,
-                      "name": "图例底栏",
-                      "width": 1290,
-                      "height": 56,
+                      "id": "RpBmI",
+                      "name": "概述与KPI行",
+                      "width": "fill_container",
+                      "height": 319,
+                      "cornerRadius": 16,
+                      "gap": 5,
+                      "padding": 5,
                       "justifyContent": "center",
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "XcchH",
-                          "name": "信号强度图例浮层",
-                          "fill": "#1F2123F2",
-                          "cornerRadius": 22,
+                          "id": "q18Ooo",
+                          "name": "层说明区",
+                          "width": 435,
+                          "height": "fill_container",
+                          "cornerRadius": 10,
+                          "layout": "vertical",
                           "gap": 10,
-                          "padding": [
-                            8,
-                            14
-                          ],
-                          "alignItems": "center",
+                          "padding": 10,
                           "children": [
                             {
-                              "type": "frame",
-                              "id": "ZHjBt",
-                              "name": "图例图标底",
-                              "width": 28,
-                              "height": 28,
-                              "fill": "#FFFFFF14",
-                              "cornerRadius": 8,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "SHfND",
-                                  "name": "图例图标",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "gauge",
-                                  "library": "lucide",
-                                  "fill": "$text-secondary"
-                                }
-                              ]
-                            },
-                            {
                               "type": "text",
-                              "id": "ZxSRk",
-                              "name": "图例标题",
+                              "id": "g7DBI",
+                              "name": "层标题",
                               "fill": "$text-primary",
-                              "content": "信号强度",
+                              "content": "RF层",
                               "fontFamily": "Inter",
-                              "fontSize": 13,
+                              "fontSize": 20,
                               "fontWeight": "600"
                             },
                             {
                               "type": "text",
-                              "id": "usdFi",
-                              "name": "刻度-强",
-                              "fill": "$text-secondary",
-                              "content": "强",
+                              "id": "p4UppC",
+                              "name": "层描述",
+                              "fill": "$text-primary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "电磁层计算结果的空间网格化/可视化呈现",
+                              "lineHeight": 1.4,
                               "fontFamily": "Inter",
-                              "fontSize": 12,
-                              "fontWeight": "500"
+                              "fontSize": 14,
+                              "fontWeight": "normal"
                             },
                             {
                               "type": "frame",
-                              "id": "rq3lf",
-                              "name": "信号色带",
-                              "height": 10,
-                              "gap": 2,
+                              "id": "vUAMJ",
+                              "name": "能力标签组",
+                              "width": "fill_container",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "jOMBe",
+                                  "name": "标签-接收信号强度(RSS)",
+                                  "fill": "#62b42e26",
+                                  "cornerRadius": 6,
+                                  "padding": [
+                                    5,
+                                    10
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "i8ZsQP",
+                                      "name": "标签文案-接收信号强度(RSS)",
+                                      "fill": "#62b42e",
+                                      "content": "接收信号强度(RSS)",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "d0fVoy",
+                                  "name": "标签-信噪比(SINR)",
+                                  "fill": "#62b42e26",
+                                  "cornerRadius": 6,
+                                  "padding": [
+                                    5,
+                                    10
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "q3ANmg",
+                                      "name": "标签文案-信噪比(SINR)",
+                                      "fill": "#62b42e",
+                                      "content": "信噪比(SINR)",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "TNut5",
+                                  "name": "标签-多径",
+                                  "fill": "#62b42e26",
+                                  "cornerRadius": 6,
+                                  "padding": [
+                                    5,
+                                    10
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ny2oV",
+                                      "name": "标签文案-多径",
+                                      "fill": "#62b42e",
+                                      "content": "多径",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "J841md",
+                                  "name": "标签-时延",
+                                  "fill": "#62b42e26",
+                                  "cornerRadius": 6,
+                                  "padding": [
+                                    5,
+                                    10
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Crxsh",
+                                      "name": "标签文案-时延",
+                                      "fill": "#62b42e",
+                                      "content": "时延",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Tyymc",
+                                  "name": "标签-相位",
+                                  "fill": "#62b42e26",
+                                  "cornerRadius": 6,
+                                  "padding": [
+                                    5,
+                                    10
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "CdrE9",
+                                      "name": "标签文案-相位",
+                                      "fill": "#62b42e",
+                                      "content": "相位",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "HiBxF",
+                          "type": "ref",
+                          "ref": "k5buD9",
+                          "name": "KPI-RSS误差",
+                          "width": 806,
+                          "height": 300,
+                          "flipX": false,
+                          "flipY": false,
+                          "x": 449,
+                          "y": 9.5,
+                          "descendants": {
+                            "B5KAGV": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "assets/icon-rf.png",
+                                "mode": "fit"
+                              }
+                            },
+                            "z63n4b": {
+                              "content": "RSS误差"
+                            },
+                            "EmFww": {
+                              "enabled": true,
+                              "width": 627,
+                              "height": 0,
+                              "flipX": false,
+                              "flipY": false,
+                              "x": 0,
+                              "y": 0
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "A6u7zs",
+                      "name": "主视图区",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 525,
+                      "fill": "#1F2123",
+                      "cornerRadius": 12,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "id": "d0j4D6",
+                          "x": 0,
+                          "y": 0,
+                          "name": "RF层主视图底图",
+                          "context": "当前含旧热力网格；纯底图待用户替换。正式渲染：case2蓝→青→黄→红 + 双线性插值马赛克透明叠加。旧色块不是TXT渲染。",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "assets/rf-map.png",
+                            "mode": "fill"
+                          },
+                          "width": 1328,
+                          "height": 700
+                        },
+                        {
+                          "type": "frame",
+                          "id": "V9JdmP",
+                          "x": 0,
+                          "y": 448,
+                          "name": "图例底栏",
+                          "width": 1260,
+                          "height": 56,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "XcchH",
+                              "name": "信号强度图例浮层",
+                              "fill": "#1F2123F2",
+                              "cornerRadius": 22,
+                              "gap": 10,
+                              "padding": [
+                                8,
+                                14
+                              ],
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "rectangle",
-                                  "cornerRadius": [
-                                    5,
-                                    0,
-                                    0,
-                                    5
-                                  ],
-                                  "id": "lgeFt",
-                                  "name": "色段-强",
-                                  "fill": "#EF4444",
-                                  "width": 52,
-                                  "height": 10
+                                  "type": "frame",
+                                  "id": "ZHjBt",
+                                  "name": "图例图标底",
+                                  "width": 28,
+                                  "height": 28,
+                                  "fill": "#FFFFFF14",
+                                  "cornerRadius": 8,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "SHfND",
+                                      "name": "图例图标",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "gauge",
+                                      "library": "lucide",
+                                      "fill": "$text-secondary"
+                                    }
+                                  ]
                                 },
                                 {
-                                  "type": "rectangle",
-                                  "id": "EF3c6",
-                                  "name": "色段-较高",
-                                  "fill": "#F59E0B",
-                                  "width": 52,
-                                  "height": 10
+                                  "type": "text",
+                                  "id": "ZxSRk",
+                                  "name": "图例标题",
+                                  "fill": "$text-primary",
+                                  "content": "信号强度",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
                                 },
                                 {
-                                  "type": "rectangle",
-                                  "id": "tMw90",
-                                  "name": "色段-较低",
-                                  "fill": "#EAB308",
-                                  "width": 52,
-                                  "height": 10
+                                  "type": "text",
+                                  "id": "usdFi",
+                                  "name": "刻度-强",
+                                  "fill": "$text-secondary",
+                                  "content": "强",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "500"
                                 },
                                 {
-                                  "type": "rectangle",
-                                  "cornerRadius": [
-                                    0,
-                                    5,
-                                    5,
-                                    0
-                                  ],
-                                  "id": "h6276O",
-                                  "name": "色段-弱",
-                                  "fill": "#22C55E",
-                                  "width": 52,
-                                  "height": 10
+                                  "type": "frame",
+                                  "id": "rq3lf",
+                                  "name": "信号色带",
+                                  "height": 10,
+                                  "gap": 2,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "rectangle",
+                                      "cornerRadius": [
+                                        5,
+                                        0,
+                                        0,
+                                        5
+                                      ],
+                                      "id": "lgeFt",
+                                      "name": "色段-强",
+                                      "fill": "#EF4444",
+                                      "width": 52,
+                                      "height": 10
+                                    },
+                                    {
+                                      "type": "rectangle",
+                                      "id": "EF3c6",
+                                      "name": "色段-较高",
+                                      "fill": "#F59E0B",
+                                      "width": 52,
+                                      "height": 10
+                                    },
+                                    {
+                                      "type": "rectangle",
+                                      "id": "tMw90",
+                                      "name": "色段-较低",
+                                      "fill": "#EAB308",
+                                      "width": 52,
+                                      "height": 10
+                                    },
+                                    {
+                                      "type": "rectangle",
+                                      "cornerRadius": [
+                                        0,
+                                        5,
+                                        5,
+                                        0
+                                      ],
+                                      "id": "h6276O",
+                                      "name": "色段-弱",
+                                      "fill": "#22C55E",
+                                      "width": 52,
+                                      "height": 10
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "bG10y",
+                                  "name": "刻度-弱",
+                                  "fill": "$text-secondary",
+                                  "content": "弱",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "500"
                                 }
                               ]
-                            },
-                            {
-                              "type": "text",
-                              "id": "bG10y",
-                              "name": "刻度-弱",
-                              "fill": "$text-secondary",
-                              "content": "弱",
-                              "fontFamily": "Inter",
-                              "fontSize": 12,
-                              "fontWeight": "500"
                             }
                           ]
                         }
@@ -4493,6 +4535,7 @@
           "x": 0,
           "y": 0,
           "name": "应用层连接虚线",
+          "enabled": false,
           "width": 520,
           "height": 986,
           "layout": "none",
@@ -4886,25 +4929,10 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "BWbJv",
-                          "name": "RF关闭数值槽",
+                          "id": "ea1FH",
+                          "name": "RF关闭数值占位",
                           "width": "fill_container",
-                          "layout": "vertical",
-                          "justifyContent": "end",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "lvH99",
-                              "name": "RF关闭数值",
-                              "fill": "$text-primary",
-                              "content": "0.2",
-                              "textAlign": "center",
-                              "fontFamily": "Inter",
-                              "fontSize": 24,
-                              "fontWeight": "600"
-                            }
-                          ]
+                          "height": 1
                         },
                         {
                           "type": "frame",
@@ -5049,21 +5077,31 @@
                               "name": "RF关闭柱形槽",
                               "width": "fill_container",
                               "layout": "vertical",
+                              "gap": 2,
+                              "justifyContent": "end",
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "path",
-                                  "id": "EmFww",
-                                  "layoutPosition": "absolute",
-                                  "x": 0,
-                                  "y": 0,
-                                  "name": "跨柱参考虚线浮层",
-                                  "geometry": "M0 0.5l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0",
-                                  "fill": "#00000000",
-                                  "width": 330,
-                                  "height": 1,
-                                  "stroke": "#FFFFFF99",
-                                  "strokeWidth": 1
+                                  "type": "frame",
+                                  "id": "BWbJv",
+                                  "name": "RF关闭数值槽",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "justifyContent": "end",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "lvH99",
+                                      "name": "RF关闭数值",
+                                      "fill": "$text-primary",
+                                      "content": "0.2",
+                                      "textAlign": "center",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 24,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
                                 },
                                 {
                                   "type": "rectangle",
@@ -5078,6 +5116,20 @@
                                   "fill": "$bar-off",
                                   "width": 72,
                                   "height": 40
+                                },
+                                {
+                                  "type": "path",
+                                  "id": "EmFww",
+                                  "layoutPosition": "absolute",
+                                  "x": 0,
+                                  "y": 31,
+                                  "name": "跨柱参考虚线浮层",
+                                  "geometry": "M0 0.5l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0m4 0l6 0",
+                                  "fill": "#00000000",
+                                  "width": 330,
+                                  "height": 1,
+                                  "stroke": "#FFFFFF99",
+                                  "strokeWidth": 1
                                 }
                               ]
                             },

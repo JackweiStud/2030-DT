@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>case1 DT Construction — Gate 1.5 Static</title>
+  <link rel="stylesheet" href="./case1.css" />
+</head>
+<body>
+  <div class="stage-viewport">
+    <div class="stage" id="stage">
+      <header class="c1-shell" aria-label="共享 Shell 参考">
+        <img class="c1-shell-bg" src="./assets/nav-bg.png" alt="" />
+        <div class="c1-brand">
+          <img src="./assets/cloud-site.png" alt="" width="36" height="36" />
+          <span>云上外场</span>
+        </div>
+        <div class="c1-tabs c1-tabs-left">
+          <div class="c1-tab is-current">
+            <span>DT Construction</span>
+            <i></i>
+          </div>
+          <div class="c1-tab">DT Calibration</div>
+        </div>
+        <div class="c1-shell-title">IMT2030(6G)无线数字孪生</div>
+        <div class="c1-tabs c1-tabs-right">
+          <div class="c1-tab">DT for Comm</div>
+          <div class="c1-tab">DT for positioning</div>
+        </div>
+        <img class="c1-corner" src="./assets/huawei-logo.png" alt="" width="36" height="36" />
+      </header>
+
+      <main class="case1-page" id="case1-page" data-view="home">
+        <aside class="c1-nav" aria-label="无线数字孪生架构">
+          <div class="c1-nav-title">
+            <img src="./assets/icon-dt-wireless.png" alt="" width="26" height="26" />
+            <h1>无线数字孪生架构</h1>
+          </div>
+          <div class="c1-layers">
+            <div class="c1-layer-block">
+              <div class="c1-layer">
+                <div class="c1-layer-copy">
+                  <span class="c1-pill c1-pill-geo">Layer 1</span>
+                  <span class="c1-layer-name">环境几何层</span>
+                </div>
+                <button type="button" class="c1-diamond" data-layer="geometry" aria-label="环境几何层">
+                  <img src="./assets/layer-geometry.png" alt="" />
+                </button>
+              </div>
+              <div class="c1-layer">
+                <div class="c1-layer-copy">
+                  <span class="c1-pill c1-pill-em">Layer 2</span>
+                  <span class="c1-layer-name">电磁材质层</span>
+                </div>
+                <button type="button" class="c1-diamond" data-layer="material" aria-label="电磁材质层">
+                  <img src="./assets/layer-material.png" alt="" />
+                </button>
+              </div>
+              <div class="c1-layer">
+                <div class="c1-layer-copy">
+                  <span class="c1-pill c1-pill-rf">Layer 3</span>
+                  <span class="c1-layer-name">RF层</span>
+                </div>
+                <button type="button" class="c1-diamond" data-layer="rf" aria-label="RF层">
+                  <img src="./assets/layer-rf.png" alt="" />
+                </button>
+              </div>
+              <div class="c1-layer">
+                <div class="c1-layer-copy">
+                  <span class="c1-pill c1-pill-kg">Layer 4</span>
+                  <span class="c1-layer-name">知识图谱层</span>
+                </div>
+                <div class="c1-diamond" data-layer="kg">
+                  <img src="./assets/layer-kg.png" alt="" />
+                </div>
+              </div>
+              <svg class="c1-stack-lines" viewBox="0 0 286 714" aria-hidden="true">
+                <line x1="18" y1="81" x2="22" y2="627" />
+                <line x1="143" y1="138" x2="143" y2="190" />
+                <line x1="143" y1="322" x2="143" y2="374" />
+                <line x1="143" y1="506" x2="143" y2="558" />
+                <line x1="270" y1="81" x2="264" y2="627" />
+              </svg>
+            </div>
+            <div class="c1-layer c1-layer-app">
+              <div class="c1-layer-copy">
+                <span class="c1-pill c1-pill-app">Layer 5</span>
+                <span class="c1-layer-name">数字孪生应用层</span>
+              </div>
+              <div class="c1-app-card">
+                <div class="c1-diamond" data-layer="app">
+                  <img src="./assets/layer-app.png" alt="" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <svg class="c1-bracket" viewBox="0 0 520 970" aria-hidden="true">
+            <path d="M496 418 H500 A12 12 0 0 1 512 430 V859 A12 12 0 0 1 500 871 H496" />
+          </svg>
+        </aside>
+
+        <section class="c1-home" id="panel-home">
+          <div class="c1-section-title">
+            <img src="./assets/icon-layers.png" alt="" width="28" height="28" />
+            <h2>无线数字孪生分层</h2>
+          </div>
+          <div class="c1-home-body">
+            <div class="c1-quad">
+              <article class="c1-home-row">
+                <div class="c1-home-copy">
+                  <h3>环境几何层</h3>
+                  <p>构建物理世界的三维实体数字重构</p>
+                  <div class="c1-tags c1-tags-geo">
+                    <span>多源感知融合</span><span>离散点云/3D表征</span><span>体素与空间网格表征</span><span>…</span>
+                  </div>
+                </div>
+                <div class="c1-shots">
+                  <figure><img src="./assets/home/融合感知+new.png" alt="" /><figcaption>多源感知融合</figcaption></figure>
+                  <figure><img src="./assets/home/3D表征+new.png" alt="" /><figcaption>离散点云/3D表征</figcaption></figure>
+                  <figure><img src="./assets/home/网格+new.png" alt="" /><figcaption>体素与空间网格表征</figcaption></figure>
+                </div>
+              </article>
+              <div class="c1-rule" aria-hidden="true"></div>
+              <article class="c1-home-row">
+                <div class="c1-home-copy">
+                  <h3>电磁材质层</h3>
+                  <p>数字孪生的物理场核心，几何实体的电磁属性</p>
+                  <div class="c1-tags c1-tags-em">
+                    <span>电常数</span><span>电导率</span><span>粗糙度</span><span>…</span>
+                  </div>
+                </div>
+                <div class="c1-shots">
+                  <figure><img src="./assets/home/电常数+new.png" alt="" /><figcaption>电常数</figcaption></figure>
+                  <figure><img src="./assets/home/电导率+new.png" alt="" /><figcaption>电导率</figcaption></figure>
+                  <figure><img src="./assets/home/粗糙度+new.png" alt="" /><figcaption>粗糙度</figcaption></figure>
+                </div>
+              </article>
+              <div class="c1-rule" aria-hidden="true"></div>
+              <article class="c1-home-row">
+                <div class="c1-home-copy">
+                  <h3>RF层</h3>
+                  <p>电磁材质层计算结果的空间网格化/可视化呈现</p>
+                  <div class="c1-tags c1-tags-rf">
+                    <span>接收信号强度(RSSI)</span><span>信噪比(SINR)</span><span>多径</span><span>…</span>
+                  </div>
+                </div>
+                <div class="c1-shots">
+                  <figure><img src="./assets/home/接收信号强度+new.png" alt="" /><figcaption>接收信号强度(RSSI)</figcaption></figure>
+                  <figure><img src="./assets/home/信噪比+new.png" alt="" /><figcaption>信噪比(SINR)</figcaption></figure>
+                  <figure><img src="./assets/home/多径+new.png" alt="" /><figcaption>多径</figcaption></figure>
+                </div>
+              </article>
+              <div class="c1-rule" aria-hidden="true"></div>
+              <article class="c1-home-row">
+                <div class="c1-home-copy">
+                  <h3>知识图谱层</h3>
+                  <p>提供数字孪生的认知能力</p>
+                  <div class="c1-tags c1-tags-kg">
+                    <span>语义标签化</span><span>环境态势与感知</span><span>知识图谱与行为预测</span><span>…</span>
+                  </div>
+                </div>
+                <div class="c1-shots">
+                  <figure><img src="./assets/home/语义+new.png" alt="" /><figcaption>语义标签化</figcaption></figure>
+                  <figure><img src="./assets/home/环境感知1+new.png" alt="" /><figcaption>环境态势与感知</figcaption></figure>
+                  <figure><img src="./assets/home/知识图谱+new.png" alt="" /><figcaption>知识图谱与行为预测</figcaption></figure>
+                </div>
+              </article>
+            </div>
+            <article class="c1-home-row c1-home-app">
+              <div class="c1-home-copy">
+                <h3>数字孪生应用层</h3>
+                <p>数字孪生价值的变现与应用界面</p>
+                <div class="c1-tags c1-tags-app">
+                  <span>辅助通信</span><span>辅助定位</span><span>具身智能路径规划</span><span>…</span>
+                </div>
+              </div>
+              <div class="c1-shots">
+                <figure><img src="./assets/home/辅助通信+new.png" alt="" /><figcaption>辅助通信</figcaption></figure>
+                <figure><img src="./assets/home/辅助定位+new.png" alt="" /><figcaption>辅助定位</figcaption></figure>
+                <figure><img src="./assets/home/具生智能+new.png" alt="" /><figcaption>具身智能路径规划</figcaption></figure>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="c1-detail" id="panel-geometry" hidden>
+          <div class="c1-section-title">
+            <img src="./assets/icon-layers.png" alt="" width="28" height="28" />
+            <h2>无线数字孪生分层</h2>
+          </div>
+          <div class="c1-detail-card">
+            <div class="c1-overview">
+              <div class="c1-brief">
+                <h3>环境几何层</h3>
+                <p>构建物理世界的三维实体数字重构</p>
+                <div class="c1-tags c1-tags-geo">
+                  <span>多源感知融合</span><span>离散点云/3D表征</span><span>体素与空间网格表征</span><span>结构与拓扑</span>
+                </div>
+              </div>
+              <div class="c1-kpi-row">
+                <article class="c1-kpi">
+                  <header><img src="./assets/icon-geo-fidelity.png" alt="" /><h3>几何保真度</h3></header>
+                  <div class="c1-chart" data-kpi="geometry-fidelity"></div>
+                </article>
+                <article class="c1-kpi">
+                  <header><img src="./assets/icon-recon-rate.png" alt="" /><h3>重构覆盖率</h3></header>
+                  <div class="c1-chart" data-kpi="geometry-recon"></div>
+                </article>
+              </div>
+            </div>
+            <div class="c1-view">
+              <img class="c1-view-geo" src="./assets/geometry-3d.png" alt="" />
+            </div>
+          </div>
+        </section>
+
+        <section class="c1-detail" id="panel-material" hidden>
+          <div class="c1-section-title">
+            <img src="./assets/icon-layers.png" alt="" width="28" height="28" />
+            <h2>无线数字孪生分层</h2>
+          </div>
+          <div class="c1-detail-card">
+            <div class="c1-overview">
+              <div class="c1-brief">
+                <h3>电磁材质层</h3>
+                <p>赋予几何体真实的电磁属性</p>
+                <div class="c1-tags c1-tags-em c1-tags-tight">
+                  <span>介电常数</span><span>电导率</span><span>粗糙度</span>
+                </div>
+              </div>
+              <div class="c1-kpi-row">
+                <article class="c1-kpi">
+                  <header><img src="./assets/icon-em.png" alt="" /><h3>电磁信道保真度</h3></header>
+                  <div class="c1-chart" data-kpi="material-fidelity"></div>
+                </article>
+                <article class="c1-materials">
+                  <header><img src="./assets/icon-material.png" alt="" /><h3>材质</h3></header>
+                  <div class="c1-swatches">
+                    <div class="c1-swatch-row">
+                      <figure><img src="./assets/material/玻璃.png" alt="" /><figcaption>玻璃</figcaption></figure>
+                      <figure><img src="./assets/material/swatch-concrete.png" alt="" /><figcaption>混凝土</figcaption></figure>
+                      <figure><img src="./assets/material/木材.png" alt="" /><figcaption>木材</figcaption></figure>
+                    </div>
+                    <div class="c1-swatch-row">
+                      <figure><img src="./assets/material/金属.png" alt="" /><figcaption>金属</figcaption></figure>
+                      <figure><img src="./assets/material/其他.png" alt="" /><figcaption>其他</figcaption></figure>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <div class="c1-view">
+              <img class="c1-view-mat" src="./assets/material/地图.png" alt="" />
+            </div>
+          </div>
+        </section>
+
+        <section class="c1-detail c1-detail-rf" id="panel-rf" hidden>
+          <div class="c1-section-title">
+            <img src="./assets/icon-layers.png" alt="" width="28" height="28" />
+            <h2>无线数字孪生分层</h2>
+          </div>
+          <div class="c1-detail-card">
+            <div class="c1-overview">
+              <div class="c1-brief">
+                <h3>RF层</h3>
+                <p>电磁层计算结果的空间网格化/可视化呈现</p>
+                <div class="c1-tags c1-tags-rf-detail">
+                  <span>接收信号强度(RSS)</span><span>信噪比(SINR)</span><span>多径</span><span>时延</span><span>相位</span>
+                </div>
+              </div>
+              <article class="c1-kpi c1-kpi-wide">
+                <header><img src="./assets/icon-rf.png" alt="" /><h3>RSS误差</h3></header>
+                <div class="c1-chart" data-kpi="rss-error"></div>
+              </article>
+            </div>
+            <div class="c1-view">
+              <img class="c1-view-rf" src="./assets/rf-map.png" alt="" />
+              <div class="c1-legend">
+                <span class="c1-legend-icon" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" width="16" height="16"><path d="M2 11.5a6 6 0 0 1 12 0" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.2 11.5a3.8 3.8 0 0 1 7.6 0" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="12" r="1.2" fill="currentColor"/></svg>
+                </span>
+                <span class="c1-legend-title">信号强度</span>
+                <span class="c1-legend-end">强</span>
+                <span class="c1-legend-bar" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span class="c1-legend-end">弱</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="./case1.js"></script>
+</body>
+</html>
