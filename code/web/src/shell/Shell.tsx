@@ -24,13 +24,13 @@ import "./shell.css";
 export type CaseTabId = "case1" | "case2" | "case3" | "case4" | "case5";
 
 const LEFT_TABS: { id: CaseTabId; label: string }[] = [
-  { id: "case1", label: "DT Construction" },
-  { id: "case2", label: "DT Calibration" },
+  { id: "case1", label: "DT构建" },
+  { id: "case2", label: "DT校正" },
 ];
 
 const RIGHT_TABS: { id: CaseTabId; label: string }[] = [
-  { id: "case5", label: "DT for Comm" },
-  { id: "case4", label: "DT for positioning" },
+  { id: "case5", label: "DT辅助通信" },
+  { id: "case4", label: "DT辅助定位" },
 ];
 
 type Props = {

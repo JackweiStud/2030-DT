@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { Case1Page } from "../cases/case1/Case1Page";
 import { ComingSoon, Shell, type CaseTabId } from "../shell/Shell";
 import { Case2Page } from "../cases/case2/Case2Page";
 import { Case3Page } from "../cases/case3/Case3Page";
@@ -26,7 +27,7 @@ import "../../assets/shell/tokens.css";
 import "../../assets/case2/tokens.css";
 
 export function App() {
-  const [tab, setTab] = useState<CaseTabId>("case2");
+  const [tab, setTab] = useState<CaseTabId>("case1");
   const stageRef = useRef<HTMLDivElement>(null);
   const [case2Busy, setCase2Busy] = useState(false);
   const [case3Busy, setCase3Busy] = useState(false);
@@ -75,7 +76,9 @@ export function App() {
   );
 
   let body: React.ReactNode;
-  if (tab === "case2") {
+  if (tab === "case1") {
+    body = <Case1Page />;
+  } else if (tab === "case2") {
     body = case2Config.ok ? (
       <Case2Page
         config={case2Config.config}

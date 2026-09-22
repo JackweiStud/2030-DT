@@ -32,7 +32,8 @@ async function controlFlag(): Promise<number | null> {
 test.describe("case2 mainline", () => {
   test("进页、启动、截图、重置主线", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("DT Calibration")).toBeVisible();
+    await page.getByRole("button", { name: "DT校正", exact: true }).click();
+    await expect(page.getByText("DT校正")).toBeVisible();
     await expect(page.getByText("等待启动测试")).toBeVisible();
 
     const start = page.getByRole("button", { name: "启动" });

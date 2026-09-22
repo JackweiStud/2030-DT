@@ -133,7 +133,7 @@ test.describe("case3 mainline (frontend-isolated)", () => {
     });
 
     await page.goto("/");
-    await page.getByRole("button", { name: "DT for Comm", exact: true }).click();
+    await page.getByRole("button", { name: "DT辅助通信", exact: true }).click();
     await expect(page.locator(".case3-page")).toBeVisible();
     await expect(page.getByRole("heading", { name: "测试对比" })).toBeVisible();
     await expect(

@@ -12,6 +12,7 @@ async function main() {
   const app = createAdapterApp({
     sharedDir: config.sharedDir,
     logger,
+    case1Ranges: config.case1Ranges,
     case2Ranges: config.case2Ranges,
   });
   await app.initialize();

@@ -89,3 +89,11 @@ CEP 增减百分比、2D Reflection、误差/吞吐/CDF 悬停均已纳入本地
 
 明确仍不做：3D 视图 / 3D 轨道相机 / 真开 3D 开关。HUD 3D 文案可见且 `aria-disabled`。
 
+
+## 2026-09-22 类型检查修复
+
+用户授权处理 reflectionGeometry.ts 的20条 TypeScript 错误。根因是 noUncheckedIndexedAccess 下通过数组下标读取点/长度会得到可能undefined类型；现将起点、终点、长度绑定成线段对象遍历，首尾点显式收窄，不关闭严格检查、不用any或非空断言，采样公式保持。
+
+- `npx vitest run test/case4/reflectionGeometry.test.ts`：9/9通过；包含空路径、单点、全重合点、重复顶点以及原端点/拐角/相位测试。日志 `/tmp/case4-types-tests.log`。
+- `npm run build`：TypeScript检查与Vite正式打包全部通过。日志 `/tmp/case4-types-build.log`。仅保留Three.js包体积提示，不是构建错误。
+- 本轮未启动浏览器、不看图、不修改视觉规格；未提交/推送。

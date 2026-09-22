@@ -1,3 +1,4 @@
+import { createCase1Router } from './cases/case1/routes.mjs';
 import http from "node:http";
 import { promises as defaultFs } from "node:fs";
 import { createControlFileService as createCase2ControlFileService } from "./cases/case2/control-file.mjs";
@@ -29,6 +30,7 @@ import { createLogger } from "./shared/logger.mjs";
  * 三个 Case 共享同一个控制文件 store 和串行写队列，避免跨 Case 覆盖。
  */
 export function createAdapterApp(options) {
+  const routeCase1 = createCase1Router(options);
   const fsOps = options.fsOps ?? defaultFs;
   const logger = options.logger ?? createLogger();
   const controlStore = createControlFileStore({
@@ -168,7 +170,8 @@ export function createAdapterApp(options) {
     let accessExtra = {};
 
     try {
-      let result = await routeCase2(request, response, url);
+      let result = await routeCase1(request, response, url);
+      if (!result?.handled) result = await routeCase2(request, response, url);
       if (!result?.handled) {
         result = await routeCase3(request, response, url);
       }

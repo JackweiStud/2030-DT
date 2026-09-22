@@ -30,7 +30,7 @@ test.describe("case4 three-process stack", () => {
       if (req.url().includes("/api/case4/trajectory")) trajCalls.push(req.url());
     });
     await page.goto("/");
-    await page.getByRole("button", { name: "DT for positioning" }).click();
+    await page.getByRole("button", { name: "DT辅助定位" }).click();
     await expect(page.locator(".case4-page")).toBeVisible();
     await expect(page.getByRole("button", { name: "开始" })).toBeEnabled({
       timeout: 15_000,
@@ -42,7 +42,7 @@ test.describe("case4 three-process stack", () => {
   test("Start 完成、截图落盘、重置后再 Start", async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto("/");
-    await page.getByRole("button", { name: "DT for positioning" }).click();
+    await page.getByRole("button", { name: "DT辅助定位" }).click();
     const start = page.getByRole("button", { name: "开始" });
     const reset = page.getByRole("button", { name: "重置" });
     await expect(start).toBeEnabled({ timeout: 15_000 });

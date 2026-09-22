@@ -52,6 +52,25 @@ describe("buildReflectionPaths", () => {
 });
 
 describe("offsetPolylineSine", () => {
+  it("空路径、单点与重合点不生成无效波纹，返回值不引用输入点", () => {
+    const point = { imageX: 10, imageY: 20 };
+    expect(offsetPolylineSine([])).toEqual([]);
+    for (const input of [[point], [point, point]]) {
+      const output = offsetPolylineSine(input);
+      expect(output).toEqual(input);
+      expect(output[0]).not.toBe(point);
+    }
+  });
+
+  it("重复顶点的零长度段不改变采样或端点", () => {
+    const a = { imageX: 0, imageY: 0 };
+    const corner = { imageX: 80, imageY: 40 };
+    const b = { imageX: 160, imageY: 0 };
+    expect(offsetPolylineSine([a, a, corner, corner, b, b])).toEqual(
+      offsetPolylineSine([a, corner, b]),
+    );
+  });
+
   it("端点钉死，中段有垂直偏移", () => {
     const start = { imageX: 0, imageY: 10 };
     const end = { imageX: 160, imageY: 10 };

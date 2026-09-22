@@ -92,22 +92,29 @@ body,
 }
 
 .case-nav--left {
-  left: var(--shell-nav-left-left);
-  width: var(--shell-nav-left-width);
-  justify-content: space-between;
+  right: calc(
+    var(--shell-stage-width) - var(--shell-title-left) + var(--shell-nav-title-gap)
+  );
+  width: max-content;
+  justify-content: flex-end;
   gap: var(--shell-nav-gap);
 }
 
 .case-nav--right {
-  left: var(--shell-nav-right-left);
-  width: var(--shell-nav-right-width);
-  justify-content: space-between;
+  left: calc(
+    var(--shell-title-left) + var(--shell-title-width) + var(--shell-nav-title-gap)
+  );
+  width: max-content;
+  justify-content: flex-start;
   gap: var(--shell-nav-gap);
 }
 
 .case-tab {
   appearance: none;
-  display: block;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--shell-nav-height);
   margin: 0;
   padding: 0;
   border: 0;
@@ -121,8 +128,7 @@ body,
   line-height: normal;
   text-align: left;
   white-space: nowrap;
-  min-width: 0;
-  min-height: 0;
+  flex-shrink: 0;
   overflow: visible;
   cursor: pointer;
 }
@@ -132,17 +138,7 @@ body,
 }
 
 .case-tab.is-active {
-  position: relative;
-  width: var(--shell-tab-active-width);
-  height: var(--shell-nav-height);
-  flex-shrink: 0;
   color: var(--shell-nav-color-text);
-}
-
-.case-tab.is-active .case-tab__label {
-  position: absolute;
-  left: 0;
-  top: 14px;
 }
 
 .tab-underline {
@@ -152,9 +148,9 @@ body,
 .case-tab.is-active .tab-underline {
   display: block;
   position: absolute;
-  left: var(--shell-tab-underline-left);
-  top: var(--shell-tab-underline-top);
-  width: var(--shell-tab-underline-width);
+  left: 0;
+  bottom: 0;
+  width: 100%;
   height: var(--shell-tab-underline-height);
   border-radius: var(--shell-radius-tab-underline);
   background: var(--shell-nav-color-text);

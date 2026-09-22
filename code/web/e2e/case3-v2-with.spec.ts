@@ -200,7 +200,7 @@ test.describe("case3 v2 with (frontend-isolated)", () => {
       "测试中",
     );
     await expectAllBusinessButtonsDisabled(page);
-    await expect(page.getByRole("button", { name: "DT Calibration" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "DT校正" })).toBeDisabled();
     await expect(root.locator("[data-legend-pred]")).toHaveText("预测波");
     await expect(root.locator("[data-legend-best]")).toHaveText("最优波");
     await expect(root.locator("[data-legend-scan]")).toHaveCount(0);
@@ -271,7 +271,7 @@ test.describe("case3 v2 with (frontend-isolated)", () => {
     });
     expect(completionInitPosts).toBe(1);
     await expectAllBusinessButtonsDisabled(page);
-    await expect(page.getByRole("button", { name: "DT Calibration" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "DT校正" })).toBeDisabled();
 
     releaseWithScreenshot();
     await expect.poll(() => completionInitPosts, { timeout: 15000 }).toBe(2);
@@ -279,7 +279,7 @@ test.describe("case3 v2 with (frontend-isolated)", () => {
     await expect(page.getByTitle("重置有 DT")).toBeEnabled({ timeout: 15000 });
     await expect(page.getByTitle("重置无 DT")).toBeEnabled();
     await expect(page.getByTitle("启动有 DT")).toBeDisabled();
-    await expect(page.getByRole("button", { name: "DT Calibration" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "DT校正" })).toBeEnabled();
     await expect(root.locator("[data-point-value]")).toHaveText("P3");
     await expect(root.locator("[data-replay-wo-value]").nth(2)).toHaveText("30");
   });

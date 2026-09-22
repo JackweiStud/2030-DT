@@ -248,7 +248,7 @@ async function mockCase4(
 
 async function openCase4(page: Page) {
   await page.goto("/");
-  await page.getByRole("button", { name: "DT for positioning" }).click();
+  await page.getByRole("button", { name: "DT辅助定位" }).click();
   await expect(page.locator(".case4-page")).toBeVisible();
 }
 
@@ -324,7 +324,7 @@ test.describe("case4 mainline (frontend-isolated)", () => {
       { timeout: 15_000 },
     );
     await page.reload();
-    await page.getByRole("button", { name: "DT for positioning" }).click();
+    await page.getByRole("button", { name: "DT辅助定位" }).click();
     await expect(page.locator(".c4-ctrl-status")).toHaveText("未开始", {
       timeout: 10_000,
     });

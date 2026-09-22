@@ -2,6 +2,20 @@
 
 ## 当前阶段
 
+- case4 类型构建修复（2026-09-22）：用户授权处理既有类型错误。reflectionGeometry.ts 将起点/终点/长度绑定成线段对象，显式收窄首尾点，清除20处数组索引undefined类型错误；波纹采样公式不变。反射几何9项测试通过（补空/单/重合点与重复顶点），完整Web `npm run build`（tsc + Vite）通过，原项目级类型构建阻塞关闭。未使用浏览器、未提交/推送；case1开发冻结保持。
+
+- case1 开发冻结（2026-09-22，优先于历史记录）：用户确认前端全部完成、人工验证通过，并授权修复复核发现。RF平移/缩放已正确换算Shell比例，旧浏览器脚本已同步为恒定热力叠加；两项发现关闭。非浏览器Web测试32/32通过（新增6项RF事件测试先复现后修复），此前Node定向7/7通过。未使用CDP、浏览器或截图。冻结当前本地工作区case1功能基线，不代表全项目交付验收；case4既有20处类型错误已在本日后续修复，完整构建通过。证据与边界见 doc/case1/QA-EVIDENCE.md。未提交、未推送、未创建Git tag；后续仅修缺陷或处理新授权需求。
+
+- case1 静态布局增量同步（2026-09-21，来源提交 `3f326dd`）：正式页已同步最新 web-static/case1 的详情标题外置/内容卡、首页尺寸与配图对齐、说明区/KPI间距、525px主视图及图例位置；RF移除独立概述布局特例。保留正式3D、离线数据与交互逻辑。按用户要求未截图、未回归；此次视觉效果待用户检查，旧测试记录不代表此增量已验收。
+
+- case1 2026-09-21 正式页本地实现与验证完成（优先于以下历史记录）：用户已人工通过静态页，Codex 独立 Gate1.5 复核通过后按授权开发。正式 React 复用已验收布局/素材，接入现有 Shell、三层切换/明暗、只读离线 TXT KPI、两 GLB Three.js 旋转/缩放/平移、env 初值与默认关闭参数复制；本次停留内保留视角，切 case 清理恢复，无保存/Reset。服务端116项、Web受影响26项和实际Chrome GLB/视角生命周期通过；Vite打包通过。完整npm build被HEAD已存在的case4 reflectionGeometry.ts 20处类型错误阻塞，未越界修复。RF带色块参考底图保持，纯底图替换与锚区标定仍待完成；正式动态页人工验收/目标PC性能未完成。证据和复放入口 `doc/case1/QA-EVIDENCE.md`；规格 `API-CONTRACT.md` / `WEB-SPEC.md` / `SERVER-SPEC.md`。当前可预览5181（DT Construction），只读适配3111，原5173/3102保留；临时debug5182已关闭。无提交/推送。
+
+- case1 Gate 1.5 分工（2026-09-21）：用户明确同意进入静态页面。由 Cursor Grok 4.5 延续 Pencil 上下文完成 `web-static/case1/` 及 `doc/case1/STATIC-HTML-ACCEPTANCE.md`，Codex 独立复核。转发提示词见 `doc/case1/CURSOR-STATIC-PROMPT.md`。以当前已通过人工验收的四帧为视觉标准，不补 Reset/保存反馈，不替换静态 KPI 示意；真实 3D、数据接口和调试参数能力后置。当前已交付提示词，未宣称静态实现完成。
+
+- case1 最新裁决（2026-09-21，覆盖下方旧方案）：用户明确以已人工视觉/结构 PASS 的当前 Pencil 为标准，Gate 1.5 不补 KPI 样例或 Reset/保存反馈。撤销交互视角自动持久化和 Reset；两层只从 `code/web/.env` 初值初始化，本次停留内保留调整，切换 case/刷新/重开恢复初值。增加默认关闭的参数调试开关，查看/复制当前视角供用户手工配置，无自动写文件。已同步范围、状态映射、技术预检及旧提示词失效说明；交接差异关闭，可继续 Gate 1.5，尚未开始静态实现。
+
+- case1 用户验收与交接复核（2026-09-21，优先于下方旧 REVIEW_READY 记录）：用户明确 Pencil 视觉 PASS、内部结构检视通过，并允许无其他问题时继续。Codex 已用现可用 Pencil MCP 直接读取四帧与实例、查看几何/RF 截图；左侧明暗正确，但当前稿 KPI 为 0.2/0.4/50%，Reset/保存反馈和局部状态样板不在文档树中，与旧交接文档不一致。证据及节点见 `doc/case1/GATE1-HANDOFF-REVIEW.md`。待明确这些差异是否有意留到网页阶段补齐；不撤销用户视觉 PASS，不擅改设计，尚未启动 Gate 1.5。
+
 - case1 Gate 1 设计交接（2026-09-21）：`03-design/case1/case1-dt-construction.pen` 已达 **REVIEW_READY**（未 APPROVED / 未冻结）。四主帧 home/geometry/material/rf + 局部状态样板；交接见 `03-design/case1/REVIEW-HANDOFF.md`、`Visual_Diff.md`、`Frontend_Spec.md`。已清理未引用重复资产；`_qa/` 过程证据不入库。`bg-left-*`、多余 swatch、备用 icon 暂留由用户自理。不进入静态 HTML 或正式实现；待用户视觉冻结。
 
 - case1 设计分工与独立预检（2026-09-21）：Cursor 完成 Pencil 设计轨；Codex 维护 `doc/case1/` 与本文件。转发入口 `doc/case1/CURSOR-PENCIL-PROMPT.md`。技术预检见 `doc/case1/TECHNICAL-PRECHECK.md`（GLB/TXT 只读检查、接口候选未冻结）。真实浏览器渲染、接口批准与实现均未开始。
@@ -200,7 +214,7 @@
 
 ## 最小下一步与停止条件
 
-case1：设计源已 `REVIEW_READY`（`03-design/case1/case1-dt-construction.pen`）。用户视觉冻结后再进入 Gate 1.5；Codex 可按 `REVIEW-HANDOFF.md` 与 `Frontend_Spec.md` 回查。RF 纯底图后补。不进入正式实现。
+case1：按已通过人工验收的当前 Pencil 四帧进入 Gate 1.5，精确读取设计源还原静态页面与局部切换；不补 Reset/保存提示，不替换静态 KPI 示意。正式 3D 调试与数据绑定后续按最新范围实施，不恢复已撤销的视角持久化接口。
 
 case4：除 3D 外功能已完成本地开发（正式 Web + Node + 打桩）。3D 不在本轮范围。真实后端/真实挂载若需由本仓库独立复验，应追加 `doc/case4/QA-EVIDENCE.md`，不覆盖本地打桩记录。
 

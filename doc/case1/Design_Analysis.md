@@ -1,5 +1,8 @@
 # case1 设计分析
 
+> 2026-09-21 更新：本文件保留为早期设计输入/执行历史。当前用户已视觉及结构 PASS，Gate 1.5 以实际 Pencil 为准，不补示意 KPI、Reset 或保存反馈。原自动持久保存/Reset 方案已撤销；现为配置初始姿态、交互仅内存保留、切换 case 后恢复初值、默认关闭的参数调试/复制能力。最新需求以 `PHASE0-SCOPE.md` 和 `UX-STATE-MAP.md` 为准，不执行下文已过期的保存/复位要求。
+
+
 模式：标准重建；目标是现有 PC 内部演示平台的设计冻结及后续前端交接。需求权威：[PHASE0-SCOPE.md](PHASE0-SCOPE.md)；页面与数值依据：[UX-STATE-MAP.md](UX-STATE-MAP.md)。设计源 `03-design/case1/case1-dt-construction.pen` 已达 `REVIEW_READY`；**未**用户冻结，不进入 Gate 1.5 / 正式实现。
 
 ## 目标与优先级

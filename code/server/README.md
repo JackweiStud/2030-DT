@@ -28,8 +28,9 @@ DT_SHARED_DIR=/absolute/path/to/shared npm start
 | `CASE2_RANGE_KPI_RSS` | `-1000,1000` |
 | `CASE2_RANGE_KPI_EFFECTIVE_PATH_NUM` | `0,50000` |
 | `CASE2_RANGE_KPI_FIRST_PATH_DELAY` | `0,10000` |
+| `CASE1_RANGE_HEATMAP_RSS` | `-500,500` |
 
-热力越界双边掐位（格子保留）；KPI 越界丢弃该样本。两种情况都打 `case2 data values out of range` 日志，带该文件 `invalidCount`。Case3/Case4 范围键目前只在 `.env.example` 占位，未改变 Case3 现有拒绝逻辑。
+热力越界双边掐位（格子保留）；KPI 越界丢弃该样本。两种情况都打 `case2 data values out of range` 日志，带该文件 `invalidCount`。Case1 RF 热力使用 `CASE1_RANGE_HEATMAP_RSS`（默认与 `CASE2_RANGE_HEATMAP_RSS` 相同）。Case3/Case4 范围键目前只在 `.env.example` 占位，未改变 Case3 现有拒绝逻辑。
 
 ## 测试
 

@@ -122,20 +122,31 @@ export function offsetPolylineSine(
   const stepPx = options.stepPx ?? REFLECTION_WAVE.stepPx;
   const fadePx = options.fadePx ?? REFLECTION_WAVE.fadePx;
   const phase = options.phase ?? 0;
-  if (points.length < 2) return points.map((point) => ({ ...point }));
+  const first = points[0];
+  const last = points.at(-1);
+  if (!first || !last || points.length < 2) {
+    return points.map((point) => ({ ...point }));
+  }
 
-  const segLens: number[] = [];
+  // Keep endpoints and length together so sampling never indexes parallel arrays.
+  const segments: {
+    start: ReflectionImagePoint;
+    end: ReflectionImagePoint;
+    length: number;
+  }[] = [];
   let total = 0;
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const length = imageDist(points[index], points[index + 1]);
-    segLens.push(length);
+  let start = first;
+  for (const end of points.slice(1)) {
+    const length = imageDist(start, end);
+    segments.push({ start, end, length });
     total += length;
+    start = end;
   }
   if (total < 1e-6) return points.map((point) => ({ ...point }));
 
   const vertexS: number[] = [0];
   let acc = 0;
-  for (const length of segLens) {
+  for (const { length } of segments) {
     acc += length;
     vertexS.push(acc);
   }
@@ -150,10 +161,7 @@ export function offsetPolylineSine(
 
   const out: ReflectionImagePoint[] = [];
   let s = 0;
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const start = points[index];
-    const end = points[index + 1];
-    const length = segLens[index];
+  for (const { start, end, length } of segments) {
     if (length < 1e-6) continue;
     const tx = (end.imageX - start.imageX) / length;
     const ty = (end.imageY - start.imageY) / length;
@@ -174,7 +182,6 @@ export function offsetPolylineSine(
     }
     s += length;
   }
-  const last = points[points.length - 1];
   out.push({ imageX: last.imageX, imageY: last.imageY });
   return out;
 }

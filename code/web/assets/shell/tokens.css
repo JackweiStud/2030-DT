@@ -32,11 +32,8 @@
 
   --shell-nav-top: 24px;
   --shell-nav-height: 46px;
-  --shell-nav-gap: 6px;
-  --shell-nav-left-left: 320px;
-  --shell-nav-left-width: 291px;
-  --shell-nav-right-left: 1311px;
-  --shell-nav-right-width: 291px;
+  --shell-nav-gap: 40px;
+  --shell-nav-title-gap: 170px;
 
   --shell-title-left: 780px;
   --shell-title-top: 24px;
@@ -46,10 +43,6 @@
   --shell-corner-top: 27px;
   --shell-corner-size: 36px;
 
-  --shell-tab-active-width: 139px;
-  --shell-tab-underline-left: 8px;
-  --shell-tab-underline-top: 45px;
-  --shell-tab-underline-width: 124px;
   --shell-tab-underline-height: 2px;
 
   --shell-font-size-brand-title: 28px;

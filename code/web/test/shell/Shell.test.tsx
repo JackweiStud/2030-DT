@@ -20,10 +20,10 @@ beforeAll(() => {
 });
 
 const TAB_LABELS = [
-  "DT Construction",
-  "DT Calibration",
-  "DT for Comm",
-  "DT for positioning",
+  "DT构建",
+  "DT校正",
+  "DT辅助通信",
+  "DT辅助定位",
 ] as const;
 
 function renderShell(opts: {
@@ -60,19 +60,19 @@ describe("Shell 可见 Tab 导航", () => {
 
   it("当前 Tab 带 is-active 与 aria-current=page", () => {
     const { view } = renderShell({ activeTab: "case5" });
-    const active = view.getByRole("button", { name: "DT for Comm" });
+    const active = view.getByRole("button", { name: "DT辅助通信" });
     expect(active.classList.contains("is-active")).toBe(true);
     expect(active.getAttribute("aria-current")).toBe("page");
     expect(active.getAttribute("data-tab")).toBe("case5");
 
-    const other = view.getByRole("button", { name: "DT Calibration" });
+    const other = view.getByRole("button", { name: "DT校正" });
     expect(other.classList.contains("is-active")).toBe(false);
     expect(other.getAttribute("aria-current")).toBeNull();
   });
 
   it("未锁定时第五 Tab 可点击并回传", () => {
     const { view, onTabChange } = renderShell({ activeTab: "case2" });
-    fireEvent.click(view.getByRole("button", { name: "DT for Comm" }));
+    fireEvent.click(view.getByRole("button", { name: "DT辅助通信" }));
     expect(onTabChange).toHaveBeenCalledWith("case5");
   });
 
@@ -81,8 +81,8 @@ describe("Shell 可见 Tab 导航", () => {
       activeTab: "case2",
       navigationLocked: true,
     });
-    const current = view.getByRole("button", { name: "DT Calibration" });
-    const case5 = view.getByRole("button", { name: "DT for Comm" });
+    const current = view.getByRole("button", { name: "DT校正" });
+    const case5 = view.getByRole("button", { name: "DT辅助通信" });
     const others = tabButtons(view).filter((el) => el !== current);
 
     expect((current as HTMLButtonElement).disabled).toBe(false);
@@ -92,7 +92,7 @@ describe("Shell 可见 Tab 导航", () => {
     expect((case5 as HTMLButtonElement).disabled).toBe(true);
 
     fireEvent.click(case5);
-    fireEvent.click(view.getByRole("button", { name: "DT Construction" }));
+    fireEvent.click(view.getByRole("button", { name: "DT构建" }));
     expect(onTabChange).not.toHaveBeenCalled();
   });
 
@@ -101,10 +101,10 @@ describe("Shell 可见 Tab 导航", () => {
       activeTab: "case5",
       navigationLocked: true,
     });
-    const case5 = view.getByRole("button", { name: "DT for Comm" });
+    const case5 = view.getByRole("button", { name: "DT辅助通信" });
     expect((case5 as HTMLButtonElement).disabled).toBe(false);
     expect(
-      (view.getByRole("button", { name: "DT Calibration" }) as HTMLButtonElement)
+      (view.getByRole("button", { name: "DT校正" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
 

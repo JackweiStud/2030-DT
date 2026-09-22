@@ -1,5 +1,8 @@
 # case1 Pencil 重建计划
 
+> 2026-09-21 更新：本文件保留为早期设计输入/执行历史。当前用户已视觉及结构 PASS，Gate 1.5 以实际 Pencil 为准，不补示意 KPI、Reset 或保存反馈。原自动持久保存/Reset 方案已撤销；现为配置初始姿态、交互仅内存保留、切换 case 后恢复初值、默认关闭的参数调试/复制能力。最新需求以 `PHASE0-SCOPE.md` 和 `UX-STATE-MAP.md` 为准，不执行下文已过期的保存/复位要求。
+
+
 依据：[Design_Analysis.md](Design_Analysis.md)、[UX-STATE-MAP.md](UX-STATE-MAP.md)。目标 `03-design/case1/case1-dt-construction.pen` **已创建**并达 `REVIEW_READY`；本文件保留为重建计划与结构合同，供复核对照，不覆盖其他 case 设计。
 
 ## 帧与组件树

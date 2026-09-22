@@ -1,5 +1,8 @@
 # 转发给 Cursor Grok 4.5：case1 Pencil 设计
 
+> 2026-09-21 更新：本文件保留为早期设计输入/执行历史。当前用户已视觉及结构 PASS，Gate 1.5 以实际 Pencil 为准，不补示意 KPI、Reset 或保存反馈。原自动持久保存/Reset 方案已撤销；现为配置初始姿态、交互仅内存保留、切换 case 后恢复初值、默认关闭的参数调试/复制能力。最新需求以 `PHASE0-SCOPE.md` 和 `UX-STATE-MAP.md` 为准，不执行下文已过期的保存/复位要求。
+
+
 你负责 `/Users/jackwl/Code/2030-DT` 的 case1 Gate 1 Pencil 设计重建。目标是可编辑、可评审、可交给前端的设计源；本轮不写 React/Node/静态 HTML，不安装 Three.js，不实现业务。用户已授权你完成设计，常规布局选择自主推进，无需重新做需求问答。Codex 随后独立校验，用户最终视觉冻结。
 
 ## 先读
