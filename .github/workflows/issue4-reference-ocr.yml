@@ -1,0 +1,25 @@
+name: issue4-reference-ocr
+on:
+  push:
+    branches: [issue-4-ux-sync]
+jobs:
+  ocr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OCR
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-chi-sim
+      - name: OCR latest UX references
+        shell: bash
+        run: |
+          mkdir -p tmp
+          : > tmp/issue4-ocr.txt
+          find '01-参考资料/更新/case2' '01-参考资料/更新/case3' '01-参考资料/更新/case4' -type f -name '*.png' -print0 | sort -z | while IFS= read -r -d '' f; do
+            echo "===== $f =====" >> tmp/issue4-ocr.txt
+            tesseract "$f" stdout -l chi_sim+eng --psm 11 2>/dev/null >> tmp/issue4-ocr.txt || true
+            echo >> tmp/issue4-ocr.txt
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue4-reference-ocr
+          path: tmp/issue4-ocr.txt
