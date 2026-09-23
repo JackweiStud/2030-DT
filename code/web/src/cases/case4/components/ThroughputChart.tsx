@@ -42,8 +42,8 @@ const WITHOUT_COLOR = "#97AAC4";
 const WITH_COLOR = "#7A6BFF";
 
 const TIP_ROWS = [
-  { key: "without" as const, name: "传统基站定位", color: WITHOUT_COLOR },
-  { key: "with" as const, name: "数字孪生辅助定位", color: WITH_COLOR },
+  { key: "without" as const, name: "无DT辅助", color: WITHOUT_COLOR },
+  { key: "with" as const, name: "有DT辅助", color: WITH_COLOR },
 ];
 
 function xOf(no: number, start: number, end: number): number {
@@ -194,7 +194,7 @@ export function ThroughputChart(props: Props) {
             </span>
             <span>
               <i className="c4-dot c4-dot--dt" />
-              数字孪生辅助定位
+              有DT辅助
             </span>
           </div>
         </div>

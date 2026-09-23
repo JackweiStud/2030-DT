@@ -24,13 +24,13 @@ import "./shell.css";
 export type CaseTabId = "case1" | "case2" | "case3" | "case4" | "case5";
 
 const LEFT_TABS: { id: CaseTabId; label: string }[] = [
-  { id: "case1", label: "DT构建" },
-  { id: "case2", label: "DT校正" },
+  { id: "case1", label: "DT 建构" },
+  { id: "case2", label: "DT 校正" },
 ];
 
 const RIGHT_TABS: { id: CaseTabId; label: string }[] = [
-  { id: "case5", label: "DT辅助通信" },
-  { id: "case4", label: "DT辅助定位" },
+  { id: "case5", label: "DT 辅助通信" },
+  { id: "case4", label: "DT 辅助定位" },
 ];
 
 type Props = {
@@ -87,6 +87,8 @@ export function Shell(props: Props) {
     return () => ro.disconnect();
   }, []);
 
+  const shellTitle = activeTab === "case2" ? "IMT-2030 DT测试" : "IMT2030(6G)无线数字孪生";
+
   const renderTab = (tab: TabItem) => {
     const isActive = activeTab === tab.id;
     const lockedOther = navigationLocked && tab.id !== activeTab;
@@ -133,7 +135,7 @@ export function Shell(props: Props) {
             <nav className="case-nav case-nav--left" aria-label="左侧 Case">
               {LEFT_TABS.map(renderTab)}
             </nav>
-            <div className="shell-title">IMT2030(6G)无线数字孪生</div>
+            <div className="shell-title">{shellTitle}</div>
             <nav className="case-nav case-nav--right" aria-label="右侧 Case">
               {RIGHT_TABS.map(renderTab)}
             </nav>

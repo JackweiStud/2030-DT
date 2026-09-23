@@ -18,9 +18,9 @@ const ICONS: Record<MetricKey, string> = {
 
 /** 与 web-static/case2 初始态一致的 KPI 行标题。 */
 const KPI_TITLES: Record<MetricKey, string> = {
-  rss: "RSS (接收信号强度)",
-  effective_path_num: "Effective Path Num (有效路径数)",
-  first_path_delay: "First Path Delay (首径时延)",
+  rss: "RSS误差（dBm）",
+  effective_path_num: "有效径数误差（条）",
+  first_path_delay: "最强径时延误差（ns）",
 };
 
 type Props = {

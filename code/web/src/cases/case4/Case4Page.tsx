@@ -3,7 +3,7 @@
  * DOM 分区对齐静态 data-region。
  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useSiteEnvWindow } from "../../shell/siteEnvWindowContext";
 import type { Case4RuntimeConfig } from "./config/case4RuntimeConfig";
 import { useCase4Controller, type MapRendererHandle } from "./hooks/useCase4Controller";
@@ -27,6 +27,7 @@ export function Case4Page(props: Props) {
   const { config, stageElementRef, onBusyChange } = props;
   const { open: openSiteEnv } = useSiteEnvWindow();
   const mapRef = useRef<MapRendererHandle | null>(null);
+  const [dockExpanded, setDockExpanded] = useState(false);
   const ctrl = useCase4Controller({
     config,
     stageElementRef,
@@ -39,7 +40,7 @@ export function Case4Page(props: Props) {
     (ctrl.ui === "running" && ctrl.liveHint ? ctrl.liveHint : null);
 
   return (
-    <main className="case4-page" data-testid="case4-page" data-state={ctrl.dataState}>
+    <main className="case4-page" data-testid="case4-page" data-state={ctrl.dataState} data-dock-expanded={dockExpanded ? "1" : "0"}>
       <MapStage
         config={config}
         stageElementRef={stageElementRef}
@@ -51,6 +52,8 @@ export function Case4Page(props: Props) {
       <MapHud onOpenSiteEnv={openSiteEnv} />
       <Banner text={liveHintBanner} />
       <BottomDock
+        expanded={dockExpanded}
+        onToggleExpanded={() => setDockExpanded((value) => !value)}
         baseRoute={ctrl.baseRoute}
         points={ctrl.trajectory?.points ?? []}
         statistics={ctrl.statistics}

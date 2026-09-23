@@ -34,6 +34,8 @@ function clampStart(value: number, maxStart: number): number {
 }
 
 type Props = {
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
   routeNos: number[];
   withoutPoints: Case3Point[];
   withPoints?: Case3Point[];
@@ -251,13 +253,21 @@ export function PointBeamReplay(props: Props) {
       data-replay-can-drag={canDrag ? "1" : "0"}
     >
       <div className="case3v2-replay-controls">
-        <div className="case3v2-replay-title">点位波束回溯</div>
+        <div className="case3v2-replay-title-row">
+          <div className="case3v2-replay-title">点位波束回溯</div>
+          <button type="button" className="case3v2-dock-expand"
+            aria-label={props.expanded ? "收起指标栏" : "展开指标栏"}
+            title={props.expanded ? "收起" : "全屏"}
+            onClick={() => props.onToggleExpanded?.()}>
+            <svg viewBox="0 0 24 24" aria-hidden><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5M9 9 3 3m12 6 6-6M9 15l-6 6m12-6 6 6" /></svg>
+          </button>
+        </div>
         <div className="case3v2-side-bar" data-side="without">
           <span className="case3v2-side-num" data-side-num="without">
             1
           </span>
           <div className="case3v2-side-copy">
-            <span className="case3v2-side-name">无DT</span>
+            <span className="case3v2-side-name">无DT辅助</span>
             <StatusLabel
               status={withoutStatus}
               side="without"
@@ -292,7 +302,7 @@ export function PointBeamReplay(props: Props) {
             2
           </span>
           <div className="case3v2-side-copy">
-            <span className="case3v2-side-name">有DT</span>
+            <span className="case3v2-side-name">有DT辅助</span>
             <StatusLabel
               status={withStatus}
               side="with"

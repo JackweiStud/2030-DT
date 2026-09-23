@@ -1732,3 +1732,22 @@
   color: #f87171;
   font-size: 18px;
 }
+
+
+/* ---- Issue #4: latest UX naming + KPI dock fullscreen ---- */
+.case3v2-page .case3v2-replay-title-row { display:flex; align-items:center; gap:8px; width:100%; height:28px; }
+.case3v2-page .case3v2-dock-expand { width:20px; height:20px; padding:0; border:0; background:transparent; color:#cbd5e1; cursor:pointer; opacity:.85; }
+.case3v2-page .case3v2-dock-expand:hover { opacity:1; }
+.case3v2-page .case3v2-dock-expand svg { display:block; width:100%; height:100%; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.case3v2-page .case3v2-compare__text { font-size:18px; }
+.case3v2-page .case3v2-site-env-link { font-size:16px; }
+.case3v2-page[data-dock-expanded="1"] .case3v2-map-stage,
+.case3v2-page[data-dock-expanded="1"] .case3v2-map-hud { visibility:hidden; }
+.case3v2-page .case3v2-dock.is-expanded { top:var(--shell-header-height,80px); height:calc(1080px - var(--shell-header-height,80px)); border-radius:0 0 14px 14px; background:#2a2a2afa; }
+.case3v2-page .case3v2-dock.is-expanded .case3v2-kpi-row { flex:1 1 auto; height:auto; min-height:0; }
+.case3v2-page .case3v2-dock.is-expanded .case3v2-kpi { height:100%; padding-top:14px; padding-bottom:14px; }
+.case3v2-page .case3v2-dock.is-expanded .case3v2-kpi__title { font-size:18px; }
+.case3v2-page .case3v2-dock.is-expanded .case3v2-thr-plot { flex:1 1 auto; height:auto; min-height:0; }
+.case3v2-page .case3v2-dock.is-expanded .case3v2-thr-grid,
+.case3v2-page .case3v2-dock.is-expanded .case3v2-thr-axis,
+.case3v2-page .case3v2-dock.is-expanded .case3v2-thr-lines { height:100%; }

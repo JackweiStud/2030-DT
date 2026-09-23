@@ -9,6 +9,8 @@ import { PositionStatistics } from "./PositionStatistics";
 import { ThroughputChart } from "./ThroughputChart";
 
 type Props = {
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
   baseRoute: BasePoint[];
   points: TrajectoryPoint[];
   statistics: Statistics | null;
@@ -24,8 +26,10 @@ type Props = {
 
 export function BottomDock(props: Props) {
   return (
-    <section className="c4-dock" data-region="BottomDock">
+    <section className={`c4-dock${props.expanded ? " is-expanded" : ""}`} data-region="BottomDock">
       <ErrorReplay
+        expanded={props.expanded}
+        onToggleExpanded={props.onToggleExpanded}
         baseRoute={props.baseRoute}
         points={props.points}
         statusText={props.statusText}

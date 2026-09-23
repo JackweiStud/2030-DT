@@ -102,10 +102,10 @@ export function MeanBarChart(props: Props) {
   return (
     <div className="bar-area">
       <div className="chart-head">
-        <span>平均值对比</span>
+        <span>平均误差</span>
         <div className="legend legend--sm">
-          <span className="leg-initial">● Initial DT</span>
-          <span className="leg-calibrated">● Calibrated DT</span>
+          <span className="leg-initial">● 初始 DT</span>
+          <span className="leg-calibrated">● 校正 DT</span>
         </div>
       </div>
       <div className="bar-plot">
@@ -136,7 +136,7 @@ export function MeanBarChart(props: Props) {
               />
             </>
           ) : null}
-          <span className="bar-axis-label">Initial DT</span>
+          <span className="bar-axis-label">初始 DT</span>
         </div>
 
         {/* 初始态也保留 Calibrated 轴标签（无柱），对齐静态 HTML */}
@@ -157,7 +157,7 @@ export function MeanBarChart(props: Props) {
               />
             </>
           ) : null}
-          <span className="bar-axis-label">Calibrated DT</span>
+          <span className="bar-axis-label">校正 DT</span>
         </div>
 
         <div className="bar-baseline" style={{ top: BASELINE_Y }} />

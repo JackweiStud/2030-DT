@@ -122,7 +122,7 @@ export function CostCompareCard(props: Props) {
   return (
     <article className="case3v2-kpi case3v2-kpi--cost" data-region="CostCompareCard">
       <div className="case3v2-kpi__head">
-        <span className="case3v2-kpi__title">开销对比</span>
+        <span className="case3v2-kpi__title">通信开销</span>
       </div>
       <div className="case3v2-cost-plot">
         <div className="case3v2-cost-col">

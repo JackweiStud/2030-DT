@@ -98,27 +98,27 @@ describe("App Shell 导航挂载", () => {
     expect(view.queryByTestId("case3-v2-page")).toBeNull();
     expect(view.queryByText("建设中")).toBeNull();
     expect(
-      view.getByRole("button", tab("DT构建")).classList.contains("is-active"),
+      view.getByRole("button", tab("DT 建构")).classList.contains("is-active"),
     ).toBe(true);
   });
 
   it("DT for Comm 挂载 Case3 V2，不再是建设中", () => {
     const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT辅助通信")));
+    fireEvent.click(view.getByRole("button", tab("DT 辅助通信")));
     expect(view.getByTestId("case3-v2-page")).toBeTruthy();
     expect(view.queryByText("建设中")).toBeNull();
     expect(view.queryByTestId("case2-page")).toBeNull();
     expect(view.queryByTestId("case3-page")).toBeNull();
     expect(
-      view.getByRole("button", tab("DT辅助通信")).classList.contains("is-active"),
+      view.getByRole("button", tab("DT 辅助通信")).classList.contains("is-active"),
     ).toBe(true);
   });
 
   it("case1 与 case4 挂载正式页，切换卸载 case1", () => {
     const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT构建")));
+    fireEvent.click(view.getByRole("button", tab("DT 建构")));
     expect(view.getByTestId("case1-page")).toBeTruthy();
-    fireEvent.click(view.getByRole("button", tab("DT辅助定位")));
+    fireEvent.click(view.getByRole("button", tab("DT 辅助定位")));
     expect(view.queryByText("建设中")).toBeNull();
     expect(view.getByTestId("case4-page")).toBeTruthy();
     expect(view.queryByTestId("case1-page")).toBeNull();
@@ -130,17 +130,17 @@ describe("App Shell 导航挂载", () => {
   it("case2 忙时第五 Tab 与其他非当前 Tab 一并禁用", () => {
     case2Busy.onMount = true;
     const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT校正")));
-    const current = view.getByRole("button", tab("DT校正"));
-    const case5 = view.getByRole("button", tab("DT辅助通信"));
+    fireEvent.click(view.getByRole("button", tab("DT 校正")));
+    const current = view.getByRole("button", tab("DT 校正"));
+    const case5 = view.getByRole("button", tab("DT 辅助通信"));
     expect((current as HTMLButtonElement).disabled).toBe(false);
     expect((case5 as HTMLButtonElement).disabled).toBe(true);
     expect(
-      (view.getByRole("button", tab("DT构建")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 建构")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(
-      (view.getByRole("button", tab("DT辅助定位")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 辅助定位")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
 
@@ -152,26 +152,26 @@ describe("App Shell 导航挂载", () => {
   it("case5 busy 时锁定其他 Tab", () => {
     case3V2Busy.onMount = true;
     const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT辅助通信")));
+    fireEvent.click(view.getByRole("button", tab("DT 辅助通信")));
     expect(view.getByTestId("case3-v2-page")).toBeTruthy();
     expect(
-      (view.getByRole("button", tab("DT辅助通信")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 辅助通信")) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
     expect(
-      (view.getByRole("button", tab("DT校正")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 校正")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(
-      (view.getByRole("button", tab("DT构建")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 建构")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(
-      (view.getByRole("button", tab("DT辅助定位")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 辅助定位")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
 
-    fireEvent.click(view.getByRole("button", tab("DT校正")));
+    fireEvent.click(view.getByRole("button", tab("DT 校正")));
     expect(view.getByTestId("case3-v2-page")).toBeTruthy();
     expect(view.queryByTestId("case3-page")).toBeNull();
     expect(view.queryByTestId("case2-page")).toBeNull();
@@ -180,26 +180,26 @@ describe("App Shell 导航挂载", () => {
   it("case4 busy 时锁定其他 Tab", () => {
     case4Busy.onMount = true;
     const view = render(<App />);
-    fireEvent.click(view.getByRole("button", tab("DT辅助定位")));
+    fireEvent.click(view.getByRole("button", tab("DT 辅助定位")));
     expect(view.getByTestId("case4-page")).toBeTruthy();
     expect(
-      (view.getByRole("button", tab("DT辅助定位")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 辅助定位")) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
     expect(
-      (view.getByRole("button", tab("DT校正")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 校正")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(
-      (view.getByRole("button", tab("DT辅助通信")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 辅助通信")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(
-      (view.getByRole("button", tab("DT构建")) as HTMLButtonElement)
+      (view.getByRole("button", tab("DT 建构")) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
 
-    fireEvent.click(view.getByRole("button", tab("DT校正")));
+    fireEvent.click(view.getByRole("button", tab("DT 校正")));
     expect(view.getByTestId("case4-page")).toBeTruthy();
     expect(view.queryByTestId("case2-page")).toBeNull();
   });

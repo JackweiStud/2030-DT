@@ -31,6 +31,7 @@ export function Case3V2Page(props: Props) {
   const { config, stageElementRef, onBusyChange } = props;
   const { open: openSiteEnv } = useSiteEnvWindow();
   const mapRef = useRef<MapRendererHandle | null>(null);
+  const [dockExpanded, setDockExpanded] = useState(false);
   const mapRendererRefs = useMemo(
     () => ({ without: mapRef, with: mapRef }),
     [],
@@ -109,6 +110,7 @@ export function Case3V2Page(props: Props) {
       data-map-side={displayMapSide}
       data-map-source-side={sourceMapSide}
       data-map-cleared={mapCleared ? "1" : "0"}
+      data-dock-expanded={dockExpanded ? "1" : "0"}
     >
       <section className="case3v2-map-stage" data-region="MapStage">
         <MapRenderer2D
@@ -127,6 +129,8 @@ export function Case3V2Page(props: Props) {
       />
       <BottomDock
         view={view}
+        expanded={dockExpanded}
+        onToggleExpanded={() => setDockExpanded((value) => !value)}
         onStartWithout={holdMapThen(ctrl.onStartWithout)}
         onStartWith={holdMapThen(ctrl.onStartWith)}
         onReinitWithout={holdMapThen(ctrl.onReinitWithout)}

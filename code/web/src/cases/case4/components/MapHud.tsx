@@ -18,7 +18,7 @@ export function MapHud(props: Props) {
       <div className="c4-top-mask" aria-hidden />
       <div className="c4-compare">
         <span className="c4-compare__icon" aria-hidden />
-        <span className="c4-compare__text">测试对比</span>
+        <span className="c4-compare__text">定位性能测试</span>
       </div>
       <button
         type="button"

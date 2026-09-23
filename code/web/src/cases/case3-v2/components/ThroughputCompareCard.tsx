@@ -81,16 +81,16 @@ export function ThroughputCompareCard(props: Props) {
   return (
     <article className="case3v2-kpi case3v2-kpi--thr" data-region="ThroughputCompareCard">
       <div className="case3v2-kpi__head">
-        <span className="case3v2-kpi__title">吞吐率对比(Gbps)</span>
+        <span className="case3v2-kpi__title">吞吐率(Gbps)</span>
       </div>
       <div className="case3v2-thr-legend">
         <span className="case3v2-thr-legend__item">
           <i className="case3v2-thr-legend__dot case3v2-thr-legend__dot--wo" />
-          <span className="case3v2-thr-legend__text--wo">无DT</span>
+          <span className="case3v2-thr-legend__text--wo">无DT辅助</span>
         </span>
         <span className="case3v2-thr-legend__item">
           <i className="case3v2-thr-legend__dot case3v2-thr-legend__dot--w" />
-          <span className="case3v2-thr-legend__text--w">有DT</span>
+          <span className="case3v2-thr-legend__text--w">有DT辅助</span>
         </span>
       </div>
       <div className="case3v2-thr-plot">

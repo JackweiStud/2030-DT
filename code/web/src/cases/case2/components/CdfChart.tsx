@@ -80,10 +80,10 @@ export function CdfChart(props: Props) {
   return (
     <div className="cdf-area">
       <div className="chart-head">
-        <span>CDF图对比</span>
+        <span>CDF</span>
         <div className="legend">
-          <span className="leg-initial">● Initial DT</span>
-          <span className="leg-calibrated">● Calibrated DT</span>
+          <span className="leg-initial">● 初始 DT</span>
+          <span className="leg-calibrated">● 校正 DT</span>
         </div>
       </div>
       <div className="cdf-plot">

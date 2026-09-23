@@ -22,7 +22,7 @@ export function MapHud(props: Props) {
       <div className="case3v2-top-mask" aria-hidden />
       <div className="case3v2-compare">
         <span className="case3v2-compare__icon" aria-hidden />
-        <span className="case3v2-compare__text">测试对比</span>
+        <span className="case3v2-compare__text">通信性能测试</span>
       </div>
       <button
         type="button"

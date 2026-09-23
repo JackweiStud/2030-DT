@@ -24,6 +24,8 @@ import {
 import type { BasePoint, TrajectoryPoint } from "../types";
 
 type Props = {
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
   baseRoute: BasePoint[];
   points: TrajectoryPoint[];
   statusText: string;
@@ -331,6 +333,15 @@ export function ErrorReplay(props: Props) {
 
   return (
     <div className="c4-error-replay" data-region="ErrorReplay">
+      <div className="c4-replay-title-row">
+        <span className="c4-replay-title">定位误差回溯</span>
+        <button type="button" className="c4-dock-expand"
+          aria-label={props.expanded ? "收起指标栏" : "展开指标栏"}
+          title={props.expanded ? "收起" : "全屏"}
+          onClick={() => props.onToggleExpanded?.()}>
+          <svg viewBox="0 0 24 24" aria-hidden><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5M9 9 3 3m12 6 6-6M9 15l-6 6m12-6 6 6" /></svg>
+        </button>
+      </div>
       <div className="c4-ctrl-col" data-region="ReplayControls">
         <div className="c4-ctrl-left">
           <div className="c4-ctrl-btns">

@@ -12,6 +12,8 @@ import { ThroughputCompareCard } from "./ThroughputCompareCard";
 
 type Props = {
   view: Case3Presentation;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
   onStartWithout: () => void;
   onStartWith: () => void;
   onReinitWithout: () => void;
@@ -26,9 +28,11 @@ export function BottomDock(props: Props) {
   const withoutComplete = completePointsOf(view.withoutKpiSnapshot);
   const withComplete = completePointsOf(view.withKpiSnapshot);
   return (
-    <section className="case3v2-dock" data-region="BottomDock">
+    <section className={`case3v2-dock${props.expanded ? " is-expanded" : ""}`} data-region="BottomDock">
       <PointBeamReplay
         routeNos={view.routeNos}
+        expanded={props.expanded}
+        onToggleExpanded={props.onToggleExpanded}
         withoutPoints={withoutComplete}
         withPoints={withComplete}
         withPeerPoints={view.withPeerPoints}

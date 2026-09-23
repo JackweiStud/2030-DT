@@ -32,9 +32,9 @@ const TAG_CLASS: Record<MetricKey, "rss" | "path" | "delay"> = {
 };
 
 const TAG_LABEL: Record<MetricKey, string> = {
-  rss: "RSS",
-  effective_path_num: "Effective Path Num",
-  first_path_delay: "First Path Delay",
+  rss: "接受信号强度（dBm）",
+  effective_path_num: "有效径数（条）",
+  first_path_delay: "最强径时延（ns）",
 };
 
 export function Case2Page(props: Props) {
@@ -79,7 +79,7 @@ export function Case2Page(props: Props) {
             <div className="panel-title-row">
               <div className="title-group">
                 <img className="title-accent" src={titleAccent} alt="" />
-                <h2 className="panel-title">测试对比</h2>
+                <h2 className="panel-title">DT校正测试</h2>
               </div>
               <a
                 className="env-link"
@@ -96,13 +96,13 @@ export function Case2Page(props: Props) {
             <div className="column-header-row">
               <div className="initial-column-head">
                 <img src={colInit} width={24} height={24} alt="" />
-                <span>Initial DT</span>
+                <span>初始 DT</span>
               </div>
               <div className="calibrated-column-head">
                 <div className="calibrated-info">
                   <div className="calibrated-label">
                     <img src={colCali} width={24} height={24} alt="" />
-                    <span>Calibrated DT</span>
+                    <span>校正 DT</span>
                   </div>
                   <div
                     className={`status-feedback${ui === "completed" ? " is-done" : ""}${
@@ -191,7 +191,7 @@ export function Case2Page(props: Props) {
           <section className="kpi-panel">
             <div className="kpi-title-row">
               <img className="title-accent" src={titleAccent} alt="" />
-              <h2 className="panel-title">KPI对比</h2>
+              <h2 className="panel-title">测试性能</h2>
             </div>
             <div className="kpi-stack">
               {METRIC_KEYS.map((key) => (
