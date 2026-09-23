@@ -162,16 +162,26 @@ test("正式配置拒绝短 dwell、非正间隔和非法枚举/flag", async (t)
   }
 });
 
-test("fixture 独立预检得到两侧各 31 点和本地 Cost override", async () => {
+test("fixture 结构点独立预检吞吐长度和本地 Cost", async () => {
   const fixtureStore = await loadFixtureStore({
     fixtureDir: DEFAULT_FIXTURE_DIR,
   });
-  assert.equal(fixtureStore.sides.without.count, 31);
-  assert.equal(fixtureStore.sides.with.count, 31);
+  assert.equal(fixtureStore.sides.without.count, 21);
+  assert.equal(fixtureStore.sides.with.count, 21);
+  assert.equal(fixtureStore.sides.without.throughputValues.length, 23);
+  assert.equal(fixtureStore.sides.with.throughputValues.length, 25);
+  assert.notEqual(
+    fixtureStore.sides.without.throughputValues.length,
+    fixtureStore.sides.with.count,
+  );
+  assert.notEqual(
+    fixtureStore.sides.with.throughputValues.length,
+    fixtureStore.sides.without.throughputValues.length,
+  );
   assert.equal(fixtureStore.sides.without.costLine, "25");
   assert.equal(fixtureStore.sides.with.costLine, "15");
-  assert.equal(fixtureStore.sides.without.throughputValues[0], 8.5);
-  assert.equal(fixtureStore.sides.with.throughputValues[0], 9.1);
+  assert.equal(fixtureStore.sides.without.throughputValues[0], 9.1);
+  assert.equal(fixtureStore.sides.with.throughputValues[0], 8.5);
 });
 
 test("random KPI：固定 seed 可复现，非 KPI 行保持 fixture 原值", async () => {
@@ -201,21 +211,21 @@ test("random KPI：固定 seed 可复现，非 KPI 行保持 fixture 原值", as
     fixtureStore.sides.without.rows.selected,
   );
   assert.notDeepEqual(
-    first.rows.throughput,
-    fixtureStore.sides.without.rows.throughput,
+    first.throughputLines,
+    fixtureStore.sides.without.throughputValues.map((value) => value.toFixed(2)),
   );
   const otherSeed = createRoundDataset({
     ...options,
     seed: "other-seed",
   });
-  assert.notDeepEqual(otherSeed.rows.throughput, first.rows.throughput);
+  assert.notDeepEqual(otherSeed.throughputLines, first.throughputLines);
   assert.notDeepEqual(otherSeed.costLines, first.costLines);
   assert.equal(first.costLines.length, first.count);
   assert.equal(first.costLine, first.costLines.at(-1));
   assert.equal(first.dataSource, "synthetic-kpi+fixture-structure");
 });
 
-test("random KPI：Throughput/Cost 在冻结抖动内且 With 始终更优", async () => {
+test("random KPI：Throughput 独立抖动，Cost 按结构点生成", async () => {
   const fixtureStore = await loadFixtureStore({
     fixtureDir: DEFAULT_FIXTURE_DIR,
   });
@@ -238,19 +248,17 @@ test("random KPI：Throughput/Cost 在冻结抖动内且 With 始终更优", asy
     costJitter: 0.15,
   });
 
-  for (let index = 0; index < without.count; index += 1) {
-    const withoutValue = Number(without.rows.throughput[index]);
-    const withValue = Number(withDt.rows.throughput[index]);
-    const withoutTemplate =
-      fixtureStore.sides.without.throughputValues[index];
-    const withTemplate = fixtureStore.sides.with.throughputValues[index];
-    assert.ok(withoutValue >= Number((withoutTemplate * 0.9).toFixed(2)));
-    assert.ok(withoutValue <= Number((withoutTemplate * 1.1).toFixed(2)));
-    assert.ok(withValue >= Number((withTemplate * 0.9).toFixed(2)));
-    assert.ok(withValue <= Number((withTemplate * 1.1).toFixed(2)));
-    assert.ok(withValue > withoutValue);
-    assert.match(without.rows.throughput[index], /^\d+\.\d{2}$/);
-    assert.match(withDt.rows.throughput[index], /^\d+\.\d{2}$/);
+  for (const [dataset, templates] of [
+    [without, fixtureStore.sides.without.throughputValues],
+    [withDt, fixtureStore.sides.with.throughputValues],
+  ]) {
+    assert.equal(dataset.throughputLines.length, templates.length);
+    dataset.throughputLines.forEach((line, index) => {
+      const value = Number(line);
+      assert.ok(value >= Number((templates[index] * 0.9).toFixed(2)));
+      assert.ok(value <= Number((templates[index] * 1.1).toFixed(2)));
+      assert.match(line, /^\d+\.\d{2}$/);
+    });
   }
 
   assert.equal(without.costLines.length, without.count);
@@ -277,6 +285,10 @@ test("replay 模式逐行保留 fixture Throughput 与 Cost", async () => {
     operationId: "replay",
   });
   assert.equal(replay.rows, fixtureStore.sides.with.rows);
+  assert.deepEqual(
+    replay.throughputLines,
+    fixtureStore.sides.with.throughputLines,
+  );
   assert.equal(replay.costLine, "15");
   assert.deepEqual(replay.costLines, ["15"]);
   assert.equal(replay.resolvedSeed, null);
@@ -448,7 +460,7 @@ test("Without Start 默认 random 发布，只写目标侧并同拍 complete+fla
     command: "start",
     dt_type: "without dt",
   });
-  await startStub(t, sharedDir);
+  const stub = await startStub(t, sharedDir);
   const terminal = await waitTerminal(sharedDir, "case complete");
   assert.equal(terminal.save_picture_flag, 1);
   assert.equal(
@@ -458,7 +470,7 @@ test("Without Start 默认 random 发布，只写目标侧并同拍 complete+fla
         "utf8",
       ),
     ),
-    31,
+    21,
   );
   const costLines = (
     await fs.readFile(
@@ -468,7 +480,7 @@ test("Without Start 默认 random 发布，只写目标侧并同拍 complete+fla
   )
     .split(/\r?\n/)
     .filter(Boolean);
-  assert.equal(costLines.length, 31);
+  assert.equal(costLines.length, 21);
   for (const line of costLines) {
     const cost = Number(line);
     assert.ok(cost >= 21.3 && cost <= 28.8);
@@ -480,6 +492,15 @@ test("Without Start 默认 random 发布，只写目标侧并同拍 complete+fla
       "utf8",
     ),
     /^\d+\.\d{2}$/m,
+  );
+  assert.equal(
+    countLines(
+      await fs.readFile(
+        path.join(sharedDir, "case3", SIDE_FILES.without.throughput),
+        "utf8",
+      ),
+    ),
+    stub.fixtureStore.sides.without.throughputValues.length,
   );
   await assert.rejects(
     fs.stat(path.join(sharedDir, "case3", SIDE_FILES.with.coordinates)),
@@ -512,7 +533,8 @@ test("Without Start replay 模式保持 fixture 的 25 与原始 Throughput", as
         "utf8",
       )
     ).split(/\r?\n/)[0],
-    "8.5",
+    (await loadFixtureStore({ fixtureDir: DEFAULT_FIXTURE_DIR }))
+      .sides.without.throughputLines[0],
   );
 });
 
@@ -532,7 +554,7 @@ test("With Start no-picture 只写 complete，不置截图 flag", async (t) => {
         "utf8",
       ),
     ),
-    31,
+    21,
   );
 });
 
@@ -610,11 +632,14 @@ test("启动遇到 Start execute success 时清空半轮并从第 1 点完整重
     SIDE_FILES.without.coordinates,
   );
   await fs.writeFile(target, "999,999,999\n");
-  await startStub(t, sharedDir, { requestPicture: false });
+  const stub = await startStub(t, sharedDir, { requestPicture: false });
   await waitTerminal(sharedDir, "case complete");
   const content = await fs.readFile(target, "utf8");
-  assert.equal(countLines(content), 31);
-  assert.equal(content.startsWith("1,15,0\n"), true);
+  assert.equal(countLines(content), 21);
+  assert.equal(
+    content.startsWith(`${stub.fixtureStore.sides.without.rows.coordinates[0]}\n`),
+    true,
+  );
   assert.equal(content.includes("999,999,999"), false);
 });
 

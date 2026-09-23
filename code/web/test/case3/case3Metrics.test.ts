@@ -39,14 +39,12 @@ describe("case3Metrics", () => {
           no: 1,
           ue: { x: 0, y: 0, z: 0 },
           selectedBeamId: 2,
-          throughputGbps: 1,
           scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
         },
         {
           no: 2,
           ue: { x: 0, y: 0, z: 0 },
           selectedBeamId: 3,
-          throughputGbps: 1,
           scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
         },
       ],
@@ -61,14 +59,12 @@ describe("case3Metrics", () => {
           no: 1,
           ue: { x: 0, y: 0, z: 0 },
           selectedBeamId: 2,
-          throughputGbps: 1,
           reflection: { x: 0, y: 0, z: 0, los: true },
         },
         {
           no: 2,
           ue: { x: 0, y: 0, z: 0 },
           selectedBeamId: 9,
-          throughputGbps: 1,
           reflection: { x: 0, y: 0, z: 0, los: false },
         },
       ],
@@ -95,7 +91,6 @@ describe("case3Metrics", () => {
           no: 1,
           ue: { x: 0, y: 0, z: 0 },
           selectedBeamId: 2,
-          throughputGbps: 1,
         },
       ],
       completeCount: 1,
@@ -109,14 +104,12 @@ describe("case3Metrics", () => {
           no: 1,
           ue: { x: 0, y: 0, z: 0 },
           selectedBeamId: 2,
-          throughputGbps: 1,
           reflection: { x: 0, y: 0, z: 0, los: true },
         },
         {
           no: 2,
           ue: { x: 0, y: 0, z: 0 },
           selectedBeamId: 9,
-          throughputGbps: 1,
           reflection: { x: 0, y: 0, z: 0, los: false },
         },
       ],
@@ -187,7 +180,7 @@ describe("case3Metrics", () => {
     expect(
       isFinalSideReady({
         side: "without",
-        points: [{ no: 1, ue: { x: 0, y: 0, z: 0 }, selectedBeamId: 0, throughputGbps: 1 }],
+        points: [{ no: 1, ue: { x: 0, y: 0, z: 0 }, selectedBeamId: 0 }],
         completeCount: 1,
         pendingTail: false,
         costPct: 1,
@@ -210,11 +203,13 @@ describe("case3Metrics", () => {
     expect(niceCeilThroughput(12)).toBeGreaterThanOrEqual(13);
   });
 
-  it("吞吐 X 域固定自 baseRoute，刻度相对域稳定", () => {
+  it("吞吐 X 域覆盖 baseRoute 和独立吞吐样点", () => {
     expect(throughputXDomain(null)).toEqual([1, 20]);
     expect(throughputXDomain([])).toEqual([1, 20]);
     expect(throughputXDomain([3, 1, 50])).toEqual([1, 50]);
     expect(throughputXDomain([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).toEqual([1, 10]);
+    expect(throughputXDomain(Array.from({ length: 21 }, (_, i) => i + 1), [1, 23])).toEqual([1, 23]);
+    expect(throughputXDomain(Array.from({ length: 21 }, (_, i) => i + 1), [1, 18])).toEqual([1, 21]);
 
     expect(niceIntegerStep(1)).toBe(1);
     expect(niceIntegerStep(3)).toBe(5);

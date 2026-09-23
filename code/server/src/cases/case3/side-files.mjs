@@ -52,7 +52,7 @@ function sameControlTuple(left, right) {
 function fileDefinitions(sharedDir, side) {
   const dataDir = path.join(sharedDir, "case3");
   return Object.entries(CASE3_SIDE_FILES[side])
-    .filter(([key]) => key !== "optionalMse")
+    .filter(([key]) => key !== "optionalMse" && key !== "throughput")
     .map(([key, filename]) => ({
       key,
       filename,
@@ -108,8 +108,8 @@ async function readText(file, fsOps) {
 function assemble(side, parsed, changed) {
   const pointKeys =
     side === "without"
-      ? ["coordinates", "scans", "selected", "throughput"]
-      : ["coordinates", "selected", "throughput", "reflection"];
+      ? ["coordinates", "scans", "selected"]
+      : ["coordinates", "selected", "reflection"];
   const pointRows = pointKeys.map((key) => parsed[key].complete);
   const count = Math.min(...pointRows.map((rows) => rows.length));
   const unequal = pointRows.some((rows) => rows.length !== count);
@@ -124,7 +124,6 @@ function assemble(side, parsed, changed) {
       no: index + 1,
       ue: parsed.coordinates.complete[index],
       selectedBeamId,
-      throughputGbps: parsed.throughput.complete[index],
     };
     if (side === "without") {
       const scanBeamIds = parsed.scans.complete[index];

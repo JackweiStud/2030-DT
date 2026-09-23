@@ -49,7 +49,6 @@ function liveWithout(count: number): SideSnapshot {
       no: index + 1,
       ue: { x: index + 1, y: index + 2, z: 0 },
       selectedBeamId: index + 1,
-      throughputGbps: 8.5 + index / 10,
       scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
     })),
     completeCount: count,

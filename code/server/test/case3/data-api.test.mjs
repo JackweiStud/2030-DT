@@ -45,7 +45,7 @@ test("Without/With side 返回全量完整前缀和冻结映射", async (t) => {
   assert.equal(without.body.completeCount, 2);
   assert.equal(without.body.pendingTail, false);
   assert.equal(without.body.costPct, 25);
-  assert.equal(without.body.points[0].throughputGbps, 8.56);
+  assert.equal("throughputGbps" in without.body.points[0], false);
   assert.equal(without.body.points[0].scanBeamIds.length, 16);
   assert.equal(without.body.points[0].selectedBeamId, 4);
   assert.equal(without.body.points[0].scanBeamIds.includes(4), true);
@@ -72,6 +72,36 @@ test("运行中多文件不齐只返回完整前缀并标记 pending", async (t)
   assert.equal(response.body.completeCount, 1);
   assert.equal(response.body.points.length, 1);
   assert.equal(response.body.pendingTail, true);
+});
+
+test("side 点位完整度不依赖吞吐文件长度或内容", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case3",
+    command: "start",
+    dt_type: "without dt",
+    status: "case complete",
+  });
+  await writeCase3SideFiles(sharedDir, "without", {
+    throughput: "bad\n9\n10\n",
+  });
+  const { baseUrl } = await startTestServer(t, { sharedDir });
+  const response = await jsonRequest(
+    baseUrl,
+    "/api/case3/side?side=without",
+  );
+  assert.equal(response.status, 200);
+  assert.equal(response.body.completeCount, 2);
+  assert.equal(response.body.pendingTail, false);
+  assert.equal("throughputGbps" in response.body.points[0], false);
+  await fs.unlink(
+    path.join(sharedDir, "case3", CASE3_SIDE_FILES.without.throughput),
+  );
+  const withoutThroughput = await jsonRequest(
+    baseUrl,
+    "/api/case3/side?side=without",
+  );
+  assert.equal(withoutThroughput.status, 200);
+  assert.equal(withoutThroughput.body.completeCount, 2);
 });
 
 test("complete 最终读取缺点、pending 或 Cost 时返回 RESULT_NOT_READY", async (t) => {

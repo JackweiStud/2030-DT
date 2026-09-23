@@ -157,7 +157,6 @@ type Case3Point = {
   no: number;
   ue: { x: number; y: number; z: number };
   selectedBeamId: number;
-  throughputGbps: number;
   scanBeamIds?: number[];
   reflection?: { x: number; y: number; z: number; los: boolean };
 };
@@ -312,7 +311,7 @@ v1 保留 `pairValid:boolean`，因为当前单挂载、单活动动作、无缓
 - 任一 Start/ReInit 在 POST 前立即置 false，POST/execute 失败也不恢复；
 - Without 完成永远不能单独置 true；
 - 只有当前 generation 的 With 最终快照提交成功，且当前 Without 仍有效时置 true；
-- `pairValid=false` 时，所有跨侧派生输出必须失效：Cost 变化为 `--`、Throughput 不绘制双侧对比结论、Beam Accuracy 回文件基线；单侧历史面板可以保留并标记未配对。
+- `pairValid=false` 时，所有跨侧派生输出必须失效：Cost 变化为 `--`、Throughput 不绘制双侧对比结论、Beam Accuracy 回文件基线；单侧历史面板可以保留并标记未配对。例外仅是当前 With Start 的实时单侧吞吐：吞吐快照一到即可显示，不等待独立的 With `/side` 快照；这不恢复旧 With 吞吐，也不构成跨侧配对结论。非运行态 With 吞吐仍服从现有配对/历史 lineage 可见规则。
 
 若未来增加页面恢复、后台常驻或多轮缓存，布尔值证据不足，应升级为 Web 本地 lineage（如 `withoutGeneration` + `withBasedOnWithoutGeneration`）后再派生 `pairValid`；不得把当前布尔值误扩展为后端轮次标识。
 
@@ -833,11 +832,12 @@ type MapRendererHandle = {
 #### 9.5.2 ThroughputChart
 
 - 使用一个原生 `<svg>`，外框 596×242；绘图区对齐 Pencil 的约 540×202，保留弱网格、坐标刻度和顶部图例。
-- 两系列按 `point.no` 升序折线：
+- 两系列按独立吞吐快照的样点序号 `no` 升序折线；吞吐曲线不从结构点读取：
   - 无 DT：`#6B7280`，线宽 2.5，点直径 6；
   - 有 DT：`#22D3EE`，线宽 2.5，点直径 6。
+- 当前 With Start 期间，独立 With 吞吐快照一到就可显示实时曲线，不要求 With `/side` 结构/KPI 快照先到。完成态及历史态仍按 With side KPI 的配对/历史 lineage 资格决定是否展示，防止旧 With 吞吐跟随新 Without 结果误显。
 - 使用折线/polyline，不做 spline 平滑，避免产生不存在的吞吐峰值；缺点断开，不补 0。
-- X 域取双侧所有有效点的 `[minNo,maxNo]`；绘制全部 N 个数据点。刻度最多 20 个，N>20 时只抽稀刻度/竖网格，不丢曲线数据。
+- X 域覆盖完整 `baseRoute` 与双侧当前可见吞吐样点号的并集；若吞吐样点超出结构路线则扩展横轴，绘制全部 N 个吞吐数据点。刻度最多 20 个，N>20 时只抽稀刻度/竖网格，不丢曲线数据。
 - Y 域从 0 开始，`yMax = max(10, niceCeil(maxThroughput × 1.1))`；超过 10 自动扩展，禁止裁剪。无数据时保留 0～10 空坐标。
 - 绘图函数保持纯函数：输入两侧 points 与固定 viewport，输出 grid/ticks/polyline/circles；组件用 `React.memo`，只在快照变化时重算。
 - 不增加缩放、tooltip 或动画交互；本卡只服务现场对比可读性。

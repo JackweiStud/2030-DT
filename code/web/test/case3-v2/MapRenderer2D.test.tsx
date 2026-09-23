@@ -204,14 +204,12 @@ describe("Case3V2 MapRenderer2D", () => {
         no: 1,
         ue: { x: 1, y: 15, z: 0 },
         selectedBeamId: 4,
-        throughputGbps: 8,
         scanBeamIds: [0],
       },
       {
         no: 3,
         ue: { x: 18, y: 2, z: 0 },
         selectedBeamId: 9,
-        throughputGbps: 9,
         scanBeamIds: [1],
       },
     ];

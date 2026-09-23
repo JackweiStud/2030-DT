@@ -1,6 +1,6 @@
 /**
  * 吞吐率对比卡：Without 灰色曲线；缺点不补 0。
- * X 域来自完整 baseRoute；Y 按真实最大值扩展。
+ * X 域覆盖完整 baseRoute 和当前可见吞吐样点；Y 按真实最大值扩展。
  */
 
 import { useMemo } from "react";
@@ -15,7 +15,7 @@ import type { ThroughputSnapshot } from "../../case3/types";
 import { segmentedThroughputPath } from "../v2ThroughputPath";
 
 type Props = {
-  /** init baseRoute 点号；用于固定 X 域。 */
+  /** init baseRoute 点号；提供结构路线的基础 X 域。 */
   routeNos: ReadonlyArray<number>;
   without?: ThroughputSnapshot | null;
   withSamples?: ThroughputSnapshot | null;
@@ -48,7 +48,10 @@ export function ThroughputCompareCard(props: Props) {
   const all = [...series.without, ...withSeries];
   const empty = all.length === 0;
 
-  const [minNo, maxNo] = throughputXDomain(props.routeNos);
+  const [minNo, maxNo] = throughputXDomain(
+    props.routeNos,
+    all.map((point) => point.no),
+  );
   const maxY = empty
     ? CASE3_THRP_Y_MAX_DEFAULT
     : niceCeilThroughput(Math.max(...all.map((p) => p.value)));
@@ -158,7 +161,7 @@ export function ThroughputCompareCard(props: Props) {
           >
             <path
               data-thr-wo
-              d={segmentedThroughputPath(props.routeNos, withoutPlot)}
+              d={segmentedThroughputPath(withoutPlot)}
               fill="none"
               stroke="#6B7280"
               strokeWidth="1.5"
@@ -166,7 +169,7 @@ export function ThroughputCompareCard(props: Props) {
             />
             <path
               data-thr-w
-              d={segmentedThroughputPath(props.routeNos, withPlot)}
+              d={segmentedThroughputPath(withPlot)}
               fill="none"
               stroke="#22D3EE"
               strokeWidth="2.5"

@@ -86,22 +86,6 @@ export type ThroughputSeries = {
   with: Array<{ no: number; value: number }>;
 };
 
-/** 按 no 升序提取吞吐点；缺点不补 0。 */
-export function throughputSeries(
-  without: Case3Point[] | null | undefined,
-  withPoints: Case3Point[] | null | undefined,
-): ThroughputSeries {
-  const sort = (pts: Case3Point[]) =>
-    [...pts]
-      .filter((p) => Number.isFinite(p.throughputGbps))
-      .sort((a, b) => a.no - b.no)
-      .map((p) => ({ no: p.no, value: p.throughputGbps }));
-  return {
-    without: sort(without ?? []),
-    with: sort(withPoints ?? []),
-  };
-}
-
 /** 从独立吞吐快照构造曲线点；两路不等长不补 0。 */
 export function throughputSeriesFromSnapshots(
   without: ThroughputSnapshot | null | undefined,
@@ -115,20 +99,6 @@ export function throughputSeriesFromSnapshots(
   return {
     without: map(without),
     with: map(withSnap),
-  };
-}
-
-/** 结构化侧快照 → 吞吐快照（终态回退）。 */
-export function sideSnapshotToThroughput(
-  snapshot: SideSnapshot | null | undefined,
-): ThroughputSnapshot | null {
-  if (!snapshot) return null;
-  return {
-    samples: [...snapshot.points]
-      .filter((p) => Number.isFinite(p.throughputGbps))
-      .sort((a, b) => a.no - b.no)
-      .map((p) => ({ no: p.no, gbps: p.throughputGbps })),
-    pendingTail: snapshot.pendingTail,
   };
 }
 
@@ -153,24 +123,30 @@ export const CASE3_THRP_X_DOMAIN_FALLBACK: readonly [number, number] = [1, 20];
 export const CASE3_THRP_X_TICK_MAX = 24;
 
 /**
- * 吞吐图 X 域：优先用 init `baseRoute` 的全程点号，运行中不再随已到点扩展。
- * 无路线时回退占位 [1,20]。
+ * 吞吐图 X 域覆盖完整 baseRoute 与当前可见吞吐样点的并集。
+ * 通常保持路线全程范围；吞吐样点独立且超出路线时，扩展到样点范围避免裁切。
+ * 无路线、无吞吐时回退占位 [1,20]。
  */
 export function throughputXDomain(
   routeNos: ReadonlyArray<number> | null | undefined,
+  sampleNos: ReadonlyArray<number> = [],
 ): [number, number] {
-  if (!routeNos || routeNos.length === 0) {
-    return [CASE3_THRP_X_DOMAIN_FALLBACK[0], CASE3_THRP_X_DOMAIN_FALLBACK[1]];
-  }
   let lo = Infinity;
   let hi = -Infinity;
-  for (const no of routeNos) {
-    if (!Number.isFinite(no)) continue;
-    if (no < lo) lo = no;
-    if (no > hi) hi = no;
+  for (const no of routeNos ?? []) {
+    if (Number.isFinite(no)) {
+      lo = Math.min(lo, no);
+      hi = Math.max(hi, no);
+    }
   }
   if (!Number.isFinite(lo) || !Number.isFinite(hi)) {
-    return [CASE3_THRP_X_DOMAIN_FALLBACK[0], CASE3_THRP_X_DOMAIN_FALLBACK[1]];
+    lo = CASE3_THRP_X_DOMAIN_FALLBACK[0];
+    hi = CASE3_THRP_X_DOMAIN_FALLBACK[1];
+  }
+  for (const no of sampleNos) {
+    if (!Number.isFinite(no)) continue;
+    lo = Math.min(lo, no);
+    hi = Math.max(hi, no);
   }
   return [lo, hi];
 }

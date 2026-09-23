@@ -102,7 +102,6 @@ test.describe("case3 mainline (frontend-isolated)", () => {
                 no: 1,
                 ue: { x: 1, y: 2, z: 0 },
                 selectedBeamId: 4,
-                throughputGbps: isWithout ? 8.5 : 9.1,
                 ...(isWithout
                   ? {
                       scanBeamIds: Array.from(

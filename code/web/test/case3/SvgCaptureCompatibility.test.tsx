@@ -15,7 +15,6 @@ function point(): Case3Point {
     no: 1,
     ue: { x: 1, y: 2, z: 0 },
     selectedBeamId: 4,
-    throughputGbps: 9.1,
     scanBeamIds: Array.from({ length: 16 }, (_, id) => id),
   };
 }

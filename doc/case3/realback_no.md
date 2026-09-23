@@ -81,7 +81,7 @@ code/back/
 
 正式环境变量严格校验：共享根必须为绝对路径；poll/point/dwell 必须为十进制整数且 poll/point 为正、dwell 不低于 3000；outcome/dataMode/log level 必须命中枚举，requestPicture/seedInit 只能为 0/1，两项 jitter 必须为 0～1。非法配置快速退出并记录 `CONFIG_INVALID`，禁止 clamp。测试通过构造函数依赖注入更小 dwell/point，不通过正式环境变量绕过约束。
 
-默认 fixture 每侧 31 点；`31 × 1000ms + 3000ms dwell ≈ 34s/侧`，另加少量文件 I/O。Web 500ms 轮询时通常约两拍看到 1 个新点。配置测试必须锁定正式默认 `point=1000ms,dwell=3000ms,poll=200ms`。
+默认结构 fixture 每侧 21 点；Throughput 文件独立计数并可多于或少于结构点。发布时按较长的一路推进，运行耗时约 `max(结构点数, 吞吐样点数) × 1000ms + 3000ms dwell`，另加少量文件 I/O。Web 500ms 轮询时通常约两拍看到 1 个新结构点或吞吐样点。配置测试必须锁定正式默认 `point=1000ms,dwell=3000ms,poll=200ms`。
 
 ### 2.2 命令
 
@@ -303,7 +303,7 @@ ReInit：
 
 恢复 Start 时允许 truncate 目标侧运行文件，因为本进程只用于无真实后端的本地 stub，且 `case complete` 前文件仍属于未完成轮。禁止与真实后端同时运行。全量重放优先于续写，原因是没有持久 batch/command_id，且旧进程可能在同一点的多个 append 之间退出，现有行数不能证明可靠恢复位置。
 
-恢复沿用当前进程 `CASE3_STUB_REQUEST_PICTURE` 和 dataMode；`CASE3_STUB_OUTCOME=fail` 不得把已经处于 `execute success` 的旧轮改写为 fail。random 若要求进程重启后逐值一致，必须配置固定 `CASE3_STUB_SEED`；默认空 seed 只保证结构、范围和优劣关系。恢复过程中仍按 §3.4 在每次清空、append、等待和终态 patch 前复验 ownership。
+恢复沿用当前进程 `CASE3_STUB_REQUEST_PICTURE` 和 dataMode；`CASE3_STUB_OUTCOME=fail` 不得把已经处于 `execute success` 的旧轮改写为 fail。random 若要求进程重启后逐值一致，必须配置固定 `CASE3_STUB_SEED`；默认空 seed 只保证结构和数值范围。恢复过程中仍按 §3.4 在每次清空、append、等待和终态 patch 前复验 ownership。
 
 ## 8. Fixture 预检
 
@@ -311,8 +311,9 @@ stub 启动时先验证 fixtures，失败则快速退出：
 
 - Base route 非空，三坐标有限。
 - BA baseline 两整数，`0<=success<=total,total>0`。
-- Without 四个逐点文件行数一致且大于 0。
-- With 四个逐点文件行数一致且大于 0。
+- Without coordinates/beams/selected 三个结构文件行数一致且大于 0。
+- With coordinates/selected/reflection 三个结构文件行数一致且大于 0。
+- 两侧 Throughput 文件独立校验；样点数允许为 0，也允许互不相同，吞吐不进入结构点完整性门槛。
 - scan 每行至少 1 个 0～255 整数，并包含**同索引行**的 selected；允许重复，不要求 16 列。stub 自带 fixture 仍写 16 个互不重复 id（演示数据质量，不是 Node / 真实后端合同）。
 - selected 0～255；Throughput 非负；Reflection flag 0/1。
 - Cost 在 0～100，且本地 override 必须精确为 Without=`25`、With=`15`。

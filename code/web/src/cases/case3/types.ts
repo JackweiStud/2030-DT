@@ -23,7 +23,6 @@ export type Case3Point = {
   no: number;
   ue: { x: number; y: number; z: number };
   selectedBeamId: number;
-  throughputGbps: number;
   scanBeamIds?: number[];
   reflection?: { x: number; y: number; z: number; los: boolean };
 };

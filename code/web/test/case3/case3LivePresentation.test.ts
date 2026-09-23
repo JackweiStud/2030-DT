@@ -22,7 +22,6 @@ function point(
     no,
     ue: { x: no, y: no, z: 0 },
     selectedBeamId: beam,
-    throughputGbps: side === "without" ? 8 + no / 10 : 9 + no / 10,
     ...(side === "without"
       ? { scanBeamIds: Array.from({ length: 16 }, (_, i) => i) }
       : { reflection: { x: 0, y: 0, z: 0, los: true } }),
@@ -144,7 +143,7 @@ describe("case3 live presentation", () => {
     expect(state.resultThrp.without).toEqual(live);
   });
 
-  it("START_COMPLETE 不用 points[].throughputGbps 回填 resultThrp", () => {
+  it("START_COMPLETE 不用结构点回填 resultThrp", () => {
     let state = createInitialCase3State();
     state = case3Reducer(state, {
       type: "INIT_READY",

@@ -5,7 +5,7 @@
  * 快照规则：
  * - 地图点：live 优先于 result。
  * - Cost：当前 Start 侧只用 live side 快照中的 cost。
- * - Throughput：独立 thrp 快照；运行侧读 liveThrp，完成侧读 resultThrp（与 P 点完整度解耦）。
+ * - Throughput：独立 thrp 快照；With 运行时不等待 `/side` 快照，完成/历史态仍服从配对与保留规则。
  * - BA：baseline + 可比较时（pairValid 或 With 基于当前 Without 运行中）的 live/result 增量。
  * - 未配对历史不得进入跨侧比较（peer / pairValid）。
  */
@@ -56,10 +56,11 @@ export type Case3Presentation = {
   withPeerPoints: Case3Point[] | null;
   withoutKpiSnapshot: SideSnapshot | null;
   withKpiSnapshot: SideSnapshot | null;
+  /** With 吞吐 snapshot 可见性；与 With side KPI 快照独立。 */
   showWithThroughput: boolean;
   thrpWithout: ThroughputSnapshot | null;
   thrpWith: ThroughputSnapshot | null;
-  beamCompareEnabled: boolean;
+  roundCompareEnabled: boolean;
   beamWithout: SideSnapshot | null;
   beamWith: SideSnapshot | null;
   withoutBadge: string;
@@ -150,12 +151,12 @@ function selectThrpWithout(
 function selectThrpWith(
   state: Case3State,
   withKpiSnapshot: SideSnapshot | null,
-  showWithThroughput: boolean,
 ): ThroughputSnapshot | null {
-  if (!showWithThroughput) return null;
+  // 活跃 With 的吞吐和结构快照独立到达；不要因 live.with 尚未到达而隐藏曲线。
   if (selectActiveStartSide(state) === "with") {
     return state.liveThrp.with;
   }
+  // 非运行态使用 side 快照仅判定该 With 结果是否仍允许展示（pair/history lineage）。
   if (withKpiSnapshot) {
     return state.resultThrp.with;
   }
@@ -179,8 +180,9 @@ export function selectCase3Presentation(state: Case3State): Case3Presentation {
   const visible = deriveVisibleState(state);
   const withoutKpiSnapshot = selectWithoutKpiSnapshot(state);
   const withKpiSnapshot = selectWithKpiSnapshot(state, withoutKpiSnapshot);
-  const showWithThroughput = withKpiSnapshot !== null;
-  const beamCompareEnabled = canCompareWithCurrentWithout(state);
+  const thrpWith = selectThrpWith(state, withKpiSnapshot);
+  const showWithThroughput = thrpWith !== null;
+  const roundCompareEnabled = canCompareWithCurrentWithout(state);
 
   return {
     visible,
@@ -202,8 +204,8 @@ export function selectCase3Presentation(state: Case3State): Case3Presentation {
     withKpiSnapshot,
     showWithThroughput,
     thrpWithout: selectThrpWithout(state, withoutKpiSnapshot),
-    thrpWith: selectThrpWith(state, withKpiSnapshot, showWithThroughput),
-    beamCompareEnabled,
+    thrpWith,
+    roundCompareEnabled,
     beamWithout: state.results.without,
     beamWith: selectBeamWith(state),
     withoutBadge: sideStatusBadge(state, "without"),

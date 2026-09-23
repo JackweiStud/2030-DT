@@ -66,7 +66,7 @@ export function BottomDock(props: Props) {
           baseline={view.baseline}
           without={view.beamWithout}
           withSide={view.beamWith}
-          pairValid={view.beamCompareEnabled}
+          roundCompareEnabled={view.roundCompareEnabled}
         />
       </div>
     </section>

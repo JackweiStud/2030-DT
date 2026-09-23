@@ -23,7 +23,7 @@
 | 点位进度 | 是 | 结构化点位 `no` 与运行时 `N` | 逐点播放 | 无 DT 显示本侧波束，没数据则 `NA`；有 DT 无对照点显示 `NA`。 |
 | Cost Comparison | 是 | `/api/case3/side` 同包侧级字段 `costPct` | 对应侧运行后 | 原生 SVG 双半环；正式标题 `开销(%)`；Node 四舍五入到 1 位且校验 `0～100`。 |
 | 相对开销变化 | 是 | Web 基于双方 `costPct` 派生 | 两侧 Cost 有效且 Without Cost 非 0 | `(withCostPct - withoutCostPct) / withoutCostPct * 100`；正数增加（↑ `X%`），负数减少（↓ `-X%`），无法计算时显示 `--`。 |
-| Throughput Comparison | 是 | 结构化点位 `throughputGbps` | 对应侧逐点数据有效 | 原生 SVG 双折线；绘制全部动态 N，N>20 仅抽稀刻度，不引入 ECharts。 |
+| Throughput Comparison | 是 | `/api/case3/throughput?side=` 的独立 `samples` 快照 | 不依赖结构点完整度；With 当前 Start 有 live 样点即显示，不等待 `/side`；非运行态 With 仍须满足现有配对/历史可见条件 | 原生 SVG 双折线；各侧按自身样点数绘制，N>20 仅抽稀刻度，不引入 ECharts。新 Without 结果使旧 With 吞吐失去 KPI 可见资格时仍隐藏，避免展示过期曲线。 |
 | Beam Accuracy | 是 | 文件基线 + Web 本轮点位派生 | 进 Tab 显示基线；With 完成后且 Without 有效时显示基线+增量 | 原生 SVG 开口环 + DOM 次数卡；任意一侧重置后增量失效，回到基线。 |
 | 运行/失败/完成反馈 | 是 | `case_control.status` + Web 本轮动作来源 | 本轮等待态内 | success 至少保持 3000ms；case complete 后最终快照通过、渲染且截图保存/放弃收尾才写 init。ReInit 失败不恢复旧结果，只显示同侧 ReInit 重试。 |
 | Stage 截图（非页面可见区块） | 是 | `save_picture_flag` + Web `html-to-image` + `POST /api/case3/screenshot` | 仅 Start 等待态 0→1；同拍 complete 仍触发 | 最多 3 次；Node 写 `out/case3/case3-{seq}.png` 后清零；ReInit 不截图。 |
@@ -36,12 +36,12 @@
 | `ue_comm_without_dt_coordinates.txt` | `point.ue` | Without UE 实时轨迹。 |
 | `ue_comm_without_dt_beams.txt` | `point.scanBeamIds` | Without 扫描波束集合（至少 1 个 id，在 16×16 网格上高亮）。 |
 | `ue_comm_without_dt_sel_beam.txt` | `point.selectedBeamId` | Without 当前选择波束、Beam Accuracy 对比输入。 |
-| `ue_comm_without_dt_thrp.txt` | `point.throughputGbps` | Throughput without 曲线。 |
+| `ue_comm_without_dt_thrp.txt` | `throughput.samples[]` | Throughput without 曲线；样点序号独立于结构点。 |
 | `ue_comm_without_dt_cost.txt` | `withoutCostPct` | Cost 左柱。 |
 | `ue_comm_with_dt_coordinates.txt` | `point.ue` | With UE 实时轨迹。 |
 | `ue_comm_with_dt_sel_beam.txt` | `point.selectedBeamId` | With 当前预测波束、Beam Accuracy 对比输入。 |
 | `ue_comm_with_dt_coordinates_reflection_point.txt` | `point.reflection` | With 完整点校验；Reflection/LOS 可视化后续单独实现。 |
-| `ue_comm_with_dt_thrp.txt` | `point.throughputGbps` | Throughput with 曲线。 |
+| `ue_comm_with_dt_thrp.txt` | `throughput.samples[]` | Throughput with 曲线；样点序号独立于结构点和 Without 吞吐。 |
 | `ue_comm_with_dt_cost.txt` | `withCostPct` | Cost 右柱。 |
 | `ue_comm_with_dt_beam_accuracy_rate.txt` | `beamAccuracyBaseline` | Beam Accuracy 初始与重置后基线。 |
 
@@ -53,7 +53,7 @@
 | 点位进度窗口 | `points.slice(-20)`；按 no 升序显示，已填槽标签为真实 `P${point.no}` | 不压缩到不可读文字，不创建第 21 个可视槽。 |
 | Cost | 对应 cost 文件最新非空行，Node 四舍五入到 1 位并校验 `0～100` | 运行中可为 `null`；完成门槛要求非空，不沿用旧值冒充本轮。 |
 | 相对开销变化 | `(withCostPct - withoutCostPct) / withoutCostPct * 100` | 任一侧 Cost 缺失或 Without Cost 为 0 时显示 `--`；正数增加（↑ `X%`），负数减少（↓ `-X%`）。 |
-| Throughput | 每个结构化点位的 `throughputGbps` 按 `no` 入曲线 | 缺点不补 0，不跨侧对齐。 |
+| Throughput | 每侧独立吞吐快照的样点按 `no` 入曲线 | 缺样点不补 0；各侧样点数可以不同，不按结构点或对侧补齐。 |
 | Beam Accuracy 增量 | With 完成后，用相同 `no` 的 Without/With 点位比较 `selectedBeamId`；坐标只做可选诊断，不做匹配主键 | Without 缺失、同 `no` 点位不完整或任意侧重置后，仅显示基线。 |
 | 调试 JSONL 快照 | Node 在 `completeCount` 变化时，将当前完整点全量以整文件原子替换写入 `{DT_SHARED_DIR}/out/case3/points/{side}.jsonl`，side 为 without 或 with | 仅作 QA/定位证据，Web 不回读；不写 cost 行；不写入 `out/case2/`。 |
 | Stage 截图 | Start 等待态内 `save_picture_flag` 0→1；Web 截取 1920×1080 Stage，Node 原子落盘 | 成功后清零；三次失败后放弃清零；不改变 completed/failed 业务结论。 |

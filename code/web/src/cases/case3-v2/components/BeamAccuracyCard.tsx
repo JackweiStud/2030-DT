@@ -13,7 +13,7 @@ type Props = {
   baseline: BeamAccuracyBaseline | null;
   without: SideSnapshot | null;
   withSide: SideSnapshot | null;
-  pairValid: boolean;
+  roundCompareEnabled: boolean;
 };
 
 /**
@@ -24,7 +24,7 @@ export function BeamAccuracyCard(props: Props) {
     props.baseline,
     props.without,
     props.withSide,
-    props.pairValid,
+    props.roundCompareEnabled,
   );
 
   const okText = display ? String(display.displaySuccess) : "--";

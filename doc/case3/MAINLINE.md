@@ -26,9 +26,9 @@
 | 状态 | 用户动作/外部条件 | Without DT | With DT | KPI |
 |---|---|---|---|---|
 | 初始 | 进入 case3 Tab | 预置 UE 路线、地图、空运行态 | 预置 UE 路线、地图、空运行态 | Cost/Throughput 为空或基线占位；Beam Accuracy 显示文件基线 |
-| Without 运行中 | 点击 Without Start；Node 清空 without 侧实时文件并写 `case3/start/without dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 按结构化点位逐点更新 UE 轨迹、扫描波束集合、选择波束、吞吐、点位进度 | 保留现有 With 历史结果但标记为未配对，不运行 | 更新 without Cost/Throughput；跨侧 KPI 失效 |
+| Without 运行中 | 点击 Without Start；Node 清空 without 侧实时文件并写 `case3/start/without dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 结构文件逐点更新 UE 轨迹、扫描波束集合、选择波束与点位进度 | 保留现有 With 历史结果但标记为未配对，不运行 | Cost 按 `/side` 更新；Throughput 按独立 `/throughput` 更新；跨侧 KPI 失效 |
 | Without 完成 | 本轮已见 `execute success -> case complete`；最终快照满足 `ok=true,pendingTail=false,points>0,costPct!=null`；Web 渲染且截图保存/放弃收尾后写回 `init` | 停止业务轮询，保留 without 完成结果 | With Start 可用 | without 曲线/表盘保留；Beam Accuracy 仍为基线 |
-| With 运行中 | 已有当前有效 Without 后点击 With Start；Node 清空 with 侧实时文件并写 `case3/start/with dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 保留 without 完成结果 | 按结构化点位逐点更新 UE 轨迹、预测波束、吞吐、点位进度；`reflection` 只用于完整点校验，v1 不渲染 Reflection/LOS | 更新 with Cost/Throughput；Beam Accuracy 等待 With 完成 |
+| With 运行中 | 已有当前有效 Without 后点击 With Start；Node 清空 with 侧实时文件并写 `case3/start/with dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 保留 without 完成结果 | 结构文件逐点更新 UE 轨迹、预测波束与点位进度；`reflection` 只用于完整点校验，v1 不渲染 Reflection/LOS | Cost 按 `/side` 更新；Throughput 按独立 `/throughput` 更新；Beam Accuracy 按配对点实时更新 |
 | With 完成 | 本轮已见 `execute success -> case complete`；最终快照通过同一完整性门槛；Web 渲染且截图保存/放弃收尾后写回 `init` | 保留 without 完成结果 | 停止业务轮询，保留 with 完成结果 | Cost/Throughput 双侧对比；Beam Accuracy = 文件基线 + 当前配对点位增量 |
 | 单侧重置中 | 点击任一侧重置；Node 写 `reinit`、对应 `dt_type`、`status=""`；UI 消费 `reinit complete` 后写回 `command=init,status=""` | 若重置 without：等待 `reinit complete` 后清 without 本轮结果；with 历史结果可保留 | 若重置 with：等待 `reinit complete` 后清 with 本轮结果；without 历史结果可保留 | 任意重置立刻使本次 Beam Accuracy 增量失效，显示回基线 |
 | 命令失败 | 本轮运行或重置中读到 `execute fail` | Start 失败只允许同侧 Start 重试；ReInit 失败不恢复旧结果，只允许同侧 ReInit 重试 | 同左 | 不自动拼接旧运行数据，不自动重算 Beam Accuracy |

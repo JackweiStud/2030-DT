@@ -290,7 +290,6 @@ describe("useCase3Controller entry", () => {
             no: 1,
             ue: { x: 1, y: 2, z: 0 },
             selectedBeamId: 1,
-            throughputGbps: 2,
             scanBeamIds: Array.from({ length: 16 }, (_, index) => index),
           },
         ],

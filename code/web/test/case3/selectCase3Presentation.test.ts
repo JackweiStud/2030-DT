@@ -10,7 +10,10 @@ import {
   createInitialCase3State,
   type Case3State,
 } from "../../src/cases/case3/state/case3Reducer";
-import type { SideSnapshot } from "../../src/cases/case3/types";
+import type {
+  SideSnapshot,
+  ThroughputSnapshot,
+} from "../../src/cases/case3/types";
 
 function snap(side: "without" | "with", cost = 25, count = 1): SideSnapshot {
   return {
@@ -21,7 +24,6 @@ function snap(side: "without" | "with", cost = 25, count = 1): SideSnapshot {
         no,
         ue: { x: no, y: no, z: 0 },
         selectedBeamId: no,
-        throughputGbps: side === "without" ? 8 + no / 10 : 9 + no / 10,
         ...(side === "without"
           ? { scanBeamIds: Array.from({ length: 16 }, (_, beam) => beam) }
           : { reflection: { x: 0, y: 0, z: 0, los: true } }),
@@ -30,6 +32,16 @@ function snap(side: "without" | "with", cost = 25, count = 1): SideSnapshot {
     completeCount: count,
     pendingTail: false,
     costPct: cost,
+  };
+}
+
+function thrp(count: number): ThroughputSnapshot {
+  return {
+    samples: Array.from({ length: count }, (_, index) => ({
+      no: index + 1,
+      gbps: 8 + index / 10,
+    })),
+    pendingTail: false,
   };
 }
 
@@ -68,7 +80,7 @@ function completeStart(
     type: "START_COMPLETE",
     side,
     snapshot,
-    throughput: null,
+    throughput: thrp(snapshot.points.length),
   });
 }
 
@@ -175,6 +187,12 @@ describe("selectCase3Presentation", () => {
       side: "with",
       snapshot: liveWith,
     });
+    const liveThrp = thrp(2);
+    state = case3Reducer(state, {
+      type: "LIVE_THROUGHPUT",
+      side: "with",
+      snapshot: liveThrp,
+    });
     const view = selectCase3Presentation(state);
     expect(view.visible).toBe("with-running");
     expect(view.dataState).toBe("with-running");
@@ -192,10 +210,29 @@ describe("selectCase3Presentation", () => {
     expect(view.withoutKpiSnapshot).toBe(without);
     expect(view.withKpiSnapshot).toBe(liveWith);
     expect(view.showWithThroughput).toBe(true);
+    expect(view.thrpWith).toBe(liveThrp);
     expect(view.pairValid).toBe(false);
     expect(view.beamWithout).toBe(without);
     expect(view.beamWith).toBe(liveWith);
-    expect(view.beamCompareEnabled).toBe(true);
+    expect(view.roundCompareEnabled).toBe(true);
+  });
+
+  it("With 吞吐先于 With side KPI 到达时独立显示", () => {
+    const without = snap("without", 25, 2);
+    const liveThrp = thrp(3);
+    let state = closed(completeStart(ready(), "without", without));
+    state = begin(state, "start", "with");
+    state = case3Reducer(state, { type: "SEEN_EXECUTE_SUCCESS" });
+    state = case3Reducer(state, {
+      type: "LIVE_THROUGHPUT",
+      side: "with",
+      snapshot: liveThrp,
+    });
+
+    const view = selectCase3Presentation(state);
+    expect(view.withKpiSnapshot).toBeNull();
+    expect(view.showWithThroughput).toBe(true);
+    expect(view.thrpWith).toBe(liveThrp);
   });
 
   it("With completed：pairValid 后两侧 KPI/BA/peer 均可比较", () => {
@@ -258,6 +295,7 @@ describe("selectCase3Presentation", () => {
     expect(view.withoutKpiSnapshot).toBeNull();
     expect(view.withKpiSnapshot).toBe(withSide);
     expect(view.showWithThroughput).toBe(true);
+    expect(view.thrpWith).toEqual(state.resultThrp.with);
     expect(view.pairValid).toBe(false);
     expect(view.beamWithout).toBeNull();
     expect(view.beamWith).toBe(withSide);
@@ -269,6 +307,7 @@ describe("selectCase3Presentation", () => {
     let state: Case3State = {
       ...ready(),
       results: { without: null, with: oldWith },
+      resultThrp: { without: null, with: thrp(oldWith.points.length) },
       pairValid: false,
     };
     state = closed(completeStart(state, "without", nextWithout));
@@ -289,6 +328,7 @@ describe("selectCase3Presentation", () => {
     expect(view.withoutKpiSnapshot).toBe(nextWithout);
     expect(view.withKpiSnapshot).toBeNull();
     expect(view.showWithThroughput).toBe(false);
+    expect(view.thrpWith).toBeNull();
     expect(view.pairValid).toBe(false);
     expect(view.beamWithout).toBe(nextWithout);
     expect(view.beamWith).toBe(oldWith);
@@ -299,6 +339,7 @@ describe("selectCase3Presentation", () => {
     let state: Case3State = {
       ...ready(),
       results: { without: null, with: oldWith },
+      resultThrp: { without: null, with: thrp(oldWith.points.length) },
       pairValid: false,
     };
     state = begin(state, "start", "without");
@@ -308,6 +349,7 @@ describe("selectCase3Presentation", () => {
     expect(view.withPoints).toBe(oldWith.points);
     expect(view.withKpiSnapshot).toBeNull();
     expect(view.showWithThroughput).toBe(false);
+    expect(view.thrpWith).toBeNull();
     expect(view.withPeerPoints).toBeNull();
     expect(view.pairValid).toBe(false);
     expect(view.withoutKpiSnapshot).toBeNull();

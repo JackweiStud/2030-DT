@@ -66,7 +66,6 @@ function pointOf(
     no,
     ue: { x: no === 1 ? 1 : no, y: no === 1 ? 15 : 2, z: 0 },
     selectedBeamId: beam,
-    throughputGbps: 8 + no,
     ...(side === "without"
       ? { scanBeamIds: [0, beam] }
       : { reflection: { x: 0, y: 0, z: 0, los: true } }),
@@ -77,7 +76,7 @@ function thrpFromSnapshot(snapshot: SideSnapshot): ThroughputSnapshot {
   return {
     samples: snapshot.points
       .slice(0, snapshot.completeCount)
-      .map((p) => ({ no: p.no, gbps: p.throughputGbps })),
+      .map((p) => ({ no: p.no, gbps: 8 + p.no })),
     pendingTail: snapshot.pendingTail,
   };
 }

@@ -1,6 +1,6 @@
 /**
  * Case3 吞吐折线：原生 SVG，DOM 对齐静态 `.case3-thrp-*`。
- * X 域固定为 init baseRoute 全程点号（无路线时占位 1～20），刻度/竖网格相对该域一次算齐；
+ * X 域覆盖 init baseRoute 与独立吞吐样点全程（无数据时占位 1～20）；
  * Y 域无数据时 0～12，有数据时按 niceCeil 扩展（下限 12 Gbps）。
  */
 
@@ -17,7 +17,7 @@ import type { ThroughputSnapshot } from "../types";
 type Props = {
   without: ThroughputSnapshot | null;
   withSamples: ThroughputSnapshot | null;
-  /** init baseRoute 点号；用于固定 X 域。 */
+  /** init baseRoute 点号；提供结构路线的基础 X 域。 */
   routeNos: ReadonlyArray<number> | null;
   /** 是否显示传入的 With 曲线；配对/历史策略由页面统一决定。 */
   showWithSeries: boolean;
@@ -44,7 +44,10 @@ export function ThroughputChart(props: Props) {
   const all = [...series.without, ...withSeries];
   const empty = all.length === 0;
 
-  const [minNo, maxNo] = throughputXDomain(props.routeNos);
+  const [minNo, maxNo] = throughputXDomain(
+    props.routeNos,
+    all.map((point) => point.no),
+  );
   const maxY = empty
     ? CASE3_THRP_Y_MAX_DEFAULT
     : niceCeilThroughput(Math.max(...all.map((p) => p.value)));

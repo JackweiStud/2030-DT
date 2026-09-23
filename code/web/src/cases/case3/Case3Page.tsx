@@ -107,7 +107,7 @@ export function Case3Page(props: Props) {
             baseline={view.baseline}
             without={view.beamWithout}
             withSide={view.beamWith}
-            roundCompareEnabled={view.beamCompareEnabled}
+            roundCompareEnabled={view.roundCompareEnabled}
           />
         </div>
       </section>

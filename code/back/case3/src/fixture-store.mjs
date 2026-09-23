@@ -34,6 +34,11 @@ function linesOf(text, filename) {
   return lines.map((line) => line.trim());
 }
 
+function optionalLinesOf(text, filename) {
+  if (text.trim() === "") return [];
+  return linesOf(text, filename);
+}
+
 function finite(token, filename, label) {
   if (!NUMBER_TOKEN.test(token)) invalid(filename, `${label} 不是合法数值`);
   const value = Number(token);
@@ -123,7 +128,13 @@ async function readFixture(fixtureDir, filename, fsOps) {
 function validateSide(side, contents) {
   const files = SIDE_FILES[side];
   const rows = {};
-  const throughputValues = [];
+  const throughputLines = optionalLinesOf(
+    contents.throughput,
+    files.throughput,
+  );
+  const throughputValues = throughputLines.map((line) =>
+    throughput(line, files.throughput),
+  );
   for (const key of POINT_KEYS[side]) {
     rows[key] = linesOf(contents[key], files[key]);
   }
@@ -132,15 +143,12 @@ function validateSide(side, contents) {
     count === 0 ||
     POINT_KEYS[side].some((key) => rows[key].length !== count)
   ) {
-    invalid(files.coordinates, `${side} 四个逐点文件行数必须一致且大于 0`);
+    invalid(files.coordinates, `${side} 结构文件行数必须一致且大于 0`);
   }
 
   for (let index = 0; index < count; index += 1) {
     coordinate(rows.coordinates[index], files.coordinates);
     const selectedBeam = selected(rows.selected[index], files.selected);
-    throughputValues.push(
-      throughput(rows.throughput[index], files.throughput),
-    );
     if (side === "without") {
       const scanBeams = scan(rows.scans[index], files.scans);
       if (!scanBeams.includes(selectedBeam)) {
@@ -159,6 +167,7 @@ function validateSide(side, contents) {
   }
   return {
     rows,
+    throughputLines,
     throughputValues,
     cost,
     costLine: costLines[0],

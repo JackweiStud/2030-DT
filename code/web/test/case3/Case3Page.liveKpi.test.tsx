@@ -65,7 +65,6 @@ function snapshot(
         no,
         ue: { x: no, y: no, z: 0 },
         selectedBeamId: no,
-        throughputGbps: side === "without" ? 8 + no / 10 : 9 + no / 10,
         ...(side === "without"
           ? { scanBeamIds: Array.from({ length: 16 }, (_, beam) => beam) }
           : { reflection: { x: 5, y: 7, z: 0, los: true } }),

@@ -400,7 +400,6 @@ type Case3Point = {
   no: number;
   ue: { x: number; y: number; z: number };
   selectedBeamId: number;
-  throughputGbps: number;
   scanBeamIds?: number[]; // Without 必需；至少 1 个 [0,255]，允许重复，必须包含 selectedBeamId
   reflection?: {
     x: number;
@@ -442,8 +441,7 @@ Without 示例：
       "no": 1,
       "ue": { "x": 1.01, "y": 15.01, "z": 0.0 },
       "selectedBeamId": 4,
-      "scanBeamIds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-      "throughputGbps": 8.5
+      "scanBeamIds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     }
   ],
   "completeCount": 1,
@@ -463,7 +461,6 @@ With 示例：
       "no": 1,
       "ue": { "x": 1.01, "y": 15.01, "z": 0.0 },
       "selectedBeamId": 4,
-      "throughputGbps": 9.1,
       "reflection": { "x": 5.0, "y": 7.0, "z": 0.0, "los": true }
     }
   ],
@@ -477,6 +474,8 @@ With 示例：
 
 - 返回当前侧完整连续点 `1..K` 的**全量替换快照**，不是增量。
 - `completeCount === points.length`。
+- `/side` 完整点由坐标、selected beam、Without scan beams 或 With reflection 对齐组成；Throughput 不属于点位必需文件，不影响点位数量与 `pendingTail`。
+- Throughput 只由 `/throughput?side=` 返回，样点数可独立于结构点数，Without/With 两侧样点数也可不同。
 - Web 每次替换本地 points/costPct，不维护 cursor，不 append。
 - 运行中允许 `points=[]`、`costPct=null` 或 `pendingTail=true`。
 - `pendingTail=true` 只代表当前物理尾部尚未收齐；不把半点返回给 Web。
@@ -524,7 +523,7 @@ Web 纪律（Issue #6）：
 
 - 运行中 `/side` 与 `/throughput` **独立**轮询；任一路失败不得阻塞另一路更新。
 - 见到本轮 `case complete` 且 `/side` 终态通过后，**必须**再独立 `GET /throughput` 封存 `resultThrp`。
-- 终态吞吐读取失败时保留本轮最后一次独立 live 快照；**禁止**从 `points[].throughputGbps` 回填 KPI 曲线。
+- 终态吞吐读取失败时保留本轮最后一次独立 live 快照；**禁止**从 `/side` 点位数据回填 KPI 曲线。
 
 
 
@@ -535,14 +534,14 @@ Without 第 `i` 点必须同时具备：
 - `ue_comm_without_dt_coordinates.txt` 第 `i` 行；
 - `ue_comm_without_dt_beams.txt` 第 `i` 行；
 - `ue_comm_without_dt_sel_beam.txt` 第 `i` 行；
-- `ue_comm_without_dt_thrp.txt` 第 `i` 行。
 
 With 第 `i` 点必须同时具备：
 
 - `ue_comm_with_dt_coordinates.txt` 第 `i` 行；
 - `ue_comm_with_dt_sel_beam.txt` 第 `i` 行；
-- `ue_comm_with_dt_thrp.txt` 第 `i` 行；
 - `ue_comm_with_dt_coordinates_reflection_point.txt` 第 `i` 行。
+
+Throughput 文件独立按自己的行序形成吞吐样点；不要求与结构点等长，也不要求 Without/With 两侧等长。吞吐不属于 `/side` 点位完整度或 `case complete` 最终结构快照门槛。
 
 Cost 与点数解耦，取该侧 cost 文件最新非空行，作为包级 `costPct`。
 
@@ -606,7 +605,7 @@ Web 只有满足全部条件才进入 completed：
 - 本轮已观察到 `execute success`；
 - 之后观察到 `case complete`；
 - 最终 `GET /side` 返回 `ok=true`；
-- 并行或紧随其后独立 `GET /throughput?side=<same>` 成功时，以该快照封存 KPI 吞吐；失败则保留本轮最后 live 吞吐，**不得**用 `points[].throughputGbps` 推导曲线；
+- 并行或紧随其后独立 `GET /throughput?side=<same>` 成功时，以该快照封存 KPI 吞吐；失败则保留本轮最后 live 吞吐，**不得**从 `/side` 点位推导曲线；
 - `pendingTail=false`；
 - `points.length > 0`；
 - `completeCount === points.length`；

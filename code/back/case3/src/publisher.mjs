@@ -121,18 +121,30 @@ export function createPublisher(options) {
       await clearForRecovery(task);
     }
 
-    for (let index = 0; index < dataset.count; index += 1) {
-      for (const key of POINT_KEYS[task.side]) {
-        await appendFixtureLine(task, key, dataset.rows[key][index]);
+    const throughputCount = dataset.throughputLines.length;
+    const totalSteps = Math.max(dataset.count, throughputCount);
+    for (let index = 0; index < totalSteps; index += 1) {
+      let currentCostLine = null;
+      if (index < dataset.count) {
+        for (const key of POINT_KEYS[task.side]) {
+          await appendFixtureLine(task, key, dataset.rows[key][index]);
+        }
+        currentCostLine =
+          dataset.dataMode === "random"
+            ? dataset.costLines[index]
+            : index === 0
+              ? dataset.costLine
+              : null;
+        if (currentCostLine !== null) {
+          await appendFixtureLine(task, "cost", currentCostLine);
+        }
       }
-      const currentCostLine =
-        dataset.dataMode === "random"
-          ? dataset.costLines[index]
-          : index === 0
-            ? dataset.costLine
-            : null;
-      if (currentCostLine !== null) {
-        await appendFixtureLine(task, "cost", currentCostLine);
+      if (index < throughputCount) {
+        await appendFixtureLine(
+          task,
+          "throughput",
+          dataset.throughputLines[index],
+        );
       }
       logger.debug("point-published", {
         operationId: task.operationId,
@@ -141,7 +153,7 @@ export function createPublisher(options) {
         side: task.side,
         event: "point",
         point: index + 1,
-        total: dataset.count,
+        total: totalSteps,
         dataMode: dataset.dataMode,
         dataSource: dataset.dataSource,
         resolvedSeed: dataset.resolvedSeed,
@@ -157,6 +169,7 @@ export function createPublisher(options) {
 
     return {
       pointCount: dataset.count,
+      throughputCount,
       cost: Number(dataset.costLine),
       dataMode: dataset.dataMode,
       dataSource: dataset.dataSource,

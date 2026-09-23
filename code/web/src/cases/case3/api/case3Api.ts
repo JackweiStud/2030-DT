@@ -72,12 +72,7 @@ function assertPoint(value: unknown, side: Case3Side): Case3Point {
     value.selectedBeamId,
     "selectedBeamId",
   );
-  const throughputGbps = assertFiniteNumber(
-    value.throughputGbps,
-    "throughputGbps",
-  );
-
-  const point: Case3Point = { no, ue, selectedBeamId, throughputGbps };
+  const point: Case3Point = { no, ue, selectedBeamId };
 
   if (side === "without") {
     if (!Array.isArray(value.scanBeamIds)) {

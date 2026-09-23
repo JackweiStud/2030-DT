@@ -13,7 +13,6 @@ function withPoint(selectedBeamId: number): Case3Point {
     no: 1,
     ue: { x: 1, y: 2, z: 0 },
     selectedBeamId,
-    throughputGbps: 9.1,
     reflection: { x: 0, y: 0, z: 0, los: true },
   };
 }

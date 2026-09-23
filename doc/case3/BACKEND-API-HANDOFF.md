@@ -8,9 +8,11 @@
 |---|---|---|---|---|
 | `case_control.json` 命令字段 | 前端侧 Node → 后端 | init/start/reinit | `case`、`command`、`dt_type`、`status=""` | 发起或结束一轮控制。 |
 | `case_control.json.status` | 后端 → 前端侧 Node | 接单、失败、完成 | `execute success`、`execute fail`、`case complete`、`reinit complete` | 唯一业务状态。 |
-| Without 四个逐点 txt | 后端 → 共享目录 | Without Start 后逐点 append | coordinates、scan beams（至少 1 个）、selected beam、throughput | Without 完整点。 |
+| Without 三个结构 txt | 后端 → 共享目录 | Without Start 后逐点 append | coordinates、scan beams（至少 1 个）、selected beam | Without 完整点。 |
+| Without Throughput txt | 后端 → 共享目录 | Without Start 后独立逐点 append | 每行一个吞吐样点；与结构点数、With 吞吐数无须相同 | 独立 Throughput 曲线。 |
 | Without Cost txt | 后端 → 共享目录 | Without 运行中/完成前 | 最新一行百分比 | Without 开销。 |
-| With 四个逐点 txt | 后端 → 共享目录 | With Start 后逐点 append | coordinates、selected beam、throughput、reflection | With 完整点。 |
+| With 三个结构 txt | 后端 → 共享目录 | With Start 后逐点 append | coordinates、selected beam、reflection | With 完整点。 |
+| With Throughput txt | 后端 → 共享目录 | With Start 后独立逐点 append | 每行一个吞吐样点；与结构点数、Without 吞吐数无须相同 | 独立 Throughput 曲线。 |
 | With Cost txt | 后端 → 共享目录 | With 运行中/完成前 | 最新一行百分比 | With 开销。 |
 | Base route / BA baseline | 后端提供的初始化文件 | 页面初始化读取 | 路线坐标、`success,total` | 初始地图路线和准确率基线。 |
 | `save_picture_flag` | 后端 → 前端侧 Node | Start 的 success→complete 窗口 | `0→1`，允许与 complete 同拍 | 请求保存当前 Case3 页面截图。 |
@@ -95,7 +97,7 @@ status=""
 1. 停止旧任务写入。
 2. 接单成功后写 `execute success`，保持至少 3000ms。
 3. 只向 dt_type 指定侧的文件 append 本轮数据。
-4. 完整写完并关闭全部必需文件和 Cost。
+4. 完整写完并关闭全部结构点文件和 Cost；Throughput 独立结束写入，样点数可不同。
 5. 停止本轮文件写入。
 6. 最后写 `case complete`；若本轮请求截图，必须在同一次原子控制写中合并 `save_picture_flag=1`。
 
@@ -145,10 +147,10 @@ status=""
 | `ue_comm_without_dt_coordinates.txt` | `x,y,z` | 第 i 行属于第 i 点。 |
 | `ue_comm_without_dt_beams.txt` | 至少 1 个逗号分隔 beam id | 第 i 行属于第 i 点。 |
 | `ue_comm_without_dt_sel_beam.txt` | 一个 beam id | 第 i 行属于第 i 点。 |
-| `ue_comm_without_dt_thrp.txt` | 一个 Throughput 数值 | 第 i 行属于第 i 点。 |
+| `ue_comm_without_dt_thrp.txt` | 一个 Throughput 数值 | 独立吞吐样点序号；不与结构点或另一侧吞吐行数对齐。 |
 | `ue_comm_without_dt_cost.txt` | 一个或多个 Cost 数值 | 与点数解耦，取最新非空行。 |
 
-第 i 个完整点必须同时存在前四个文件的第 i 行。
+第 i 个完整点必须同时存在 coordinates、beams、sel_beam 三个结构文件的第 i 行。Throughput 独立发布。
 
 ## 5. With DT 文件
 
@@ -156,11 +158,11 @@ status=""
 |---|---|---|
 | `ue_comm_with_dt_coordinates.txt` | `x,y,z` | 第 i 行属于第 i 点。 |
 | `ue_comm_with_dt_sel_beam.txt` | 一个 beam id | 第 i 行属于第 i 点。 |
-| `ue_comm_with_dt_thrp.txt` | 一个 Throughput 数值 | 第 i 行属于第 i 点。 |
+| `ue_comm_with_dt_thrp.txt` | 一个 Throughput 数值 | 独立吞吐样点序号；不与结构点或另一侧吞吐行数对齐。 |
 | `ue_comm_with_dt_coordinates_reflection_point.txt` | `x,y,z,flag` | 第 i 行属于第 i 点，必需。 |
 | `ue_comm_with_dt_cost.txt` | 一个或多个 Cost 数值 | 与点数解耦，取最新非空行。 |
 
-第 i 个完整点必须同时存在前四个文件的第 i 行。`flag=1` 映射为 `los=true`（LOS），`flag=0` 映射为 `los=false`（NLOS）。
+第 i 个完整点必须同时存在 coordinates、sel_beam、reflection_point 三个结构文件的第 i 行。Throughput 独立发布。`flag=1` 映射为 `los=true`（LOS），`flag=0` 映射为 `los=false`（NLOS）。
 
 `ue_comm_without_dt_mse.txt`、`ue_comm_with_dt_mse.txt` 可以继续存在，但不进入页面数据、完整点或完成发布门槛。
 
@@ -182,7 +184,7 @@ status=""
 写 `case complete` 前，后端必须确认：
 
 - 当前控制仍属于同一 case3 start 和同一 dt_type。
-- 所有目标侧逐点文件已经写完并关闭。
+- 所有目标侧结构点文件已经写完并关闭；Throughput 结束本轮写入即可，样点数可独立于结构点数和另一侧吞吐点数。
 - 各逐点文件可以组成连续完整点 `1..N`，且 `N > 0`。
 - Cost 文件至少有一个有效值。
 - 后端已停止本轮文件写入。
