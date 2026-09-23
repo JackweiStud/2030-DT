@@ -1,6 +1,6 @@
 /**
- * V2 吞吐折线：按 baseRoute 顺序索引分段。
- * 相邻 route 点才用 L 连接；缺口新开 M，不补 0，不跨缺口画线。
+ * V2 吞吐折线：按独立吞吐样点序号分段。
+ * 连续样点用 L 连接；缺口新开 M，不补 0，不跨缺口画线。
  */
 
 export type ThroughputPathPoint = {
@@ -10,29 +10,18 @@ export type ThroughputPathPoint = {
 };
 
 /**
- * 相邻判定只用 routeNos 的顺序下标，不用数值 no+1。
+ * 吞吐样点不依赖结构 route；只有真实连续的 no 才连接。
  */
 export function segmentedThroughputPath(
-  routeNos: ReadonlyArray<number>,
   points: ReadonlyArray<ThroughputPathPoint>,
 ): string | undefined {
   if (points.length === 0) return undefined;
-  const routeIndex = new Map<number, number>();
-  for (let i = 0; i < routeNos.length; i += 1) {
-    const no = routeNos[i];
-    if (no === undefined || routeIndex.has(no)) continue;
-    routeIndex.set(no, i);
-  }
   const parts: string[] = [];
-  let prevIndex: number | undefined;
-  for (const point of points) {
-    const index = routeIndex.get(point.no);
-    const connected =
-      prevIndex !== undefined &&
-      index !== undefined &&
-      index === prevIndex + 1;
+  let prevNo: number | undefined;
+  for (const point of [...points].sort((a, b) => a.no - b.no)) {
+    const connected = prevNo !== undefined && point.no === prevNo + 1;
     parts.push(`${connected ? "L" : "M"}${point.x} ${point.y}`);
-    prevIndex = index;
+    prevNo = point.no;
   }
   return parts.join(" ");
 }

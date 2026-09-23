@@ -13,6 +13,7 @@ import type {
   Failure,
   FailureReason,
   SideSnapshot,
+  ThroughputSnapshot,
 } from "../types";
 
 export type Case3State = {
@@ -21,6 +22,8 @@ export type Case3State = {
   baseline: BeamAccuracyBaseline | null;
   results: { without: SideSnapshot | null; with: SideSnapshot | null };
   live: { without: SideSnapshot | null; with: SideSnapshot | null };
+  liveThrp: { without: ThroughputSnapshot | null; with: ThroughputSnapshot | null };
+  resultThrp: { without: ThroughputSnapshot | null; with: ThroughputSnapshot | null };
   pairValid: boolean;
   activeAction: ActiveAction | null;
   /** 结果已提交，但截图与最终 init 尚未完成；此时禁止开始下一轮。 */
@@ -50,7 +53,8 @@ export type Case3Action =
   | { type: "ACTION_POST_FAILED" }
   | { type: "SEEN_EXECUTE_SUCCESS" }
   | { type: "LIVE_SNAPSHOT"; side: Case3Side; snapshot: SideSnapshot }
-  | { type: "START_COMPLETE"; side: Case3Side; snapshot: SideSnapshot }
+  | { type: "LIVE_THROUGHPUT"; side: Case3Side; snapshot: ThroughputSnapshot }
+  | { type: "START_COMPLETE"; side: Case3Side; snapshot: SideSnapshot; throughput: ThroughputSnapshot | null }
   | { type: "REINIT_COMPLETE"; side: Case3Side }
   | { type: "ROUND_CLOSE_COMPLETE" }
   | { type: "EXECUTE_FAIL"; reason?: FailureReason }
@@ -66,6 +70,8 @@ export function createInitialCase3State(): Case3State {
     baseline: null,
     results: { without: null, with: null },
     live: { without: null, with: null },
+    liveThrp: { without: null, with: null },
+    resultThrp: { without: null, with: null },
     pairValid: false,
     activeAction: null,
     roundClosing: false,
@@ -80,6 +86,8 @@ function invalidateSide(state: Case3State, side: Case3Side): Case3State {
     ...state,
     results: { ...state.results, [side]: null },
     live: { ...state.live, [side]: null },
+    liveThrp: { ...state.liveThrp, [side]: null },
+    resultThrp: { ...state.resultThrp, [side]: null },
     pairValid: false,
   };
 }
@@ -183,6 +191,20 @@ export function case3Reducer(
       };
     }
 
+    case "LIVE_THROUGHPUT": {
+      if (
+        !state.activeAction ||
+        state.activeAction.side !== action.side ||
+        state.activeAction.kind !== "start"
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        liveThrp: { ...state.liveThrp, [action.side]: action.snapshot },
+      };
+    }
+
     case "START_COMPLETE": {
       if (
         !state.activeAction ||
@@ -197,6 +219,12 @@ export function case3Reducer(
         [action.side]: action.snapshot,
       };
       const live = { ...state.live, [action.side]: null };
+      const liveThrp = { ...state.liveThrp, [action.side]: null };
+      const resultThrp = {
+        ...state.resultThrp,
+        [action.side]:
+          action.throughput ?? state.liveThrp[action.side] ?? null,
+      };
       // Without 完成不能单独置 pairValid；With 完成且 Without 仍有效才 true
       const pairValid =
         action.side === "with" && results.without !== null;
@@ -204,6 +232,8 @@ export function case3Reducer(
         ...state,
         results,
         live,
+        liveThrp,
+        resultThrp,
         pairValid,
         activeAction: null,
         roundClosing: true,
@@ -223,6 +253,8 @@ export function case3Reducer(
         ...state,
         results: { ...state.results, [action.side]: null },
         live: { ...state.live, [action.side]: null },
+        liveThrp: { ...state.liveThrp, [action.side]: null },
+        resultThrp: { ...state.resultThrp, [action.side]: null },
         pairValid: false,
         activeAction: null,
         roundClosing: true,
@@ -245,6 +277,8 @@ export function case3Reducer(
         ...state,
         results: { ...state.results, [side]: null },
         live: { ...state.live, [side]: null },
+        liveThrp: { ...state.liveThrp, [side]: null },
+        resultThrp: { ...state.resultThrp, [side]: null },
         pairValid: false,
         activeAction: null,
         roundClosing: false,

@@ -44,6 +44,26 @@ export function createCase3Router(services) {
 
     if (
       request.method === "GET" &&
+      url.pathname === `${CASE3_API_PREFIX}/throughput`
+    ) {
+      const entries = [...url.searchParams.entries()];
+      if (entries.length !== 1 || entries[0][0] !== "side") {
+        throw new AppError(
+          400,
+          "INVALID_SIDE",
+          "throughput requires exactly one side query",
+        );
+      }
+      const side = entries[0][1];
+      if (side !== "without" && side !== "with") {
+        throw new AppError(400, "INVALID_SIDE", "side must be without or with");
+      }
+      sendJson(response, 200, await services.throughput.read(side));
+      return { handled: true, access: { caseId: "case3", side } };
+    }
+
+    if (
+      request.method === "GET" &&
       url.pathname === `${CASE3_API_PREFIX}/side`
     ) {
       const entries = [...url.searchParams.entries()];

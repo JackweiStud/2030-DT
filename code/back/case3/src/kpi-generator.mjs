@@ -40,8 +40,7 @@ function fixed(value, digits) {
 /**
  * 为一次 Start 构造不可变发布快照。
  *
- * With 的下限高于对应 Without 模板在 +jitter 时的理论上限，保证两侧
- * 独立生成时仍保持 With Throughput 更高；若 fixture 无法满足则快速失败。
+ * 吞吐按各自 fixture 的行数独立生成；不要求两侧吞吐或结构点数相同。
  */
 export function createRoundDataset(options) {
   const {
@@ -62,6 +61,7 @@ export function createRoundDataset(options) {
   if (dataMode === "replay") {
     return {
       rows: fixture.rows,
+      throughputLines: [...fixture.throughputLines],
       costLine: fixture.costLine,
       costLines: [fixture.costLine],
       count: fixture.count,
@@ -76,25 +76,8 @@ export function createRoundDataset(options) {
       ? String(operationId)
       : `${String(seed)}:${side}`;
   const nextRandom = createSeededRng(resolvedSeed);
-  const withoutTemplate = fixtureStore.sides.without.throughputValues;
   const throughputLines = fixture.throughputValues.map((template, index) => {
-    let value = jittered(template, throughputJitter, nextRandom, 2);
-
-    if (side === "with" && withoutTemplate[index] !== undefined) {
-      const withoutUpper = roundTo(
-        withoutTemplate[index] * (1 + throughputJitter),
-        2,
-      );
-      const requiredFloor = roundTo(withoutUpper + 0.01, 2);
-      const withUpper = roundTo(template * (1 + throughputJitter), 2);
-      if (requiredFloor > withUpper) {
-        throw new StubError(
-          "KPI_GENERATION_INVALID",
-          `第 ${index + 1} 点 fixture 无法在抖动范围内保证 With Throughput 更高`,
-        );
-      }
-      value = Math.max(value, requiredFloor);
-    }
+    const value = jittered(template, throughputJitter, nextRandom, 2);
     return fixed(value, 2);
   });
 
@@ -108,10 +91,8 @@ export function createRoundDataset(options) {
     ),
   );
   return {
-    rows: {
-      ...fixture.rows,
-      throughput: throughputLines,
-    },
+    rows: fixture.rows,
+    throughputLines,
     costLine: costLines.at(-1),
     costLines,
     count: fixture.count,

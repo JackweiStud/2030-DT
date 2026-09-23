@@ -29,7 +29,6 @@ function point(partial: Partial<Case3Point> = {}): Case3Point {
     no: 4,
     ue: { x: 1, y: 2, z: 0 },
     selectedBeamId: 122,
-    throughputGbps: 8,
     scanBeamIds: [0, 122, 255],
     ...partial,
   };

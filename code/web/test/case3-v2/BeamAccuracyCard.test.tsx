@@ -28,7 +28,7 @@ describe("Case3V2 BeamAccuracyCard overlay", () => {
         baseline={null}
         without={null}
         withSide={null}
-        pairValid={false}
+        roundCompareEnabled={false}
       />,
     );
     assertMainOnOverlay(container, "--");
@@ -44,7 +44,7 @@ describe("Case3V2 BeamAccuracyCard overlay", () => {
         baseline={{ success: 0, total: 10 }}
         without={null}
         withSide={null}
-        pairValid={false}
+        roundCompareEnabled={false}
       />,
     );
     assertMainOnOverlay(container, "0.0");
@@ -58,7 +58,7 @@ describe("Case3V2 BeamAccuracyCard overlay", () => {
         baseline={{ success: 1, total: 100 }}
         without={null}
         withSide={null}
-        pairValid={false}
+        roundCompareEnabled={false}
       />,
     );
     assertMainOnOverlay(container, "1.0");
@@ -72,7 +72,7 @@ describe("Case3V2 BeamAccuracyCard overlay", () => {
         baseline={{ success: 10, total: 10 }}
         without={null}
         withSide={null}
-        pairValid={false}
+        roundCompareEnabled={false}
       />,
     );
     assertMainOnOverlay(container, "100.0");

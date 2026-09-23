@@ -150,6 +150,7 @@ export function createStubRunner(options) {
     await controlStore.patch(finalPatch, task, ["execute success"]);
     logger.info("start-complete", taskLog(task, "complete", {
       pointCount: published.pointCount,
+      throughputCount: published.throughputCount,
       cost: published.cost,
       dataMode: published.dataMode,
       dataSource: published.dataSource,

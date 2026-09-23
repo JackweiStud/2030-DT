@@ -135,7 +135,6 @@ test.describe("case3 v2 without (frontend-isolated)", () => {
                 no,
                 ue: { x: no === 1 ? 1 : 1, y: no === 1 ? 15 : 15 - no, z: 0 },
                 selectedBeamId: no * 10,
-                throughputGbps: 8 + no,
                 scanBeamIds: [0, no * 10],
               };
             }),

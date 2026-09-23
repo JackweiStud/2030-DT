@@ -18,7 +18,7 @@ type Props = {
   baseline: BeamAccuracyBaseline | null;
   without: SideSnapshot | null;
   withSide: SideSnapshot | null;
-  pairValid: boolean;
+  roundCompareEnabled: boolean;
 };
 
 /** 静态开口弧实测周长（r=86、约 240°）。 */
@@ -32,7 +32,7 @@ export function BeamAccuracyCard(props: Props) {
     props.baseline,
     props.without,
     props.withSide,
-    props.pairValid,
+    props.roundCompareEnabled,
   );
 
   const okText = display ? String(display.displaySuccess) : "--";

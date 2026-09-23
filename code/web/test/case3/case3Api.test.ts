@@ -59,6 +59,37 @@ describe("case3Api", () => {
     await expect(api.getControl()).resolves.toMatchObject({ command: "init" });
   });
 
+  it("解析吞吐快照", async () => {
+    const api = createCase3Api({
+      fetchImpl: async () =>
+        ok({
+          ok: true,
+          side: "without",
+          samples: [{ no: 1, gbps: 8.5 }],
+          pendingTail: true,
+        }),
+    });
+    await expect(api.getThroughput("without")).resolves.toEqual({
+      samples: [{ no: 1, gbps: 8.5 }],
+      pendingTail: true,
+    });
+  });
+
+  it("拒绝 side 不匹配的吞吐响应", async () => {
+    const api = createCase3Api({
+      fetchImpl: async () =>
+        ok({
+          ok: true,
+          side: "with",
+          samples: [{ no: 1, gbps: 8.5 }],
+          pendingTail: false,
+        }),
+    });
+    await expect(api.getThroughput("without")).rejects.toBeInstanceOf(
+      Case3ApiError,
+    );
+  });
+
   it("拒绝无 reflection 的 with 点", async () => {
     const api = createCase3Api({
       fetchImpl: async () =>
@@ -70,7 +101,6 @@ describe("case3Api", () => {
               no: 1,
               ue: { x: 1, y: 2, z: 0 },
               selectedBeamId: 1,
-              throughputGbps: 1,
             },
           ],
           completeCount: 1,
@@ -92,7 +122,6 @@ describe("case3Api", () => {
               no: 1,
               ue: { x: 1, y: 2, z: 0 },
               selectedBeamId: 3,
-              throughputGbps: 1.5,
               scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
             },
           ],

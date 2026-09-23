@@ -49,7 +49,6 @@ function liveWithout(count: number): SideSnapshot {
       no: index + 1,
       ue: { x: index + 1, y: index + 2, z: 0 },
       selectedBeamId: index + 1,
-      throughputGbps: 8.5 + index / 10,
       scanBeamIds: Array.from({ length: 16 }, (_, i) => i),
     })),
     completeCount: count,
@@ -105,6 +104,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -150,6 +150,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -211,6 +212,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => liveWithout(1)),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 
@@ -277,6 +279,7 @@ describe("useCase3Controller failure classification", () => {
         baseline: { success: 80, total: 100 },
       })),
       getSide: vi.fn(async () => freshLive),
+      getThroughput: vi.fn(async () => ({ samples: [], pendingTail: false })),
       postScreenshot: vi.fn(),
     };
 

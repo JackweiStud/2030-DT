@@ -52,14 +52,16 @@ CASE3_STUB_LOG_LEVEL=debug
 
 ## 数据边界
 
-- 两侧 fixture 是 31 点预置模板。坐标、扫描/selected Beam、
+- 两侧结构 fixture 是 21 点预置模板。坐标、扫描/selected Beam、
   Reflection 始终逐行回放，不参与动态生成。
+- 每侧 Throughput fixture 独立预检和发布，样点数不要求等于结构点数；
+  Without/With 两侧吞吐样点数也可不同。吞吐只按 fixture 做可复现随机抖动，
+  不保证 With 每个样点高于 Without。
 - 默认 `random` 只生成 Throughput 与 Cost；Beam Accuracy 仍由预置
   selected Beam 派生，因此保持可复现。
 - random 每发布一个点就 append 一个 Cost；Node/Web 始终读取最新非空行，
   因此仪表可按点实时变化。
-- With Throughput 在自身 ±10% 范围内还会高于对应 Without 的理论上限；
-  Cost 25/15 各自 ±15% 后仍保证 With 更低。
+- Cost 25/15 各自 ±15% 后仍保证 With 更低。
 - `replay` 原样发布 fixture，Cost 固定 25/15，对应 `-40.0%` 相对变化（有 DT 低于无 DT）。
 - 日志分别标记 `synthetic-kpi+fixture-structure` / `fixture-replay`，
   不得表述为真实采集。

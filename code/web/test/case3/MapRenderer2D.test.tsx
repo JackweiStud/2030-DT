@@ -109,13 +109,11 @@ describe("MapRenderer2D", () => {
             no: 1,
             ue: { x: 0, y: 0, z: 0 },
             selectedBeamId: 4,
-            throughputGbps: 1,
           },
           {
             no: 2,
             ue: { x: 1, y: 0, z: 0 },
             selectedBeamId: 9,
-            throughputGbps: 1,
           },
         ]}
         peerPoints={[
@@ -123,13 +121,11 @@ describe("MapRenderer2D", () => {
             no: 1,
             ue: { x: 0, y: 0, z: 0 },
             selectedBeamId: 4,
-            throughputGbps: 1,
           },
           {
             no: 2,
             ue: { x: 1, y: 0, z: 0 },
             selectedBeamId: 1,
-            throughputGbps: 1,
           },
         ]}
         stageElementRef={{ current: stage }}

@@ -65,7 +65,6 @@ function snapshot(
         no,
         ue: { x: no, y: no, z: 0 },
         selectedBeamId: no,
-        throughputGbps: side === "without" ? 8 + no / 10 : 9 + no / 10,
         ...(side === "without"
           ? { scanBeamIds: Array.from({ length: 16 }, (_, beam) => beam) }
           : { reflection: { x: 5, y: 7, z: 0, los: true } }),
@@ -124,6 +123,13 @@ describe("Case3Page live KPI", () => {
       {
         ...initial,
         live: { without: snapshot("without", 1, 25), with: null },
+        liveThrp: {
+          without: {
+            samples: [{ no: 1, gbps: 8.1 }],
+            pendingTail: false,
+          },
+          with: null,
+        },
         activeAction: {
           kind: "start",
           side: "without",
@@ -160,6 +166,16 @@ describe("Case3Page live KPI", () => {
       {
         ...current.state,
         live: { without: snapshot("without", 2, 25), with: null },
+        liveThrp: {
+          without: {
+            samples: [
+              { no: 1, gbps: 8.1 },
+              { no: 2, gbps: 8.2 },
+            ],
+            pendingTail: false,
+          },
+          with: null,
+        },
       },
       "without-running",
     );
@@ -182,6 +198,26 @@ describe("Case3Page live KPI", () => {
         live: {
           without: null,
           with: snapshot("with", 2, 15),
+        },
+        liveThrp: {
+          without: null,
+          with: {
+            samples: [
+              { no: 1, gbps: 9.1 },
+              { no: 2, gbps: 9.2 },
+            ],
+            pendingTail: false,
+          },
+        },
+        resultThrp: {
+          without: {
+            samples: [
+              { no: 1, gbps: 8.1 },
+              { no: 2, gbps: 8.2 },
+            ],
+            pendingTail: false,
+          },
+          with: null,
         },
         pairValid: false,
         activeAction: {
@@ -225,6 +261,16 @@ describe("Case3Page live KPI", () => {
       results: {
         without: null,
         with: withHistory,
+      },
+      resultThrp: {
+        without: null,
+        with: {
+          samples: [
+            { no: 1, gbps: 9.1 },
+            { no: 2, gbps: 9.2 },
+          ],
+          pendingTail: false,
+        },
       },
       pairValid: false,
     };

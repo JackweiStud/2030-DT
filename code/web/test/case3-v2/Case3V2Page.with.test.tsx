@@ -16,7 +16,12 @@ import {
 } from "../../src/cases/case3/state/case3Reducer";
 import { selectCase3Presentation } from "../../src/cases/case3/presentation/selectCase3Presentation";
 import { SiteEnvWindowContext } from "../../src/shell/siteEnvWindowContext";
-import type { BaseRoutePoint, Case3Point, SideSnapshot } from "../../src/cases/case3/types";
+import type {
+  BaseRoutePoint,
+  Case3Point,
+  SideSnapshot,
+  ThroughputSnapshot,
+} from "../../src/cases/case3/types";
 
 vi.mock("../../src/cases/case3/hooks/useCase3Controller", async () => {
   const actual = await vi.importActual<
@@ -61,10 +66,18 @@ function pointOf(
     no,
     ue: { x: no === 1 ? 1 : no, y: no === 1 ? 15 : 2, z: 0 },
     selectedBeamId: beam,
-    throughputGbps: 8 + no,
     ...(side === "without"
       ? { scanBeamIds: [0, beam] }
       : { reflection: { x: 0, y: 0, z: 0, los: true } }),
+  };
+}
+
+function thrpFromSnapshot(snapshot: SideSnapshot): ThroughputSnapshot {
+  return {
+    samples: snapshot.points
+      .slice(0, snapshot.completeCount)
+      .map((p) => ({ no: p.no, gbps: 8 + p.no })),
+    pendingTail: snapshot.pendingTail,
   };
 }
 
@@ -132,6 +145,7 @@ function withoutClosed(count = 3, route: BaseRoutePoint[] = L_ROUTE) {
     type: "START_COMPLETE",
     side: "without",
     snapshot: snap("without", count, 0, 25),
+    throughput: thrpFromSnapshot(snap("without", count, 0, 25)),
   });
   return case3Reducer(state, { type: "ROUND_CLOSE_COMPLETE" });
 }
@@ -144,10 +158,16 @@ function withRunning(count: number, extraPoints = 0, cost: number | null = 12.5)
     generation: 2,
   });
   state = case3Reducer(state, { type: "SEEN_EXECUTE_SUCCESS" });
-  return case3Reducer(state, {
+  const snapshot = snap("with", count, extraPoints, cost);
+  state = case3Reducer(state, {
     type: "LIVE_SNAPSHOT",
     side: "with",
-    snapshot: snap("with", count, extraPoints, cost),
+    snapshot,
+  });
+  return case3Reducer(state, {
+    type: "LIVE_THROUGHPUT",
+    side: "with",
+    snapshot: thrpFromSnapshot(snapshot),
   });
 }
 
@@ -211,7 +231,7 @@ describe("Case3V2Page with flow", () => {
     );
   });
 
-  it("实时点亮本轮 With；P1 成功、P2 失败；Cost/Throughput 增长；BA 仍基线", () => {
+  it("实时点亮本轮 With；P1 成功、P2 失败；Cost/Throughput 增长；BA 随可比对点更新", () => {
     const { view } = renderPage(withRunning(1, 0, 12.5));
     expect(view.container.querySelectorAll('[data-pin-lit="1"]')).toHaveLength(1);
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P1");
@@ -229,7 +249,7 @@ describe("Case3V2Page with flow", () => {
     expect(view.container.querySelector("[data-cost-delta]")?.textContent).toBe("--");
     expect(view.container.querySelectorAll("[data-thr-dot-w]")).toHaveLength(1);
     expect(view.container.querySelectorAll("[data-thr-dot-wo]")).toHaveLength(3);
-    expect(view.container.querySelector("[data-ba-ok]")?.textContent).toBe("222");
+    expect(view.container.querySelector("[data-ba-ok]")?.textContent).toBe("223");
     expect(view.container.querySelector("[data-ba-pct]")?.textContent).toBe("94.5");
     view.unmount();
 
@@ -262,7 +282,7 @@ describe("Case3V2Page with flow", () => {
       ),
     ).toBe("fail");
     expect(next.view.container.querySelectorAll("[data-thr-dot-w]")).toHaveLength(2);
-    expect(next.view.container.querySelector("[data-ba-ok]")?.textContent).toBe("222");
+    expect(next.view.container.querySelector("[data-ba-ok]")?.textContent).toBe("223");
   });
 
   it("缺同 no peer 时矩阵无徽标无准星，回溯 idle", () => {
@@ -298,6 +318,7 @@ describe("Case3V2Page with flow", () => {
       type: "START_COMPLETE",
       side: "with",
       snapshot: snap("with", 3, 0, 12.5),
+      throughput: thrpFromSnapshot(snap("with", 3, 0, 12.5)),
     });
     const closing = renderPage(state);
     expect(

@@ -49,7 +49,6 @@ function point(no: number, beam = no): Case3Point {
     no,
     ue: { x: no, y: 2, z: 0 },
     selectedBeamId: beam,
-    throughputGbps: 8,
     scanBeamIds: [beam],
   };
 }

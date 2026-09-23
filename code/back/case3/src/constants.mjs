@@ -28,11 +28,10 @@ export const SIDE_FILES = Object.freeze({
 });
 
 export const POINT_KEYS = Object.freeze({
-  without: Object.freeze(["coordinates", "scans", "selected", "throughput"]),
+  without: Object.freeze(["coordinates", "scans", "selected"]),
   with: Object.freeze([
     "coordinates",
     "selected",
-    "throughput",
     "reflection",
   ]),
 });

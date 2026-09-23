@@ -16,7 +16,6 @@ function withoutPoint(no: number) {
     no,
     ue: { x: no === 1 ? 1 : 1, y: no === 1 ? 15 : 15 - no, z: 0 },
     selectedBeamId: no * 10,
-    throughputGbps: 8 + no,
     scanBeamIds: [0, no * 10],
   };
 }
@@ -26,7 +25,6 @@ function withPoint(no: number) {
     no,
     ue: { x: no === 1 ? 1 : 1, y: no === 1 ? 15 : 15 - no, z: 0 },
     selectedBeamId: no === 2 ? 21 : no * 10,
-    throughputGbps: 8 + no,
     reflection: { x: 0, y: 0, z: 0, los: true },
   };
 }

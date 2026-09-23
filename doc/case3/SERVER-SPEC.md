@@ -176,9 +176,10 @@ POST init 永远允许，语义是撤销旧 Case/旧侧写入权。截图清零�
 | `POST /api/case3/control-file` | Case3 command/clear guard + shared patch |
 | `GET /api/case3/init-data` | init-data |
 | `GET /api/case3/side?side=<side>` | side-files；side 仅为 without 或 with |
+| `GET /api/case3/throughput?side=<side>` | throughput；只读该侧 thrp 文件 |
 | `POST /api/case3/screenshot` | Case3 screenshot |
 
-每个 GET/POST 严格拒绝多余 query/body 字段。`/side` 必须恰好一个 `side` query。
+每个 GET/POST 严格拒绝多余 query/body 字段。`/side` 与 `/throughput` 必须恰好一个 `side` query。
 
 ### 4.2 唯一错误映射
 
@@ -319,7 +320,6 @@ Without：
 | coordinates | `ue` |
 | beams | `scanBeamIds` |
 | sel_beam | `selectedBeamId` |
-| thrp | `throughputGbps` |
 | cost | package `costPct` |
 
 With：
@@ -328,7 +328,6 @@ With：
 |---|---|
 | coordinates | `ue` |
 | sel_beam | `selectedBeamId` |
-| thrp | `throughputGbps` |
 | reflection_point | `reflection` |
 | cost | package `costPct` |
 
@@ -369,9 +368,9 @@ type ParsedLines<T> = {
 1. 读取 controlBefore。
 2. stat 所有目标文件，读取内容，再 stat。
 3. 解析所有 complete 行。
-4. `K=min(各逐点文件 complete 行数)`。
+4. 结构点文件取共同完整前缀：Without 为 coordinates/beams/sel_beam，With 为 coordinates/sel_beam/reflection_point；`K=min(这些结构文件的 complete 行数)`。
 5. 只组装连续点 `1..K`；`completeCount=K`。
-6. 任一逐点行数不等、任一物理尾部未收齐、读取期间 stat 变化，`pendingTail=true`。
+6. 结构文件行数不等、任一结构文件物理尾部未收齐、读取期间结构文件 stat 变化，`pendingTail=true`。Throughput 文件不参与 `/side` 读取或完整度判断。
 7. Cost 与点数解耦；空文件时 `costPct=null`。
 8. 读取 controlAfter。
 
@@ -387,7 +386,7 @@ isFinalRead =
 ```
 
 - `isFinalRead=false`：这是运行中或非目标侧只读快照。允许 `K=0`、`costPct=null`、`pendingTail=true`；返回当前完整前缀。读取期间变化时最多重试 2 次，仍变化则返回前缀并置 `pendingTail=true`。
-- `isFinalRead=true`：若 `K=0`、任一 pending、Cost null、文件读取中仍变化，或 controlBefore/controlAfter 的 case/command/dt_type 不一致，返回 `409 RESULT_NOT_READY`；否则返回 200 最终快照。
+- `isFinalRead=true`：若 `K=0`、结构文件 pending、Cost null、结构文件读取中仍变化，或 controlBefore/controlAfter 的 case/command/dt_type 不一致，返回 `409 RESULT_NOT_READY`；否则返回 200 最终快照。吞吐由独立 `/throughput` 获取，吞吐缺失、行数不同或读取失败不阻塞 `/side` 完成。
 - `/side` 不因请求 side 与当前控制目标不一致而返回 400/409；但另一个侧的 `case complete` 绝不能触发本侧最终门槛。
 - 必需侧文件任何阶段缺失都返回 `404 DATA_FILE_MISSING`；非缺失类 I/O 故障返回 `DATA_FILE_READ_FAILED`。
 - `RESULT_NOT_READY` 只适用于匹配侧 Start 的 complete 最终读取；ReInit 不读取 side，也不使用该错误。
@@ -487,13 +486,14 @@ path 为相对共享根的 POSIX 路径；日志写绝对路径。
 - 未知活动 status 失败关闭；Case2 合法主线不受影响，直接冲突请求返回 busy。
 - init 撤权且不清数据；截图清零不改 status；flag0 幂等，flag1 按 route ownership 清零。
 
-### 10.3 init-data / side
+### 10.3 init-data / side / throughput
 
 - CRLF、无换行完整末行、空文件、缺文件。
 - 坐标、Throughput、Cost、beam、scan、reflection、baseline 的有效/非法边界和四舍五入。
+- **`GET /throughput`**：只读所请求侧 thrp 文件；不约束于结构点数或另一侧吞吐点数；半行 pending、已提交非法行 422；不做 complete 门槛；响应 `side` 必须与 query 一致。
 - scan 至少 1 项且 ∈[0,255]，允许重复；组装时必须包含 selected；Cost 归一后越界 422 且不 clamp；正负半值进位与负零归一。
 - 0/1 Reflection 映射。
-- 多文件等长、不同长、半行、提交非法行、文件读取中变化。
+- 结构文件等长/不同长、半行、提交非法行、文件读取中变化；Throughput 独立于结构文件，且 Without/With 吞吐样本数量可不同。
 - running/非目标侧返回完整前缀 + pending；只有匹配侧 Start complete 时 pending/空点/null Cost/漂移返回 RESULT_NOT_READY。
 - 运行中/complete 必需文件缺失均为 DATA_FILE_MISSING；ReInit 不触发 RESULT_NOT_READY。
 - `completeCount===points.length`，全量快照不 append。

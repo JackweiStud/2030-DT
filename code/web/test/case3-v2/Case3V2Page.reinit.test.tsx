@@ -83,7 +83,6 @@ function pointOf(side: "without" | "with", no: number, beam: number): Case3Point
     no,
     ue: { x: no === 1 ? 1 : no, y: no === 1 ? 15 : 2, z: 0 },
     selectedBeamId: beam,
-    throughputGbps: 8 + no,
     ...(side === "without"
       ? { scanBeamIds: [0, beam] }
       : { reflection: { x: 0, y: 0, z: 0, los: true } }),
@@ -107,6 +106,15 @@ function snap(
     completeCount: count,
     pendingTail: extraPoints > 0,
     costPct: cost,
+  };
+}
+
+function thrpFromSnapshot(snapshot: SideSnapshot) {
+  return {
+    samples: snapshot.points
+      .slice(0, snapshot.completeCount)
+      .map((p) => ({ no: p.no, gbps: 8 + p.no })),
+    pendingTail: snapshot.pendingTail,
   };
 }
 
@@ -150,10 +158,12 @@ function withoutClosed(count = 3, route: BaseRoutePoint[] = L_ROUTE) {
     generation: 1,
   });
   state = case3Reducer(state, { type: "SEEN_EXECUTE_SUCCESS" });
+  const withoutSnap = snap("without", count, 0, 25);
   state = case3Reducer(state, {
     type: "START_COMPLETE",
     side: "without",
-    snapshot: snap("without", count, 0, 25),
+    snapshot: withoutSnap,
+    throughput: thrpFromSnapshot(withoutSnap),
   });
   return case3Reducer(state, { type: "ROUND_CLOSE_COMPLETE" });
 }
@@ -166,10 +176,12 @@ function bothClosed(count = 3, route: BaseRoutePoint[] = L_ROUTE) {
     generation: 2,
   });
   state = case3Reducer(state, { type: "SEEN_EXECUTE_SUCCESS" });
+  const withSnap = snap("with", count, 0, 12.5);
   state = case3Reducer(state, {
     type: "START_COMPLETE",
     side: "with",
-    snapshot: snap("with", count, 0, 12.5),
+    snapshot: withSnap,
+    throughput: thrpFromSnapshot(withSnap),
   });
   return case3Reducer(state, { type: "ROUND_CLOSE_COMPLETE" });
 }
