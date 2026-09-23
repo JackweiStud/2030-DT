@@ -176,9 +176,10 @@ POST init 永远允许，语义是撤销旧 Case/旧侧写入权。截图清零�
 | `POST /api/case3/control-file` | Case3 command/clear guard + shared patch |
 | `GET /api/case3/init-data` | init-data |
 | `GET /api/case3/side?side=<side>` | side-files；side 仅为 without 或 with |
+| `GET /api/case3/throughput?side=<side>` | throughput；只读该侧 thrp 文件 |
 | `POST /api/case3/screenshot` | Case3 screenshot |
 
-每个 GET/POST 严格拒绝多余 query/body 字段。`/side` 必须恰好一个 `side` query。
+每个 GET/POST 严格拒绝多余 query/body 字段。`/side` 与 `/throughput` 必须恰好一个 `side` query。
 
 ### 4.2 唯一错误映射
 
@@ -487,10 +488,11 @@ path 为相对共享根的 POSIX 路径；日志写绝对路径。
 - 未知活动 status 失败关闭；Case2 合法主线不受影响，直接冲突请求返回 busy。
 - init 撤权且不清数据；截图清零不改 status；flag0 幂等，flag1 按 route ownership 清零。
 
-### 10.3 init-data / side
+### 10.3 init-data / side / throughput
 
 - CRLF、无换行完整末行、空文件、缺文件。
 - 坐标、Throughput、Cost、beam、scan、reflection、baseline 的有效/非法边界和四舍五入。
+- **`GET /throughput`**：只读 thrp 文件；不等长约束于 side 组装；半行 pending、已提交非法行 422；不做 complete 门槛；响应 `side` 必须与 query 一致。
 - scan 至少 1 项且 ∈[0,255]，允许重复；组装时必须包含 selected；Cost 归一后越界 422 且不 clamp；正负半值进位与负零归一。
 - 0/1 Reflection 映射。
 - 多文件等长、不同长、半行、提交非法行、文件读取中变化。

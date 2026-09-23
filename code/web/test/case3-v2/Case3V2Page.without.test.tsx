@@ -226,6 +226,7 @@ describe("Case3V2Page without flow", () => {
       type: "START_COMPLETE",
       side: "without",
       snapshot: snap(3, 0, 25),
+      throughput: thrpFromSnapshot(snap(3, 0, 25)),
     });
     const closing = renderPage(state);
     expect(

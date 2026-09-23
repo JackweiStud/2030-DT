@@ -110,6 +110,7 @@ describe("case3Reducer", () => {
       type: "START_COMPLETE",
       side: "without",
       snapshot: snap("without", 25),
+      throughput: null,
     });
     expect(s.pairValid).toBe(false);
     expect(deriveVisibleState(s)).toBe("without-completed");
@@ -145,6 +146,7 @@ describe("case3Reducer", () => {
       type: "START_COMPLETE",
       side: "with",
       snapshot: snap("with", 15),
+      throughput: null,
     });
     expect(s.pairValid).toBe(true);
     expect(deriveVisibleState(s)).toBe("with-completed");
@@ -192,6 +194,7 @@ describe("case3Reducer", () => {
       type: "START_COMPLETE",
       side: "without",
       snapshot: snap("without", 25),
+      throughput: null,
     });
     expect(s.pairValid).toBe(false);
     expect(deriveVisibleState(s)).toBe("unpaired-both");
@@ -266,6 +269,7 @@ describe("case3Reducer", () => {
       type: "START_COMPLETE",
       side: "without",
       snapshot: snap("without"),
+      throughput: null,
     });
     expect(next.results.without).toBeNull();
     expect(next.activeAction).not.toBeNull();

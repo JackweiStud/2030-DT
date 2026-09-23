@@ -54,7 +54,7 @@ export type Case3Action =
   | { type: "SEEN_EXECUTE_SUCCESS" }
   | { type: "LIVE_SNAPSHOT"; side: Case3Side; snapshot: SideSnapshot }
   | { type: "LIVE_THROUGHPUT"; side: Case3Side; snapshot: ThroughputSnapshot }
-  | { type: "START_COMPLETE"; side: Case3Side; snapshot: SideSnapshot }
+  | { type: "START_COMPLETE"; side: Case3Side; snapshot: SideSnapshot; throughput: ThroughputSnapshot | null }
   | { type: "REINIT_COMPLETE"; side: Case3Side }
   | { type: "ROUND_CLOSE_COMPLETE" }
   | { type: "EXECUTE_FAIL"; reason?: FailureReason }
@@ -223,14 +223,7 @@ export function case3Reducer(
       const resultThrp = {
         ...state.resultThrp,
         [action.side]:
-          state.liveThrp[action.side] ??
-          ({
-            samples: action.snapshot.points
-              .filter((p) => Number.isFinite(p.throughputGbps))
-              .sort((a, b) => a.no - b.no)
-              .map((p) => ({ no: p.no, gbps: p.throughputGbps })),
-            pendingTail: action.snapshot.pendingTail,
-          } satisfies ThroughputSnapshot),
+          action.throughput ?? state.liveThrp[action.side] ?? null,
       };
       // Without 完成不能单独置 pairValid；With 完成且 Without 仍有效才 true
       const pairValid =

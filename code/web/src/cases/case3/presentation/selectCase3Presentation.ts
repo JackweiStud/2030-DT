@@ -22,7 +22,6 @@ import {
   sideStatusRetryHint,
   type Case3State,
 } from "../state/case3Reducer";
-import { sideSnapshotToThroughput } from "../metrics/case3Metrics";
 import type {
   ActiveAction,
   BaseRoutePoint,
@@ -143,9 +142,7 @@ function selectThrpWithout(
     return state.liveThrp.without;
   }
   if (withoutKpiSnapshot) {
-    return (
-      state.resultThrp.without ?? sideSnapshotToThroughput(withoutKpiSnapshot)
-    );
+    return state.resultThrp.without;
   }
   return null;
 }
@@ -160,7 +157,7 @@ function selectThrpWith(
     return state.liveThrp.with;
   }
   if (withKpiSnapshot) {
-    return state.resultThrp.with ?? sideSnapshotToThroughput(withKpiSnapshot);
+    return state.resultThrp.with;
   }
   return null;
 }

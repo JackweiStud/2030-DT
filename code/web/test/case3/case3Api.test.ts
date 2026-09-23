@@ -75,6 +75,21 @@ describe("case3Api", () => {
     });
   });
 
+  it("拒绝 side 不匹配的吞吐响应", async () => {
+    const api = createCase3Api({
+      fetchImpl: async () =>
+        ok({
+          ok: true,
+          side: "with",
+          samples: [{ no: 1, gbps: 8.5 }],
+          pendingTail: false,
+        }),
+    });
+    await expect(api.getThroughput("without")).rejects.toBeInstanceOf(
+      Case3ApiError,
+    );
+  });
+
   it("拒绝无 reflection 的 with 点", async () => {
     const api = createCase3Api({
       fetchImpl: async () =>

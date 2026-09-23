@@ -146,6 +146,7 @@ function withoutClosed(count = 3, route: BaseRoutePoint[] = L_ROUTE) {
     type: "START_COMPLETE",
     side: "without",
     snapshot: snap("without", count, 0, 25),
+    throughput: thrpFromSnapshot(snap("without", count, 0, 25)),
   });
   return case3Reducer(state, { type: "ROUND_CLOSE_COMPLETE" });
 }
@@ -318,6 +319,7 @@ describe("Case3V2Page with flow", () => {
       type: "START_COMPLETE",
       side: "with",
       snapshot: snap("with", 3, 0, 12.5),
+      throughput: thrpFromSnapshot(snap("with", 3, 0, 12.5)),
     });
     const closing = renderPage(state);
     expect(

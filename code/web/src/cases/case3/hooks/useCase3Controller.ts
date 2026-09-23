@@ -32,6 +32,7 @@ import type {
   ActiveAction,
   Case3Side,
   ControlSnapshot,
+  ThroughputSnapshot,
 } from "../types";
 
 export type Case3BusyChange = (busy: boolean) => void;
@@ -775,13 +776,20 @@ export function useCase3Controller(options: Options) {
             });
           }
           try {
-            const snapshot = await api.getSide(action.side, ac.signal);
+            const [sideSettled, thrpSettled] = await Promise.allSettled([
+              api.getSide(action.side, ac.signal),
+              api.getThroughput(action.side, ac.signal),
+            ]);
             if (
               stateRef.current.activeAction?.generation !== generation ||
               ac.signal.aborted
             ) {
               return;
             }
+            if (sideSettled.status === "rejected") {
+              throw sideSettled.reason;
+            }
+            const snapshot = sideSettled.value;
             if (!isFinalSideReady(snapshot)) {
               const exhausted = await noteFinalNotReady({
                 generation,
@@ -797,6 +805,28 @@ export function useCase3Controller(options: Options) {
               if (exhausted) return;
             } else {
               finalNotReadyAttemptsRef.current = 0;
+              let finalThrp: ThroughputSnapshot | null = null;
+              if (thrpSettled.status === "fulfilled") {
+                finalThrp = thrpSettled.value;
+              } else {
+                const thrpErr = thrpSettled.reason;
+                if (!isAbortError(thrpErr)) {
+                  case3Warn("thrp.final_fail", {
+                    generation,
+                    side: action.side,
+                    endpoint: `/api/case3/throughput?side=${action.side}`,
+                    code:
+                      thrpErr instanceof Case3ApiError
+                        ? thrpErr.code
+                        : undefined,
+                    reason:
+                      thrpErr instanceof Error
+                        ? thrpErr.message
+                        : String(thrpErr),
+                  });
+                }
+                finalThrp = stateRef.current.liveThrp[action.side];
+              }
               case3Log("side.final_ready", {
                 generation,
                 side: action.side,
@@ -804,11 +834,13 @@ export function useCase3Controller(options: Options) {
                 completeCount: snapshot.completeCount,
                 pendingTail: snapshot.pendingTail,
                 costPct: snapshot.costPct,
+                thrpSamples: finalThrp?.samples.length ?? 0,
               });
               dispatch({
                 type: "START_COMPLETE",
                 side: action.side,
                 snapshot,
+                throughput: finalThrp,
               });
               pendingCompleteSideRef.current = action.side;
               await waitForNextRender();
@@ -861,19 +893,62 @@ export function useCase3Controller(options: Options) {
             }
           }
         } else {
-          try {
-            const snapshot = await api.getSide(action.side, ac.signal);
-            if (
-              stateRef.current.activeAction?.generation !== generation ||
-              ac.signal.aborted
-            ) {
-              return;
+          const pollLiveSide = async () => {
+            try {
+              const snapshot = await api.getSide(action.side, ac.signal);
+              if (
+                stateRef.current.activeAction?.generation !== generation ||
+                ac.signal.aborted
+              ) {
+                return;
+              }
+              dispatch({
+                type: "LIVE_SNAPSHOT",
+                side: action.side,
+                snapshot,
+              });
+              const progressCount = snapshot.completeCount;
+              const previousProgress = lastProgressRef.current;
+              if (
+                previousProgress?.generation !== generation ||
+                previousProgress.count !== progressCount
+              ) {
+                lastProgressRef.current = {
+                  generation,
+                  count: progressCount,
+                };
+                if (
+                  shouldLogLiveProgress(
+                    progressCount,
+                    stateRef.current.baseRoute.length,
+                  )
+                ) {
+                  case3Log("side.live_progress", {
+                    generation,
+                    side: action.side,
+                    points: snapshot.points.length,
+                    completeCount: snapshot.completeCount,
+                    lastPointNo: snapshot.points.at(-1)?.no ?? null,
+                    pendingTail: snapshot.pendingTail,
+                    costPct: snapshot.costPct,
+                  });
+                }
+              }
+            } catch (err) {
+              if (isAbortError(err)) return;
+              case3Warn("side.live_fail", {
+                generation,
+                side: action.side,
+                endpoint: `/api/case3/side?side=${action.side}`,
+                code: err instanceof Case3ApiError ? err.code : undefined,
+                reason: err instanceof Error ? err.message : String(err),
+              });
+              countedFail = true;
+              notePollTransportFail();
             }
-            dispatch({
-              type: "LIVE_SNAPSHOT",
-              side: action.side,
-              snapshot,
-            });
+          };
+
+          const pollLiveThrp = async () => {
             try {
               const thrp = await api.getThroughput(action.side, ac.signal);
               if (
@@ -897,45 +972,9 @@ export function useCase3Controller(options: Options) {
                 reason: err instanceof Error ? err.message : String(err),
               });
             }
-            const progressCount = snapshot.completeCount;
-            const previousProgress = lastProgressRef.current;
-            if (
-              previousProgress?.generation !== generation ||
-              previousProgress.count !== progressCount
-            ) {
-              lastProgressRef.current = {
-                generation,
-                count: progressCount,
-              };
-              if (
-                shouldLogLiveProgress(
-                  progressCount,
-                  stateRef.current.baseRoute.length,
-                )
-              ) {
-                case3Log("side.live_progress", {
-                  generation,
-                  side: action.side,
-                  points: snapshot.points.length,
-                  completeCount: snapshot.completeCount,
-                  lastPointNo: snapshot.points.at(-1)?.no ?? null,
-                  pendingTail: snapshot.pendingTail,
-                  costPct: snapshot.costPct,
-                });
-              }
-            }
-          } catch (err) {
-            if (isAbortError(err)) return;
-            case3Warn("side.live_fail", {
-              generation,
-              side: action.side,
-              endpoint: `/api/case3/side?side=${action.side}`,
-              code: err instanceof Case3ApiError ? err.code : undefined,
-              reason: err instanceof Error ? err.message : String(err),
-            });
-            countedFail = true;
-            notePollTransportFail();
-          }
+          };
+
+          await Promise.all([pollLiveSide(), pollLiveThrp()]);
         }
       }
 

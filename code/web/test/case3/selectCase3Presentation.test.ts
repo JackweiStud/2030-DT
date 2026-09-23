@@ -68,6 +68,7 @@ function completeStart(
     type: "START_COMPLETE",
     side,
     snapshot,
+    throughput: null,
   });
 }
 

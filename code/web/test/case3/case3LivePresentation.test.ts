@@ -4,7 +4,6 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveBeamAccuracy,
-  sideSnapshotToThroughput,
   throughputSeriesFromSnapshots,
 } from "../../src/cases/case3/metrics/case3Metrics";
 import { selectCase3Presentation } from "../../src/cases/case3/presentation/selectCase3Presentation";
@@ -139,10 +138,34 @@ describe("case3 live presentation", () => {
       type: "START_COMPLETE",
       side: "without",
       snapshot: snap,
+      throughput: live,
     });
     expect(state.liveThrp.without).toBeNull();
     expect(state.resultThrp.without).toEqual(live);
-    expect(sideSnapshotToThroughput(snap)?.samples[0]?.gbps).toBeCloseTo(8.1);
+  });
+
+  it("START_COMPLETE 不用 points[].throughputGbps 回填 resultThrp", () => {
+    let state = createInitialCase3State();
+    state = case3Reducer(state, {
+      type: "INIT_READY",
+      baseRoute: [{ no: 1, x: 0, y: 0, z: 0 }],
+      baseline: { success: 1, total: 2 },
+    });
+    state = case3Reducer(state, {
+      type: "ACTION_BEGIN",
+      kind: "start",
+      side: "without",
+      generation: 1,
+    });
+    state = case3Reducer(state, { type: "SEEN_EXECUTE_SUCCESS" });
+    const snap = side("without", [point("without", 1, 1)]);
+    state = case3Reducer(state, {
+      type: "START_COMPLETE",
+      side: "without",
+      snapshot: snap,
+      throughput: null,
+    });
+    expect(state.resultThrp.without).toBeNull();
   });
 
   it("Without 运行中 presentation 使用 liveThrp", () => {

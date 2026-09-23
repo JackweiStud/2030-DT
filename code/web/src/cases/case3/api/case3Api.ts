@@ -107,8 +107,14 @@ function assertPoint(value: unknown, side: Case3Side): Case3Point {
   return point;
 }
 
-function assertThroughputSnapshot(body: unknown): ThroughputSnapshot {
+function assertThroughputSnapshot(
+  body: unknown,
+  expectedSide: Case3Side,
+): ThroughputSnapshot {
   if (!isObject(body)) throw new Error("throughput body must be object");
+  if (body.side !== expectedSide) {
+    throw new Error(`side mismatch: expected ${expectedSide}`);
+  }
   if (!Array.isArray(body.samples)) throw new Error("samples must be array");
   const samples = body.samples.map((row, index) => {
     if (!isObject(row)) throw new Error(`samples[${index}]`);
@@ -352,7 +358,7 @@ export function createCase3Api(options: ApiClientOptions = {}) {
       return request(
         `/throughput?side=${side}`,
         { method: "GET", signal },
-        (body) => assertThroughputSnapshot(body),
+        (body) => assertThroughputSnapshot(body, side),
       );
     },
 

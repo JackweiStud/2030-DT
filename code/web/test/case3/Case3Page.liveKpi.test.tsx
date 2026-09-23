@@ -263,6 +263,16 @@ describe("Case3Page live KPI", () => {
         without: null,
         with: withHistory,
       },
+      resultThrp: {
+        without: null,
+        with: {
+          samples: [
+            { no: 1, gbps: 9.1 },
+            { no: 2, gbps: 9.2 },
+          ],
+          pendingTail: false,
+        },
+      },
       pairValid: false,
     };
     let current = controller(
