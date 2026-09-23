@@ -5,6 +5,7 @@
  * 该窗图像全屏：滚轮缩放（0.5×～5×，缩向指针）、左键拖旋转（±90°）、
  * 右键拖平移；右上角 ↺ 恢复初始变换；关闭后小窗保留变换（cover 可裁切）；六窗独立。
  * 全屏底部常驻操作提示。
+ * 卡底常驻色标：指标名 + 本张矩阵 min/max（1 位小数）+ 5 实色块。
  */
 
 import {
@@ -19,7 +20,11 @@ import {
 import { createPortal } from "react-dom";
 import type { HeatmapConfig } from "../metrics/heatmapConfig";
 import { assertHeatmapAnchor } from "../metrics/heatmapConfig";
-import { heatmapContainsInvalid, paintHeatmapOnCanvas } from "../metrics/heatmap";
+import {
+  heatmapContainsInvalid,
+  matrixMinMax,
+  paintHeatmapOnCanvas,
+} from "../metrics/heatmap";
 import mapBaseUrl from "../../../../assets/case2/maps/heatmap-map-base.png";
 
 type Props = {
@@ -138,6 +143,46 @@ function ResetIcon() {
   );
 }
 
+const LEGEND_TITLE: Record<Props["metricClass"], string> = {
+  rss: "接收信号强度",
+  path: "有效径数",
+  delay: "最强径时延",
+};
+
+function formatLegendBound(value: number | null): string {
+  if (value === null) return "—";
+  const text = value.toFixed(1);
+  return text === "-0.0" ? "0.0" : text;
+}
+
+/** 不进变换层：缩放/旋转时色标仍钉在卡底。 */
+function HeatmapColorLegend(props: {
+  metricClass: Props["metricClass"];
+  min: number | null;
+  max: number | null;
+}) {
+  const title = LEGEND_TITLE[props.metricClass];
+  const minText = formatLegendBound(props.min);
+  const maxText = formatLegendBound(props.max);
+  return (
+    <div
+      className="heatmap-card__legend"
+      aria-label={`${title}色标 ${minText} 到 ${maxText}`}
+    >
+      <span className="heatmap-card__legend-title">{title}</span>
+      <span className="heatmap-card__legend-end">{minText}</span>
+      <span className="heatmap-card__legend-bar" aria-hidden>
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
+      <span className="heatmap-card__legend-end">{maxText}</span>
+    </div>
+  );
+}
+
 export function HeatmapCard(props: Props) {
   const { matrix, config, empty, metricClass, label, variant } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -161,6 +206,9 @@ export function HeatmapCard(props: Props) {
     matrix !== null &&
     matrix.length > 0 &&
     !heatmapContainsInvalid(matrix);
+  const heatRange = showHeat && matrix ? matrixMinMax(matrix) : null;
+  const legendMin = heatRange?.eMin ?? null;
+  const legendMax = heatRange?.eMax ?? null;
   const xformStyle = toTransformStyle(view);
 
   useEffect(() => {
@@ -341,6 +389,11 @@ export function HeatmapCard(props: Props) {
       <div className={`metric-tag metric-tag--${metricClass}`}>
         <span className="metric-tag__label">{label}</span>
       </div>
+      <HeatmapColorLegend
+        metricClass={metricClass}
+        min={legendMin}
+        max={legendMax}
+      />
       <button
         type="button"
         className="heatmap-expand-btn"
@@ -410,6 +463,11 @@ export function HeatmapCard(props: Props) {
                 <div className={`metric-tag metric-tag--${metricClass}`}>
                   <span className="metric-tag__label">{label}</span>
                 </div>
+                <HeatmapColorLegend
+                  metricClass={metricClass}
+                  min={legendMin}
+                  max={legendMax}
+                />
               </div>
               <p className="case2-heatmap-lightbox__hint" aria-hidden>
                 滚轮缩放 · 左键拖旋转 · 右键拖平移 · ↺恢复 · Esc关闭

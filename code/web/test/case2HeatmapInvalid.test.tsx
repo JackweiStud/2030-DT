@@ -25,6 +25,10 @@ describe("case2 heatmap invalid sentinel", () => {
     );
     expect(container.querySelector(".heatmap-canvas")).toBeNull();
     expect(container.querySelector(".heatmap-base")).not.toBeNull();
+    const emptyLegend = container.querySelector(".heatmap-card__legend");
+    expect(emptyLegend).not.toBeNull();
+    expect(emptyLegend?.textContent).toContain("—");
+    expect(emptyLegend?.querySelectorAll("i")).toHaveLength(5);
   });
 
   it("无哨兵时渲染热力 canvas", () => {
@@ -43,5 +47,10 @@ describe("case2 heatmap invalid sentinel", () => {
     );
     expect(container.querySelector(".heatmap-canvas")).not.toBeNull();
     expect(container.querySelector(".heatmap-base")).toBeNull();
+    const legend = container.querySelector(".heatmap-card__legend");
+    expect(legend).not.toBeNull();
+    expect(legend?.textContent).toContain("1.0");
+    expect(legend?.textContent).toContain("4.0");
+    expect(legend?.querySelectorAll("i")).toHaveLength(5);
   });
 });
