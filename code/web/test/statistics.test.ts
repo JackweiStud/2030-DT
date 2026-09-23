@@ -3,6 +3,7 @@ import {
   buildCdfStairPath,
   buildEmpiricalCdfPoints,
   formatReductionLabel,
+  kpiHasChartData,
   meanChangeMarker,
   meanChangeStackTops,
   meanOf,
@@ -10,6 +11,7 @@ import {
   resolveXDomain,
   buildCdfXAxis,
   cdfXTickCount,
+  validKpiSamples,
 } from "../src/cases/case2/metrics/statistics";
 
 describe("statistics", () => {
@@ -81,6 +83,25 @@ describe("statistics", () => {
     const b = buildEmpiricalCdfPoints([1, 2], 256);
     expect(a).toHaveLength(4);
     expect(b).toHaveLength(2);
+  });
+
+  it("KPI 哨兵 -1 不进入有效样本，全无效时不画图", () => {
+    expect(validKpiSamples([1, -1, 3, -1])).toEqual([1, 3]);
+    expect(validKpiSamples([-1, -1])).toEqual([]);
+    expect(meanOf(validKpiSamples([1, -1, 3]))).toBe(2);
+    expect(buildEmpiricalCdfPoints(validKpiSamples([3, -1, 1]), 256)).toEqual(
+      buildEmpiricalCdfPoints([1, 3], 256),
+    );
+    const domain = resolveXDomain(validKpiSamples([5, -1, 9]));
+    expect(domain.xMin).toBe(5);
+    expect(domain.xMax).toBe(9);
+    const equalDomain = resolveXDomain(validKpiSamples([-1, 5, 5]));
+    expect(equalDomain.xMin).toBe(5);
+    expect(equalDomain.xMax).toBeGreaterThan(5);
+    expect(kpiHasChartData([-1, -1], null)).toBe(false);
+    expect(kpiHasChartData([-1], [-1, -1])).toBe(false);
+    expect(kpiHasChartData([1, -1], null)).toBe(true);
+    expect(kpiHasChartData([-1], [2])).toBe(true);
   });
 
   it("CDF x 轴：MAX 小时保持 16 档居中；五位数减少档数且首左末右", () => {

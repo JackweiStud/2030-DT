@@ -1,10 +1,10 @@
 /**
- * 均值柱：Gate 1.5 静态 chrome（轴/基线/双标签）+ 运行时柱高。
- * 初始态也保留「Calibrated DT」轴标签，仅隐藏柱体。
- * 无 Initial 样本时只出 chrome，不画柱/均值/降幅。
+ * 平均误差柱：轴/基线/双标签 chrome + 运行时柱高。
+ * 初始态也保留「校正 DT」轴标签，仅隐藏柱体。
+ * 无有效 Initial/Calibrated 样本时只出 chrome，不画柱/均值/降幅。
+ * 哨兵 -1 不进入均值。
  */
 
-import barFillUrl from "../../../../assets/case2/icons/bar-initial-fill.png";
 import badgeBgUrl from "../../../../assets/case2/icons/reduction-badge-bg.png";
 import arrowUrl from "../../../../assets/case2/icons/reduction-arrow-icon.png";
 import {
@@ -13,6 +13,7 @@ import {
   meanChangeStackTops,
   meanOf,
   relativeChangePercent,
+  validKpiSamples,
 } from "../metrics/statistics";
 
 type Props = {
@@ -22,12 +23,13 @@ type Props = {
 };
 
 /**
- * 与 web-static 一致的绘图几何（bar-plot 内像素）。
- * y 轴上界 = 当前柱均值最大值 / Y_MAX_FILL_RATIO。
+ * 绘图几何（bar-plot 内像素，bar-plot 高 172）。
+ * y 轴上界 = 当前柱均值最大值 / Y_MAX_FILL_RATIO；BAR_MAX_HEIGHT 即 0→yMax 的轴长，
+ * 刻度与柱高共用同一比例。
  */
-const BASELINE_Y = 190;
-const BAR_BOTTOM = 190;
-const BAR_MAX_HEIGHT = 101;
+const BASELINE_Y = 148;
+const BAR_BOTTOM = 148;
+const BAR_MAX_HEIGHT = 136;
 const BAR_LEFT_INIT = 8;
 const BAR_LEFT_CALI = 10;
 const BAR_WIDTH = 40;
@@ -69,15 +71,20 @@ function yAxisLabels(yMax: number): string[] {
 
 export function MeanBarChart(props: Props) {
   const { initialKpi, calibratedKpi, showReduction } = props;
-  const hasInit = initialKpi.length > 0;
-  const meanInit = hasInit ? meanOf(initialKpi) : null;
-  const meanCali =
-    calibratedKpi && calibratedKpi.length > 0 ? meanOf(calibratedKpi) : null;
+  const initValid = validKpiSamples(initialKpi);
+  const caliValid =
+    calibratedKpi !== null ? validKpiSamples(calibratedKpi) : [];
+  const hasInit = initValid.length > 0;
+  const meanInit = hasInit ? meanOf(initValid) : null;
+  const meanCali = caliValid.length > 0 ? meanOf(caliValid) : null;
   const showCali = meanCali !== null;
 
-  const yMax = hasInit
-    ? resolveYMax(showCali ? [meanInit!, meanCali] : [meanInit!])
-    : EMPTY_Y_MAX;
+  const yMax =
+    meanInit !== null || meanCali !== null
+      ? resolveYMax(
+          [meanInit, meanCali].filter((value): value is number => value !== null),
+        )
+      : EMPTY_Y_MAX;
   const yLabels = yAxisLabels(yMax);
   const initBar =
     hasInit && meanInit !== null ? barGeometry(meanInit, yMax) : null;
@@ -102,16 +109,19 @@ export function MeanBarChart(props: Props) {
   return (
     <div className="bar-area">
       <div className="chart-head">
-        <span>平均值对比</span>
-        <div className="legend legend--sm">
-          <span className="leg-initial">● Initial DT</span>
-          <span className="leg-calibrated">● Calibrated DT</span>
-        </div>
+        <span>平均误差</span>
       </div>
       <div className="bar-plot">
         <div className="bar-y-axis" aria-hidden>
           {yLabels.map((text, index) => (
-            <span key={`y-${index}`}>{text}</span>
+            <span
+              key={`y-${index}`}
+              style={{
+                top: BAR_BOTTOM - ((yLabels.length - 1 - index) / (yLabels.length - 1)) * BAR_MAX_HEIGHT,
+              }}
+            >
+              {text}
+            </span>
           ))}
         </div>
 
@@ -131,15 +141,14 @@ export function MeanBarChart(props: Props) {
                   width: BAR_WIDTH,
                   top: initBar.top,
                   height: initBar.height,
-                  backgroundImage: `url(${barFillUrl})`,
                 }}
               />
             </>
           ) : null}
-          <span className="bar-axis-label">Initial DT</span>
+          <span className="bar-axis-label">初始 DT</span>
         </div>
 
-        {/* 初始态也保留 Calibrated 轴标签（无柱），对齐静态 HTML */}
+        {/* 初始态也保留校正 DT 轴标签（无柱） */}
         <div className="bar-group bar-group--calibrated">
           {showCali && caliBar ? (
             <>
@@ -157,7 +166,7 @@ export function MeanBarChart(props: Props) {
               />
             </>
           ) : null}
-          <span className="bar-axis-label">Calibrated DT</span>
+          <span className="bar-axis-label">校正 DT</span>
         </div>
 
         <div className="bar-baseline" style={{ top: BASELINE_Y }} />
@@ -186,7 +195,7 @@ export function MeanBarChart(props: Props) {
               src={arrowUrl}
               width={24}
               height={24}
-              alt={changeMarker.increased ? "相对 Initial 增加" : "相对 Initial 减少"}
+              alt={changeMarker.increased ? "相对初始 DT 增加" : "相对初始 DT 减少"}
               className={
                 changeMarker.increased
                   ? "reduction-badge__arrow is-up"

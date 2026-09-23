@@ -1,7 +1,7 @@
 /**
  * 单张热力卡。
  * 有矩阵：Canvas 一次画「底图 + 热力」（object-fit:cover）。
- * 无矩阵：只显示 CSS cover 底图空槽。
+ * 无矩阵或矩阵含哨兵 -1：只显示 CSS cover 底图空槽，不画热力。
  * 该窗图像全屏：滚轮缩放（0.5×～5×，缩向指针）、左键拖旋转（±90°）、
  * 右键拖平移；右上角 ↺ 恢复初始变换；关闭后小窗保留变换（cover 可裁切）；六窗独立。
  * 全屏底部常驻操作提示。
@@ -19,7 +19,7 @@ import {
 import { createPortal } from "react-dom";
 import type { HeatmapConfig } from "../metrics/heatmapConfig";
 import { assertHeatmapAnchor } from "../metrics/heatmapConfig";
-import { paintHeatmapOnCanvas } from "../metrics/heatmap";
+import { heatmapContainsInvalid, paintHeatmapOnCanvas } from "../metrics/heatmap";
 import mapBaseUrl from "../../../../assets/case2/maps/heatmap-map-base.png";
 
 type Props = {
@@ -156,7 +156,11 @@ export function HeatmapCard(props: Props) {
   const [expanded, setExpanded] = useState(false);
   const [view, setView] = useState<ViewTransform>(IDENTITY_TRANSFORM);
   const titleId = useId();
-  const showHeat = !empty && matrix !== null && matrix.length > 0;
+  const showHeat =
+    !empty &&
+    matrix !== null &&
+    matrix.length > 0 &&
+    !heatmapContainsInvalid(matrix);
   const xformStyle = toTransformStyle(view);
 
   useEffect(() => {

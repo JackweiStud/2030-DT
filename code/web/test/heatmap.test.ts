@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   colorAt,
+  heatmapContainsInvalid,
   matrixMinMax,
   normalizeScalar,
   sampleBilinear,
@@ -44,6 +45,12 @@ describe("heatmap math", () => {
   it("色标断点精确", () => {
     expect(colorAt(0)).toEqual([37, 99, 235]);
     expect(colorAt(1)).toEqual([239, 68, 68]);
+  });
+
+  it("矩阵含哨兵 -1 则判定为不可画", () => {
+    expect(heatmapContainsInvalid([[1, 2], [3, 4]])).toBe(false);
+    expect(heatmapContainsInvalid([[1, -1], [3, 4]])).toBe(true);
+    expect(heatmapContainsInvalid([[-1]])).toBe(true);
   });
 
   it("马赛克 CELL=3 GAP=1：色块不透明、缝透明", () => {

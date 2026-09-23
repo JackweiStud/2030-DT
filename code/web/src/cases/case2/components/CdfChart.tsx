@@ -1,7 +1,8 @@
 /**
  * CDF 图：Gate 1.5 网格 chrome + 运行时阶梯曲线。
  * 轴标用 HTML 叠加（避免 html-to-image 对嵌套 SVG text 栅格化失真）。
- * 无样本时只出 chrome（网格/轴），不画阶梯线。
+ * 无有效样本时只出 chrome（网格/轴），不画阶梯线。
+ * 哨兵 -1 不进入台阶；x 域从有效最小值起。
  */
 
 import {
@@ -9,6 +10,7 @@ import {
   buildCdfXAxis,
   buildEmpiricalCdfPoints,
   resolveXDomain,
+  validKpiSamples,
 } from "../metrics/statistics";
 
 type Props = {
@@ -27,21 +29,14 @@ const X_TICK_Y = 215;
 /** 无样本时的占位 x 域（仅用于轴刻度 chrome）。 */
 const EMPTY_X_DOMAIN = { xMin: 0, xMax: 1 };
 
-const Y_LABELS = [
-  { y: 8, text: "1" },
-  { y: 28, text: "0.9" },
-  { y: 48, text: "0.8" },
-  { y: 69, text: "0.7" },
-  { y: 89, text: "0.6" },
-  { y: 109, text: "0.5" },
-  { y: 129, text: "0.4" },
-  { y: 149, text: "0.3" },
-  { y: 170, text: "0.2" },
-  { y: 190, text: "0.1" },
-  { y: 210, text: "0" },
-];
+const Y_VALUES = [1, 0.8, 0.6, 0.4, 0.2, 0] as const;
 
-const H_GRID = [4, 24, 44, 65, 85, 105, 125, 145, 166, 186, 206];
+const H_GRID = Y_VALUES.map((v) => PLOT.top + (1 - v) * PLOT.height);
+
+const Y_LABELS = Y_VALUES.map((v, i) => ({
+  y: H_GRID[i]!,
+  text: String(v),
+}));
 
 function pctX(x: number): string {
   return `${(x / VB.w) * 100}%`;
@@ -53,21 +48,22 @@ function pctY(y: number): string {
 
 export function CdfChart(props: Props) {
   const { initialKpi, calibratedKpi, cdfPointCap } = props;
-  const hasInit = initialKpi.length > 0;
-  const showCali = calibratedKpi !== null && calibratedKpi.length > 0;
+  const initValid = validKpiSamples(initialKpi);
+  const caliValid =
+    calibratedKpi !== null ? validKpiSamples(calibratedKpi) : [];
+  const hasInit = initValid.length > 0;
+  const showCali = caliValid.length > 0;
 
   const initPoints = hasInit
-    ? buildEmpiricalCdfPoints(initialKpi, cdfPointCap)
+    ? buildEmpiricalCdfPoints(initValid, cdfPointCap)
     : null;
   const caliPoints = showCali
-    ? buildEmpiricalCdfPoints(calibratedKpi, cdfPointCap)
+    ? buildEmpiricalCdfPoints(caliValid, cdfPointCap)
     : null;
 
-  const domainValues = showCali
-    ? [...initialKpi, ...calibratedKpi]
-    : [...initialKpi];
+  const domainSource = showCali ? [...initValid, ...caliValid] : [...initValid];
   const domain =
-    domainValues.length > 0 ? resolveXDomain(domainValues) : EMPTY_X_DOMAIN;
+    domainSource.length > 0 ? resolveXDomain(domainSource) : EMPTY_X_DOMAIN;
   const xTicks = buildCdfXAxis(domain.xMin, domain.xMax);
 
   const initPath = initPoints
@@ -80,11 +76,7 @@ export function CdfChart(props: Props) {
   return (
     <div className="cdf-area">
       <div className="chart-head">
-        <span>CDF图对比</span>
-        <div className="legend">
-          <span className="leg-initial">● Initial DT</span>
-          <span className="leg-calibrated">● Calibrated DT</span>
-        </div>
+        <span>CDF</span>
       </div>
       <div className="cdf-plot">
         <svg
@@ -105,7 +97,7 @@ export function CdfChart(props: Props) {
             <path
               d={initPath}
               fill="none"
-              stroke="#939393"
+              stroke="var(--case2-color-cdf-initial)"
               strokeWidth="2"
               vectorEffect="non-scaling-stroke"
             />
@@ -114,7 +106,7 @@ export function CdfChart(props: Props) {
             <path
               d={caliPath}
               fill="none"
-              stroke="#22D3EE"
+              stroke="var(--case2-color-calibrated)"
               strokeWidth="2"
               vectorEffect="non-scaling-stroke"
             />

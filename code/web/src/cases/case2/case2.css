@@ -1,84 +1,110 @@
 /* case2 业务样式：一律挂在 .case2-page 下，尺寸绑 tokens.css。 */
 
+/* 页面上延到标题栏下方，填住 nav-bg 底部透明区；深色面板在 .main-row */
 .case2-page {
-  height: calc(1080px - var(--shell-header-height));
+  height: 1080px;
+  margin-top: calc(-1 * var(--shell-header-height));
+  box-sizing: border-box;
   color: var(--shell-color-text);
+  background: linear-gradient(180deg, #5e6065 0%, #4e5055 100%);
 }
 
+/* 标题行 + 主内容区；面板内左热力图区 994、右测试性能区 788 */
 .case2-page .main-content {
   height: 100%;
-  padding: var(--case2-space-pad-main);
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: calc(38px + var(--shell-header-height)) 34px 34px 32px;
   overflow: hidden;
 }
 
+.case2-page .page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 42px;
+}
+
 .case2-page .main-row {
-  width: var(--case2-main-row-width);
-  height: var(--case2-main-row-height);
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: row;
-  gap: var(--case2-space-gap-main-row);
-  padding: var(--case2-space-pad-main-row-y) var(--case2-space-pad-main-row-x);
+  gap: 24px;
+  padding: 19px 24px 26px;
+  border-radius: 16px;
+  background: linear-gradient(
+    45.57deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.16) 101.15%
+  );
 }
 
 .case2-page .calibration-panel,
 .case2-page .kpi-panel {
-  height: var(--case2-panel-height);
-  border-radius: var(--case2-radius-panel);
-  padding: var(--case2-space-pad-panel);
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
   overflow: hidden;
-  background-color: var(--case2-color-panel);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
 }
 
 .case2-page .calibration-panel {
-  width: var(--case2-left-panel-width);
-  background-image: url("../../../assets/case2/chrome/panel-left-background.png");
+  width: 994px;
+  flex-shrink: 0;
+  gap: 20px;
+  /* 28px 按钮高于 24px 列头行，且需露出焦点描边 */
+  overflow: visible;
 }
 
 .case2-page .kpi-panel {
-  width: var(--case2-right-panel-width);
-  background-image: url("../../../assets/case2/chrome/panel-right-background.png");
+  flex: 1;
+  min-width: 0;
+  gap: 22px;
 }
 
-.case2-page .panel-title-row,
 .case2-page .kpi-title-row {
   display: flex;
   align-items: center;
-  height: 26px;
+  flex-shrink: 0;
+  height: 24px;
 }
 
-.case2-page .panel-title-row {
-  justify-content: space-between;
-}
-
-.case2-page .title-group,
-.case2-page .kpi-title-row {
+.case2-page .title-group {
   display: flex;
   align-items: center;
-  gap: var(--case2-space-gap-title);
+  gap: 10px;
 }
 
-.case2-page .title-accent {
-  width: 3px;
-  height: 18px;
-  object-fit: fill;
-  border-radius: 2px;
+.case2-page .page-title-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 .case2-page .panel-title {
   margin: 0;
-  font-size: var(--case2-font-size-panel-title);
+  font-size: 18px;
   font-weight: 600;
-  color: var(--shell-color-text);
+  color: #ffffff;
+}
+
+.case2-page .section-title,
+.case2-page .initial-column-head,
+.case2-page .calibrated-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.case2-page .section-title {
+  margin: 0;
 }
 
 .case2-page .env-link {
-  color: var(--case2-color-calibrated);
-  font-size: var(--case2-font-size-link);
+  color: #ffffff;
+  font-size: 16px;
   text-decoration: none;
   cursor: pointer;
 }
@@ -95,9 +121,9 @@
 .case2-page .column-header-row {
   display: flex;
   align-items: center;
-  gap: var(--case2-space-gap-row);
-  padding: 0 5px;
-  height: 29px;
+  flex-shrink: 0;
+  gap: 22px;
+  height: 24px;
 }
 
 .case2-page .initial-column-head,
@@ -110,7 +136,6 @@
 
 .case2-page .initial-column-head {
   gap: 6px;
-  font-size: var(--case2-font-size-column);
 }
 
 .case2-page .calibrated-column-head {
@@ -128,25 +153,23 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--case2-font-size-column);
 }
 
 .case2-page .status-feedback {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 25px;
-  padding: 4px 12px;
-  border-radius: var(--case2-radius-badge);
-  background: #1e293b;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: rgba(59, 72, 99, 0.6);
   font-size: var(--case2-font-size-status);
-  color: var(--shell-color-muted);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .case2-page .status-feedback.is-done {
   background: var(--case2-color-status-success-bg);
   color: var(--case2-color-success);
-  font-size: var(--case2-font-size-status-done);
 }
 
 .case2-page .status-feedback.is-error {
@@ -163,7 +186,6 @@
 
 /* 与 case3 忙态一致：测试运行中 / 重置中 → 青色 + 脉冲 + 底部对齐省略号 */
 .case2-page .status-feedback.is-busy {
-  align-items: baseline;
   background: #0ea5e933;
   color: #0ea5e9;
   animation: case2-status-pulse 1.6s ease-in-out infinite;
@@ -171,7 +193,6 @@
 
 .case2-page .status-feedback.is-busy .status-dot {
   background: #0ea5e9;
-  align-self: center;
 }
 
 .case2-page .status-retry {
@@ -185,13 +206,17 @@
   opacity: 0.8;
 }
 
+.case2-page .status-text,
+.case2-page .status-ellipsis {
+  line-height: 1;
+}
+
+/* 省略号紧贴文字、与文字同一基线；右侧留位避免动画时宽度跳动 */
 .case2-page .status-ellipsis {
   display: inline-block;
   width: 1.15em;
   overflow: hidden;
-  margin-left: 1px;
-  line-height: 1;
-  vertical-align: baseline;
+  margin-left: -4px;
   flex-shrink: 0;
 }
 
@@ -209,8 +234,6 @@
   content: "…";
   display: inline-block;
   line-height: 1;
-  vertical-align: baseline;
-  transform: translateY(0.18em);
 }
 
 @keyframes case2-status-pulse {
@@ -255,52 +278,98 @@
 .case2-page .calibration-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
 }
 
+/* 启动/重置：可用 / 悬停 / 按下 / 进行中（旋转进度环，不可取消）/ 不可用 */
 .case2-page .ctrl-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 6px 12px;
-  border-radius: var(--case2-radius-button);
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0;
   border: 0;
-  background: transparent;
-  color: var(--shell-color-text);
-  font-size: var(--case2-font-size-button);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  color: #ffffff;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
 }
 
-.case2-page .ctrl-btn:disabled {
-  opacity: 0.35;
+.case2-page .ctrl-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.case2-page .ctrl-btn--start svg {
+  width: 15px;
+  height: 15px;
+}
+
+.case2-page .ctrl-btn.is-ready:hover {
+  background: rgba(90, 191, 251, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(90, 191, 251, 0.8);
+}
+
+.case2-page .ctrl-btn.is-ready:active {
+  transform: scale(0.94);
+  background: rgba(90, 191, 251, 0.32);
+}
+
+.case2-page .ctrl-btn:focus-visible {
+  outline: 2px solid rgba(90, 191, 251, 0.9);
+  outline-offset: 2px;
+}
+
+.case2-page .ctrl-btn.is-busy {
   cursor: default;
+  box-shadow: inset 0 0 0 1px rgba(90, 191, 251, 0.25);
+  color: rgba(90, 191, 251, 1);
 }
 
-.case2-page .ctrl-btn img {
-  display: block;
-  width: 16px;
-  height: 16px;
+.case2-page .ctrl-btn.is-busy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(90, 191, 251, 0) 0deg,
+    rgba(90, 191, 251, 1) 270deg,
+    rgba(90, 191, 251, 0) 360deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  animation: case2-btn-spin 1s linear infinite;
+  pointer-events: none;
 }
 
-.case2-page .ctrl-btn--start .ctrl-icon--play {
-  display: block;
+.case2-page .ctrl-btn.is-off {
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.28);
 }
 
-.case2-page .ctrl-btn--start .ctrl-icon--pause {
-  display: none;
+@keyframes case2-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.case2-page[data-state="calibrating"] .ctrl-btn--start .ctrl-icon--play {
-  display: none;
-}
-
-.case2-page[data-state="calibrating"] .ctrl-btn--start .ctrl-icon--pause {
-  display: block;
-}
-
-.case2-page[data-state="calibrating"] .ctrl-btn--start:disabled {
-  opacity: 1;
-  cursor: default;
+@media (prefers-reduced-motion: reduce) {
+  .case2-page .ctrl-btn.is-busy::after {
+    animation: none;
+    background: rgba(90, 191, 251, 1);
+  }
 }
 
 .case2-page .heatmap-stack {
@@ -308,26 +377,23 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--case2-space-gap-heat-stack);
-  padding: 5px;
+  gap: 14px;
 }
 
 .case2-page .heatmap-pair {
   width: 100%;
-  height: var(--case2-heatmap-row-height);
+  height: 252px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: var(--case2-space-gap-heat-pair);
-  padding: 5px 20px;
+  gap: 22px;
 }
 
 .case2-page .heatmap-card {
   position: relative;
   flex: 1;
   height: 100%;
-  border-radius: var(--case2-radius-card);
+  border-radius: 12px;
   box-shadow: inset 0 0 0 1px var(--case2-color-card-stroke);
   background: var(--case2-color-panel);
   overflow: hidden;
@@ -397,34 +463,31 @@
   position: absolute;
   left: 0;
   top: 0;
-  height: 30px;
-  padding: 4px 10px;
+  height: 22px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0 0 var(--case2-radius-tag) 0;
+  border-radius: 0 0 8px 0;
   z-index: 2;
 }
 
 .case2-page .metric-tag__label {
   color: var(--shell-color-primary-text);
-  font-size: var(--case2-font-size-metric-tag);
+  font-size: 13px;
   white-space: nowrap;
   line-height: 1;
 }
 
 .case2-page .metric-tag--rss {
-  width: 70px;
   background-color: var(--case2-color-metric-tag-rss);
 }
 
 .case2-page .metric-tag--path {
-  width: 200px;
   background-color: var(--case2-color-metric-tag-path);
 }
 
 .case2-page .metric-tag--delay {
-  width: 164px;
   background-color: var(--case2-color-metric-tag-delay);
 }
 
@@ -562,17 +625,14 @@
 }
 
 .case2-heatmap-lightbox .metric-tag--rss {
-  width: 90px;
   background-color: var(--case2-color-metric-tag-rss);
 }
 
 .case2-heatmap-lightbox .metric-tag--path {
-  width: 240px;
   background-color: var(--case2-color-metric-tag-path);
 }
 
 .case2-heatmap-lightbox .metric-tag--delay {
-  width: 200px;
   background-color: var(--case2-color-metric-tag-delay);
 }
 
@@ -593,17 +653,22 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--case2-space-gap-kpi-rows);
-  padding: 5px;
+  gap: 20px;
 }
 
+/* 误差卡 248 高：头 24 + 间距 8 + 图表行 194 */
 .case2-page .kpi-row {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 248px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 0 5px;
+  gap: 8px;
+  padding: 12px 16px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.case2-page .kpi-row.is-charts-hidden {
+  flex: 0 0 auto;
 }
 
 .case2-page .metric-header {
@@ -611,35 +676,40 @@
   align-items: center;
   gap: 8px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .case2-page .metric-header h3 {
   margin: 0;
-  font-size: var(--case2-font-size-kpi-title);
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 1);
+}
+
+.case2-page .metric-header .legend {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .case2-page .metric-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 18px;
   object-fit: contain;
 }
 
 .case2-page .chart-row {
-  flex: 1;
-  min-height: 0;
+  height: 194px;
+  flex-shrink: 0;
   display: flex;
-  gap: var(--case2-space-gap-chart);
-  justify-content: space-between;
+  gap: 24px;
 }
 
 .case2-page .cdf-area {
-  width: var(--case2-cdf-width);
-  height: var(--case2-cdf-height);
-  max-height: 100%;
-  padding: 8px 10px;
-  border-radius: var(--case2-radius-card);
+  width: 370px;
+  height: 100%;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -647,10 +717,9 @@
 }
 
 .case2-page .bar-area {
-  width: var(--case2-bar-width);
+  flex: 1;
+  min-width: 0;
   height: 100%;
-  padding: 10px;
-  border-radius: var(--case2-radius-card);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -659,27 +728,44 @@
 
 .case2-page .chart-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: var(--case2-font-size-chart-title);
+  height: 16px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 1);
+  font-size: 12px;
+}
+
+.case2-page .bar-area .chart-head {
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .case2-page .legend {
   display: flex;
-  gap: 12px;
-  font-size: var(--case2-font-size-legend);
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 1);
+  font-size: 12px;
 }
 
-.case2-page .legend--sm {
-  gap: 10px;
-  font-size: 9px;
+.case2-page .legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.case2-page .leg-initial {
+.case2-page .leg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.case2-page .leg-initial .leg-dot {
   color: var(--case2-color-cdf-initial);
 }
 
-.case2-page .leg-calibrated {
+.case2-page .leg-calibrated .leg-dot {
   color: var(--case2-color-calibrated);
 }
 
@@ -695,7 +781,8 @@
 }
 
 .case2-page .bar-plot {
-  min-height: 210px;
+  height: 172px;
+  flex: none;
 }
 
 .case2-page .cdf-svg {
@@ -715,7 +802,7 @@
 
 .case2-page .cdf-axis-label {
   position: absolute;
-  color: #939393;
+  color: rgba(255, 255, 255, 1);
   font-family: var(--shell-font-ui);
   font-size: 9px;
   line-height: 1;
@@ -746,12 +833,12 @@
 }
 
 .case2-page .bar-group--initial {
-  left: 42px;
+  left: 77px;
   width: 56px;
 }
 
 .case2-page .bar-group--calibrated {
-  left: 154px;
+  left: 235px;
   width: 88px;
 }
 
@@ -761,7 +848,7 @@
   font-family: var(--case2-font-data);
   font-size: var(--case2-font-size-mean);
   font-weight: 600;
-  color: var(--shell-color-text);
+  color: rgba(255, 255, 255, 1);
   z-index: 2;
   line-height: 1;
 }
@@ -773,9 +860,7 @@
 .case2-page .bar-initial {
   position: absolute;
   border-radius: 6px 6px 0 0;
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+  background: var(--case2-color-cdf-initial);
   z-index: 1;
 }
 
@@ -796,32 +881,17 @@
 .case2-page .bar-y-axis span {
   position: absolute;
   left: 4px;
+  transform: translateY(-50%);
   font-size: var(--case2-font-size-bar-axis);
-  color: var(--case2-color-bar-axis);
+  color: rgba(255, 255, 255, 1);
   line-height: 1;
-}
-
-.case2-page .bar-y-axis span:nth-child(1) {
-  top: 23px;
-}
-.case2-page .bar-y-axis span:nth-child(2) {
-  top: 64px;
-}
-.case2-page .bar-y-axis span:nth-child(3) {
-  top: 104px;
-}
-.case2-page .bar-y-axis span:nth-child(4) {
-  top: 145px;
-}
-.case2-page .bar-y-axis span:nth-child(5) {
-  top: 185px;
 }
 
 .case2-page .bar-guide-dash {
   position: absolute;
   left: 24px;
-  /* top 由 MeanBarChart 写入：升高对齐 Initial 柱顶，降低对齐 Calibrated 柱顶 */
-  width: 200px;
+  /* top 由 MeanBarChart 写入：升高对齐初始柱顶，降低对齐校正柱顶 */
+  width: 320px;
   height: 2px;
   overflow: visible;
   pointer-events: none;
@@ -835,33 +905,34 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* 柱下标签：水平居中于柱（初始柱中心 8+20，校正柱中心 10+20） */
 .case2-page .bar-axis-label {
   position: absolute;
-  left: 3px;
-  top: 195px;
+  left: 28px;
+  top: 154px;
+  transform: translateX(-50%);
   font-size: var(--case2-font-size-bar-label);
-  color: var(--shell-color-text);
+  color: rgba(255, 255, 255, 1);
   white-space: nowrap;
 }
 
 .case2-page .bar-group--calibrated .bar-axis-label {
-  left: -9px;
-  top: 196px;
+  left: 30px;
 }
 
 .case2-page .bar-baseline {
   position: absolute;
   left: 22px;
-  width: 200px;
+  width: 320px;
   height: 1px;
-  background: var(--case2-color-baseline);
+  background: var(--case2-color-dash);
   z-index: 0;
 }
 
 .case2-page .reduction-badge {
   position: absolute;
-  left: 139px;
-  /* top 由 MeanBarChart 写入：相对 Calibrated 柱顶上移 */
+  left: 222px;
+  /* top 由 MeanBarChart 写入：相对校正柱顶上移 */
   min-width: 85px;
   width: max-content;
   height: 47px;
@@ -875,7 +946,7 @@
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
-  color: var(--shell-color-primary-text);
+  color: rgba(255, 255, 255, 1);
   font-size: var(--case2-font-size-reduction);
   font-weight: 600;
   line-height: 1;

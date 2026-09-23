@@ -14,15 +14,15 @@
 
   /* Case state and metric colours */
   --case2-color-initial: #6b7280;
-  --case2-color-calibrated: #22d3ee;
+  --case2-color-calibrated: rgba(32, 112, 243, 1);
   --case2-color-success: #22c55e;
   --case2-color-error: #ef4444;
   --case2-color-metric-rss: #3b82f6;
   --case2-color-metric-path: #a855f7;
   --case2-color-metric-delay: #eab308;
-  --case2-color-metric-tag-rss: #2f85de;
-  --case2-color-metric-tag-path: #6137ff;
-  --case2-color-metric-tag-delay: #f7b502;
+  --case2-color-metric-tag-rss: #1fa2b5;
+  --case2-color-metric-tag-path: #715afb;
+  --case2-color-metric-tag-delay: #f4840c;
   --case2-color-panel: #121820;
   --case2-color-surface: #0a0e14;
 
@@ -34,7 +34,7 @@
   --case2-color-card-stroke: #334155;
   --case2-color-status-success-bg: #09aa7126;
   --case2-color-heat-represent: #22c55e66;
-  --case2-color-cdf-initial: #939393;
+  --case2-color-cdf-initial: rgba(147, 147, 147, 1);
   --case2-color-ghost-stroke: #9ca3af;
   --case2-color-dash: #d1d5dbcc;
 

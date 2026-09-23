@@ -5,6 +5,23 @@
 
 export type CdfPoint = { x: number; y: number };
 
+/** KPI 无效哨兵：不进入 CDF / 均值；有有效样本时在图上按有效最小值起轴。 */
+export const KPI_INVALID_SENTINEL = -1;
+
+/** 去掉哨兵后的样本；可能为空。 */
+export function validKpiSamples(samples: number[]): number[] {
+  return samples.filter((value) => value !== KPI_INVALID_SENTINEL);
+}
+
+/** 该项至少一侧有有效样本才画 CDF / 平均误差。 */
+export function kpiHasChartData(
+  initialKpi: number[],
+  calibratedKpi: number[] | null,
+): boolean {
+  if (validKpiSamples(initialKpi).length > 0) return true;
+  return calibratedKpi !== null && validKpiSamples(calibratedKpi).length > 0;
+}
+
 /** 算术平均；调用方保证 N≥1。 */
 export function meanOf(samples: number[]): number {
   let sum = 0;
@@ -53,7 +70,8 @@ export function resolveXDomain(values: number[]): XDomain {
   }
   if (xMinRaw === xMaxRaw) {
     const pad = Math.max(1, Math.abs(xMinRaw) * 0.05);
-    return { xMin: xMinRaw - pad, xMax: xMaxRaw + pad };
+    // 保持坐标轴从有效样本最小值起；仅向右扩展以避免零宽域。
+    return { xMin: xMinRaw, xMax: xMaxRaw + pad };
   }
   return { xMin: xMinRaw, xMax: xMaxRaw };
 }

@@ -1,9 +1,9 @@
 /**
- * 单行 KPI：CDF + 均值柱/降幅。
- * 标题文案对齐 Gate 1.5 静态 HTML。
+ * 单项误差卡：标题 + 图例，下方 CDF + 平均误差柱/降幅。
  */
 
 import type { MetricKey } from "../types";
+import { kpiHasChartData } from "../metrics/statistics";
 import { CdfChart } from "./CdfChart";
 import { MeanBarChart } from "./MeanBarChart";
 import rssIcon from "../../../../assets/case2/icons/metric-rss-icon.png";
@@ -16,11 +16,10 @@ const ICONS: Record<MetricKey, string> = {
   first_path_delay: delayIcon,
 };
 
-/** 与 web-static/case2 初始态一致的 KPI 行标题。 */
 const KPI_TITLES: Record<MetricKey, string> = {
-  rss: "RSS (接收信号强度)",
-  effective_path_num: "Effective Path Num (有效路径数)",
-  first_path_delay: "First Path Delay (首径时延)",
+  rss: "RSS误差 (dBm)",
+  effective_path_num: "有效径数误差 (条)",
+  first_path_delay: "最强径时延误差 (ns)",
 };
 
 type Props = {
@@ -34,30 +33,46 @@ type Props = {
 export function KpiComparisonRow(props: Props) {
   const { metric, initialKpi, calibratedKpi, cdfPointCap, showComparison } =
     props;
+  const comparisonKpi = showComparison ? calibratedKpi : null;
+  const showCharts = kpiHasChartData(initialKpi, comparisonKpi);
   return (
-    <div className="kpi-row">
+    <div className={showCharts ? "kpi-row" : "kpi-row is-charts-hidden"}>
       <div className="metric-header">
         <img
           className="metric-icon"
           src={ICONS[metric]}
-          width={24}
-          height={24}
+          width={20}
+          height={20}
           alt=""
         />
         <h3>{KPI_TITLES[metric]}</h3>
+        {showCharts ? (
+          <div className="legend">
+            <span className="leg-initial">
+              <i className="leg-dot" />
+              初始 DT
+            </span>
+            <span className="leg-calibrated">
+              <i className="leg-dot" />
+              校正 DT
+            </span>
+          </div>
+        ) : null}
       </div>
-      <div className="chart-row">
-        <CdfChart
-          initialKpi={initialKpi}
-          calibratedKpi={showComparison ? calibratedKpi : null}
-          cdfPointCap={cdfPointCap}
-        />
-        <MeanBarChart
-          initialKpi={initialKpi}
-          calibratedKpi={showComparison ? calibratedKpi : null}
-          showReduction={showComparison}
-        />
-      </div>
+      {showCharts ? (
+        <div className="chart-row">
+          <CdfChart
+            initialKpi={initialKpi}
+            calibratedKpi={comparisonKpi}
+            cdfPointCap={cdfPointCap}
+          />
+          <MeanBarChart
+            initialKpi={initialKpi}
+            calibratedKpi={comparisonKpi}
+            showReduction={showComparison}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

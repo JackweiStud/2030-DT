@@ -46,6 +46,19 @@ export function assertHeatmapMatrix(matrix: number[][]): {
   return { rows, cols };
 }
 
+/** 热力无效哨兵：矩阵中只要出现就不画该张热力图。 */
+export const HEATMAP_INVALID_SENTINEL = -1;
+
+/** 任一格为 -1 则整张不画。 */
+export function heatmapContainsInvalid(matrix: number[][]): boolean {
+  for (const row of matrix) {
+    for (const value of row) {
+      if (value === HEATMAP_INVALID_SENTINEL) return true;
+    }
+  }
+  return false;
+}
+
 /** 本张矩阵独立 min/max，不与其它图共享。 */
 export function matrixMinMax(matrix: number[][]): MatrixStats {
   let eMin = Infinity;

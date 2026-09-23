@@ -1,14 +1,9 @@
 /**
- * case2 页面：测试对比 + KPI 对比。
- * DOM 分区对齐 Gate 1.5；状态机不继承静态假逻辑。
+ * case2 页面：DT校正测试（初始/校正热力图）+ 测试性能（三项误差）。
+ * 状态机不继承静态假逻辑。
  */
 
-import titleAccent from "../../../assets/case2/icons/panel-title-accent.png";
-import colInit from "../../../assets/case2/icons/column-initial-icon.png";
-import colCali from "../../../assets/case2/icons/column-calibrated-icon.png";
-import iconPlay from "../../../assets/case2/icons/icon-play.svg";
-import iconPause from "../../../assets/case2/icons/icon-pause.svg";
-import iconReset from "../../../assets/case2/icons/icon-rotate-ccw.svg";
+import pageTitleIcon from "../../../assets/case2/icons/page-title-icon.png";
 import { useEffect } from "react";
 import { useSiteEnvWindow } from "../../shell/siteEnvWindowContext";
 import type { Case2RuntimeConfig } from "./metrics/heatmapConfig";
@@ -32,10 +27,43 @@ const TAG_CLASS: Record<MetricKey, "rss" | "path" | "delay"> = {
 };
 
 const TAG_LABEL: Record<MetricKey, string> = {
-  rss: "RSS",
-  effective_path_num: "Effective Path Num",
-  first_path_delay: "First Path Delay",
+  rss: "接收信号强度 (dBm)",
+  effective_path_num: "有效径数 (条)",
+  first_path_delay: "最强径时延 (ns)",
 };
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden>
+      <path
+        d="M5.5 3.6v8.8a.6.6 0 0 0 .9.5l7-4.4a.6.6 0 0 0 0-1l-7-4.4a.6.6 0 0 0-.9.5z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function ResetIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden>
+      <path
+        d="M12.6 9.4A4.8 4.8 0 1 1 11.4 4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12.4 2.2v3h-3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export function Case2Page(props: Props) {
   const { config, stageElementRef, onBusyChange } = props;
@@ -71,38 +99,40 @@ export function Case2Page(props: Props) {
     return () => onBusyChange?.(false);
   }, [busy, onBusyChange]);
 
+  const startClass =
+    ui === "calibrating" ? "is-busy" : startEnabled ? "is-ready" : "is-off";
+  const resetClass =
+    ui === "resetting" ? "is-busy" : resetEnabled ? "is-ready" : "is-off";
+
   return (
     <main className="case2-page" data-state={ui}>
       <div className="main-content">
+        <div className="page-title-row">
+          <div className="title-group">
+            <img className="page-title-icon" src={pageTitleIcon} alt="" />
+            <h2 className="panel-title">DT校正测试</h2>
+          </div>
+          <a
+            className="env-link"
+            href="#现场环境"
+            onClick={(e) => {
+              e.preventDefault();
+              openSiteEnv();
+            }}
+          >
+            现场环境 &gt;
+          </a>
+        </div>
         <div className="main-row">
           <section className="calibration-panel">
-            <div className="panel-title-row">
-              <div className="title-group">
-                <img className="title-accent" src={titleAccent} alt="" />
-                <h2 className="panel-title">测试对比</h2>
-              </div>
-              <a
-                className="env-link"
-                href="#现场环境"
-                onClick={(e) => {
-                  e.preventDefault();
-                  openSiteEnv();
-                }}
-              >
-                现场环境 &gt;
-              </a>
-            </div>
-
             <div className="column-header-row">
               <div className="initial-column-head">
-                <img src={colInit} width={24} height={24} alt="" />
-                <span>Initial DT</span>
+                <span>初始 DT</span>
               </div>
               <div className="calibrated-column-head">
                 <div className="calibrated-info">
                   <div className="calibrated-label">
-                    <img src={colCali} width={24} height={24} alt="" />
-                    <span>Calibrated DT</span>
+                    <span>校正 DT</span>
                   </div>
                   <div
                     className={`status-feedback${ui === "completed" ? " is-done" : ""}${
@@ -125,36 +155,23 @@ export function Case2Page(props: Props) {
                 <div className="calibration-controls">
                   <button
                     type="button"
-                    className="ctrl-btn ctrl-btn--start"
+                    className={`ctrl-btn ctrl-btn--start ${startClass}`}
                     disabled={!startEnabled}
                     onClick={onStart}
                     title="启动"
+                    aria-label="启动"
                   >
-                    <img
-                      className="ctrl-icon ctrl-icon--play"
-                      src={iconPlay}
-                      width={16}
-                      height={16}
-                      alt=""
-                    />
-                    <img
-                      className="ctrl-icon ctrl-icon--pause"
-                      src={iconPause}
-                      width={16}
-                      height={16}
-                      alt=""
-                    />
-                    <span>启动</span>
+                    <PlayIcon />
                   </button>
                   <button
                     type="button"
-                    className="ctrl-btn ctrl-btn--clear"
+                    className={`ctrl-btn ctrl-btn--clear ${resetClass}`}
                     disabled={!resetEnabled}
                     onClick={onReset}
                     title="重置"
+                    aria-label="重置"
                   >
-                    <img src={iconReset} width={16} height={16} alt="" />
-                    <span>重置</span>
+                    <ResetIcon />
                   </button>
                 </div>
               </div>
@@ -190,8 +207,7 @@ export function Case2Page(props: Props) {
 
           <section className="kpi-panel">
             <div className="kpi-title-row">
-              <img className="title-accent" src={titleAccent} alt="" />
-              <h2 className="panel-title">KPI对比</h2>
+              <h2 className="section-title">测试性能</h2>
             </div>
             <div className="kpi-stack">
               {METRIC_KEYS.map((key) => (
