@@ -68,7 +68,7 @@ function coordinate(line, filename, expected = 3) {
 
 function selected(line, filename) {
   const value = integer(line, filename, "selected beam");
-  if (value < 0 || value > 255) invalid(filename, "selected beam 越界");
+  if (value < -1 || value > 255) invalid(filename, "selected beam 越界");
   return value;
 }
 
@@ -83,7 +83,7 @@ function scan(line, filename) {
   if (tokens.length !== 16) invalid(filename, "scan 必须恰好 16 项");
   const values = tokens.map((token) => {
     const value = integer(token, filename, "scan beam");
-    if (value < 0 || value > 255) invalid(filename, "scan beam 越界");
+    if (value < -1 || value > 255) invalid(filename, "scan beam 越界");
     return value;
   });
   if (new Set(values).size !== 16) invalid(filename, "scan beam 必须互不重复");
@@ -150,7 +150,8 @@ function validateSide(side, contents) {
     const selectedBeam = selected(rows.selected[index], files.selected);
     if (side === "without") {
       const scanBeams = scan(rows.scans[index], files.scans);
-      if (!scanBeams.includes(selectedBeam)) {
+      const beamAbnormal = selectedBeam === -1 || scanBeams.includes(-1);
+      if (!beamAbnormal && !scanBeams.includes(selectedBeam)) {
         invalid(files.scans, `第 ${index + 1} 行不包含同索引 selected beam`);
       }
     } else {

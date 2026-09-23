@@ -16,6 +16,7 @@ import {
   type BeamCrosshairMarker,
   type BeamCrosshairTone,
 } from "./BeamCrosshair";
+import { isAbnormalBeamPoint } from "../../case3/metrics/case3Metrics";
 
 export type { BeamCrosshairMarker, BeamCrosshairTone };
 
@@ -40,18 +41,20 @@ export function BeamMatrixCard(props: Props) {
       ? props.peerPoint
       : null;
   const legalPred = legalSelectedBeamId(point?.selectedBeamId);
-  const legalBest = legalSelectedBeamId(peerPoint?.selectedBeamId);
+  const legalBest = isAbnormalBeamPoint(peerPoint)
+    ? null
+    : legalSelectedBeamId(peerPoint?.selectedBeamId);
+  const pointAbnormal = isAbnormalBeamPoint(point);
   const verdict = mode === "with" ? withBeamVerdict(point, peerPoint) : "empty";
   const pointLabel = point ? `P${point.no}` : "P--";
-  const beamId = legalPred == null ? "--" : String(legalPred);
+  const beamId = pointAbnormal ? "NA" : legalPred == null ? "--" : String(legalPred);
   const showBadge = verdict === "match" || verdict === "mismatch";
   const derivedTone: BeamCrosshairTone =
     verdict === "match" ? "success" : verdict === "mismatch" ? "fail" : "neutral";
   const crosshairTone = mode === "with" ? derivedTone : (props.crosshairTone ?? "neutral");
   const crosshairMarker: BeamCrosshairMarker =
     mode === "with" ? "pred" : (props.crosshairMarker ?? "best");
-  const showCrosshair =
-    legalPred != null && (mode === "without" || verdict === "match" || verdict === "mismatch");
+  const showCrosshair = legalPred != null && !pointAbnormal;
 
   return (
     <article
@@ -96,8 +99,9 @@ export function BeamMatrixCard(props: Props) {
             {AXIS.map((row) => (
               <div className="case3v2-beam-grid__row" key={`row-${row}`}>
                 {AXIS.map((col) => {
-                  const role =
-                    mode === "with"
+                  const role = pointAbnormal
+                    ? null
+                    : mode === "with"
                       ? withBeamCellRole(row, col, legalPred, legalBest)
                       : beamCellRole(
                           row,

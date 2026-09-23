@@ -127,7 +127,8 @@ function assemble(side, parsed, changed) {
     };
     if (side === "without") {
       const scanBeamIds = parsed.scans.complete[index];
-      if (!scanBeamIds.includes(selectedBeamId)) {
+      const beamAbnormal = selectedBeamId === -1 || scanBeamIds.includes(-1);
+      if (!beamAbnormal && !scanBeamIds.includes(selectedBeamId)) {
         throw new AppError(
           422,
           "SIDE_DATA_INVALID",

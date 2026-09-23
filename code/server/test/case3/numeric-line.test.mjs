@@ -50,7 +50,7 @@ test("Cost 解析保留最新非空行的兼容能力", () => {
   });
 });
 
-test("Without 扫描 beam 至少 1 个 [0,255] 整数，允许重复、不要求 16 列", () => {
+test("Without 扫描 beam 至少 1 个 -1 或 [0,255] 整数，允许重复、不要求 16 列", () => {
   assert.deepEqual(parseScanBeamLine("16, 17", "scan"), [16, 17]);
   assert.deepEqual(parseScanBeamLine("17", "scan"), [17]);
   assert.deepEqual(parseScanBeamLine("16,16,17", "scan"), [16, 16, 17]);
@@ -67,7 +67,7 @@ test("Without 扫描 beam 至少 1 个 [0,255] 整数，允许重复、不要求
   assert.throws(() => parseScanBeamLine("256", "scan"), {
     code: "SIDE_DATA_INVALID",
   });
-  assert.throws(() => parseScanBeamLine("-1", "scan"), {
+  assert.throws(() => parseScanBeamLine("-2", "scan"), {
     code: "SIDE_DATA_INVALID",
   });
 });

@@ -22,8 +22,8 @@ export type ThroughputSnapshot = {
 export type Case3Point = {
   no: number;
   ue: { x: number; y: number; z: number };
-  selectedBeamId: number;
-  scanBeamIds?: number[];
+  selectedBeamId: number; // -1 表示该点波束异常；正常值 0-255。
+  scanBeamIds?: number[]; // Without；包含 -1 时该点波束异常。
   reflection?: { x: number; y: number; z: number; los: boolean };
 };
 

@@ -99,7 +99,7 @@ describe("BeamMatrixCard", () => {
     const { container } = render(
       <BeamMatrixCard
         point={point({
-          scanBeamIds: [-1, 256, 1.5, 3],
+          scanBeamIds: [256, 257, 1.5, 3],
           selectedBeamId: 999,
         })}
       />,

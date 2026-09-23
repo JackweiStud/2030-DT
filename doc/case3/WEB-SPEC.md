@@ -156,8 +156,8 @@ type BaseRoutePoint = {
 type Case3Point = {
   no: number;
   ue: { x: number; y: number; z: number };
-  selectedBeamId: number;
-  scanBeamIds?: number[];
+  selectedBeamId: number; // -1 为本点波束异常；正常值 0-255
+  scanBeamIds?: number[]; // Without；任一元素为 -1 时整点波束异常
   reflection?: { x: number; y: number; z: number; los: boolean };
 };
 
@@ -784,8 +784,9 @@ type MapRendererHandle = {
 ### 9.3 BeamScanCard
 
 - 单 Canvas/SVG 程序化画 16×16 网格；beam id 0～255 按行优先定位。
-- Without：`scanBeamIds` 白色，`selectedBeamId` 蓝色最优。
-- With：`selectedBeamId` 绿色；按相同 `no` 与 Without result 比较显示预测成功/失败图例。
+- Without：正常点 `scanBeamIds` 白色，`selectedBeamId` 蓝色最优；selected 为 -1 或扫描行含 -1 时 BeamID 显示 NA 且整张矩阵不绘制色块。
+- With：正常点 `selectedBeamId` 绿色；按相同 `no` 与 Without result 比较显示预测成功/失败图例。With selected 为 -1 时显示 NA、不画预测波；点位坐标和轨迹保留。
+- 任一侧波束异常时，该点对比状态显示 NA，不显示预测成功/失败；另一侧正常波束仍按本侧数据展示。
 - 视觉尺寸、颜色、图例和浮层位置以 Pencil 双侧 238×331 卡片及 `web-static/case3/` 为准。
 - 禁止创建 256 个 Pencil ellipse 对应的 React 叶子节点。
 
@@ -799,8 +800,8 @@ type MapRendererHandle = {
 - `N>20` 时每个新点到达后整体滑动，例如 `1..20 → 2..21 → 3..22`，默认始终展示最新 20 个真实点。
 - 超过 20 点后，鼠标在槽条上左右拖动可把窗口移回更早点号（右拖看 P1）；拖到最新窗口则恢复自动跟随。可视槽数仍是 20，不改成整条滚动条。
 - 已填槽标签显示真实业务编号 `P${point.no}`；Pencil/静态页的 P1～P20 是首窗代表态，不得在第 21 点后继续假装为全局 P1～P20。
-- Without 显示该点 `selectedBeamId`；该点尚无 Without 数据时显示 `NA`（不依赖有 DT 是否已有同 `no`）。
-- With 在有 Without 同 `no` 时显示预测正确/错误图标；有 With 点但无 Without 对照时显示 `NA`，且不计入 Beam Accuracy。
+- Without 显示该点 `selectedBeamId`；无数据或波束异常时显示 `NA`（不依赖有 DT 是否已有同 `no`）。
+- With 在有 Without 同 `no` 且两侧波束均有效时显示预测正确/错误图标；缺对照或任一侧异常时显示 `NA`，且不计入 Beam Accuracy。
 - 无路线号的垫槽保持空圆，补足到 20 个，但不伪造业务 no 或数值。
 - 组件 key 使用 `point.no`，不能用窗口数组 index；窗口更新只移动视觉项，不改变 result 数据。
 
@@ -846,7 +847,7 @@ type MapRendererHandle = {
 
 - 使用原生 SVG 开口环 + DOM 次数卡，结构对齐 Pencil `波束准确率卡片/i1nWz` 和静态 `.case3-ba-*`；标题 `波束预测准确率`。
 - 中央环复用已接受静态页的开口 path；设置 `pathLength="100"`，值环 `strokeDashoffset=100-displayPct`，底环 `#3A4048`，值环 `#22C55E`，12px 圆头并保留轻微绿光。
-- BA 增量公式集中在 `metrics/case3Metrics.ts`，只按相同 `no` 比较 `selectedBeamId`，不以坐标匹配；缺一侧的 `no` 不计入 `roundTotal`。
+- BA 增量公式集中在 `metrics/case3Metrics.ts`，只按相同 `no` 比较有效 `selectedBeamId`，不以坐标匹配；缺一侧或任一侧波束异常的 `no` 不计入 `roundTotal`。
 - 左侧显示 `displaySuccess`，右侧显示 `displayError=displayTotal-displaySuccess`，均带 `(次)` 与正确/错误图标及「正确次数」/「错误次数」。
 - 中央 `displayPct` 按契约保留一位小数，使用 tabular numbers；`100.0` 等长值允许降低字号但不得溢出。
 - baseline ready 时初始即显示文件基线；With 完成且 `pairValid=true` 后叠加当前轮匹配；任一侧新 Start/ReInit/失效立即回 baseline。

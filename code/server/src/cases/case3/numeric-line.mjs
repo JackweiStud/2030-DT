@@ -67,8 +67,8 @@ export function parseSelectedBeamLine(line, filename) {
     throw invalid(filename, "selected beam row must contain one integer");
   }
   const value = parseIntegerToken(tokens[0], filename, "selected beam");
-  if (value < 0 || value > 255) {
-    throw invalid(filename, "selected beam must be in [0,255]");
+  if (value < -1 || value > 255) {
+    throw invalid(filename, "selected beam must be -1 or in [0,255]");
   }
   return value;
 }
@@ -80,8 +80,8 @@ export function parseScanBeamLine(line, filename) {
   }
   return tokens.map((token, index) => {
     const value = parseIntegerToken(token, filename, `scan beam ${index}`);
-    if (value < 0 || value > 255) {
-      throw invalid(filename, "scan beams must be in [0,255]");
+    if (value < -1 || value > 255) {
+      throw invalid(filename, "scan beams must be -1 or in [0,255]");
     }
     return value;
   });

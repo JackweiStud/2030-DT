@@ -1,5 +1,6 @@
 import type { Case3RuntimeConfig } from "../../../case3/config/case3RuntimeConfig";
 import type { Case3Point } from "../../../case3/types";
+import { isAbnormalBeamPoint } from "../../../case3/metrics/case3Metrics";
 import { projectBusinessToImage } from "../../mapProjectionV2";
 import {
   losLabelPosition,
@@ -19,7 +20,15 @@ function pointsAttr(points: Array<{ imageX: number; imageY: number }>): string {
 
 export function ReflectionOverlay({ config, point, viewBox, playback }: Props) {
   const reflection = point?.reflection;
-  if (!config.reflectionEnable || !config.bsXyz || !point || !reflection) return null;
+  if (
+    !config.reflectionEnable ||
+    !config.bsXyz ||
+    !point ||
+    isAbnormalBeamPoint(point) ||
+    !reflection
+  ) {
+    return null;
+  }
 
   const projection = {
     v2MapOriginX: config.v2MapOriginX,

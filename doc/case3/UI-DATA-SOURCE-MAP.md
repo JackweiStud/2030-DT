@@ -17,10 +17,10 @@
 | Without 地图轨迹 | 是 | `/api/case3/side?side=without` 的 `points` | Without 本轮已见 `execute success` | UE 坐标由 `ue_comm_without_dt_coordinates.txt` 收编。 |
 | With 地图轨迹 | 是 | `/api/case3/side?side=with` 的 `points` | With 本轮已见 `execute success` | UE 坐标由 `ue_comm_with_dt_coordinates.txt` 收编。 |
 | 双侧地图视图变换 | 是（Web 本地） | 每侧 `MapView` | 用户滚轮/左键/右键 | 0.5～5×缩放、±90°旋转、平移、复位；地图和轨迹共用 transform，浮层不跟随；无全屏。 |
-| Without BS 波束扫描 | 是 | 结构化点位 `scanBeamIds` + `selectedBeamId` | Without 逐点播放 | 扫描集合来自 `ue_comm_without_dt_beams.txt`；选择波束来自 `ue_comm_without_dt_sel_beam.txt`。 |
-| With BS 波束预测 | 是 | 结构化点位 `selectedBeamId` | With 逐点播放 | 来自 `ue_comm_with_dt_sel_beam.txt`。 |
+| Without BS 波束扫描 | 是 | 结构化点位 `scanBeamIds` + `selectedBeamId` | Without 逐点播放 | 扫描集合来自 `ue_comm_without_dt_beams.txt`；该行含 -1 或 selected=-1 时整点波束异常，矩阵不画色块、BeamID 显示 NA。 |
+| With BS 波束预测 | 是 | 结构化点位 `selectedBeamId` | With 逐点播放 | 来自 `ue_comm_with_dt_sel_beam.txt`；selected=-1 时不画预测波、BeamID 显示 NA，地图坐标轨迹保留。 |
 | With 反射/LOS 示意 | 后续阶段 | 结构化点位 `reflection` | v1 不渲染 | 来自 `ue_comm_with_dt_coordinates_reflection_point.txt`；reflection 仍是 With 完整点必需字段，缺第 `i` 行时不返回第 `i` 个半点。 |
-| 点位进度 | 是 | 结构化点位 `no` 与运行时 `N` | 逐点播放 | 无 DT 显示本侧波束，没数据则 `NA`；有 DT 无对照点显示 `NA`。 |
+| 点位进度 | 是 | 结构化点位 `no` 与运行时 `N` | 逐点播放 | 无 DT 显示本侧有效波束，缺数据/波束异常则 `NA`；有 DT 缺对照或任一侧波束异常时显示 `NA`。 |
 | Cost Comparison | 是 | `/api/case3/side` 同包侧级字段 `costPct` | 对应侧运行后 | 原生 SVG 双半环；正式标题 `开销(%)`；Node 四舍五入到 1 位且校验 `0～100`。 |
 | 相对开销变化 | 是 | Web 基于双方 `costPct` 派生 | 两侧 Cost 有效且 Without Cost 非 0 | `(withCostPct - withoutCostPct) / withoutCostPct * 100`；正数增加（↑ `X%`），负数减少（↓ `-X%`），无法计算时显示 `--`。 |
 | Throughput Comparison | 是 | `/api/case3/throughput?side=` 的独立 `samples` 快照 | 不依赖结构点完整度；With 当前 Start 有 live 样点即显示，不等待 `/side`；非运行态 With 仍须满足现有配对/历史可见条件 | 原生 SVG 双折线；各侧按自身样点数绘制，N>20 仅抽稀刻度，不引入 ECharts。新 Without 结果使旧 With 吞吐失去 KPI 可见资格时仍隐藏，避免展示过期曲线。 |
@@ -54,7 +54,7 @@
 | Cost | 对应 cost 文件最新非空行，Node 四舍五入到 1 位并校验 `0～100` | 运行中可为 `null`；完成门槛要求非空，不沿用旧值冒充本轮。 |
 | 相对开销变化 | `(withCostPct - withoutCostPct) / withoutCostPct * 100` | 任一侧 Cost 缺失或 Without Cost 为 0 时显示 `--`；正数增加（↑ `X%`），负数减少（↓ `-X%`）。 |
 | Throughput | 每侧独立吞吐快照的样点按 `no` 入曲线 | 缺样点不补 0；各侧样点数可以不同，不按结构点或对侧补齐。 |
-| Beam Accuracy 增量 | With 完成后，用相同 `no` 的 Without/With 点位比较 `selectedBeamId`；坐标只做可选诊断，不做匹配主键 | Without 缺失、同 `no` 点位不完整或任意侧重置后，仅显示基线。 |
+| Beam Accuracy 增量 | With 完成后，用相同 `no` 的有效 Without/With `selectedBeamId` 比较；坐标只做可选诊断，不做匹配主键 | 缺一侧或任一侧该点波束异常时显示 NA，不进入成功率分子/分母；任意侧重置后仅显示基线。 |
 | 调试 JSONL 快照 | Node 在 `completeCount` 变化时，将当前完整点全量以整文件原子替换写入 `{DT_SHARED_DIR}/out/case3/points/{side}.jsonl`，side 为 without 或 with | 仅作 QA/定位证据，Web 不回读；不写 cost 行；不写入 `out/case2/`。 |
 | Stage 截图 | Start 等待态内 `save_picture_flag` 0→1；Web 截取 1920×1080 Stage，Node 原子落盘 | 成功后清零；三次失败后放弃清零；不改变 completed/failed 业务结论。 |
 

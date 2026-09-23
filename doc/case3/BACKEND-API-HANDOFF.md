@@ -152,6 +152,8 @@ status=""
 
 第 i 个完整点必须同时存在 coordinates、beams、sel_beam 三个结构文件的第 i 行。Throughput 独立发布。Cost 见第 3 节预置文件，不在本侧逐点输出清理/写入范围。
 
+波束文件允许 `-1` 表示异常：Without 扫描行只要含 `-1`，该点整体视为波束异常；`sel_beam` 行值 `-1` 也表示该点异常。该点仍按正常点序发布，坐标/轨迹保留。正常点的 beam id 仍为 `0～255`；异常值以外的越界值不合法。
+
 ## 5. With DT 文件
 
 | 文件 | 每行格式 | 点位对齐 |
@@ -163,6 +165,8 @@ status=""
 
 第 i 个完整点必须同时存在 coordinates、sel_beam、reflection_point 三个结构文件的第 i 行。Throughput 独立发布。`flag=1` 映射为 `los=true`（LOS），`flag=0` 映射为 `los=false`（NLOS）。Cost 见第 3 节预置文件，不在本侧逐点输出清理/写入范围。
 
+`ue_comm_with_dt_sel_beam.txt` 允许 `-1` 表示该点波束异常；正常值范围为 `0～255`。异常点仍需正常发布 coordinates 与 reflection 行。
+
 `ue_comm_without_dt_mse.txt`、`ue_comm_with_dt_mse.txt` 可以继续存在，但不进入页面数据、完整点或完成发布门槛。
 
 ## 6. 数值合同
@@ -172,8 +176,8 @@ status=""
 | 坐标 / reflection 坐标 | 有限数；前端侧 Node 四舍五入到 2 位。 |
 | Throughput | 有限且非负；前端侧 Node 四舍五入到 2 位。 |
 | Cost | 有限数；前端侧 Node 四舍五入到 1 位；归一后必须在 `0～100`。 |
-| beam id | 整数 `0～255`。 |
-| Without beam 行 | 至少 1 个 `[0,255]` 的 beam id，允许重复；selected beam 必须包含在该行中。 |
+| beam id | 整数 `-1` 或 `0～255`；`-1` 表示波束异常。 |
+| Without beam 行 | 至少 1 个 `-1` 或 `[0,255]` 的 beam id，允许重复；含 `-1` 的整行视为本点波束异常，不要求包含 selected beam。正常行仍要求包含。 |
 | reflection flag | 只能为整数 `0` 或 `1`；`0→los=false`，`1→los=true`。 |
 
 后端应尽量直接输出符合精度和范围的值；前端侧 Node 会执行最终校验和归一。

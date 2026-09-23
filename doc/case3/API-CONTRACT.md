@@ -81,7 +81,7 @@ Web 仍必须在 REST 信任边界检查响应是否为对象、必填字段和 
 | 当前动作、目标侧、是否见过 success  | Web 本地          | 是       | 不写回控制文件。                         |
 | 单侧结果是否有效/是否配对          | Web 本地          | 是       | 刷新后全部丢弃。                         |
 | 相对开销变化                 | Web             | 是       | 基于双方 `costPct`。                  |
-| Beam Accuracy 增量       | Web             | 是       | 按相同 `no` 的 `selectedBeamId` 对比。  |
+| Beam Accuracy 增量       | Web             | 是       | 仅按相同 `no` 的有效 `selectedBeamId` 对比；任一侧异常不计入增量。  |
 | `save_picture_flag=1`  | 真实后端            | 否       | 仅 Start success→complete 窗口；允许与 complete 同拍。 |
 | 截图 PNG 与 flag 清零       | Node             | 否       | Web 只提交 Base64；Node 原子落盘后清零。      |
 | 地图、图标、背景               | Web 运行资源        | 否       | 不来自共享目录 REST。                    |
@@ -399,8 +399,8 @@ type Case3Side = "without" | "with";
 type Case3Point = {
   no: number;
   ue: { x: number; y: number; z: number };
-  selectedBeamId: number;
-  scanBeamIds?: number[]; // Without 必需；至少 1 个 [0,255]，允许重复，必须包含 selectedBeamId
+  selectedBeamId: number; // -1 表示本点波束异常；正常值为 [0,255]
+  scanBeamIds?: number[]; // Without 必需；至少 1 个，元素为 -1 或 [0,255]；行含 -1 时整点波束异常
   reflection?: {
     x: number;
     y: number;
@@ -557,8 +557,8 @@ Node 对共享文件内容做唯一权威业务校验：
 | 坐标                    | 必须为有限数；超过两位小数四舍五入到两位。                               |
 | Throughput            | 必须为有限非负数；四舍五入到两位。                                   |
 | Cost                  | 必须为有限数；先四舍五入到一位再检查 `0～100`；越界拒绝，禁止 clamp。          |
-| `selectedBeamId`      | 整数 `0～255`。                                         |
-| Without `scanBeamIds` | 至少 1 个整数，每个 `0～255`，允许重复；`selectedBeamId` 必须包含在该行中。 |
+| `selectedBeamId`      | 整数 `-1` 或 `0～255`；`-1` 表示本点波束异常。          |
+| Without `scanBeamIds` | 至少 1 个整数，每个为 `-1` 或 `0～255`，允许重复；行含 `-1` 表示本点波束异常，此时不要求 selected beam 出现在扫描行。正常行仍要求包含。 |
 | Reflection 坐标         | 必须为有限数；超过两位小数四舍五入到两位。                               |
 | Reflection flag       | 只能为整数 `0` 或 `1`；`0 → los=false`，`1 → los=true`。       |
 | Beam Accuracy 基线      | 整数，`0 <= success <= total` 且 `total > 0`。           |
@@ -714,11 +714,11 @@ relativeCostChangePct =
 输入：
 
 - 基线：`ue_comm_with_dt_beam_accuracy_rate.txt` 的 `success,total`。
-- 增量：当前配对的 Without/With 完整点，按相同 `no` 比较 `selectedBeamId`。只有两侧都存在的 `no` 才计入 `roundTotal`；缺一侧的点在「点位和波束关系」显示 `NA`，不进入准确率。
+- 增量：当前配对的 Without/With 完整点，按相同 `no` 比较 `selectedBeamId`。仅两侧点都存在且波束有效时计入 `roundTotal`；任一侧 `selectedBeamId=-1`，或 Without 扫描行含 `-1`，该配对显示 `NA`，不计入成功率分子或分母。异常标记不影响结构点完整度、坐标轨迹或 Throughput。
 
 ```text
-roundSuccess = count(matching no where selectedBeamId equal)
-roundTotal   = count(matching no)
+roundSuccess = count(valid paired no where selectedBeamId equal)
+roundTotal   = count(valid paired no)
 displaySuccess = baselineSuccess + roundSuccess
 displayTotal   = baselineTotal + roundTotal
 displayError   = displayTotal - displaySuccess

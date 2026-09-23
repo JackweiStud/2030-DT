@@ -10,6 +10,26 @@ import type {
   ThroughputSnapshot,
 } from "../types";
 
+/** -1 是后端的波束异常标记；其他可用 BeamID 为 0-255。 */
+export function isValidBeamId(value: number | undefined): value is number {
+  return (
+    value !== undefined &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 255
+  );
+}
+
+/** Without 扫描行包含 -1 时整点异常，即使所选 BeamID 本身正常。 */
+export function isAbnormalBeamPoint(
+  point: Case3Point | null | undefined,
+): boolean {
+  return Boolean(
+    point &&
+      (point.selectedBeamId === -1 || point.scanBeamIds?.includes(-1)),
+  );
+}
+
 /** 一位小数展示（不改变业务权威精度语义，仅 UI 格式）。 */
 export function formatOneDecimal(value: number): string {
   return (Math.round(value * 10) / 10).toFixed(1);
@@ -64,7 +84,15 @@ export function deriveBeamAccuracy(
     );
     for (const wp of withSide.points) {
       const o = withoutByNo.get(wp.no);
-      if (!o) continue;
+      if (
+        !o ||
+        isAbnormalBeamPoint(o) ||
+        isAbnormalBeamPoint(wp) ||
+        !isValidBeamId(o.selectedBeamId) ||
+        !isValidBeamId(wp.selectedBeamId)
+      ) {
+        continue;
+      }
       roundTotal += 1;
       if (o.selectedBeamId === wp.selectedBeamId) roundSuccess += 1;
     }
@@ -137,10 +165,25 @@ export function pointBeamSlotView(
   peer: Case3Point | null | undefined,
 ): PointBeamSlotView {
   if (side === "without") {
-    if (point == null) return { kind: "na" };
+    if (
+      point == null ||
+      isAbnormalBeamPoint(point) ||
+      !isValidBeamId(point.selectedBeamId)
+    ) {
+      return { kind: "na" };
+    }
     return { kind: "beam", beamId: point.selectedBeamId };
   }
-  if (point == null || peer == null) return { kind: "na" };
+  if (
+    point == null ||
+    peer == null ||
+    isAbnormalBeamPoint(point) ||
+    isAbnormalBeamPoint(peer) ||
+    !isValidBeamId(point.selectedBeamId) ||
+    !isValidBeamId(peer.selectedBeamId)
+  ) {
+    return { kind: "na" };
+  }
   return {
     kind: "predict",
     ok: point.selectedBeamId === peer.selectedBeamId,

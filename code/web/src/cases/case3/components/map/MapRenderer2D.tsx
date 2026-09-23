@@ -30,11 +30,13 @@ import {
   type MapView,
 } from "../../metrics/mapProjection";
 import type { BaseRoutePoint, Case3Point, Case3Side } from "../../types";
+import { isAbnormalBeamPoint, isValidBeamId } from "../../metrics/case3Metrics";
 
 /** Pencil `tYZqa`：预期一致。 */
 const UE_DOT_MATCH = "#22C55E";
 /** Pencil `tYZqa`：预期不一致。 */
 const UE_DOT_MISMATCH = "#c44a21";
+const UE_DOT_UNPAIRED = "#94A3B8";
 const UE_DOT_RING = "#FFFFFF";
 const UE_DOT_RADIUS = 4;
 const UE_DOT_STROKE = 1.5;
@@ -184,13 +186,22 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
     );
     const livePts = points.map((p) => {
       const peer = peerByNo.get(p.no);
-      // Without：事实侧一律一致绿；With：同 no 的 selectedBeamId 一致为绿，否则红
-      const matched =
-        side === "without"
-          ? true
-          : peer
-            ? peer.selectedBeamId === p.selectedBeamId
-            : true;
+      // 异常波束不参与 With 地图对比着色；坐标点仍保留。
+      let matched: boolean | null = true;
+      if (side === "with") {
+        if (isAbnormalBeamPoint(p) || !isValidBeamId(p.selectedBeamId)) {
+          matched = null;
+        } else if (peer) {
+          if (
+            isAbnormalBeamPoint(peer) ||
+            !isValidBeamId(peer.selectedBeamId)
+          ) {
+            matched = null;
+          } else {
+            matched = peer.selectedBeamId === p.selectedBeamId;
+          }
+        }
+      }
       return {
         no: p.no,
         matched,
@@ -290,15 +301,23 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
               {livePts.map((p) => (
                 <circle
                   key={p.no}
-                  className={
-                    p.matched
-                      ? "case3-ue-dot case3-ue-dot--match"
-                      : "case3-ue-dot case3-ue-dot--mismatch"
-                  }
+                  className={`case3-ue-dot ${
+                    p.matched == null
+                      ? "case3-ue-dot--unpaired"
+                      : p.matched
+                        ? "case3-ue-dot--match"
+                        : "case3-ue-dot--mismatch"
+                  }`}
                   cx={p.mapPixelX}
                   cy={p.mapPixelY}
                   r={UE_DOT_RADIUS}
-                  fill={p.matched ? UE_DOT_MATCH : UE_DOT_MISMATCH}
+                  fill={
+                    p.matched == null
+                      ? UE_DOT_UNPAIRED
+                      : p.matched
+                        ? UE_DOT_MATCH
+                        : UE_DOT_MISMATCH
+                  }
                   stroke={UE_DOT_RING}
                   strokeWidth={UE_DOT_STROKE}
                 />

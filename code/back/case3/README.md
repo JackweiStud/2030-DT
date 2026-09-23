@@ -54,6 +54,8 @@ CASE3_STUB_LOG_LEVEL=debug
 
 - 两侧结构 fixture 是 21 点预置模板。坐标、扫描/selected Beam、
   Reflection 始终逐行回放，不参与动态生成。
+- 结构 fixture 可用波束 ID `-1` 覆盖异常波束场景：Without 扫描行含 `-1`
+  或任一侧 selected Beam 为 `-1` 时，Node/Web 将该点作为完整但波束异常的点处理。
 - 每侧 Throughput fixture 独立预检和发布，样点数不要求等于结构点数；
   Without/With 两侧吞吐样点数也可不同。吞吐只按 fixture 做可复现随机抖动，
   不保证 With 每个样点高于 Without。

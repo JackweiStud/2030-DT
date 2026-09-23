@@ -7,6 +7,7 @@ import iconBs from "../../../../assets/case3/icon-bs-beam.png";
 import iconPoint from "../../../../assets/case3/icon-point.png";
 import iconOk from "../../../../assets/case3/icon-ok.png";
 import iconErr from "../../../../assets/case3/icon-err.png";
+import { isAbnormalBeamPoint } from "../metrics/case3Metrics";
 import type { Case3Point, Case3Side } from "../types";
 
 type Props = {
@@ -58,17 +59,24 @@ const ALL_BEAMS_PATH = beamPath(ALL_BEAM_IDS);
  */
 export function BeamScanCard(props: Props) {
   const { side, point, peerPoint } = props;
+  const pointAbnormal = isAbnormalBeamPoint(point);
   const scan = new Set(point?.scanBeamIds ?? []);
   const selected = point?.selectedBeamId;
   const scanPath =
-    side === "without"
+    side === "without" && !pointAbnormal
       ? beamPath([...scan].filter((id) => id !== selected))
       : "";
   const selectedPath =
-    selected === undefined ? "" : beamPath([selected]);
+    selected === undefined || pointAbnormal ? "" : beamPath([selected]);
 
   let legend: { ok: boolean; text: string } | null = null;
-  if (side === "with" && point && peerPoint) {
+  if (
+    side === "with" &&
+    point &&
+    peerPoint &&
+    !pointAbnormal &&
+    !isAbnormalBeamPoint(peerPoint)
+  ) {
     const ok = point.selectedBeamId === peerPoint.selectedBeamId;
     legend = {
       ok,

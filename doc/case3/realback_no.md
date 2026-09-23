@@ -297,8 +297,8 @@ stub 启动时先验证 fixtures，失败则快速退出：
 - Without coordinates/beams/selected 三个结构文件行数一致且大于 0。
 - With coordinates/selected/reflection 三个结构文件行数一致且大于 0。
 - 两侧 Throughput 文件独立校验；样点数允许为 0，也允许互不相同，吞吐不进入结构点完整性门槛。
-- scan 每行至少 1 个 0～255 整数，并包含**同索引行**的 selected；允许重复，不要求 16 列。stub 自带 fixture 仍写 16 个互不重复 id（演示数据质量，不是 Node / 真实后端合同）。
-- selected 0～255；Throughput 非负；Reflection flag 0/1。
+- scan 每行至少 1 个 -1 或 0～255 整数，允许重复，不要求 16 列；含 -1 时该点整体波束异常，不要求包含 selected。正常行必须包含同索引 selected。stub 自带 fixture 仍写 16 个互不重复 id（演示数据质量，不是 Node / 真实后端合同）。
+- selected 为 -1 或 0～255；-1 表示波束异常。Throughput 非负；Reflection flag 0/1。
 - 允许首尾空行、CRLF 和无换行完整末行；数据中间空行仍非法。
 
 fixture 预检可以复用 stub 内纯解析函数，但不得 import Node 适配服务的生产解析器，否则测试会失去独立性。
@@ -362,7 +362,7 @@ seed=1 时还要按初始化接口语义校验共享目录中已存在的 base/b
 ### 10.5 Seed 与 Fixture
 
 - 全部有效 fixture 通过。
-- 行数不同、scan 数量/同索引包含关系、beam 范围、负 Throughput/flag 分别失败；scan 同行重复仅作为 stub fixture 质量失败，不声称契约也会拒绝。
+- 行数不同、scan 数量、异常值范围、正常行同索引包含关系、负 Throughput/flag 分别失败；含 -1 的扫描行作为完整异常点接受；scan 同行重复仅作为 stub fixture 质量失败，不声称契约也会拒绝。
 - seed 只创建缺失 base/baseline；已存在合法文件保留，非法文件快速失败；逐点文件与预置 Cost 永不被 seed 改写。
 - 每个逐点 append 后内容对读者立即可见；持有未刷盘缓冲导致点位成批出现视为失败。
 

@@ -6,8 +6,12 @@
 import type { Case3Presentation } from "../case3/presentation/selectCase3Presentation";
 import type { Case3Point } from "../case3/types";
 import { completePointsOf } from "./v2CompletePoints";
+import {
+  isAbnormalBeamPoint,
+  isValidBeamId,
+} from "../case3/metrics/case3Metrics";
 
-export type WithBeamVerdict = "empty" | "no-peer" | "match" | "mismatch";
+export type WithBeamVerdict = "empty" | "no-peer" | "na" | "match" | "mismatch";
 export type WithReplayTone = "idle" | "ok" | "fail";
 export type V2LiveMapSide = "without" | "with";
 
@@ -35,6 +39,14 @@ export function withBeamVerdict(
 ): WithBeamVerdict {
   if (!withPoint) return "empty";
   if (!peerPoint || peerPoint.no !== withPoint.no) return "no-peer";
+  if (
+    isAbnormalBeamPoint(withPoint) ||
+    isAbnormalBeamPoint(peerPoint) ||
+    !isValidBeamId(withPoint.selectedBeamId) ||
+    !isValidBeamId(peerPoint.selectedBeamId)
+  ) {
+    return "na";
+  }
   return withPoint.selectedBeamId === peerPoint.selectedBeamId
     ? "match"
     : "mismatch";

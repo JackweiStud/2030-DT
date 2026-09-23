@@ -21,6 +21,7 @@ import {
   withReplayTone,
   type V2LiveMapSide,
 } from "../v2WithCompare";
+import { isAbnormalBeamPoint } from "../../case3/metrics/case3Metrics";
 
 /** V2 槽距：82px 格 + 3px gap。不得使用旧皮肤 CASE3_POINT_SLOT_PITCH=29。 */
 export const CASE3V2_REPLAY_SLOT_PITCH = 85;
@@ -29,6 +30,11 @@ export const CASE3V2_REPLAY_WINDOW = 19;
 const CURSOR_SIZE = 28;
 /** 勾/叉相对回溯对表左缘，与静态 `fillChecks` 一致：34 + i * 85。 */
 const CHECK_LEFT0 = 34;
+
+function beamIdLabel(point: Case3Point | null): string {
+  if (!point) return "--";
+  return isAbnormalBeamPoint(point) ? "NA" : String(point.selectedBeamId);
+}
 
 function clampStart(value: number, maxStart: number): number {
   return Math.max(0, Math.min(maxStart, Math.round(value)));
@@ -386,7 +392,7 @@ export function PointBeamReplay(props: Props) {
               return (
                 <div
                   className={`case3v2-replay-cell case3v2-replay-cell--without${
-                    point ? " is-done" : ""
+                    point && !isAbnormalBeamPoint(point) ? " is-done" : ""
                   }`}
                   key={`wo-${i}`}
                 >
@@ -394,7 +400,7 @@ export function PointBeamReplay(props: Props) {
                     className="case3v2-replay-cell__value"
                     data-replay-wo-value
                   >
-                    {point ? String(point.selectedBeamId) : "--"}
+                    {beamIdLabel(point)}
                   </span>
                 </div>
               );
@@ -414,7 +420,7 @@ export function PointBeamReplay(props: Props) {
                   key={`w-${i}`}
                 >
                   <span className="case3v2-replay-cell__value" data-replay-w-value>
-                    {withPoint ? String(withPoint.selectedBeamId) : "--"}
+                    {beamIdLabel(withPoint)}
                   </span>
                 </div>
               );
