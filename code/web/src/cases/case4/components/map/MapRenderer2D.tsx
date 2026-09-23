@@ -457,7 +457,7 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
                   [
                     ["traditional", "#97AAC4"],
                     ["commercial", "#F0A12E"],
-                    ["dt", "#7A6BFF"],
+                    ["dt", "rgba(90, 191, 251, 1)"],
                   ] as const
                 ).map(([key, color]) => {
                   const pts = livePoints.map((p) =>
@@ -468,7 +468,7 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
                       <polyline
                         fill="none"
                         stroke={color}
-                        strokeWidth="2.5"
+                        strokeWidth="2"
                         strokeLinejoin="round"
                         strokeLinecap="round"
                         points={polyline(pts)}

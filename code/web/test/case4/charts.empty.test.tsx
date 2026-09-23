@@ -199,8 +199,8 @@ describe("ThroughputChart", () => {
     expect(surface.getAttribute("data-hover-no")).toBe("1");
     expect(tip?.textContent).not.toContain("样点");
     expect(tip?.textContent).not.toContain("吞吐率");
-    expect(tip?.textContent).toContain("传统基站定位");
-    expect(tip?.textContent).toContain("数字孪生辅助定位");
+    expect(tip?.textContent).toContain("有DT辅助");
+    expect(tip?.textContent).toContain("无DT辅助");
     expect(tip?.textContent).toContain("8.00Gbps");
     expect(tip?.textContent).toContain("--");
 
@@ -282,8 +282,9 @@ describe("CdfChart empty", () => {
   it("绘图区 Y 映射到一位小数概率", () => {
     expect(cdfHoverProbFromLocalY(-1)).toBeNull();
     expect(cdfHoverProbFromLocalY(0)).toBe(1);
-    expect(cdfHoverProbFromLocalY(68)).toBe(0.5);
-    expect(cdfHoverProbFromLocalY(136)).toBe(0);
+    expect(cdfHoverProbFromLocalY(63)).toBe(0.5);
+    expect(cdfHoverProbFromLocalY(126)).toBe(0);
+    expect(cdfHoverProbFromLocalY(127)).toBeNull();
     expect(cdfHoverProbFromLocalY(200)).toBeNull();
   });
 
@@ -295,12 +296,12 @@ describe("CdfChart empty", () => {
   it("悬停横线读三方案一位小数误差，leave 收起", () => {
     const view = render(<CdfChart cdf={sampleStatistics().cdf} />);
     const surface = mockCdfSurface(view.container);
-    fireEvent.pointerMove(surface, { clientX: 40, clientY: 68 });
+    fireEvent.pointerMove(surface, { clientX: 40, clientY: 63 });
     const tip = view.container.querySelector("[data-cdf-tip]");
     expect(tip?.getAttribute("data-cdf-tip-p")).toBe("0.5");
     expect(surface.getAttribute("data-hover-p")).toBe("0.5");
-    expect(tip?.textContent).toContain("传统基站定位");
-    expect(tip?.textContent).toContain("商用方案定位");
+    expect(tip?.textContent).toContain("方案1");
+    expect(tip?.textContent).toContain("方案2");
     expect(tip?.textContent).toContain("数字孪生辅助定位");
     expect(tip?.textContent).toContain("0.8m");
     expect(tip?.textContent).toContain("0.1m");
@@ -313,7 +314,7 @@ describe("CdfChart empty", () => {
     fireEvent.pointerMove(surface, { clientX: 40, clientY: 0 });
     expect(view.container.querySelector("[data-cdf-tip]")).toBeNull();
 
-    fireEvent.pointerMove(surface, { clientX: 40, clientY: 14 });
+    fireEvent.pointerMove(surface, { clientX: 40, clientY: 12.6 });
     expect(surface.getAttribute("data-hover-p")).toBe("0.9");
     const tip90 = view.container.querySelector("[data-cdf-tip]") as HTMLElement;
     expect(tip90?.textContent).toContain("0.6m");
@@ -324,10 +325,10 @@ describe("CdfChart empty", () => {
 });
 
 describe("CepBars empty", () => {
-  it("空态保留传统/商用/DT 与数字刻度，不用 --", () => {
+  it("空态保留方案1/方案2/DT 与数字刻度，不用 --", () => {
     const view = render(<CepBars cep={null} kind="p50M" />);
-    expect(view.container.textContent).toContain("传统");
-    expect(view.container.textContent).toContain("商用");
+    expect(view.container.textContent).toContain("方案1");
+    expect(view.container.textContent).toContain("方案2");
     expect(view.container.textContent).toContain("DT");
     expect(view.container.textContent).not.toContain("--");
     const ticks = [...view.container.querySelectorAll(".c4-cep-y span")].map(
@@ -344,7 +345,7 @@ describe("CepBars empty", () => {
     const ticks = [...view.container.querySelectorAll(".c4-cep-y span")].map(
       (el) => el.textContent,
     );
-    expect(ticks).toEqual(["0.4", "0.3", "0.2", "0.1", "0.0"]);
+    expect(ticks).toEqual(["0.8", "0.6", "0.4", "0.2", "0.0"]);
     const values = [...view.container.querySelectorAll(".c4-cep-value")].map(
       (el) => el.textContent,
     );
@@ -361,14 +362,28 @@ describe("CepBars empty", () => {
       <CepBars
         cep={{
           traditional: { p50M: 10, p90M: 0 },
-          commercial: { p50M: 1, p90M: 1 },
+          commercial: { p50M: 10, p90M: 1 },
           dt: { p50M: 10, p90M: 5 },
         }}
         kind="p50M"
       />,
     );
     expect(equal.container.querySelector("[data-cep-delta]")).toBeNull();
+    expect(equal.container.querySelector("[data-cep-baseline]")).toBeNull();
     equal.unmount();
+
+    const zeroBase = render(
+      <CepBars
+        cep={{
+          traditional: { p50M: 1, p90M: 0 },
+          commercial: { p50M: 1, p90M: 3 },
+          dt: { p50M: 1, p90M: 5 },
+        }}
+        kind="p90M"
+      />,
+    );
+    expect(zeroBase.container.querySelector("[data-cep-delta]")).toBeNull();
+    zeroBase.unmount();
 
     const mixed = {
       traditional: { p50M: 10, p90M: 10 },
@@ -376,33 +391,47 @@ describe("CepBars empty", () => {
       dt: { p50M: 2, p90M: 15 },
     };
     const p50 = render(<CepBars cep={mixed} kind="p50M" />);
-    const d50 = p50.container.querySelector("[data-cep-delta]");
+    const d50 = p50.container.querySelector('[data-cep-delta="dt"]');
     expect(d50?.textContent).toBe("80.0%");
     expect(d50?.querySelector(".c4-cep-delta__num")?.textContent).toBe("80.0");
     expect(d50?.querySelector(".c4-cep-delta__pct")?.textContent).toBe("%");
     expect(d50?.getAttribute("data-cep-delta-dir")).toBe("down");
-    expect(p50.container.querySelectorAll("[data-cep-delta]")).toHaveLength(1);
+    const c50 = p50.container.querySelector('[data-cep-delta="commercial"]');
+    expect(c50?.textContent).toBe("90.0%");
+    expect(c50?.getAttribute("data-cep-delta-dir")).toBe("down");
+    expect(p50.container.querySelectorAll("[data-cep-delta]")).toHaveLength(2);
+    expect(
+      p50.container.querySelector('[data-cep-delta="traditional"]'),
+    ).toBeNull();
     const base50 = p50.container.querySelector(
       "[data-cep-baseline]",
     ) as HTMLElement | null;
     expect(base50).not.toBeNull();
-    expect(base50?.style.bottom).toBe("122px");
-    expect((d50 as HTMLElement).style.bottom).toBe("130px");
+    // 峰值 10 → yMax 12
+    expect(base50?.style.bottom).toBe(`${130 * (10 / 12)}px`);
+    expect((d50 as HTMLElement).style.bottom).toBe(`${130 * (10 / 12) + 8}px`);
+    expect((c50 as HTMLElement).style.bottom).toBe(`${130 * (10 / 12) + 8}px`);
     p50.unmount();
 
     const p90 = render(<CepBars cep={mixed} kind="p90M" />);
-    const d90 = p90.container.querySelector("[data-cep-delta]");
+    const d90 = p90.container.querySelector('[data-cep-delta="dt"]');
     expect(d90?.textContent).toBe("50.0%");
     expect(d90?.getAttribute("data-cep-delta-dir")).toBe("up");
+    const c90 = p90.container.querySelector('[data-cep-delta="commercial"]');
+    expect(c90?.textContent).toBe("90.0%");
+    expect(c90?.getAttribute("data-cep-delta-dir")).toBe("down");
     const base90 = p90.container.querySelector(
       "[data-cep-baseline]",
     ) as HTMLElement | null;
-    expect(base90?.style.bottom).toBe(`${13 + 109 * (10 / 15)}px`);
-    expect((d90 as HTMLElement).style.bottom).toBe("137.2px");
+    // 峰值 15 → yMax 18
+    expect(base90?.style.bottom).toBe(`${130 * (10 / 18)}px`);
+    expect((d90 as HTMLElement).style.bottom).toBe(
+      `${130 * (15 / 18) + 13.2 + 2}px`,
+    );
     p90.unmount();
   });
 
-  it("DT 接近或高于传统时气泡让开数值，虚线仍锚传统柱顶", () => {
+  it("商用/DT 接近或高于传统时气泡让开本列数值，虚线仍锚传统柱顶", () => {
     const near = render(
       <CepBars
         cep={{
@@ -417,11 +446,11 @@ describe("CepBars empty", () => {
       "[data-cep-baseline]",
     ) as HTMLElement | null;
     const nearDelta = near.container.querySelector(
-      "[data-cep-delta]",
+      '[data-cep-delta="dt"]',
     ) as HTMLElement | null;
-    expect(nearBase?.style.bottom).toBe("122px");
+    expect(nearBase?.style.bottom).toBe(`${130 * (10 / 12)}px`);
     expect(nearDelta?.style.bottom).toBe(
-      `${13 + 109 * (9.9 / 10) + 13.2 + 2}px`,
+      `${130 * (9.9 / 12) + 13.2 + 2}px`,
     );
     near.unmount();
 
@@ -439,11 +468,31 @@ describe("CepBars empty", () => {
       "[data-cep-baseline]",
     ) as HTMLElement | null;
     const tallDelta = tall.container.querySelector(
-      "[data-cep-delta]",
+      '[data-cep-delta="dt"]',
     ) as HTMLElement | null;
-    expect(tallBase?.style.bottom).toBe(`${13 + 109 * (10 / 15)}px`);
-    expect(tallDelta?.style.bottom).toBe("137.2px");
+    expect(tallBase?.style.bottom).toBe(`${130 * (10 / 18)}px`);
+    expect(tallDelta?.style.bottom).toBe(`${130 * (15 / 18) + 13.2 + 2}px`);
     tall.unmount();
+
+    // 截图同款：商用 3.3 高于传统 1.4 → 上升 135.7%，气泡让开商用数值
+    const comHigh = render(
+      <CepBars
+        cep={{
+          traditional: { p50M: 1.4, p90M: 1 },
+          commercial: { p50M: 3.3, p90M: 1 },
+          dt: { p50M: 0.1, p90M: 1 },
+        }}
+        kind="p50M"
+      />,
+    );
+    const comDelta = comHigh.container.querySelector(
+      '[data-cep-delta="commercial"]',
+    ) as HTMLElement | null;
+    expect(comDelta?.textContent).toBe("135.7%");
+    expect(comDelta?.getAttribute("data-cep-delta-dir")).toBe("up");
+    // 峰值 3.3 → yMax 4.0
+    expect(comDelta?.style.bottom).toBe(`${130 * (3.3 / 4) + 13.2 + 2}px`);
+    comHigh.unmount();
   });
 });
 
@@ -479,8 +528,12 @@ describe("ErrorReplay", () => {
         onReset={() => undefined}
       />,
     );
-    const title = view.container.querySelector(".c4-axis-title");
-    expect(title?.textContent).toBe("点位定位误差(m)");
+    expect(view.container.querySelector(".c4-ctrl-title")?.textContent).toBe(
+      "定位误差(m)",
+    );
+    expect(
+      view.container.querySelector(".c4-y-axis__label")?.textContent,
+    ).toBe("点位");
     const ticks = [...view.container.querySelectorAll(".c4-y-axis span")].map(
       (el) => el.textContent,
     );
@@ -585,15 +638,15 @@ describe("ErrorReplay", () => {
 
     Object.defineProperty(board, "offsetWidth", {
       configurable: true,
-      value: 1748,
+      value: 1666,
     });
     board.getBoundingClientRect = () =>
       ({
-        width: 1748,
+        width: 1666,
         height: 147,
         top: 0,
         left: 0,
-        right: 1748,
+        right: 1666,
         bottom: 147,
         x: 0,
         y: 0,
@@ -681,8 +734,8 @@ describe("ErrorReplay", () => {
     expect(tip?.getAttribute("data-error-tip-no")).toBe("1");
     expect(board.getAttribute("data-hover-no")).toBe("1");
     expect(tip?.textContent).toContain("P1定位误差");
-    expect(tip?.textContent).toContain("传统基站定位轨迹");
-    expect(tip?.textContent).toContain("商用方案定位轨迹");
+    expect(tip?.textContent).toContain("方案1轨迹");
+    expect(tip?.textContent).toContain("方案2轨迹");
     expect(tip?.textContent).toContain("数字孪生辅助定位轨迹");
     expect(tip?.textContent).toContain("0.017m");
     expect(tip?.textContent).toContain("0.012m");
@@ -770,15 +823,15 @@ function mockReplayBoard(container: HTMLElement): HTMLElement {
   const board = container.querySelector("[data-replay-surface]") as HTMLElement;
   Object.defineProperty(board, "offsetWidth", {
     configurable: true,
-    value: 1748,
+    value: 1666,
   });
   board.getBoundingClientRect = () =>
     ({
-      width: 1748,
+      width: 1666,
       height: 147,
       top: 0,
       left: 0,
-      right: 1748,
+      right: 1666,
       bottom: 147,
       x: 0,
       y: 0,
@@ -816,16 +869,16 @@ function mockCdfSurface(container: HTMLElement): HTMLElement {
   });
   Object.defineProperty(surface, "offsetHeight", {
     configurable: true,
-    value: 136,
+    value: 126,
   });
   surface.getBoundingClientRect = () =>
     ({
       width: 280,
-      height: 136,
+      height: 126,
       top: 0,
       left: 0,
       right: 280,
-      bottom: 136,
+      bottom: 126,
       x: 0,
       y: 0,
       toJSON: () => ({}),

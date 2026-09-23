@@ -20,16 +20,20 @@ type Props = {
   withSamples: ThroughputSample[];
 };
 
-/** Pencil AFTrn / 静态 THRP_PLOT：602×176 内的网格与曲线坐标系。 */
+/**
+ * Pencil AFTrn：602×176 内的网格与曲线坐标系（槽高 171 裁切）。
+ * 12px 刻度：顶留半行给最高 Y 刻度，底留一行给 X 刻度，二者都不得越出 171。
+ */
 const PLOT = {
   artW: 602,
   artH: 176,
   left: 29.263888888888886,
-  top: 4.591304347826087,
+  top: 8,
   width: 564.375,
-  height: 154.57391304347829,
-  xLabelY: 162.22608695652175,
-  yLabelX: 15,
+  height: 146,
+  xLabelY: 156,
+  /** Y 刻度右缘锚点，位于绘图区左缘左侧留空。 */
+  yLabelRight: 22,
 } as const;
 
 /** 案侧文案较长（传统/数字孪生），宽于 case3-v2 的 148。 */
@@ -37,12 +41,12 @@ const TIP_W = 200;
 /** 约两行 tip 高度（含 padding），用于锚在数据点上方。 */
 const TIP_H = 48;
 const TIP_GAP = 8;
-const WITHOUT_COLOR = "#97AAC4";
-const WITH_COLOR = "#7A6BFF";
+const WITHOUT_COLOR = "rgba(90, 191, 251, 1)";
+const WITH_COLOR = "rgba(186, 206, 234, 1)";
 
 const TIP_ROWS = [
-  { key: "without" as const, name: "传统基站定位", color: WITHOUT_COLOR },
-  { key: "with" as const, name: "数字孪生辅助定位", color: WITH_COLOR },
+  { key: "without" as const, name: "有DT辅助", color: WITHOUT_COLOR },
+  { key: "with" as const, name: "无DT辅助", color: WITH_COLOR },
 ];
 
 function xOf(no: number, start: number, end: number): number {
@@ -188,11 +192,11 @@ export function ThroughputChart(props: Props) {
           <div className="c4-kpi__legend c4-kpi__legend--thrp">
             <span>
               <i className="c4-dot c4-dot--bs" />
-              传统基站定位
+              有DT辅助
             </span>
             <span>
               <i className="c4-dot c4-dot--dt" />
-              数字孪生辅助定位
+              无DT辅助
             </span>
           </div>
         </div>
@@ -240,7 +244,7 @@ export function ThroughputChart(props: Props) {
                 d={dWith}
                 fill="none"
                 stroke={WITH_COLOR}
-                strokeWidth="2.5"
+                strokeWidth="1.5"
               />
             </svg>
             <div className="c4-thrp-dots">
@@ -272,7 +276,7 @@ export function ThroughputChart(props: Props) {
                 <span
                   key={`y-${v}`}
                   style={{
-                    left: `${PLOT.yLabelX}px`,
+                    left: `${PLOT.yLabelRight}px`,
                     top: `${yOf(v, win.yMax)}px`,
                   }}
                 >
@@ -297,7 +301,11 @@ export function ThroughputChart(props: Props) {
           {hovered != null ? (
             <div
               className="c4-thrp-cursor"
-              style={{ left: `${xOf(hovered, win.windowStart, win.windowEnd)}px` }}
+              style={{
+                left: `${xOf(hovered, win.windowStart, win.windowEnd)}px`,
+                top: `${PLOT.top}px`,
+                height: `${PLOT.height}px`,
+              }}
               aria-hidden
             />
           ) : null}

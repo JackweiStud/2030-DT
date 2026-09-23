@@ -7,6 +7,7 @@ import {
   cdfGeometry,
   cdfQuantileErrorM,
   cdfXTicks,
+  cepAxisTop,
   cepFromStatistics,
   cepGroupGeometry,
   cepImprovement,
@@ -207,10 +208,10 @@ describe("cepGroupGeometry", () => {
     const stats = sampleStatistics();
     const p50 = cepGroupGeometry(cepFromStatistics(stats.cep, "p50M"));
     const p90 = cepGroupGeometry(cepFromStatistics(stats.cep, "p90M"));
-    expect(p50.yMax).toBeCloseTo(0.4);
-    expect(p90.yMax).toBeCloseTo(0.9);
+    expect(p50.yMax).toBe(0.8);
+    expect(p90.yMax).toBe(1.2);
     const dt50 = p50.bars.find((b) => b.scheme === "dt")!;
-    expect(dt50.heightRatio).toBeCloseTo(0.1 / 0.4);
+    expect(dt50.heightRatio).toBeCloseTo(0.1 / 0.8);
     const mutated = {
       ...stats.cep,
       traditional: { ...stats.cep.traditional, p90M: 2 },
@@ -218,7 +219,17 @@ describe("cepGroupGeometry", () => {
     const p50b = cepGroupGeometry(cepFromStatistics(mutated, "p50M"));
     const p90b = cepGroupGeometry(cepFromStatistics(mutated, "p90M"));
     expect(p50b.yMax).toBe(p50.yMax);
-    expect(p90b.yMax).toBeCloseTo(2);
+    expect(p90b.yMax).toBe(2.4);
+  });
+
+  it("yMax = 峰值×1.2 向上取 0.4 倍数，最高柱不顶满", () => {
+    expect(cepAxisTop(3)).toBe(3.6);
+    expect(cepAxisTop(3.2)).toBe(4);
+    expect(cepAxisTop(5)).toBe(6);
+    expect(cepAxisTop(0)).toBe(0.4);
+    const geom = cepGroupGeometry({ traditional: 3, commercial: 2, dt: 1 });
+    const peak = Math.max(...geom.bars.map((b) => b.heightRatio));
+    expect(peak).toBeLessThanOrEqual(1 / 1.2 + 1e-9);
   });
 });
 

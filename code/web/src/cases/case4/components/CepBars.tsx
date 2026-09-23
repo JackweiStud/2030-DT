@@ -1,6 +1,7 @@
 /**
  * CEP 50/90 柱。柱高用原值，标签 toFixed(1)。禁止固定像素特例。
  * 空态保留轴与「传统/商用/DT」标签，不画柱、不用「--」占位。
+ * X 轴标签在独立行，位于 Y=0 基线下方，不与柱列共用底部空间。
  */
 
 import {
@@ -14,20 +15,25 @@ import type { CepPoint, Scheme } from "../types";
 const COLORS: Record<Scheme, string> = {
   traditional: "#97AAC4",
   commercial: "#F0A12E",
-  dt: "#7A6BFF",
+  dt: "rgba(90, 191, 251, 1)",
 };
 
 const LABELS: Record<Scheme, string> = {
-  traditional: "传统",
-  commercial: "商用",
+  traditional: "方案1",
+  commercial: "方案2",
   dt: "DT",
 };
 
 const SCHEME_ORDER: Scheme[] = ["traditional", "commercial", "dt"];
+/** 相对传统画变化气泡的方案。 */
+const DELTA_SCHEMES: Scheme[] = ["commercial", "dt"];
 
-const PLOT_MAX = 109;
-/** 与 `.c4-cep-label` 高度一致，用于传统柱顶虚线。 */
-const CEP_LABEL_H = 13;
+/** 与 `.c4-cep-grid` 高度一致；柱区 136 高，顶部只留半行给最高刻度文字。 */
+const PLOT_MAX = 130;
+/** 与 `.c4-cep-x` 高度 + margin-top 一致；Y=0 基线距柱槽底边的距离。 */
+const CEP_X_AXIS_H = 22;
+/** 与 ticks 顺序一一对应（顶 → 底）。 */
+const TICK_RATIOS = [1, 0.75, 0.5, 0.25, 0] as const;
 /** 与 `.c4-cep-value` 的 11px × line-height 1.2 一致。 */
 const CEP_VALUE_H = 13.2;
 /** 气泡底边小三角高度，尖端落在虚线上。 */
@@ -47,14 +53,14 @@ type Props = {
 };
 
 function dataTicks(yMax: number): string[] {
-  return [1, 0.75, 0.5, 0.25, 0].map((ratio) => formatFixed(yMax * ratio, 1));
+  return TICK_RATIOS.map((ratio) => formatFixed(yMax * ratio, 1));
 }
 
-/** 虚线始终锚传统柱顶；气泡同时让开 DT 数值顶边。 */
-function cepDeltaBottomPx(tradHeight: number, dtHeight: number): number {
-  const onBaseline = CEP_LABEL_H + tradHeight + CEP_CARET_H;
-  const aboveDtValue = CEP_LABEL_H + dtHeight + CEP_VALUE_H + CEP_DELTA_GAP;
-  return Math.max(onBaseline, aboveDtValue);
+/** 虚线始终锚传统柱顶；气泡同时让开本列数值顶边。bottom 相对柱图区底边。 */
+function cepDeltaBottomPx(tradHeight: number, barHeight: number): number {
+  const onBaseline = tradHeight + CEP_CARET_H;
+  const aboveValue = barHeight + CEP_VALUE_H + CEP_DELTA_GAP;
+  return Math.max(onBaseline, aboveValue);
 }
 
 function CepDeltaArrow(props: { direction: "up" | "down" }) {
@@ -83,21 +89,30 @@ function CepDeltaArrow(props: { direction: "up" | "down" }) {
  * 一组 CEP 柱。
  */
 export function CepBars(props: Props) {
-  const title = props.kind === "p50M" ? "CEP(50%)" : "CEP(90%)";
+  const title = props.kind === "p50M" ? "CEP,50%" : "CEP,90%";
   const geom = props.cep
     ? cepGroupGeometry(cepFromStatistics(props.cep, props.kind))
     : null;
   const ticks = geom ? dataTicks(geom.yMax) : EMPTY_TICKS[props.kind];
-  const delta = props.cep
-    ? cepImprovement(props.cep.traditional[props.kind], props.cep.dt[props.kind])
-    : null;
-  const tradBar = geom?.bars.find((b) => b.scheme === "traditional");
-  const dtBar = geom?.bars.find((b) => b.scheme === "dt");
-  const tradHeight = tradBar ? PLOT_MAX * tradBar.heightRatio : 0;
-  const dtHeight = dtBar ? PLOT_MAX * dtBar.heightRatio : 0;
-  const baselineBottom = CEP_LABEL_H + tradHeight;
-  const deltaBottom = cepDeltaBottomPx(tradHeight, dtHeight);
-  const showBaseline = delta != null && tradHeight > 0;
+  const heightOf = (scheme: Scheme) => {
+    const bar = geom?.bars.find((b) => b.scheme === scheme);
+    return bar ? PLOT_MAX * bar.heightRatio : 0;
+  };
+  const tradHeight = heightOf("traditional");
+  const deltas = new Map(
+    DELTA_SCHEMES.map((scheme) => [
+      scheme,
+      props.cep
+        ? cepImprovement(
+            props.cep.traditional[props.kind],
+            props.cep[scheme][props.kind],
+          )
+        : null,
+    ]),
+  );
+  const baselineBottom = tradHeight;
+  const showBaseline =
+    tradHeight > 0 && [...deltas.values()].some((d) => d != null);
   return (
     <div
       className="c4-cep"
@@ -106,57 +121,77 @@ export function CepBars(props: Props) {
     >
       <div className="c4-subhead">{title}</div>
       <div className="c4-cep-slot">
-        <div className="c4-cep-grid" aria-hidden />
+        <div className="c4-cep-grid" aria-hidden>
+          <i className="c4-cep-grid__line" style={{ bottom: "0px" }} />
+        </div>
         <div className="c4-cep-y">
           {ticks.map((t, i) => (
-            <span key={`${t}-${i}`}>{t}</span>
+            <span
+              key={`${t}-${i}`}
+              style={{
+                bottom: `${CEP_X_AXIS_H + (TICK_RATIOS[i] ?? 0) * PLOT_MAX}px`,
+              }}
+            >
+              {t}
+            </span>
           ))}
         </div>
-        <div className="c4-cep-plot">
-          {showBaseline ? (
-            <div
-              className="c4-cep-baseline"
-              data-cep-baseline
-              style={{ bottom: `${baselineBottom}px` }}
-            />
-          ) : null}
-          {SCHEME_ORDER.map((scheme) => {
-            const bar = geom?.bars.find((b) => b.scheme === scheme);
-            const value = bar ? formatFixed(bar.value, 1) : "";
-            const height = bar ? PLOT_MAX * bar.heightRatio : 0;
-            const emptyBar = !bar || bar.heightRatio === 0;
-            return (
-              <div key={scheme} className="c4-cep-col">
-                {scheme === "dt" && delta && showBaseline ? (
-                  <span
-                    className="c4-cep-delta"
-                    data-cep-delta
-                    data-cep-delta-dir={delta.direction}
-                    style={{ bottom: `${deltaBottom}px` }}
-                  >
-                    <CepDeltaArrow direction={delta.direction} />
-                    <span className="c4-cep-delta__readout">
-                      <span className="c4-cep-delta__num">
-                        {delta.label.replace(/%$/, "")}
+        <div className="c4-cep-main">
+          <div className="c4-cep-plot">
+            {showBaseline ? (
+              <div
+                className="c4-cep-baseline"
+                data-cep-baseline
+                style={{ bottom: `${baselineBottom}px` }}
+              />
+            ) : null}
+            {SCHEME_ORDER.map((scheme) => {
+              const bar = geom?.bars.find((b) => b.scheme === scheme);
+              const value = bar ? formatFixed(bar.value, 1) : "";
+              const height = bar ? PLOT_MAX * bar.heightRatio : 0;
+              const emptyBar = !bar || bar.heightRatio === 0;
+              const delta = deltas.get(scheme);
+              return (
+                <div key={scheme} className="c4-cep-col">
+                  {delta && showBaseline ? (
+                    <span
+                      className="c4-cep-delta"
+                      data-cep-delta={scheme}
+                      data-cep-delta-dir={delta.direction}
+                      style={{
+                        bottom: `${cepDeltaBottomPx(tradHeight, height)}px`,
+                      }}
+                    >
+                      <CepDeltaArrow direction={delta.direction} />
+                      <span className="c4-cep-delta__readout">
+                        <span className="c4-cep-delta__num">
+                          {delta.label.replace(/%$/, "")}
+                        </span>
+                        <span className="c4-cep-delta__pct">%</span>
                       </span>
-                      <span className="c4-cep-delta__pct">%</span>
                     </span>
-                  </span>
-                ) : null}
-                <div className="c4-cep-value-wrap">
-                  <div className="c4-cep-value">{value}</div>
+                  ) : null}
+                  <div className="c4-cep-value-wrap">
+                    <div className="c4-cep-value">{value}</div>
+                  </div>
+                  <div
+                    className={`c4-cep-bar${emptyBar ? " is-empty" : ""}`}
+                    style={{
+                      height: `${height}px`,
+                      background: COLORS[scheme],
+                    }}
+                  />
                 </div>
-                <div
-                  className={`c4-cep-bar${emptyBar ? " is-empty" : ""}`}
-                  style={{
-                    height: `${height}px`,
-                    background: COLORS[scheme],
-                  }}
-                />
-                <div className="c4-cep-label">{LABELS[scheme]}</div>
+              );
+            })}
+          </div>
+          <div className="c4-cep-x">
+            {SCHEME_ORDER.map((scheme) => (
+              <div key={scheme} className="c4-cep-label">
+                {LABELS[scheme]}
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
     </div>

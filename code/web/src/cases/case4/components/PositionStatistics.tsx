@@ -19,11 +19,11 @@ export function PositionStatistics(props: Props) {
         <div className="c4-kpi__legend">
           <span>
             <i className="c4-dot c4-dot--bs" />
-            传统基站定位
+            方案1
           </span>
           <span>
             <i className="c4-dot c4-dot--gaode" />
-            商用方案定位
+            方案2
           </span>
           <span>
             <i className="c4-dot c4-dot--dt" />

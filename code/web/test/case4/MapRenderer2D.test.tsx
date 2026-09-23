@@ -73,7 +73,7 @@ describe("Case4 MapRenderer2D", () => {
     expect(layer?.querySelector(".c4-tracks")).toBeTruthy();
     const trackLines = layer?.querySelectorAll(".c4-tracks polyline") ?? [];
     expect(trackLines.length).toBe(3);
-    expect(trackLines[0]?.getAttribute("stroke-width")).toBe("2.5");
+    expect(trackLines[0]?.getAttribute("stroke-width")).toBe("2");
     expect(layer?.querySelectorAll(".c4-tracks circle").length).toBe(90);
     expect(view.container.querySelector('[aria-label="复位地图"]')).toBeNull();
   });

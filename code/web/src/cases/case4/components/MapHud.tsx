@@ -1,5 +1,5 @@
 /**
- * 地图 HUD：测试对比、现场环境、2D/3D、图例。不进地图 transform。
+ * 地图 HUD：定位性能测试、现场环境、2D/3D、图例。不进地图 transform。
  */
 
 import { TrackLegend } from "./TrackLegend";
@@ -18,7 +18,7 @@ export function MapHud(props: Props) {
       <div className="c4-top-mask" aria-hidden />
       <div className="c4-compare">
         <span className="c4-compare__icon" aria-hidden />
-        <span className="c4-compare__text">测试对比</span>
+        <span className="c4-compare__text">定位性能测试</span>
       </div>
       <button
         type="button"

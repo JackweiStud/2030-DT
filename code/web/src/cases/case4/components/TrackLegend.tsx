@@ -7,11 +7,11 @@ export function TrackLegend() {
     <div className="c4-legend" data-region="TrackLegend" aria-hidden="true">
       <div className="c4-legend__item">
         <i className="c4-legend__swatch c4-legend__swatch--bs" />
-        <span>传统基站定位</span>
+        <span>方案1</span>
       </div>
       <div className="c4-legend__item">
         <i className="c4-legend__swatch c4-legend__swatch--gaode" />
-        <span>商用方案定位</span>
+        <span>方案2</span>
       </div>
       <div className="c4-legend__item">
         <i className="c4-legend__swatch c4-legend__swatch--dt" />

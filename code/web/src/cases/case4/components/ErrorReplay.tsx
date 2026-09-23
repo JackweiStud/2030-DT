@@ -6,9 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import {
-  CASE4_POINT_WINDOW,
-} from "../config/case4RuntimeConfig";
+import { CASE4_POINT_WINDOW } from "../config/case4RuntimeConfig";
 import {
   errorAxisTicks,
   errorPlotYMax,
@@ -34,7 +32,7 @@ type Props = {
   onReset: () => void;
 };
 
-const PLOT_W = 1748;
+const PLOT_W = 1666;
 const PLOT_H = 110;
 const COL_GAP = 3;
 const POINT_R = 5;
@@ -52,12 +50,12 @@ type SchemeKey = "traditional" | "commercial" | "dt";
 const SCHEME_COLOR: Record<SchemeKey, string> = {
   traditional: "#97AAC4",
   commercial: "#F0A12E",
-  dt: "#7A6BFF",
+  dt: "rgba(90, 191, 251, 1)",
 };
 
 const TIP_ROWS: Array<{ scheme: SchemeKey; name: string }> = [
-  { scheme: "traditional", name: "传统基站定位轨迹" },
-  { scheme: "commercial", name: "商用方案定位轨迹" },
+  { scheme: "traditional", name: "方案1轨迹" },
+  { scheme: "commercial", name: "方案2轨迹" },
   { scheme: "dt", name: "数字孪生辅助定位轨迹" },
 ];
 
@@ -219,12 +217,18 @@ export function ErrorReplay(props: Props) {
     hasPlot,
   );
 
-  const playClass = props.startEnabled
-    ? "is-ready"
-    : props.busy
+  const playClass =
+    props.statusText === "测试中"
       ? "is-busy"
-      : "is-off";
-  const resetClass = props.resetEnabled ? "is-ready" : "is-off";
+      : props.startEnabled
+        ? "is-ready"
+        : "is-off";
+  const resetClass =
+    props.statusText === "重置中"
+      ? "is-busy"
+      : props.resetEnabled
+        ? "is-ready"
+        : "is-off";
   const statusBusy = isBusyStatus(props.statusText);
 
   function samePointer(
@@ -332,6 +336,7 @@ export function ErrorReplay(props: Props) {
   return (
     <div className="c4-error-replay" data-region="ErrorReplay">
       <div className="c4-ctrl-col" data-region="ReplayControls">
+        <div className="c4-ctrl-title">定位误差(m)</div>
         <div className="c4-ctrl-left">
           <div className="c4-ctrl-btns">
             <button
@@ -340,14 +345,39 @@ export function ErrorReplay(props: Props) {
               aria-label="开始"
               disabled={!props.startEnabled}
               onClick={props.onStart}
-            />
+            >
+              <svg viewBox="0 0 16 16" aria-hidden>
+                <path
+                  d="M5.5 3.6v8.8a.6.6 0 0 0 .9.5l7-4.4a.6.6 0 0 0 0-1l-7-4.4a.6.6 0 0 0-.9.5z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
             <button
               type="button"
               className={`c4-icon-btn c4-icon-btn--reset ${resetClass}`}
               aria-label="重置"
               disabled={!props.resetEnabled}
               onClick={props.onReset}
-            />
+            >
+              <svg viewBox="0 0 16 16" aria-hidden>
+                <path
+                  d="M12.6 9.4A4.8 4.8 0 1 1 11.4 4.6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M12.4 2.2v3h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
           <div className={`c4-ctrl-status${statusBusy ? " is-busy" : ""}`}>
             <span className="c4-ctrl-status__text">{props.statusText}</span>
@@ -358,13 +388,11 @@ export function ErrorReplay(props: Props) {
             ) : null}
           </div>
         </div>
-        <div className="c4-axis-title" aria-hidden>
-          <span>点位</span>
-          <span className="c4-axis-title__err">定位误差</span>
-          <span>(m)</span>
-        </div>
       </div>
       <div className="c4-y-axis" data-region="ErrorYAxis">
+        <div className="c4-y-axis__label" aria-hidden>
+          点位
+        </div>
         {errorAxisTicks(plotYMax).map((tick, index) => (
           <span key={index}>{formatErrorAxisTick(tick)}</span>
         ))}
@@ -456,7 +484,13 @@ export function ErrorReplay(props: Props) {
               return (
                 <g key={scheme}>
                   {d ? (
-                    <path d={d} fill="none" stroke={color} strokeWidth="2" />
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth="1"
+                      strokeDasharray="6 4"
+                    />
                   ) : null}
                   {pts.map((p, i) => (
                     <circle

@@ -17,12 +17,12 @@ import { SCHEMES } from "../types";
 const COLORS: Record<Scheme, string> = {
   traditional: "#97AAC4",
   commercial: "#F0A12E",
-  dt: "#7A6BFF",
+  dt: "rgba(90, 191, 251, 1)",
 };
 
 const TIP_ROWS: Array<{ scheme: Scheme; name: string }> = [
-  { scheme: "traditional", name: "传统基站定位" },
-  { scheme: "commercial", name: "商用方案定位" },
+  { scheme: "traditional", name: "方案1" },
+  { scheme: "commercial", name: "方案2" },
   { scheme: "dt", name: "数字孪生辅助定位" },
 ];
 
@@ -42,7 +42,8 @@ const EMPTY_X_TICKS = [
 ] as const;
 
 const PLOT_W = 280;
-const PLOT_H = 136;
+/** 底部留白与 CEP 同构：Y=0 下 8px 间距 + 14px X 刻度行，贴 `.c4-cdf-plot` 底。 */
+const PLOT_H = 126;
 const PLOT_LEFT = 28;
 const PLOT_TOP = 8;
 const TIP_W = 200;
@@ -91,7 +92,7 @@ function metersLabel(errorM: number | null): string {
  * CDF 卡内图。
  */
 export function CdfChart(props: Props) {
-  const geom = props.cdf ? cdfGeometry(props.cdf) : null;
+  const geom = props.cdf ? cdfGeometry(props.cdf, PLOT_W, PLOT_H) : null;
   const empty = !geom || geom.series.every((s) => !s.d);
   const [hoverP, setHoverP] = useState<number | null>(null);
 
@@ -142,7 +143,7 @@ export function CdfChart(props: Props) {
 
   return (
     <div className={`c4-cdf${hovered != null ? " is-hover" : ""}`} data-region="CDF">
-      <div className="c4-subhead">CDF图对比</div>
+      <div className="c4-subhead">CDF</div>
       <div className="c4-cdf-plot">
         <div className="c4-cdf-grid" aria-hidden />
         <svg
@@ -166,8 +167,13 @@ export function CdfChart(props: Props) {
             : null}
         </svg>
         <div className="c4-cdf-y">
-          {Y_TICKS.map((t) => (
-            <span key={t}>{t}</span>
+          {Y_TICKS.map((t, i) => (
+            <span
+              key={t}
+              style={{ top: `${PLOT_TOP + (i * PLOT_H) / (Y_TICKS.length - 1)}px` }}
+            >
+              {t}
+            </span>
           ))}
         </div>
         <div className="c4-cdf-x">

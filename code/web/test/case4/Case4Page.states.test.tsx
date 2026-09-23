@@ -87,7 +87,7 @@ describe("Case4Page", () => {
       "--",
     );
     expect(view.container.querySelector(".c4-cep-label")?.textContent).toBe(
-      "传统",
+      "方案1",
     );
     const thrpX = [
       ...view.container.querySelectorAll(".c4-thrp-x span"),
@@ -118,7 +118,7 @@ describe("Case4Page", () => {
     ).toBe(true);
     expect(view.container.querySelector(".c4-nlos-value")?.textContent).toBe("--");
     expect(view.container.querySelector(".c4-cep-label")?.textContent).toBe(
-      "传统",
+      "方案1",
     );
   });
 

@@ -310,12 +310,24 @@ export type CepGroupGeom = {
   bars: CepBar[];
 };
 
+/** 柱顶预留比例，与 case1 KPI 柱图一致。 */
+const CEP_HEADROOM = 1.2;
+/** 4 段刻度且刻度为一位小数，yMax 须为 0.4 的倍数。 */
+const CEP_Y_GRAIN = 0.4;
+
+/** 组内峰值 ×1.2 后向上取到 0.4 的倍数，最高柱约占 83% 轴高。 */
+export function cepAxisTop(peak: number): number {
+  const raw = Math.max(peak, 0) * CEP_HEADROOM;
+  const steps = Math.max(1, Math.ceil(raw / CEP_Y_GRAIN - 1e-9));
+  return Number((steps * CEP_Y_GRAIN).toFixed(1));
+}
+
 /** 组内三方案共用 yMax；柱高用原值。 */
 export function cepGroupGeometry(
   values: Record<Scheme, number>,
 ): CepGroupGeom {
   const nums = SCHEMES.map((s) => values[s]).filter((v) => Number.isFinite(v));
-  const yMax = Math.max(...nums, EPS);
+  const yMax = cepAxisTop(Math.max(...nums, EPS));
   return {
     yMax,
     bars: SCHEMES.map((scheme) => ({
@@ -345,16 +357,16 @@ export type CepImprovement = {
 };
 
 /**
- * DT 相对传统基站的 CEP 变化百分比。
+ * 商用 / DT 相对传统基站的 CEP 变化百分比。
  * 用原值计算；传统为 0 或两者相等时不展示。标签一位小数，不含箭头字符。
  */
 export function cepImprovement(
   traditional: number,
-  dt: number,
+  other: number,
 ): CepImprovement | null {
-  if (!Number.isFinite(traditional) || !Number.isFinite(dt)) return null;
-  if (traditional === 0 || traditional === dt) return null;
-  const raw = ((traditional - dt) / traditional) * 100;
+  if (!Number.isFinite(traditional) || !Number.isFinite(other)) return null;
+  if (traditional === 0 || traditional === other) return null;
+  const raw = ((traditional - other) / traditional) * 100;
   const direction: CepImprovement["direction"] = raw > 0 ? "down" : "up";
   return {
     direction,
