@@ -12,7 +12,7 @@ declare const process: {
  * 主变量 DT_ADAPTER_*；旧 CASE2_ADAPTER_* 仅 fallback。
  * 正式包由同机静态托管保持同源，不依赖 CORS。
  * host:true 监听 0.0.0.0，启动时打印 Local + Network（局域网 IP）。
- * CASE4_REFLECTION_ENABLE / CASE4_BS_XYZ 显式白名单注入，不暴露整个 .env。
+ * Case3/Case4 Reflection 配置显式白名单注入，不暴露整个 .env。
  */
 export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, process.cwd(), "");
@@ -29,6 +29,9 @@ export default defineConfig(({ mode }) => {
     fileEnv.CASE4_REFLECTION_ENABLE ??
     "";
   const bsXyz = process.env.CASE4_BS_XYZ ?? fileEnv.CASE4_BS_XYZ ?? "";
+  const case3ReflectionEnable =
+    process.env.CASE3_REFLECTION_ENABLE ?? fileEnv.CASE3_REFLECTION_ENABLE ?? "";
+  const case3BsXyz = process.env.CASE3_BS_XYZ ?? fileEnv.CASE3_BS_XYZ ?? "";
 
   return {
     plugins: [react()],
@@ -36,6 +39,8 @@ export default defineConfig(({ mode }) => {
     define: {
       "import.meta.env.CASE4_REFLECTION_ENABLE": JSON.stringify(reflectionEnable),
       "import.meta.env.CASE4_BS_XYZ": JSON.stringify(bsXyz),
+      "import.meta.env.CASE3_REFLECTION_ENABLE": JSON.stringify(case3ReflectionEnable),
+      "import.meta.env.CASE3_BS_XYZ": JSON.stringify(case3BsXyz),
     },
     server: {
       host: true,

@@ -22,6 +22,37 @@ describe("case3RuntimeConfig", () => {
     expect(c.v2MapImageOffsetX).toBe(0);
     expect(c.v2MapImageOffsetY).toBe(0);
     expect(c.v2DebugShow).toBe(true);
+    expect(c.reflectionEnable).toBe(false);
+    expect(c.bsXyz).toBeUndefined();
+  });
+
+  it("Reflection 关闭时不要求 BS；开启时校验坐标", () => {
+    expect(
+      loadCase3RuntimeConfig({
+        CASE3_REFLECTION_ENABLE: "false",
+        CASE3_BS_XYZ: "",
+      }).bsXyz,
+    ).toBeUndefined();
+
+    const on = loadCase3RuntimeConfig({
+      CASE3_REFLECTION_ENABLE: "true",
+      CASE3_BS_XYZ: "(1.5,-2.25,0)",
+    });
+    expect(on.reflectionEnable).toBe(true);
+    expect(on.bsXyz).toEqual({ x: 1.5, y: -2.25, z: 0 });
+
+    expect(() =>
+      loadCase3RuntimeConfig({
+        CASE3_REFLECTION_ENABLE: "1",
+        CASE3_BS_XYZ: "",
+      }),
+    ).toThrow(Case3ConfigError);
+    expect(() =>
+      loadCase3RuntimeConfig({
+        CASE3_REFLECTION_ENABLE: "true",
+        CASE3_BS_XYZ: "(1,2,65535)",
+      }),
+    ).toThrow(Case3ConfigError);
   });
 
   it("接受合法覆盖", () => {

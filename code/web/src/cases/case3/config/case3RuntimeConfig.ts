@@ -17,6 +17,8 @@ export type Case3RuntimeConfig = {
   v2MapImageOffsetX: number;
   v2MapImageOffsetY: number;
   v2DebugShow: boolean;
+  reflectionEnable?: boolean;
+  bsXyz?: { x: number; y: number; z: number };
 };
 
 const DEFAULTS: Case3RuntimeConfig = {
@@ -32,6 +34,7 @@ const DEFAULTS: Case3RuntimeConfig = {
   v2MapImageOffsetX: 0,
   v2MapImageOffsetY: 0,
   v2DebugShow: true,
+  reflectionEnable: false,
 };
 
 export class Case3ConfigError extends Error {
@@ -111,6 +114,50 @@ function readBooleanFlag(
   throw new Case3ConfigError(key, `${key} must be 0 or 1`);
 }
 
+function readReflectionEnable(env: EnvLike): boolean {
+  const raw = env.CASE3_REFLECTION_ENABLE;
+  if (raw === undefined || raw.trim() === "") {
+    return DEFAULTS.reflectionEnable ?? false;
+  }
+  const trimmed = raw.trim();
+  if (trimmed === "1" || trimmed.toLowerCase() === "true") return true;
+  if (trimmed === "0" || trimmed.toLowerCase() === "false") return false;
+  throw new Case3ConfigError(
+    "CASE3_REFLECTION_ENABLE",
+    "CASE3_REFLECTION_ENABLE must be 0/1 or true/false",
+  );
+}
+
+function readBsXyz(env: EnvLike): {
+  x: number;
+  y: number;
+  z: number;
+} {
+  const raw = env.CASE3_BS_XYZ;
+  if (raw === undefined || raw.trim() === "") {
+    throw new Case3ConfigError(
+      "CASE3_BS_XYZ",
+      "CASE3_BS_XYZ is required when CASE3_REFLECTION_ENABLE is on",
+    );
+  }
+  const trimmed = raw.trim().replace(/^[([]/, "").replace(/[)\]]$/, "");
+  const tokens = trimmed.split(",").map((token) => token.trim());
+  if (tokens.length !== 3 || tokens.some((token) => token === "")) {
+    throw new Case3ConfigError(
+      "CASE3_BS_XYZ",
+      "CASE3_BS_XYZ must be 3 finite numbers, e.g. (1.0,5.0,7.0)",
+    );
+  }
+  const values = tokens.map(Number);
+  if (values.some((value) => !Number.isFinite(value) || value === 65535)) {
+    throw new Case3ConfigError(
+      "CASE3_BS_XYZ",
+      "CASE3_BS_XYZ must be 3 finite non-sentinel numbers",
+    );
+  }
+  return { x: values[0]!, y: values[1]!, z: values[2]! };
+}
+
 /**
  * 解析 Case3 Vite env。
  * @param env 通常传入 import.meta.env
@@ -118,6 +165,7 @@ function readBooleanFlag(
 export function loadCase3RuntimeConfig(
   env: EnvLike = import.meta.env,
 ): Case3RuntimeConfig {
+  const reflectionEnable = readReflectionEnable(env);
   return {
     pollMs: readPositiveSafeInt(env, "VITE_CASE3_POLL_MS", DEFAULTS.pollMs),
     mapOriginX: readFiniteNumber(
@@ -175,6 +223,8 @@ export function loadCase3RuntimeConfig(
       "VITE_CASE3_V2_DEBUG_SHOW",
       DEFAULTS.v2DebugShow,
     ),
+    reflectionEnable,
+    bsXyz: reflectionEnable ? readBsXyz(env) : undefined,
   };
 }
 

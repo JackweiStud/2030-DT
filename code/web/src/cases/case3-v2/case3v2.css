@@ -241,6 +241,35 @@
 .case3v2-page .case3v2-route-debug { z-index: 3; pointer-events: none; }
 .case3v2-page .case3v2-route-points { z-index: 4; }
 
+.case3v2-page .case3v2-reflection {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.case3v2-page .case3v2-reflection__beam {
+  animation: case3v2-reflection-beam 1.2s linear infinite;
+}
+
+.case3v2-page .case3v2-reflection.is-static .case3v2-reflection__beam {
+  display: none;
+  animation: none;
+}
+
+.case3v2-page .case3v2-reflection__label {
+  fill: #e0f2fe;
+  font: 700 12px/1 var(--shell-font-ui);
+  pointer-events: none;
+}
+
+@keyframes case3v2-reflection-beam {
+  to { stroke-dashoffset: -1; }
+}
+
 .case3v2-page .case3v2-route-svg {
   position: absolute;
   left: 0;

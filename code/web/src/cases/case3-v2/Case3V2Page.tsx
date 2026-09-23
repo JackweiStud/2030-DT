@@ -89,6 +89,11 @@ export function Case3V2Page(props: Props) {
   const displayMapSide = v2DisplayMapSide(sourceMapSide, mapCleared);
   const mapPoints = mapCleared ? [] : completePointsOf(liveSnapshot);
   const currentPoint = mapCleared ? null : latestCompletePoint(liveSnapshot);
+  const reflectionVisible = displayMapSide === "with" && !mapCleared;
+  const reflectionPlayback =
+    view.activeAction?.kind === "start" && view.activeAction.side === "with"
+      ? "running"
+      : "static";
   const peerPoint =
     !mapCleared && displayMapSide === "with" && currentPoint
       ? peerPointByNo(view.withPeerPoints, currentPoint.no)
@@ -116,6 +121,9 @@ export function Case3V2Page(props: Props) {
           config={config}
           baseRoute={view.baseRoute}
           points={mapPoints}
+          currentPoint={currentPoint}
+          reflectionVisible={reflectionVisible}
+          reflectionPlayback={reflectionPlayback}
           stageElementRef={stageElementRef}
         />
       </section>

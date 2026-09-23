@@ -33,7 +33,7 @@ npm run build
 ## 配置
 
 - Case2 `VITE_CASE2_*` 只在 `src/cases/case2/metrics/heatmapConfig.ts` 读取。
-- Case3 `VITE_CASE3_*` 只在 `src/cases/case3/config/case3RuntimeConfig.ts` 读取（非法则启动失败，不钳制回退）。
+- Case3 `VITE_CASE3_*` 只在 `src/cases/case3/config/case3RuntimeConfig.ts` 读取（非法则启动失败，不钳制回退）；Reflection 使用白名单注入的 `CASE3_REFLECTION_ENABLE` 与 `CASE3_BS_XYZ`。
 - Case4 `VITE_CASE4_*` 只在 `src/cases/case4/config/case4RuntimeConfig.ts` 读取；反射另注入 `CASE4_REFLECTION_ENABLE` 与 `CASE4_BS_XYZ`。
 - 静态资源在 `assets/shell/`、`assets/case2/`、`assets/case3/`、`assets/case3-v2/`、`assets/case4/`；构建不依赖仓库外路径。
 - 「现场环境」弹窗为 Shell 级共用：case 页只调 `useSiteEnvWindow().open()`。

@@ -24,6 +24,7 @@ import {
   zoomMapViewAtPointer,
 } from "../../../case3/metrics/mapProjection";
 import type { BaseRoutePoint, Case3Point } from "../../../case3/types";
+import { ReflectionOverlay } from "./ReflectionOverlay";
 import {
   CASE3V2_MAP_STAGE,
   formatCase3V2MapEnv,
@@ -46,6 +47,9 @@ type Props = {
   baseRoute: BaseRoutePoint[];
   /** 最新快照中的完整点；不完整尾点不得传入。 */
   points?: Case3Point[];
+  currentPoint?: Case3Point | null;
+  reflectionVisible?: boolean;
+  reflectionPlayback?: "running" | "static";
   stageElementRef: React.RefObject<HTMLElement>;
 };
 
@@ -82,7 +86,15 @@ function clampSampleCount(value: number): number {
  */
 export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
   function MapRenderer2D(props, ref) {
-    const { config, baseRoute, points = [], stageElementRef } = props;
+    const {
+      config,
+      baseRoute,
+      points = [],
+      currentPoint = null,
+      reflectionVisible = false,
+      reflectionPlayback = "static",
+      stageElementRef,
+    } = props;
     const rootRef = useRef<HTMLDivElement>(null);
     const baseImageTransform = mapImageTransformFromConfig(config);
     const [imageTransform, setImageTransform] =
@@ -473,6 +485,14 @@ export const MapRenderer2D = forwardRef<MapRendererHandle, Props>(
                 </>
               ) : null}
             </div>
+            {reflectionVisible ? (
+              <ReflectionOverlay
+                config={config}
+                point={currentPoint}
+                viewBox={routeViewBox}
+                playback={reflectionPlayback}
+              />
+            ) : null}
             <div className="case3v2-route-debug" data-debug-route aria-hidden>
               {drawPoints.length > 1 ? (
                 <svg

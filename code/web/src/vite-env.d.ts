@@ -22,6 +22,8 @@ interface ImportMetaEnv {
   readonly VITE_CASE3_V2_MAP_IMAGE_OFFSET_X?: string;
   readonly VITE_CASE3_V2_MAP_IMAGE_OFFSET_Y?: string;
   readonly VITE_CASE3_V2_DEBUG_SHOW?: string;
+  readonly CASE3_REFLECTION_ENABLE?: string;
+  readonly CASE3_BS_XYZ?: string;
   readonly VITE_CASE4_POLL_MS?: string;
   readonly VITE_CASE4_MAP_ORIGIN_X?: string;
   readonly VITE_CASE4_MAP_ORIGIN_Y?: string;
