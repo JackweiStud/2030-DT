@@ -16,14 +16,12 @@ export const SIDE_FILES = Object.freeze({
     scans: "ue_comm_without_dt_beams.txt",
     selected: "ue_comm_without_dt_sel_beam.txt",
     throughput: "ue_comm_without_dt_thrp.txt",
-    cost: "ue_comm_without_dt_cost.txt",
   }),
   with: Object.freeze({
     coordinates: "ue_comm_with_dt_coordinates.txt",
     selected: "ue_comm_with_dt_sel_beam.txt",
     throughput: "ue_comm_with_dt_thrp.txt",
     reflection: "ue_comm_with_dt_coordinates_reflection_point.txt",
-    cost: "ue_comm_with_dt_cost.txt",
   }),
 });
 
@@ -46,7 +44,6 @@ export const DEFAULTS = Object.freeze({
   dataMode: "random",
   seed: "",
   throughputJitter: 0.1,
-  costJitter: 0.15,
   logLevel: "info",
 });
 

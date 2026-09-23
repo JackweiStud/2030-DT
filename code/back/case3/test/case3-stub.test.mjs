@@ -15,6 +15,11 @@ import {
 } from "../case3-stub.mjs";
 import { SIDE_FILES } from "../src/constants.mjs";
 
+const COST_FILES = Object.freeze({
+  without: "ue_comm_without_dt_cost.txt",
+  with: "ue_comm_with_dt_cost.txt",
+});
+
 const DEFAULT_CONTROL = Object.freeze({
   case: "case3",
   command: "init",
@@ -27,7 +32,10 @@ const DEFAULT_CONTROL = Object.freeze({
 
 async function createSharedDir(t, control = DEFAULT_CONTROL, write = true) {
   const sharedDir = await fs.mkdtemp(path.join(os.tmpdir(), "case3-stub-"));
-  await fs.mkdir(path.join(sharedDir, "case3"), { recursive: true });
+  const dataDir = path.join(sharedDir, "case3");
+  await fs.mkdir(dataDir, { recursive: true });
+  await fs.writeFile(path.join(dataDir, COST_FILES.without), "25\n");
+  await fs.writeFile(path.join(dataDir, COST_FILES.with), "15\n");
   if (write) await writeControl(sharedDir, control);
   t.after(() => fs.rm(sharedDir, { recursive: true, force: true }));
   return sharedDir;
@@ -68,7 +76,6 @@ function testConfig(sharedDir, overrides = {}) {
     dataMode: "random",
     seed: "",
     throughputJitter: 0.1,
-    costJitter: 0.15,
     logLevel: "info",
     ...overrides,
   };
@@ -121,7 +128,6 @@ test("正式配置锁定默认值与绝对共享根", async (t) => {
       dataMode: config.dataMode,
       seed: config.seed,
       throughputJitter: config.throughputJitter,
-      costJitter: config.costJitter,
       logLevel: config.logLevel,
     },
     {
@@ -134,7 +140,6 @@ test("正式配置锁定默认值与绝对共享根", async (t) => {
       dataMode: "random",
       seed: "",
       throughputJitter: 0.1,
-      costJitter: 0.15,
       logLevel: "info",
     },
   );
@@ -152,7 +157,6 @@ test("正式配置拒绝短 dwell、非正间隔和非法枚举/flag", async (t)
     { CASE3_STUB_DATA_MODE: "copy" },
     { CASE3_STUB_DATA_MODE: "dynamic" },
     { CASE3_STUB_THROUGHPUT_JITTER: "1.1" },
-    { CASE3_STUB_COST_JITTER: "-0.1" },
     { CASE3_STUB_LOG_LEVEL: "trace" },
   ]) {
     await assert.rejects(
@@ -162,7 +166,7 @@ test("正式配置拒绝短 dwell、非正间隔和非法枚举/flag", async (t)
   }
 });
 
-test("fixture 结构点独立预检吞吐长度和本地 Cost", async () => {
+test("fixture 结构点独立预检吞吐长度，不依赖 Cost", async () => {
   const fixtureStore = await loadFixtureStore({
     fixtureDir: DEFAULT_FIXTURE_DIR,
   });
@@ -178,8 +182,6 @@ test("fixture 结构点独立预检吞吐长度和本地 Cost", async () => {
     fixtureStore.sides.with.throughputValues.length,
     fixtureStore.sides.without.throughputValues.length,
   );
-  assert.equal(fixtureStore.sides.without.costLine, "25");
-  assert.equal(fixtureStore.sides.with.costLine, "15");
   assert.equal(fixtureStore.sides.without.throughputValues[0], 9.1);
   assert.equal(fixtureStore.sides.with.throughputValues[0], 8.5);
 });
@@ -195,7 +197,6 @@ test("random KPI：固定 seed 可复现，非 KPI 行保持 fixture 原值", as
     seed: "demo-seed",
     operationId: "ignored-with-fixed-seed",
     throughputJitter: 0.1,
-    costJitter: 0.15,
   };
   const first = createRoundDataset(options);
   const second = createRoundDataset(options);
@@ -219,13 +220,10 @@ test("random KPI：固定 seed 可复现，非 KPI 行保持 fixture 原值", as
     seed: "other-seed",
   });
   assert.notDeepEqual(otherSeed.throughputLines, first.throughputLines);
-  assert.notDeepEqual(otherSeed.costLines, first.costLines);
-  assert.equal(first.costLines.length, first.count);
-  assert.equal(first.costLine, first.costLines.at(-1));
   assert.equal(first.dataSource, "synthetic-kpi+fixture-structure");
 });
 
-test("random KPI：Throughput 独立抖动，Cost 按结构点生成", async () => {
+test("random KPI：只抖动 Throughput", async () => {
   const fixtureStore = await loadFixtureStore({
     fixtureDir: DEFAULT_FIXTURE_DIR,
   });
@@ -236,7 +234,6 @@ test("random KPI：Throughput 独立抖动，Cost 按结构点生成", async () 
     seed: "range-seed",
     operationId: "without",
     throughputJitter: 0.1,
-    costJitter: 0.15,
   });
   const withDt = createRoundDataset({
     fixtureStore,
@@ -245,7 +242,6 @@ test("random KPI：Throughput 独立抖动，Cost 按结构点生成", async () 
     seed: "range-seed",
     operationId: "with",
     throughputJitter: 0.1,
-    costJitter: 0.15,
   });
 
   for (const [dataset, templates] of [
@@ -260,21 +256,9 @@ test("random KPI：Throughput 独立抖动，Cost 按结构点生成", async () 
       assert.match(line, /^\d+\.\d{2}$/);
     });
   }
-
-  assert.equal(without.costLines.length, without.count);
-  assert.equal(withDt.costLines.length, withDt.count);
-  for (let index = 0; index < without.count; index += 1) {
-    const withoutCost = Number(without.costLines[index]);
-    const withCost = Number(withDt.costLines[index]);
-    assert.ok(withoutCost >= 21.3 && withoutCost <= 28.8);
-    assert.ok(withCost >= 12.8 && withCost <= 17.3);
-    assert.ok(withCost < withoutCost);
-    assert.match(without.costLines[index], /^\d+\.\d$/);
-    assert.match(withDt.costLines[index], /^\d+\.\d$/);
-  }
 });
 
-test("replay 模式逐行保留 fixture Throughput 与 Cost", async () => {
+test("replay 模式逐行保留 fixture Throughput", async () => {
   const fixtureStore = await loadFixtureStore({
     fixtureDir: DEFAULT_FIXTURE_DIR,
   });
@@ -289,20 +273,17 @@ test("replay 模式逐行保留 fixture Throughput 与 Cost", async () => {
     replay.throughputLines,
     fixtureStore.sides.with.throughputLines,
   );
-  assert.equal(replay.costLine, "15");
-  assert.deepEqual(replay.costLines, ["15"]);
   assert.equal(replay.resolvedSeed, null);
   assert.equal(replay.dataSource, "fixture-replay");
 });
 
-test("fixture 行数错配、scan 重复和错误 Cost 分别快速失败", async (t) => {
+test("fixture 行数错配和 scan 重复时快速失败", async (t) => {
   for (const [filename, content] of [
     ["ue_comm_without_dt_sel_beam.txt", "0\n"],
     [
       "ue_comm_without_dt_beams.txt",
       "0,0,2,3,4,5,6,7,8,9,10,11,12,13,14,15\n",
     ],
-    ["ue_comm_with_dt_cost.txt", "5\n"],
   ]) {
     const fixtureDir = await fs.mkdtemp(path.join(os.tmpdir(), "case3-fixture-"));
     t.after(() => fs.rm(fixtureDir, { recursive: true, force: true }));
@@ -472,20 +453,13 @@ test("Without Start 默认 random 发布，只写目标侧并同拍 complete+fla
     ),
     21,
   );
-  const costLines = (
+  assert.equal(
     await fs.readFile(
-      path.join(sharedDir, "case3", SIDE_FILES.without.cost),
+      path.join(sharedDir, "case3", COST_FILES.without),
       "utf8",
-    )
-  )
-    .split(/\r?\n/)
-    .filter(Boolean);
-  assert.equal(costLines.length, 21);
-  for (const line of costLines) {
-    const cost = Number(line);
-    assert.ok(cost >= 21.3 && cost <= 28.8);
-    assert.match(line, /^\d+\.\d$/);
-  }
+    ),
+    "25\n",
+  );
   assert.match(
     await fs.readFile(
       path.join(sharedDir, "case3", SIDE_FILES.without.throughput),
@@ -508,7 +482,7 @@ test("Without Start 默认 random 发布，只写目标侧并同拍 complete+fla
   );
 });
 
-test("Without Start replay 模式保持 fixture 的 25 与原始 Throughput", async (t) => {
+test("Without Start replay 保留共享 Cost 且回放原始 Throughput", async (t) => {
   const sharedDir = await createSharedDir(t, {
     ...DEFAULT_CONTROL,
     command: "start",
@@ -521,7 +495,7 @@ test("Without Start replay 模式保持 fixture 的 25 与原始 Throughput", as
   await waitTerminal(sharedDir, "case complete");
   assert.equal(
     await fs.readFile(
-      path.join(sharedDir, "case3", SIDE_FILES.without.cost),
+      path.join(sharedDir, "case3", COST_FILES.without),
       "utf8",
     ),
     "25\n",
@@ -556,6 +530,13 @@ test("With Start no-picture 只写 complete，不置截图 flag", async (t) => {
     ),
     21,
   );
+  assert.equal(
+    await fs.readFile(
+      path.join(sharedDir, "case3", COST_FILES.with),
+      "utf8",
+    ),
+    "15\n",
+  );
 });
 
 test("配置 fail 只写 execute fail，不发布数据或完成终态", async (t) => {
@@ -582,6 +563,13 @@ test("ReInit 经过 success 窗口到 reinit complete，永不截图或写数据
   await startStub(t, sharedDir);
   const terminal = await waitTerminal(sharedDir, "reinit complete");
   assert.equal(terminal.save_picture_flag, 0);
+  assert.equal(
+    await fs.readFile(
+      path.join(sharedDir, "case3", COST_FILES.with),
+      "utf8",
+    ),
+    "15\n",
+  );
   await assert.rejects(
     fs.stat(path.join(sharedDir, "case3", SIDE_FILES.with.coordinates)),
     { code: "ENOENT" },
@@ -631,6 +619,8 @@ test("启动遇到 Start execute success 时清空半轮并从第 1 点完整重
     "case3",
     SIDE_FILES.without.coordinates,
   );
+  const costPath = path.join(sharedDir, "case3", COST_FILES.without);
+  const originalCost = await fs.readFile(costPath, "utf8");
   await fs.writeFile(target, "999,999,999\n");
   const stub = await startStub(t, sharedDir, { requestPicture: false });
   await waitTerminal(sharedDir, "case complete");
@@ -641,6 +631,7 @@ test("启动遇到 Start execute success 时清空半轮并从第 1 点完整重
     true,
   );
   assert.equal(content.includes("999,999,999"), false);
+  assert.equal(await fs.readFile(costPath, "utf8"), originalCost);
 });
 
 test("启动时控制缺失保持运行，文件恢复后可接单", async (t) => {

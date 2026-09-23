@@ -37,28 +37,19 @@ code/back/
     │   ├── ue_comm_without_dt_beams.txt
     │   ├── ue_comm_without_dt_sel_beam.txt
     │   ├── ue_comm_without_dt_thrp.txt
-    │   ├── ue_comm_without_dt_cost.txt
     │   ├── ue_comm_with_dt_coordinates.txt
     │   ├── ue_comm_with_dt_sel_beam.txt
     │   ├── ue_comm_with_dt_thrp.txt
     │   ├── ue_comm_with_dt_coordinates_reflection_point.txt
-    │   └── ue_comm_with_dt_cost.txt
     ├── src/kpi-generator.mjs
     └── test/case3-stub.test.mjs
 ```
 
 实现期可以从 `01-参考资料/case3/data/c3/` 一次性复制并校验 base route、BA baseline 和两侧逐点样本到 stub 自有 fixtures；运行时禁止回读 `01-参考资料/`。Fixtures 同时承担 `replay` 的完整回放源和 `random` 的结构/KPI 模板。
 
-两个 Cost fixture 是明确的本地演示覆盖，不从参考目录复制：
-
-本地代表值：
-
-- Without Cost：`25`
-- With Cost：`15`
-- 因而 `replay`、静态页和固定 mock E2E 可断言相对开销变化 `-40.0`（有 DT 相对无 DT 减少）
-- Beam Accuracy baseline 可使用参考 `222,235`
-
-参考目录原始 Cost 为 Without=`10`、With=`5`；不得把它们误复制进 stub fixtures 后仍断言 40.0%。`random` 日志标记 `dataSource:"synthetic-kpi+fixture-structure"`，`replay` 标记 `fixture-replay`；seed 日志仅用 `reference-derived`（见 §4）。这些值只用于本地演示和测试，不改变 API 契约或真实后端数据要求。
+Cost 不属于 stub fixtures。`ue_comm_without_dt_cost.txt` 与
+`ue_comm_with_dt_cost.txt` 必须由部署/演示准备流程预置在共享目录；Node 与本地
+stub 均不得创建、清空、截断或更新。Node/Web 仍读取并校验静态侧级 Cost。
 
 ## 2. 配置与命令
 
@@ -73,13 +64,12 @@ code/back/
 | `CASE3_STUB_OUTCOME` | `success` | `success` / `fail`。 |
 | `CASE3_STUB_REQUEST_PICTURE` | `1` | `1`：Start 终态同拍 flag=1；`0`：只 complete。 |
 | `CASE3_STUB_SEED_INIT` | `1` | 仅在缺失时向 shared/case3 写 base/baseline；仅本地 stub。 |
-| `CASE3_STUB_DATA_MODE` | `random` | `random`：只生成 Throughput/Cost；`replay`：完整回放 fixture。 |
+| `CASE3_STUB_DATA_MODE` | `random` | `random`：只生成 Throughput；`replay`：回放逐点 fixture。 |
 | `CASE3_STUB_SEED` | 空 | 仅 random；空值每次 Start 使用新的 operationId，非空值按 `seed+side` 可复现。 |
 | `CASE3_STUB_THROUGHPUT_JITTER` | `0.10` | 仅 random；fixture Throughput 的双向相对抖动，0～1。 |
-| `CASE3_STUB_COST_JITTER` | `0.15` | 仅 random；fixture Cost 的双向相对抖动，0～1。 |
 | `CASE3_STUB_LOG_LEVEL` | `info` | `info` / `debug`。 |
 
-正式环境变量严格校验：共享根必须为绝对路径；poll/point/dwell 必须为十进制整数且 poll/point 为正、dwell 不低于 3000；outcome/dataMode/log level 必须命中枚举，requestPicture/seedInit 只能为 0/1，两项 jitter 必须为 0～1。非法配置快速退出并记录 `CONFIG_INVALID`，禁止 clamp。测试通过构造函数依赖注入更小 dwell/point，不通过正式环境变量绕过约束。
+正式环境变量严格校验：共享根必须为绝对路径；poll/point/dwell 必须为十进制整数且 poll/point 为正、dwell 不低于 3000；outcome/dataMode/log level 必须命中枚举，requestPicture/seedInit 只能为 0/1，Throughput jitter 必须为 0～1。非法配置快速退出并记录 `CONFIG_INVALID`，禁止 clamp。测试通过构造函数依赖注入更小 dwell/point，不通过正式环境变量绕过约束。
 
 默认结构 fixture 每侧 21 点；Throughput 文件独立计数并可多于或少于结构点。发布时按较长的一路推进，运行耗时约 `max(结构点数, 吞吐样点数) × 1000ms + 3000ms dwell`，另加少量文件 I/O。Web 500ms 轮询时通常约两拍看到 1 个新结构点或吞吐样点。配置测试必须锁定正式默认 `point=1000ms,dwell=3000ms,poll=200ms`。
 
@@ -149,7 +139,7 @@ active task 在撤权或终态（`execute fail` / `case complete` / `reinit comp
 
 ### 3.4 写入权撤销
 
-每次 sleep、**每个独立文件 append（包括 Cost）**和 status patch 前都重读控制；以下任一条件成立，当前任务 abort：
+每次 sleep、每个逐点文件 append 和 status patch 前都重读控制；以下任一条件成立，当前任务 abort：
 
 - `command=init`
 - `case` 不再是 case3
@@ -157,20 +147,20 @@ active task 在撤权或终态（`execute fail` / `case complete` / `reinit comp
 - 出现新的 `status=""` 命令元组
 - 进程收到 SIGINT/SIGTERM
 
-撤销可能发生在同一点的多个文件 append 之间，允许留下跨文件不齐的物理行尾。Stub 不回滚、不补齐、不实现跨文件事务；Node 只返回完整前缀，下一轮 Start/ReInit 由 Node 清空目标侧文件。撤销后不再写数据、status 或 flag，并立即重新求值当前控制。
+撤销可能发生在同一点的多个文件 append 之间，允许留下跨文件不齐的物理行尾。Stub 不回滚、不补齐、不实现跨文件事务；Node 只返回完整前缀，下一轮 Start/ReInit 由 Node 清空目标侧逐点文件、保留 Cost。撤销后不再写数据、status 或 flag，并立即重新求值当前控制。
 
 ## 4. 初始化文件
 
 `CASE3_STUB_SEED_INIT=1` 时：
 
 - 创建 `{DT_SHARED_DIR}/case3/`；
-- seed 只处理 `ue_comm_coordinates_base.txt` 与 `ue_comm_with_dt_beam_accuracy_rate.txt` 两个初始化文件，不复制或改写任何逐点/Cost 文件；
+- seed 只处理 `ue_comm_coordinates_base.txt` 与 `ue_comm_with_dt_beam_accuracy_rate.txt` 两个初始化文件，不复制或改写逐点文件或 Cost；
 - 文件缺失时用 stub fixtures 原子创建；
 - 文件已存在且合法时保留，日志记录 `seedAction:"skippedExisting"`；
 - 文件已存在但内容非法时以 `SEED_TARGET_INVALID` 快速退出，禁止静默覆盖；
-- seed 启动日志标记 `dataSource:"reference-derived"`（seed 只写 base/baseline，不含 Cost override）。
+- seed 启动日志标记 `dataSource:"reference-derived"`（seed 只写 base/baseline）。
 
-该动作仅用于本地无真实后端环境。真实挂载联调必须关闭 seed，使用真实后端提供的初始化文件。Start 逐点/Cost 发布日志按当前 dataMode 使用 `synthetic-kpi+fixture-structure` 或 `fixture-replay`。
+该动作仅用于本地无真实后端环境。真实挂载联调必须关闭 seed，使用真实后端提供的初始化文件。Cost 文件须由共享目录预置，seed 和 Start 均不处理 Cost。
 
 ## 5. Start 行为
 
@@ -204,12 +194,11 @@ ReInit 日志省略 `requestPicture`，避免把截图配置误解为 ReInit 业
 
 ### 5.3 逐点 append
 
-每次 Start 先在内存中一次性构造本轮不可变数据集，之后才逐点 append；禁止每次轮询或每次文件写入时重新随机。`replay` 完整使用 fixture，`random` 只替换 Throughput 与 Cost：
+每次 Start 先在内存中一次性构造本轮不可变数据集，之后才逐点 append；禁止每次轮询或每次文件写入时重新随机。`replay` 完整使用逐点 fixture，`random` 只替换 Throughput：
 
 - UE coordinates、Without scans、两侧 selected Beam、With Reflection 始终使用 fixture；
 - Throughput 以同侧 fixture 曲线为模板做 ±10% 有 seed 抖动，保留两位小数；
 - With 每点仍限制在自身 ±10% 内，同时高于对应 Without fixture 在 +10% 时的理论上限至少 0.01 Gbps；fixture 无法满足时以 `KPI_GENERATION_INVALID` 失败；
-- Cost 以 25/15 为模板，为每个点生成一个 ±15% 有 seed 抖动值，保留一位小数；两侧范围天然保证 With 更低；
 - Beam Accuracy 不单独随机，继续由预置 selected Beam 的匹配结果派生。
 
 Without 每点按同一索引写：
@@ -236,19 +225,13 @@ With 每点按同一索引写：
 - 等待 `CASE3_STUB_POINT_MS`；
 - 写下一点前再次检查控制仍属于当前任务。
 
-Cost：
-
-- API/Node 语义仍是侧级值，与完整点对齐门槛解耦，并取 Cost 文件最新非空行；
-- random 每完成一个点就 append 同索引生成的 Cost，使 Web 仪表按点更新；
-- replay 只在第一点后 append fixture 固定 Cost，保持 25/15 回放；
-- Cost append 前单独复验写入权，append 后同样立即刷盘可见；
-- random Cost 文件最终有 N 行，但 REST `costPct` 始终只暴露最后一行。
+Cost 是共享目录预置的静态侧级输入，与逐点数据发布解耦。stub 对其不做读取、校验、创建或写入；Start/ReInit 及恢复均不得改变文件内容。Node 仍在 REST 快照中读取、校验并提供 Cost，最终快照门槛保持不变。
 
 MSE 不属于当前契约和 UI；stub 不需要生成。
 
 ### 5.4 完成发布与截图
 
-全部目标侧点文件和 Cost：
+全部目标侧逐点文件：
 
 - 已写完；
 - 文件句柄已关闭；
@@ -294,14 +277,14 @@ ReInit：
 | 控制文件缺失/暂不可读 | 按 §3.2 等待，不创建控制文件。 |
 | `command=init,status=""` | 空闲，不动作。 |
 | 合法 Case3 Start/ReInit 元组且 `status=""` | 尚未接单，按新命令执行。 |
-| 精确 `case3 + start + dt_type + execute success` | 新建日志 `operationId,recovery:true`；清空该侧 4 个逐点文件和 Cost，从第 1 点完整重放；禁止从现有 `K+1` 续写。replay 原样回放 fixture；random 重新构造本轮 KPI，固定 seed 可复现，空 seed 在进程重启后允许变化。全部关闭后按当前截图配置写 complete；若控制中 flag 已为 1，最终写必须保留高电平。 |
+| 精确 `case3 + start + dt_type + execute success` | 新建日志 `operationId,recovery:true`；清空该侧逐点文件（Cost 不触碰），从第 1 点完整重放；禁止从现有 `K+1` 续写。replay 原样回放 fixture；random 重新构造本轮 KPI，固定 seed 可复现，空 seed 在进程重启后允许变化。全部关闭后按当前截图配置写 complete；若控制中 flag 已为 1，最终写必须保留高电平。 |
 | 精确 `case3 + reinit + dt_type + execute success` 且 `save_picture_flag=0` | 新建日志 `operationId,recovery:true`；重新保持完整 3000ms，再写 `reinit complete`。 |
 | 合法 Case3 元组的 `execute fail` / `case complete` / `reinit complete` | 本轮已终止，不动作。 |
 | 非 Case3、非法 `dt_type`、启动恢复见到 `reinit + execute success + flag=1`、未知 status 或其他不合法元组 | 记录诊断，不猜测、不动作。 |
 
 说明：`reinit + flag=1` 仅作为**启动恢复分类**的非法快照；活体新轮门沿仍只认 §3.3 的 `case/command/dt_type/status=""` 元组（正常路径 Node 开轮会写 `flag=0`）。
 
-恢复 Start 时允许 truncate 目标侧运行文件，因为本进程只用于无真实后端的本地 stub，且 `case complete` 前文件仍属于未完成轮。禁止与真实后端同时运行。全量重放优先于续写，原因是没有持久 batch/command_id，且旧进程可能在同一点的多个 append 之间退出，现有行数不能证明可靠恢复位置。
+恢复 Start 时允许 truncate 目标侧逐点运行文件，但不得触碰 Cost；本进程只用于无真实后端的本地 stub，且 `case complete` 前文件仍属于未完成轮。禁止与真实后端同时运行。全量重放优先于续写，原因是没有持久 batch/command_id，且旧进程可能在同一点的多个 append 之间退出，现有行数不能证明可靠恢复位置。
 
 恢复沿用当前进程 `CASE3_STUB_REQUEST_PICTURE` 和 dataMode；`CASE3_STUB_OUTCOME=fail` 不得把已经处于 `execute success` 的旧轮改写为 fail。random 若要求进程重启后逐值一致，必须配置固定 `CASE3_STUB_SEED`；默认空 seed 只保证结构和数值范围。恢复过程中仍按 §3.4 在每次清空、append、等待和终态 patch 前复验 ownership。
 
@@ -316,7 +299,6 @@ stub 启动时先验证 fixtures，失败则快速退出：
 - 两侧 Throughput 文件独立校验；样点数允许为 0，也允许互不相同，吞吐不进入结构点完整性门槛。
 - scan 每行至少 1 个 0～255 整数，并包含**同索引行**的 selected；允许重复，不要求 16 列。stub 自带 fixture 仍写 16 个互不重复 id（演示数据质量，不是 Node / 真实后端合同）。
 - selected 0～255；Throughput 非负；Reflection flag 0/1。
-- Cost 在 0～100，且本地 override 必须精确为 Without=`25`、With=`15`。
 - 允许首尾空行、CRLF 和无换行完整末行；数据中间空行仍非法。
 
 fixture 预检可以复用 stub 内纯解析函数，但不得 import Node 适配服务的生产解析器，否则测试会失去独立性。
@@ -341,8 +323,8 @@ seed=1 时还要按初始化接口语义校验共享目录中已存在的 base/b
 
 ### 10.1 配置、控制读取与唤醒
 
-- 正式默认断言：poll=200ms、point=1000ms、dwell=3000ms、requestPicture=1、seedInit=1、dataMode=random、Throughput jitter=0.10、Cost jitter=0.15。
-- 正式环境 dwell<3000、非正 poll/point、非法 outcome/dataMode/flag/log level、越界 jitter 均 `CONFIG_INVALID`，不 clamp；测试构造注入可使用更短间隔。
+- 正式默认断言：poll=200ms、point=1000ms、dwell=3000ms、requestPicture=1、seedInit=1、dataMode=random、Throughput jitter=0.10。
+- 正式环境 dwell<3000、非正 poll/point、非法 outcome/dataMode/flag/log level、越界 Throughput jitter 均 `CONFIG_INVALID`，不 clamp；测试构造注入可使用更短间隔。
 - 控制文件启动时不存在：进程保持运行，文件随后创建后可接单。
 - JSON/UTF-8 短暂不可读最多 3 次/50ms；持续非法只记限频诊断，不接单、不退出。
 - `fs.watch` 事件与纯轮询都只唤醒；重复事件不重复接单，watch 不可用时轮询仍可完成主线。
@@ -359,13 +341,13 @@ seed=1 时还要按初始化接口语义校验共享目录中已存在的 base/b
 
 - Without/With 只写目标侧，逐点文件对齐。
 - random 固定 seed 可复现，不同 seed 产生不同 KPI；坐标、Beam、Reflection 与 fixture 逐行一致。
-- random Throughput/Cost 不越过冻结抖动范围，保留 2/1 位小数，并保持 With 更优；replay 逐行保持 fixture。
-- random 每点 append 一行 Cost，最终行数为 N，Node 读取过程中始终采用最新非空行；replay Cost 仍只有一行。
+- random Throughput 不越过冻结抖动范围并保留 2 位小数；replay 逐行保持 fixture。
+- Start、ReInit、恢复重放不得更改两侧预置 Cost 文件，逐字节校验内容不变。
 - success 实际保持配置 dwell，complete 不提前。
 - complete 前文件关闭；complete 后无写入。
 - 默认最终同拍 complete+flag1；no-picture 只 complete。
 - fail 不写数据/完成/flag。
-- 每个独立文件/Cost append 前均检查 ownership；同一点中途撤权允许留下不齐尾部，但不再继续写、不做回滚。
+- 每个逐点文件 append 前均检查 ownership；同一点中途撤权允许留下不齐尾部，但不再继续写、不做回滚。
 
 ### 10.4 ReInit、撤权与启动恢复
 
@@ -380,10 +362,9 @@ seed=1 时还要按初始化接口语义校验共享目录中已存在的 base/b
 ### 10.5 Seed 与 Fixture
 
 - 全部有效 fixture 通过。
-- 行数不同、scan 数量/同索引包含关系、beam 范围、负 Throughput、非法 Cost/flag 分别失败；scan 同行重复仅作为 stub fixture 质量失败，不声称契约也会拒绝。
-- 参考原始 Cost 10/5 不复制；本地 override 25/15 作为 random 模板和 replay 固定值，replay mock 导出 `-40.0` 的 E2E 预期。
-- seed 只创建缺失 base/baseline；已存在合法文件保留，非法文件快速失败；逐点/Cost 文件永不被 seed 改写。
-- 每个 append（含 Cost）后内容对读者立即可见；持有未刷盘缓冲导致点位成批出现视为失败。
+- 行数不同、scan 数量/同索引包含关系、beam 范围、负 Throughput/flag 分别失败；scan 同行重复仅作为 stub fixture 质量失败，不声称契约也会拒绝。
+- seed 只创建缺失 base/baseline；已存在合法文件保留，非法文件快速失败；逐点文件与预置 Cost 永不被 seed 改写。
+- 每个逐点 append 后内容对读者立即可见；持有未刷盘缓冲导致点位成批出现视为失败。
 
 ## 11. 联调
 
@@ -426,6 +407,4 @@ code/scripts/e2e-case3-stack.sh
 
 - [x] 用户于 2026-08-10 批准默认逐点间隔 1000ms、success dwell 3000ms（同日由 500ms 改为 1000ms）。
 - [x] 用户于 2026-08-10 批准默认每次 Start 请求截图，no-picture 作为可选旁路。
-- [x] 用户于 2026-08-10 批准本地 fixtures Cost 手工覆盖为 25/15，用于与已接受静态页的 40.0% 对齐；参考原始 10/5 不复制。
-- [x] 用户于 2026-08-11 批准 stub 默认 random：Throughput 以 fixture 为模板 ±10%，Cost 以 25/15 为模板 ±15%；UE 轨迹、Beam ID 与 Reflection 保持预置，replay 模式保留。
-- [x] 用户于 2026-08-11 补充批准 random Cost 每个点产生并 append 一个新值，用于前端仪表实时变化；replay 仍固定单值。
+- [x] 历史决策（2026-08-10 至 2026-08-11）：曾批准 stub 生成/逐点发布 Cost；该规则已由 2026-09-22 静态共享文件约定取代，不再适用于当前实现。

@@ -4,7 +4,7 @@
 >
 > approved_at: `2026-08-10`
 >
-> amended_at: `2026-08-13`（Without `scanBeamIds` 改为至少 1 个 `[0,255]` 整数，允许重复；开销变化改为有 DT 相对无 DT；点位不对齐显示 NA 且不计入 Beam Accuracy）
+> amended_at: `2026-09-22`（在保留 `2026-08-13` 已确认的 scan、开销变化和点位对齐规则基础上，新增两侧 Cost 为共享目录预置静态输入，Start/ReInit 与后端不得清空或更新）
 >
 > 本文已由用户确认冻结，是 `DT for Comm`（case3）前端、Node 本地适配服务与真实后端共享文件交互的唯一语义真相源。后续行为变更必须先修改本文并重新评审，再修改 SPEC 或代码。
 
@@ -28,10 +28,10 @@ case3 不使用 WebSocket。Web 只调用前端 PC 上的 Node 本地适配服�
 关键约束：
 
 1. Node 是浏览器侧唯一共享文件 I/O 和数值语义校验方；Web 不直接访问共享目录。
-2. Start/ReInit 必须先清目标侧实时文件，再写 `start|reinit + dt_type + status=""`。
+2. Start/ReInit 必须先清目标侧逐点输出文件，再写 `start|reinit + dt_type + status=""`；两侧 Cost 是共享目录预置静态输入，不清、不写。
 3. `init` 是空闲态和旧轮写入权撤销信号；后端观察到 `command=init` 后必须停止旧 Case/旧侧继续写文件。
 4. 后端必须让 `execute success` 保持至少 3000ms，保证 500ms 轮询可观察。
-5. 后端完整写完并关闭该侧全部必需文件和 Cost 后，最后才写 `case complete`，其后不得再写本轮数据。
+5. 后端完整写完并关闭该侧全部逐点输出文件后，最后才写 `case complete`，其后不得再写本轮数据；Cost 文件预置且本轮保持不变。
 6. Web 只有通过最终快照门槛、完成渲染且截图任务已保存或三次失败后放弃清零，才能 POST `init`；不能在 `case complete` 边沿立即清终态。
 7. 任一 Case 处于 Start/ReInit 等待态时，Shell 锁定其他 Case Tab；不增加取消按钮、命令队列或自动业务超时。
 8. Case3 截图与 Case2 同构：后端只在 Start 路径 success→complete 窗口置 `save_picture_flag=1`，Web 最多尝试 3 次，Node 原子落盘并清零；ReInit 不截图。
@@ -200,7 +200,7 @@ start/reinit
 | 422  | `SIDE_DATA_INVALID`     | 已提交完整行的数值/字段/行号非法                            | 不更新该侧；记日志。                   |
 | 500  | `CONTROL_READ_FAILED`   | 控制文件不可读                                      | 记 adapter error。             |
 | 500  | `CONTROL_WRITE_FAILED`  | 控制原子写/回读校验失败                                 | 动作不完成；记 adapter error。       |
-| 500  | `SIDE_CLEAR_FAILED`     | 目标侧必需文件未全部清空                                 | 不写 start/reinit 控制；记错误。      |
+| 500  | `SIDE_CLEAR_FAILED`     | 目标侧逐点输出文件无法清空                                 | 不写 start/reinit 控制；记错误。      |
 | 500  | `DATA_FILE_READ_FAILED` | 共享文件 I/O 失败                                  | 不更新；记日志。                     |
 | 500  | `SCREENSHOT_SAVE_FAILED` | PNG 写入、原子替换、校验或清 flag 失败                    | 同一任务有限重试；不改变业务状态。           |
 | 500  | `INTERNAL_ERROR`        | 未归类适配服务异常                                    | 不更新；记日志。                     |
@@ -312,9 +312,9 @@ ReInit：
   - init 不是新业务轮，不触发测试或重置。
 2. `start|reinit`
   - Node 串行处理。
-  - 先清空目标侧实时文件和该侧调试 JSONL。
+  - 先清空目标侧逐点输出文件和该侧调试 JSONL；Cost 文件不得清空或改写。
   - 任一清空失败则不写控制，返回 `SIDE_CLEAR_FAILED`。
-  - 清空全部成功后，写 `case=case3,command=start|reinit,dt_type=<side>,status=""`。
+  - 清空逐点输出成功后，写 `case=case3,command=start|reinit,dt_type=<side>,status=""`。
   - `save_picture_flag` 归一为 `0`，防止继承旧截图请求。
   - 正式后端必须停止旧轮写入，再开始当前命令侧。
 3. `save_picture_flag=0`
@@ -579,7 +579,7 @@ Start 成功路径必须是：
 2. 停止旧 Case/旧侧写入。
 3. 写 `status="execute success"`，保持至少 3000ms。
 4. 仅向命令目标侧 append 本轮数据。
-5. 完整写完并关闭该侧全部逐点文件和 Cost 文件。
+5. 完整写完并关闭该侧全部逐点输出文件；Cost 文件是共享目录预置输入，不由后端更新。
 6. 停止本轮文件写入。
 7. 若本轮请求截图，最后一次原子控制写合并 `status="case complete",save_picture_flag=1`；若不请求截图，只写 `status="case complete"`。
 

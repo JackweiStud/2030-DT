@@ -110,6 +110,7 @@ export function createCase3ControlFileService(options) {
     try {
       await fsOps.mkdir(dataDir, { recursive: true });
       for (const [key, filename] of Object.entries(files)) {
+        if (key === "cost") continue;
         const target = path.join(dataDir, filename);
         if (key === "optionalMse") {
           await fsOps.truncate(target, 0).catch((error) => {

@@ -6,6 +6,14 @@
 - Ticket 06 提交前自动验证：Web 33 个测试文件 / 258 项、typecheck、生产构建及 5 条 Case3 前端隔离 E2E 通过；人工另行确认业务 `execute fail` 与最终结果不完整自动回退符合预期。
 - 用户明确豁免 Ticket 07 原计划新增的三进程自动化测试。故本节只记录**功能人工验收完成**；下文“尚无 Case3 三进程一键 E2E、真实后端/真实挂载/真实采集未验收”的证据边界继续有效。
 
+## 2026-09-22 Cost 静态文件生命周期调整
+
+- 两侧 Cost 文件作为共享目录预置静态输入；Node Start/ReInit 清理与 Case3 本地打桩均不得修改。
+- Node 仍读取并校验 Cost，Web 的读取与开销计算保持不变。
+- 验证：`code/server npm test` 121/121；`code/back npm test` 91/91（Case2 29、Case3 21、Case4 41）。
+- 用户确认本地联调验证通过。
+- 两份正式共享 Cost 文件未进入本次 diff；Start/ReInit/stub 回归测试均在临时共享目录运行。此证据不代表真实后端或真实挂载已验收。
+
 ## 结论
 
 - 状态：`PASS_LOCAL_STUB_AND_FRONTEND_ISOLATED`。
@@ -19,8 +27,8 @@
 | 层 | 路径 | 结论 |
 |---|---|---|
 | Web | `code/web/` | React/Vite 正式 Case3 页面已实现；地图交互、点位窗口、原生 SVG/DOM KPI、截图收尾和维测日志已进入测试。 |
-| Node 文件适配服务 | `code/server/` | `/api/case3/*` REST、共享 control store、跨 Case busy、单侧文件清空、多 txt 收编、最终快照门槛、截图落盘测试通过。 |
-| 模拟后端打桩 | `code/back/case3/` | 31 点逐点发布、dynamic/replay 模式、逐点 Cost、seed、撤权、启动恢复和同拍截图 flag 测试通过。 |
+| Node 文件适配服务 | `code/server/` | `/api/case3/*` REST、共享 control store、跨 Case busy、单侧逐点文件清理、静态 Cost 保留、多 txt 收编、最终快照门槛、截图落盘测试通过。 |
+| 模拟后端打桩 | `code/back/case3/` | 逐点发布、dynamic/replay 模式、静态 Cost 保留、seed、撤权、启动恢复和同拍截图 flag 测试通过。 |
 | 共享根 | `code/comdatafiles/` | 本地联调使用；其中 case3 txt、JSONL 和截图输出是运行产物/样本，不代表真实采集。 |
 
 ## 自动验证
@@ -43,8 +51,8 @@
 ## 本地联调覆盖口径
 
 - 进入 Case3 后执行 `GET control -> POST init -> GET init-data`，初始化失败会禁用 Start 并输出结构化错误。
-- Without Start 后逐点显示路线、波束、Throughput 和 live Cost；完成后保留 Without 结果。
-- With Start 后逐点显示路线、预测波束、Throughput 和 live Cost；完成后计算 Cost 变化、Throughput 双曲线和 Beam Accuracy。
+- Without Start 后逐点显示路线、波束、Throughput 和预置 Cost；完成后保留 Without 结果。
+- With Start 后逐点显示路线、预测波束、Throughput 和预置 Cost；完成后计算 Cost 变化、Throughput 双曲线和 Beam Accuracy。
 - Without/With ReInit 独立重置；目标侧清空，另一侧历史结果按 pairValid 规则保留或标记未配对。
 - Start 完成态截图与 Case2 同构，输出隔离在 `out/case3/case3-{seq}.png`，失败最多 3 次后放弃并清 flag。
 - 浏览器控制台 Case3 维测日志包含 entryGeneration / roundGeneration、side.live_progress、final_ready、completed_rendered、screenshot 和 completion init 关键事件。

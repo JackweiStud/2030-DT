@@ -8,11 +8,11 @@
 
 - 当前 Tab：`DT for Comm`（case3）。
 - 执行顺序：用户必须先跑 Without DT，再跑 With DT；两侧互斥运行，一次只允许一侧处于运行或重置中。
-- 后端文件层：沿用 `01-参考资料/case3/data/c3/` 的多 txt 现网协议；正式后端继续 append txt。
-- Web 与 Node：浏览器不直接读、删或写共享目录；Node 适配服务提供 `/api/case3/*`，负责清空单侧 append 文件、按行号收编并校验为区分 Without/With 的结构化点位；Web 通过 `GET /api/case3/side` 拉取单侧全量快照（完整点 + 侧级 `costPct`）。
+- 后端文件层：沿用 `01-参考资料/case3/data/c3/` 的多 txt 现网协议；正式后端只 append 逐点输出文件，两侧 Cost 是共享目录预置静态输入。
+- Web 与 Node：浏览器不直接读、删或写共享目录；Node 适配服务提供 `/api/case3/*`，负责清空单侧逐点输出文件（保留 Cost）、按行号收编并校验为区分 Without/With 的结构化点位；Web 通过 `GET /api/case3/side` 拉取单侧全量快照（完整点 + 侧级 `costPct`）。
 - 控制文件：沿用同一个 `case_control.json` 五个核心字段结构。case2/case3 共享根统一使用项目级 `DT_SHARED_DIR`；`CASE2_SHARED_DIR` 仅可作为历史兼容名。
 - 控制收尾：进页/刷新/切回 case3 的控制文件 GET 成功后，Web 触发 `command=init,status=""` 空闲写回；后端观察到 init 后必须停止旧 Case/旧侧继续写文件。单侧 Start 只有在本轮已见保持至少 3000ms 的 `execute success -> case complete`，且最终 `/side` 快照通过完整性门槛并渲染完成后，才写回空闲态；单侧 ReInit 在 UI 消费 `reinit complete` 并完成单侧清理后写回空闲态。
-- 删除清空：Start/ReInit 前清空对应侧实时 append 文件归属 Node 适配服务；后端不负责清历史文件，React 不直接删文件。开新轮后，正式后端必须停止旧轮写入，并只向当前命令侧文件写入本轮数据。
+- 删除清空：Start/ReInit 前清空对应侧逐点输出文件归属 Node 适配服务；Cost 不在清理范围，且 Node/后端/stub 均不更新它。开新轮后，正式后端必须停止旧轮写入，并只向当前命令侧文件写入本轮数据。
 - Reset：单侧重置。Without 重置后 With 历史结果可保留；With 重置后 Without 历史结果可保留。任意一侧重置都必须让本次 Beam Accuracy 增量对比失效，恢复到跑 With 前的基线展示。
 - ReInit 失败不恢复目标侧旧结果；进入对应侧 `failed-reinit` 后，用户只需重试该侧 ReInit。
 - 跨 Case：任一 Case 处于 Start/ReInit 等待态时，Shell 锁定其他 Case Tab；不增加取消、队列或自动业务超时。
@@ -26,9 +26,9 @@
 | 状态 | 用户动作/外部条件 | Without DT | With DT | KPI |
 |---|---|---|---|---|
 | 初始 | 进入 case3 Tab | 预置 UE 路线、地图、空运行态 | 预置 UE 路线、地图、空运行态 | Cost/Throughput 为空或基线占位；Beam Accuracy 显示文件基线 |
-| Without 运行中 | 点击 Without Start；Node 清空 without 侧实时文件并写 `case3/start/without dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 结构文件逐点更新 UE 轨迹、扫描波束集合、选择波束与点位进度 | 保留现有 With 历史结果但标记为未配对，不运行 | Cost 按 `/side` 更新；Throughput 按独立 `/throughput` 更新；跨侧 KPI 失效 |
+| Without 运行中 | 点击 Without Start；Node 清空 without 侧逐点输出文件（保留预置 Cost）并写 `case3/start/without dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 结构文件逐点更新 UE 轨迹、扫描波束集合、选择波束与点位进度 | 保留现有 With 历史结果但标记为未配对，不运行 | Cost 为共享目录静态预置值，由 `/side` 读取；Throughput 按独立 `/throughput` 更新；跨侧 KPI 失效 |
 | Without 完成 | 本轮已见 `execute success -> case complete`；最终快照满足 `ok=true,pendingTail=false,points>0,costPct!=null`；Web 渲染且截图保存/放弃收尾后写回 `init` | 停止业务轮询，保留 without 完成结果 | With Start 可用 | without 曲线/表盘保留；Beam Accuracy 仍为基线 |
-| With 运行中 | 已有当前有效 Without 后点击 With Start；Node 清空 with 侧实时文件并写 `case3/start/with dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 保留 without 完成结果 | 结构文件逐点更新 UE 轨迹、预测波束与点位进度；`reflection` 只用于完整点校验，v1 不渲染 Reflection/LOS | Cost 按 `/side` 更新；Throughput 按独立 `/throughput` 更新；Beam Accuracy 按配对点实时更新 |
+| With 运行中 | 已有当前有效 Without 后点击 With Start；Node 清空 with 侧逐点输出文件（保留预置 Cost）并写 `case3/start/with dt/status=""`；后端写并保持 `execute success` 至少 3000ms | 保留 without 完成结果 | 结构文件逐点更新 UE 轨迹、预测波束与点位进度；`reflection` 只用于完整点校验，v1 不渲染 Reflection/LOS | Cost 为共享目录静态预置值，由 `/side` 读取；Throughput 按独立 `/throughput` 更新；Beam Accuracy 按配对点实时更新 |
 | With 完成 | 本轮已见 `execute success -> case complete`；最终快照通过同一完整性门槛；Web 渲染且截图保存/放弃收尾后写回 `init` | 保留 without 完成结果 | 停止业务轮询，保留 with 完成结果 | Cost/Throughput 双侧对比；Beam Accuracy = 文件基线 + 当前配对点位增量 |
 | 单侧重置中 | 点击任一侧重置；Node 写 `reinit`、对应 `dt_type`、`status=""`；UI 消费 `reinit complete` 后写回 `command=init,status=""` | 若重置 without：等待 `reinit complete` 后清 without 本轮结果；with 历史结果可保留 | 若重置 with：等待 `reinit complete` 后清 with 本轮结果；without 历史结果可保留 | 任意重置立刻使本次 Beam Accuracy 增量失效，显示回基线 |
 | 命令失败 | 本轮运行或重置中读到 `execute fail` | Start 失败只允许同侧 Start 重试；ReInit 失败不恢复旧结果，只允许同侧 ReInit 重试 | 同左 | 不自动拼接旧运行数据，不自动重算 Beam Accuracy |
@@ -38,7 +38,7 @@
 - 只能在 Without 与 With 均完成后表达“DT 辅助通信相对基线的 Cost、Throughput、Beam Accuracy 对比”。
 - `execute success` 只表示命令执行成功，不表示本侧运行完成；完成门槛是本轮已见 `execute success -> case complete`。
 - 后端必须让 `execute success` 保持至少 3000ms；不得在 500ms Web 轮询可能完全漏过的窗口内直接覆盖为完成终态。
-- `case complete` 只在目标侧必需文件和 Cost 完整写完、关闭并停止写入后发布；Web 最终快照不完整时保持 running，不写回 init。
+- `case complete` 只在目标侧逐点输出文件完整写完、关闭并停止写入后发布；Cost 是共享目录预置静态输入，不进入本轮写入过程。Web 最终快照不完整时保持 running，不写回 init。
 - 若 Start 本轮请求截图，后端应将 `case complete + save_picture_flag=1` 合并为同一次最终控制写；Web 同拍先建立截图任务，再完成结果收尾。截图失败不改业务状态，累计 3 次后允许清 flag 并丢失本张截图。
 - `reinit complete` 是单侧重置完成信号；不要求后端再写 `command=init,status=""`，由 Web 经 Node 在 UI 消费完成后写回空闲态。
 - 空闲写回不是业务命令边沿；后端识别新轮次仍只看 `start|reinit + status=""`。

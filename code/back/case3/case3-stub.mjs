@@ -57,7 +57,6 @@ export async function createCase3Stub(options) {
       dataMode: config.dataMode,
       seed: config.seed,
       throughputJitter: config.throughputJitter,
-      costJitter: config.costJitter,
     });
   const runner = createStubRunner({
     sharedDir: config.sharedDir,
@@ -91,7 +90,6 @@ export async function runMain(env = process.env) {
     dataMode: config.dataMode,
     seedConfigured: config.seed !== "",
     throughputJitter: config.throughputJitter,
-    costJitter: config.costJitter,
     dataSource:
       config.dataMode === "random"
         ? "synthetic-kpi+fixture-structure"

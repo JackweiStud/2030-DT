@@ -1,6 +1,6 @@
 /**
  * Case3 打桩 KPI 数据集生成器。
- * random 只生成 Throughput 与 Cost；坐标、波束和 Reflection 始终沿用 fixture。
+ * random 只生成 Throughput；坐标、波束和 Reflection 始终沿用 fixture。
  */
 
 import { StubError } from "./errors.mjs";
@@ -50,7 +50,6 @@ export function createRoundDataset(options) {
     seed = "",
     operationId,
     throughputJitter = 0.1,
-    costJitter = 0.15,
   } = options;
   const fixture = fixtureStore.sides[side];
 
@@ -62,8 +61,6 @@ export function createRoundDataset(options) {
     return {
       rows: fixture.rows,
       throughputLines: [...fixture.throughputLines],
-      costLine: fixture.costLine,
-      costLines: [fixture.costLine],
       count: fixture.count,
       dataMode,
       dataSource: "fixture-replay",
@@ -81,20 +78,9 @@ export function createRoundDataset(options) {
     return fixed(value, 2);
   });
 
-  const costLines = Array.from({ length: fixture.count }, () =>
-    fixed(
-      Math.min(
-        100,
-        Math.max(0, jittered(fixture.cost, costJitter, nextRandom, 1)),
-      ),
-      1,
-    ),
-  );
   return {
     rows: fixture.rows,
     throughputLines,
-    costLine: costLines.at(-1),
-    costLines,
     count: fixture.count,
     dataMode,
     dataSource: "synthetic-kpi+fixture-structure",

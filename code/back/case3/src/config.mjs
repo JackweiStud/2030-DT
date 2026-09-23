@@ -116,11 +116,6 @@ export async function loadRuntimeConfig(env = process.env, options = {}) {
       "CASE3_STUB_THROUGHPUT_JITTER",
       DEFAULTS.throughputJitter,
     ),
-    costJitter: unitInterval(
-      env,
-      "CASE3_STUB_COST_JITTER",
-      DEFAULTS.costJitter,
-    ),
     logLevel: enumValue(
       env,
       "CASE3_STUB_LOG_LEVEL",

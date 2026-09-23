@@ -77,7 +77,6 @@ export function createPublisher(options) {
   const dataMode = options.dataMode ?? "random";
   const seed = options.seed ?? "";
   const throughputJitter = options.throughputJitter ?? 0.1;
-  const costJitter = options.costJitter ?? 0.15;
   const checkEveryMs = Math.max(1, Math.min(options.pollMs ?? 100, 200));
 
   async function clearForRecovery(task) {
@@ -114,7 +113,6 @@ export function createPublisher(options) {
       seed,
       operationId: task.operationId,
       throughputJitter,
-      costJitter,
     });
     await fsOps.mkdir(dataDir, { recursive: true });
     if (optionsForPublish.recovery) {
@@ -124,19 +122,9 @@ export function createPublisher(options) {
     const throughputCount = dataset.throughputLines.length;
     const totalSteps = Math.max(dataset.count, throughputCount);
     for (let index = 0; index < totalSteps; index += 1) {
-      let currentCostLine = null;
       if (index < dataset.count) {
         for (const key of POINT_KEYS[task.side]) {
           await appendFixtureLine(task, key, dataset.rows[key][index]);
-        }
-        currentCostLine =
-          dataset.dataMode === "random"
-            ? dataset.costLines[index]
-            : index === 0
-              ? dataset.costLine
-              : null;
-        if (currentCostLine !== null) {
-          await appendFixtureLine(task, "cost", currentCostLine);
         }
       }
       if (index < throughputCount) {
@@ -157,7 +145,6 @@ export function createPublisher(options) {
         dataMode: dataset.dataMode,
         dataSource: dataset.dataSource,
         resolvedSeed: dataset.resolvedSeed,
-        cost: currentCostLine === null ? undefined : Number(currentCostLine),
       });
       await waitWhileOwned({
         milliseconds: pointMs,
@@ -170,7 +157,6 @@ export function createPublisher(options) {
     return {
       pointCount: dataset.count,
       throughputCount,
-      cost: Number(dataset.costLine),
       dataMode: dataset.dataMode,
       dataSource: dataset.dataSource,
       resolvedSeed: dataset.resolvedSeed,

@@ -151,7 +151,6 @@ export function createStubRunner(options) {
     logger.info("start-complete", taskLog(task, "complete", {
       pointCount: published.pointCount,
       throughputCount: published.throughputCount,
-      cost: published.cost,
       dataMode: published.dataMode,
       dataSource: published.dataSource,
       resolvedSeed: published.resolvedSeed,

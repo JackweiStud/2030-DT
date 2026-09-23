@@ -24,6 +24,12 @@ function service(sharedDir, options = {}) {
 test("Case3 Start 先清目标侧文件，再原子开新轮并保留未知字段", async (t) => {
   const sharedDir = await createSharedDir(t, { future_field: "keep" });
   await writeCase3SideFiles(sharedDir, "without");
+  const costPath = path.join(
+    sharedDir,
+    "case3",
+    CASE3_SIDE_FILES.without.cost,
+  );
+  const costBefore = await fs.readFile(costPath, "utf8");
   const controlFile = service(sharedDir);
 
   const written = await controlFile.updateFromHttp({
@@ -40,6 +46,13 @@ test("Case3 Start 先清目标侧文件，再原子开新轮并保留未知字�
 
   for (const [key, filename] of Object.entries(CASE3_SIDE_FILES.without)) {
     if (key === "optionalMse") continue;
+    if (key === "cost") {
+      assert.equal(
+        await fs.readFile(path.join(sharedDir, "case3", filename), "utf8"),
+        costBefore,
+      );
+      continue;
+    }
     assert.equal(
       await fs.readFile(path.join(sharedDir, "case3", filename), "utf8"),
       "",
@@ -89,6 +102,18 @@ test("Case3 ReInit 仅清目标侧，不清另一侧", async (t) => {
     CASE3_SIDE_FILES.with.coordinates,
   );
   const withBefore = await fs.readFile(withFile, "utf8");
+  const withoutCostPath = path.join(
+    sharedDir,
+    "case3",
+    CASE3_SIDE_FILES.without.cost,
+  );
+  const withoutCostBefore = await fs.readFile(withoutCostPath, "utf8");
+  const withCostPath = path.join(
+    sharedDir,
+    "case3",
+    CASE3_SIDE_FILES.with.cost,
+  );
+  const withCostBefore = await fs.readFile(withCostPath, "utf8");
 
   await service(sharedDir).updateFromHttp({
     case: "case3",
@@ -103,6 +128,8 @@ test("Case3 ReInit 仅清目标侧，不清另一侧", async (t) => {
     "",
   );
   assert.equal(await fs.readFile(withFile, "utf8"), withBefore);
+  assert.equal(await fs.readFile(withoutCostPath, "utf8"), withoutCostBefore);
+  assert.equal(await fs.readFile(withCostPath, "utf8"), withCostBefore);
 });
 
 test("共享控制 busy 拒绝未消费旧轮，execute fail 允许同动作重试", async (t) => {

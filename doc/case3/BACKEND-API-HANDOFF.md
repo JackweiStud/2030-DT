@@ -10,10 +10,9 @@
 | `case_control.json.status` | 后端 → 前端侧 Node | 接单、失败、完成 | `execute success`、`execute fail`、`case complete`、`reinit complete` | 唯一业务状态。 |
 | Without 三个结构 txt | 后端 → 共享目录 | Without Start 后逐点 append | coordinates、scan beams（至少 1 个）、selected beam | Without 完整点。 |
 | Without Throughput txt | 后端 → 共享目录 | Without Start 后独立逐点 append | 每行一个吞吐样点；与结构点数、With 吞吐数无须相同 | 独立 Throughput 曲线。 |
-| Without Cost txt | 后端 → 共享目录 | Without 运行中/完成前 | 最新一行百分比 | Without 开销。 |
+| Without / With Cost txt | 共享目录预置静态输入 | 部署时预置；Start/ReInit 全程不清理、不改写 | 最新一行百分比 | 开销；后端与 stub 均不得写入。 |
 | With 三个结构 txt | 后端 → 共享目录 | With Start 后逐点 append | coordinates、selected beam、reflection | With 完整点。 |
 | With Throughput txt | 后端 → 共享目录 | With Start 后独立逐点 append | 每行一个吞吐样点；与结构点数、Without 吞吐数无须相同 | 独立 Throughput 曲线。 |
-| With Cost txt | 后端 → 共享目录 | With 运行中/完成前 | 最新一行百分比 | With 开销。 |
 | Base route / BA baseline | 后端提供的初始化文件 | 页面初始化读取 | 路线坐标、`success,total` | 初始地图路线和准确率基线。 |
 | `save_picture_flag` | 后端 → 前端侧 Node | Start 的 success→complete 窗口 | `0→1`，允许与 complete 同拍 | 请求保存当前 Case3 页面截图。 |
 
@@ -23,11 +22,11 @@
 前端侧 Node 写 start/reinit + dt_type + status=""
   -> 后端停止旧 Case/旧侧写入
   -> 后端写 execute success，并保持至少 3000ms
-  -> Start: append 当前侧多 txt
-  -> Start: 完整写完并关闭必需文件和 Cost
-  -> Start: 停止本轮文件写入
+  -> Start: append 当前侧逐点输出 txt（不含 Cost）
+  -> Start: 完整写完并关闭目标侧结构点文件；Throughput 独立结束写入
+  -> Start: 停止本轮文件写入；不得改写两侧 Cost
   -> Start: 若请求截图，最后同拍写 case complete + save_picture_flag=1；否则只写 case complete
-  -> ReInit: 完成重置，写 reinit complete
+  -> ReInit: 完成重置，写 reinit complete；不得改写两侧 Cost
 
 前端侧 Node 写 init
   -> 后端停止旧 Case/旧侧继续写文件
@@ -96,8 +95,8 @@ status=""
 
 1. 停止旧任务写入。
 2. 接单成功后写 `execute success`，保持至少 3000ms。
-3. 只向 dt_type 指定侧的文件 append 本轮数据。
-4. 完整写完并关闭全部结构点文件和 Cost；Throughput 独立结束写入，样点数可不同。
+3. 只向 dt_type 指定侧的逐点输出文件 append 本轮数据；两侧 Cost 是共享目录预置静态输入，不得清理或改写。
+4. 完整写完并关闭全部结构点文件；Throughput 独立结束写入，样点数可不同。
 5. 停止本轮文件写入。
 6. 最后写 `case complete`；若本轮请求截图，必须在同一次原子控制写中合并 `save_picture_flag=1`。
 
@@ -124,7 +123,7 @@ status=""
 后端处理：
 
 1. 接单成功后写 `execute success`，保持至少 3000ms。
-2. 完成指定侧的业务重置。
+2. 完成指定侧的业务重置；不得清理或改写两侧 Cost 预置文件。
 3. 写 `reinit complete`。
 
 若失败，写 `execute fail`；用户会再次点击同侧 ReInit。
@@ -135,10 +134,12 @@ status=""
 |---|---|---|
 | `ue_comm_coordinates_base.txt` | 每行 `x,y,z` | 至少 1 行；坐标有限；超过 2 位小数由前端侧 Node 四舍五入。 |
 | `ue_comm_with_dt_beam_accuracy_rate.txt` | `success,total` | 整数；`0 <= success <= total` 且 `total > 0`。 |
+| `ue_comm_without_dt_cost.txt` | 一个或多个 Cost 数值 | 共享目录预置；取最新非空行；后端不得写入。 |
+| `ue_comm_with_dt_cost.txt` | 一个或多个 Cost 数值 | 共享目录预置；取最新非空行；后端不得写入。 |
 
 末行没有 LF/CRLF 但字段完整可解析时视为有效。
 
-前端侧 Node 在 Start/ReInit 时不会清空 base route 或 Beam Accuracy 基线文件。
+前端侧 Node 在 Start/ReInit 时不会清空 base route、Beam Accuracy 基线文件，也不会清空两侧 Cost。
 
 ## 4. Without DT 文件
 
@@ -148,9 +149,8 @@ status=""
 | `ue_comm_without_dt_beams.txt` | 至少 1 个逗号分隔 beam id | 第 i 行属于第 i 点。 |
 | `ue_comm_without_dt_sel_beam.txt` | 一个 beam id | 第 i 行属于第 i 点。 |
 | `ue_comm_without_dt_thrp.txt` | 一个 Throughput 数值 | 独立吞吐样点序号；不与结构点或另一侧吞吐行数对齐。 |
-| `ue_comm_without_dt_cost.txt` | 一个或多个 Cost 数值 | 与点数解耦，取最新非空行。 |
 
-第 i 个完整点必须同时存在 coordinates、beams、sel_beam 三个结构文件的第 i 行。Throughput 独立发布。
+第 i 个完整点必须同时存在 coordinates、beams、sel_beam 三个结构文件的第 i 行。Throughput 独立发布。Cost 见第 3 节预置文件，不在本侧逐点输出清理/写入范围。
 
 ## 5. With DT 文件
 
@@ -160,9 +160,8 @@ status=""
 | `ue_comm_with_dt_sel_beam.txt` | 一个 beam id | 第 i 行属于第 i 点。 |
 | `ue_comm_with_dt_thrp.txt` | 一个 Throughput 数值 | 独立吞吐样点序号；不与结构点或另一侧吞吐行数对齐。 |
 | `ue_comm_with_dt_coordinates_reflection_point.txt` | `x,y,z,flag` | 第 i 行属于第 i 点，必需。 |
-| `ue_comm_with_dt_cost.txt` | 一个或多个 Cost 数值 | 与点数解耦，取最新非空行。 |
 
-第 i 个完整点必须同时存在 coordinates、sel_beam、reflection_point 三个结构文件的第 i 行。Throughput 独立发布。`flag=1` 映射为 `los=true`（LOS），`flag=0` 映射为 `los=false`（NLOS）。
+第 i 个完整点必须同时存在 coordinates、sel_beam、reflection_point 三个结构文件的第 i 行。Throughput 独立发布。`flag=1` 映射为 `los=true`（LOS），`flag=0` 映射为 `los=false`（NLOS）。Cost 见第 3 节预置文件，不在本侧逐点输出清理/写入范围。
 
 `ue_comm_without_dt_mse.txt`、`ue_comm_with_dt_mse.txt` 可以继续存在，但不进入页面数据、完整点或完成发布门槛。
 
@@ -186,12 +185,11 @@ status=""
 - 当前控制仍属于同一 case3 start 和同一 dt_type。
 - 所有目标侧结构点文件已经写完并关闭；Throughput 结束本轮写入即可，样点数可独立于结构点数和另一侧吞吐点数。
 - 各逐点文件可以组成连续完整点 `1..N`，且 `N > 0`。
-- Cost 文件至少有一个有效值。
-- 后端已停止本轮文件写入。
+- 后端已停止本轮文件写入；两侧 Cost 预置文件未被本轮改写。
 
-`case complete` 后禁止继续 append、截断或重写本轮文件。
+`case complete` 后禁止继续 append、截断或重写本轮逐点输出文件；也禁止改写 Cost。
 
-若前端最终读取时仍发现半点、空点、缺 Cost 或文件变化，页面不会进入完成态，也不会清控制终态。
+若前端最终读取时仍发现半点、空点、缺预置 Cost 或逐点文件变化，页面不会进入完成态，也不会清控制终态。
 
 ## 8. 后端检查清单
 
@@ -199,10 +197,10 @@ status=""
 - [ ] start/reinit 只响应合法 case3 + dt_type + 空 status 元组。
 - [ ] `execute success` 保持至少 3000ms。
 - [ ] `execute fail` 后不再写其他完成终态。
-- [ ] Start 只写命令目标侧文件。
-- [ ] 所有必需文件和 Cost 完整关闭后，最后写 `case complete`。
+- [ ] Start 只写命令目标侧逐点输出文件；两侧 Cost 预置文件全程不清理、不改写。
+- [ ] 所有目标侧结构点文件完整关闭后，最后写 `case complete`（Cost 不进入本轮写入门槛）。
 - [ ] 请求截图时在 Start success→complete 窗口置 flag；同拍 complete 时合并为一次原子写；ReInit 不置 1。
-- [ ] `case complete` 后不再修改本轮文件。
+- [ ] `case complete` 后不再修改本轮逐点输出文件或 Cost。
 - [ ] status 更新保留控制文件未知字段。
 - [ ] 数值、行数和 reflection flag 符合本文。
 - [ ] 不要求浏览器或前端侧 Node读取 JSONL 作为后端输入。

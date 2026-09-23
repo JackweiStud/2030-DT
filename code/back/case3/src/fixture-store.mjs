@@ -13,7 +13,6 @@ import { StubError } from "./errors.mjs";
 const NUMBER_TOKEN =
   /^[+-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[eE][+-]?\d+)?$/;
 const INTEGER_TOKEN = /^[+-]?\d+$/;
-const LOCAL_COST = Object.freeze({ without: 25, with: 15 });
 
 function invalid(filename, message) {
   throw new StubError("FIXTURE_INVALID", `${filename}: ${message}`, {
@@ -159,18 +158,10 @@ function validateSide(side, contents) {
     }
   }
 
-  const costLines = linesOf(contents.cost, files.cost);
-  if (costLines.length !== 1) invalid(files.cost, "Cost fixture 必须只有一行");
-  const cost = finite(costLines[0], files.cost, "Cost");
-  if (cost !== LOCAL_COST[side]) {
-    invalid(files.cost, `本地 Cost override 必须精确为 ${LOCAL_COST[side]}`);
-  }
   return {
     rows,
     throughputLines,
     throughputValues,
-    cost,
-    costLine: costLines[0],
     count,
   };
 }

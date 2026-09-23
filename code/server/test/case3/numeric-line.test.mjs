@@ -43,7 +43,7 @@ test("Throughput、Cost、beam id 和 Reflection 执行冻结校验", () => {
   });
 });
 
-test("Cost 多行时读取最新非空值，支持打桩逐点更新", () => {
+test("Cost 解析保留最新非空行的兼容能力", () => {
   assert.deepEqual(parseLatestCost("25.0\n23.8\n24.1\n", "cost"), {
     value: 24.1,
     hasPendingTail: false,

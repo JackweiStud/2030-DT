@@ -13,7 +13,7 @@
 - [x] 同一个 `127.0.0.1:3102` 进程同时注册现有 `/api/case2/*` 和新增 `/api/case3/*`。
 - [x] 控制文件读取、原子 patch 和串行队列升级为进程级共享原语；Case2 合法 Web 主线、REST shape、数据和截图路径不变，非法并发/跨 Case 直接命令按新规则返回 `CONTROL_BUSY`。
 - [x] Node 对跨 Case 活动命令执行 `CONTROL_BUSY` 防御，不只依赖 Shell 按钮锁。
-- [x] Case3 Start/ReInit 在写控制前完整清空目标侧实时文件和调试快照；失败不写命令。
+- [x] Case3 Start/ReInit 在写控制前清空目标侧逐点输出文件和调试快照；静态 Cost 保留；失败不写命令。
 - [x] init-data、单侧全量快照、pending tail、稳定读取和最终完成门槛有自动测试。
 - [x] 数值四舍五入、范围、逐点行号和 Reflection `0→false,1→true` 由 Node 唯一校验。
 - [x] 截图 Base64/PNG 校验、进程内串行、原子落盘、不覆盖、成功后清零与 Case2 同构，输出隔离到 `out/case3/`。
@@ -196,7 +196,7 @@ POST init 永远允许，语义是撤销旧 Case/旧侧写入权。截图清零�
 | 422 | `SIDE_DATA_INVALID` | 已提交完整行的词法、数值、行号或跨文件字段非法。 |
 | 500 | `CONTROL_READ_FAILED` | 控制文件 I/O/结构失败。 |
 | 500 | `CONTROL_WRITE_FAILED` | 控制原子写或回读失败。 |
-| 500 | `SIDE_CLEAR_FAILED` | Start/ReInit 前目标文件无法清空。 |
+| 500 | `SIDE_CLEAR_FAILED` | Start/ReInit 前目标侧逐点输出文件无法清空。 |
 | 500 | `DATA_FILE_READ_FAILED` | 数据文件非缺失类 I/O 故障。 |
 | 500 | `SCREENSHOT_SAVE_FAILED` | PNG 写入/rename/stat/清 flag 失败。 |
 | 500 | `INTERNAL_ERROR` | 未分类异常。 |
@@ -252,7 +252,6 @@ Without 必需清空/创建：
 - `ue_comm_without_dt_beams.txt`
 - `ue_comm_without_dt_sel_beam.txt`
 - `ue_comm_without_dt_thrp.txt`
-- `ue_comm_without_dt_cost.txt`
 
 With 必需清空/创建：
 
@@ -260,9 +259,8 @@ With 必需清空/创建：
 - `ue_comm_with_dt_sel_beam.txt`
 - `ue_comm_with_dt_thrp.txt`
 - `ue_comm_with_dt_coordinates_reflection_point.txt`
-- `ue_comm_with_dt_cost.txt`
 
-对应 `*_mse.txt` 若存在则一并清空，但缺失不阻塞，因为契约不消费。Base route 与 BA baseline 永不清。目标侧调试 JSONL 一并清空。
+两侧 `ue_comm_*_cost.txt` 是共享目录预置的静态输入，Start/ReInit 均不得清空、创建、截断或更新；完成快照仍读取并校验其值。对应 `*_mse.txt` 若存在则一并清空，但缺失不阻塞，因为契约不消费。Base route 与 BA baseline 永不清。目标侧调试 JSONL 一并清空。
 
 全部文件操作成功后才 patch：
 
@@ -479,7 +477,7 @@ path 为相对共享根的 POSIX 路径；日志写绝对路径。
 ### 10.2 控制
 
 - 四种精确 payload；多余字段/flag=1/status 被拒。
-- Start/ReInit 先清全部目标文件，再写空 status/flag0。
+- Start/ReInit 先清目标侧逐点输出文件（保留预置 Cost），再写空 status/flag0。
 - 某一清空失败时控制未写。
 - base/baseline 不清，MSE 缺失不阻塞。
 - 同动作 `execute fail` 重试允许；活动/未消费终态与跨 Case 命令 `CONTROL_BUSY`。
