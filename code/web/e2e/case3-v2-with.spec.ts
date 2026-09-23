@@ -175,7 +175,7 @@ test.describe("case3 v2 with (frontend-isolated)", () => {
     });
 
     await page.goto("/");
-    await page.getByRole("button", { name: "DT for Comm new" }).click();
+    await page.getByRole("button", { name: "DT辅助通信" }).click();
     const root = page.getByTestId("case3-v2-page");
     await expect(root).toBeVisible();
     await expect(page.getByTitle("启动无 DT")).toBeEnabled({ timeout: 10000 });

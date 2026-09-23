@@ -1,6 +1,6 @@
 /**
  * Shell：1920×1080 固定舞台等比缩放居中；跨 Case 导航锁。
- * 可见 Tab 不含旧「DT for Comm」；Case3 V2 走「DT for Comm new」。
+ * 「DT辅助通信」挂 Case3 V2（tab=case3）。
  * 拥有「现场环境」弹窗（case2/3/4 共用）。
  */
 
@@ -21,7 +21,7 @@ import {
 } from "./siteEnvWindowContext";
 import "./shell.css";
 
-export type CaseTabId = "case1" | "case2" | "case3" | "case4" | "case5";
+export type CaseTabId = "case1" | "case2" | "case3" | "case4";
 
 const LEFT_TABS: { id: CaseTabId; label: string }[] = [
   { id: "case1", label: "DT构建" },
@@ -29,7 +29,7 @@ const LEFT_TABS: { id: CaseTabId; label: string }[] = [
 ];
 
 const RIGHT_TABS: { id: CaseTabId; label: string }[] = [
-  { id: "case5", label: "DT辅助通信" },
+  { id: "case3", label: "DT辅助通信" },
   { id: "case4", label: "DT辅助定位" },
 ];
 

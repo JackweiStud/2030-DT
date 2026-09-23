@@ -1,14 +1,12 @@
 /**
  * 应用入口：加载 Case2/Case3/Case4 配置；仅激活 Tab 挂载对应页面；汇总跨 Case busy。
- * 「DT for Comm」挂 Case3 V2（tab=case5）；「DT for positioning」挂 Case4。
- * 旧 case3 页仍保留但不进导航。
+ * 「DT辅助通信」挂 Case3 V2（tab=case3）；「DT辅助定位」挂 Case4。
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Case1Page } from "../cases/case1/Case1Page";
 import { ComingSoon, Shell, type CaseTabId } from "../shell/Shell";
 import { Case2Page } from "../cases/case2/Case2Page";
-import { Case3Page } from "../cases/case3/Case3Page";
 import { Case3V2Page } from "../cases/case3-v2/Case3V2Page";
 import { Case4Page } from "../cases/case4/Case4Page";
 import {
@@ -31,7 +29,6 @@ export function App() {
   const stageRef = useRef<HTMLDivElement>(null);
   const [case2Busy, setCase2Busy] = useState(false);
   const [case3Busy, setCase3Busy] = useState(false);
-  const [case3V2Busy, setCase3V2Busy] = useState(false);
   const [case4Busy, setCase4Busy] = useState(false);
 
   const case2Config = useMemo(() => {
@@ -64,7 +61,6 @@ export function App() {
   const navigationLocked =
     (tab === "case2" && case2Busy) ||
     (tab === "case3" && case3Busy) ||
-    (tab === "case5" && case3V2Busy) ||
     (tab === "case4" && case4Busy);
 
   const onTabChange = useCallback(
@@ -94,24 +90,10 @@ export function App() {
     );
   } else if (tab === "case3") {
     body = case3Config.ok ? (
-      <Case3Page
-        config={case3Config.config}
-        stageElementRef={stageRef}
-        onBusyChange={setCase3Busy}
-      />
-    ) : (
-      <main className="case3-page">
-        <p className="case3-config-error">
-          case3 配置错误：{case3Config.field}
-        </p>
-      </main>
-    );
-  } else if (tab === "case5") {
-    body = case3Config.ok ? (
       <Case3V2Page
         config={case3Config.config}
         stageElementRef={stageRef}
-        onBusyChange={setCase3V2Busy}
+        onBusyChange={setCase3Busy}
       />
     ) : (
       <main className="case3v2-page">

@@ -3,7 +3,7 @@
 ## 项目目标与范围
 
 - 项目是面向内部团队的 PC Web 演示平台：同一入口下有四个 case Tab。
-- 当前已完成本地开发的活跃业务 Tab 为 `case2`（`DT Calibration`）、`case3`（`DT for Comm`）与 `case4`（`DT for positioning`）。`case1`（`DT Construction`）已接入离线浏览正式页与预置 GLB 交互；本地验证及未完成项见 `doc/case1/QA-EVIDENCE.md`，不涉及实时后端建模。
+- 当前已完成本地开发的活跃业务 Tab 为 `case2`（`DT Calibration`）、`case3`（`DT辅助通信`，正式皮为 case3-v2）与 `case4`（`DT辅助定位`）。`case1`（`DT Construction`）已接入离线浏览正式页与预置 GLB 交互；本地验证及未完成项见 `doc/case1/QA-EVIDENCE.md`，不涉及实时后端建模。
 - case4 除 3D 外功能已完成本地开发（正式 Web、Node 文件适配、打桩、2D Reflection、CEP 百分比、误差/吞吐/CDF 悬停）；3D 按钮可见禁用、不接业务。证据见 `doc/case4/QA-EVIDENCE.md`。不得把本地打桩或用户提供的联调 PASS 表述为本仓库已独立验收真实后端。
 - 基准画布为 Chrome 1920×1080，使用固定画布等比缩放；窗口变化时整体缩放、居中，不以业务页面自行重排替代 Shell 缩放。
 - case2 Gate 1 已于 2026-07-30 经用户视觉审阅冻结；Gate 1.5 静态 HTML 已由用户人工检查接受；Gate 2 API 契约 v1 已于 2026-07-31 获用户批准；Gate 3 演示向放宽与 `WEB-SPEC` / `SERVER-SPEC` 已于 2026-08-03 定稿。Gate 4 的正式 Web、Node 文件适配服务与模拟后端打桩已完成本地自动测试与人工联调；证据见 `doc/case2/QA-EVIDENCE.md`。

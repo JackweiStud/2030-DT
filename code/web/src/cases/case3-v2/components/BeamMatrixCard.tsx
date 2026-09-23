@@ -54,7 +54,10 @@ export function BeamMatrixCard(props: Props) {
   const crosshairTone = mode === "with" ? derivedTone : (props.crosshairTone ?? "neutral");
   const crosshairMarker: BeamCrosshairMarker =
     mode === "with" ? "pred" : (props.crosshairMarker ?? "best");
-  const showCrosshair = legalPred != null && !pointAbnormal;
+  const showCrosshair =
+    legalPred != null &&
+    !pointAbnormal &&
+    (mode === "without" || verdict === "match" || verdict === "mismatch");
 
   return (
     <article

@@ -17,7 +17,7 @@
 ## 0. 出口条件
 
 - [ ] Case4 在现有 `code/web/` 单应用内实现，不新建 Vite 应用、端口或第二套 Shell。
-- [ ] 导航仍是四可见 Tab：`case1` / `case2` / `case5`（文案 `DT for Comm` = 现行 case3-v2）/ `case4`（`DT for positioning`）。**不**把 case3-v2 迁回 `case3` Tab，不删除第五 Tab 映射。
+- [ ] 导航仍是四可见 Tab：`case1` / `case2` / `case3`（文案 `DT辅助通信` = Case3 V2）/ `case4`（`DT辅助定位`）。临时 `case5` Tab 已合回；旧 case3 皮已删除。
 - [ ] `case4` 取代自身「建设中」；`App.test.tsx` 中「case1 与 case4 仍为建设中」改为只断言 case1。
 - [ ] 进入 / 刷新 / 切回固定 `GET control → POST init → GET init-data`；完成握手前不读 `/trajectory`、`/throughput`、`/result`。
 - [ ] 一次 Start 覆盖三方案；POST body 精确为 `{case:"case4",command:"start",dt_type:"all"}`。
@@ -375,12 +375,12 @@ const [case4Busy, setCase4Busy] = useState(false);
 ```
 
 - `tab === "case4"` 渲染 `Case4Page`（配置失败则配置错误页），`onBusyChange={setCase4Busy}`。
-- `tab === "case5"` 仍是 `Case3V2Page`。旧 `tab === "case3"` 分支可保留但不在导航出现。
-- `tab === "case1"` 仍 `ComingSoon`。
+- `tab === "case3"` 挂 `Case3V2Page`（旧皮已删除；无 `case5`）。
+- `tab === "case1"` 挂正式 Case1 离线页。
 - busy=true：Start/ReInit 点击当拍，直到：普通命令失败回退、`CONTROL_BUSY` 回退、**或** 本轮截图 idle 且 POST init **已经返回**（成功或失败都算返回）。`ui=completed` 本身不解 busy、不开放重置。
 - `CONTROL_BUSY` 不保持 busy。
 - 切 Tab 关闭现场环境（Shell 已有）。
-- 更新 `test/app/App.test.tsx`：case4 不再期望「建设中」；补 case4 busy 锁 Tab，对标现有 case5 用例。
+- 更新 `test/app/App.test.tsx`：case4 不再期望「建设中」；补 case4 busy 锁 Tab，对标现有 case3 用例。
 
 Node `CONTROL_BUSY` 仍是第二安全边界。
 
@@ -947,7 +947,6 @@ NLOS/CDF/误差/吞吐/地图反射层的 stroke、fill、dash 必须经得起�
 - 把静态 `dataset=pencilCep` / `visual20` 当运行数据。
 - 复用 case2 热力/CDF 组件或 case3 Cost/BA/波束。
 - 修改 Pencil；把 `web-static` 当运行依赖。
-- 更名或迁移当前 `case5` → case3-v2 导航。
 - 在日志或 UI 把 stub 随机统计宣称为本轮轨迹的真实统计（来源说明留给打桩日志 / QA，首版不做「模拟数据」徽标）。
 
 ---
@@ -963,7 +962,7 @@ NLOS/CDF/误差/吞吐/地图反射层的 stroke、fill、dash 必须经得起�
 - [x] Codex 核查三处已收口：完成态渲染与截图解耦（画面 completed ≠ 解锁）；result 耗尽保持锁定到 init 返回并 abort 截图；ReInit 不确定 POST 补读 control，init 失败保留空画面 + adapterError。
 - [x] Codex 续查已收口：控制快照归属校验先于 flag/status；放弃清零失败保留完成结果、禁按钮、停截图与轮询、不 POST init、busy=false；视觉对照证据不能用组件测试代替。
 - [x] 组件树对齐静态 `data-region`；CSS 迁正式 assets；`STATIC-HTML-ACCEPTANCE.md` 为开工必读。
-- [x] App 只加 case4 挂载与 busy；case3-v2 留在 `case5`。
+- [x] App 只加 case4 挂载与 busy；case3-v2 正式挂在 `case3`（临时 `case5` 已合回，旧皮已删）。
 - [x] CEP 百分比已实现并由用户接受（见 §9 增量）；2D Reflection 按 REFLECTION-SPEC 实施；误差/吞吐/CDF 悬停已实现；**3D 保留未做**。
 - [x] Case2/Case3/Case4 API 前缀各自写死同源路径。
 

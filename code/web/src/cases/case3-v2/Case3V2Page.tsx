@@ -25,7 +25,7 @@ type Props = {
 };
 
 /**
- * Case3 V2 根页面（开发期挂在 case5 Tab）。
+ * Case3 V2 根页面（正式挂在「DT辅助通信」Tab）。
  */
 export function Case3V2Page(props: Props) {
   const { config, stageElementRef, onBusyChange } = props;

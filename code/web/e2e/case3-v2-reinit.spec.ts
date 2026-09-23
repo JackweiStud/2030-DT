@@ -218,7 +218,7 @@ test.describe("case3 v2 reinit (frontend-isolated)", () => {
     test.setTimeout(90_000);
     await installCase3Mock(page, { routeCount: 5, liveCap: 3 });
     await page.goto("/");
-    await page.getByRole("button", { name: "DT for Comm new" }).click();
+    await page.getByRole("button", { name: "DT辅助通信" }).click();
     const root = page.getByTestId("case3-v2-page");
     await expect(root).toBeVisible();
     await expect(page.getByTitle("启动无 DT")).toBeEnabled({ timeout: 10000 });
@@ -321,7 +321,7 @@ test.describe("case3 v2 reinit (frontend-isolated)", () => {
     test.setTimeout(60_000);
     await installCase3Mock(page, { routeCount: 31, liveCap: 31 });
     await page.goto("/");
-    await page.getByRole("button", { name: "DT for Comm new" }).click();
+    await page.getByRole("button", { name: "DT辅助通信" }).click();
     const root = page.getByTestId("case3-v2-page");
     await expect(root).toBeVisible();
     await expect(page.getByTitle("启动无 DT")).toBeEnabled({ timeout: 10000 });

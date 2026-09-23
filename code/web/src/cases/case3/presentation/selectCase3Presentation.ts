@@ -76,7 +76,7 @@ export type Case3Presentation = {
 };
 
 /**
- * 旧 Case3Page 的 data-state 映射。不得改 failed/resetting/未配对分支。
+ * Case3 页面 data-state 映射。不得改 failed/resetting/未配对分支。
  */
 export function deriveCase3DataState(
   visible: Case3VisibleState,
