@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CASE3V2_MAP_STAGE,
+  CASE3V2_PIN_ANCHOR,
   formatBusinessCoordinateRows,
   isImagePointInNaturalBounds,
   mapImageLayerToCssTransform,
@@ -124,10 +125,14 @@ describe("projectBusinessToImage", () => {
     }
   });
 
-  it("点位以投影点为地面锚点", () => {
-    const box = pinBoxFromImagePoint({ imageX: 1041.36, imageY: 454.09 });
-    expect(box.left).toBeCloseTo(1023.86);
-    expect(box.top).toBeCloseTo(412.09);
+  it("点位以投影点为白点锚点（非外框底边）", () => {
+    const point = { imageX: 1041.36, imageY: 454.09 };
+    const box = pinBoxFromImagePoint(point);
+    expect(box.left).toBeCloseTo(point.imageX - CASE3V2_PIN_ANCHOR.x);
+    expect(box.top).toBeCloseTo(point.imageY - CASE3V2_PIN_ANCHOR.y);
+    // 白点应落在投影点上
+    expect(box.left + CASE3V2_PIN_ANCHOR.x).toBeCloseTo(point.imageX);
+    expect(box.top + CASE3V2_PIN_ANCHOR.y).toBeCloseTo(point.imageY);
   });
 
   it("UE 以投影点为地面锚点", () => {

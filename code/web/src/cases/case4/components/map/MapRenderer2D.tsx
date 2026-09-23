@@ -78,7 +78,7 @@ function ueBox(point: Case3V2ImagePoint): { left: number; top: number } {
   };
 }
 
-/** Pencil c0EO9c / nkOCa：35×42 外框；路径锚点为图钉白点（非外框底边）。 */
+/** Pencil c0EO9c / nkOCa：35×30 外框；路径锚点为图钉白点（非外框底边）。 */
 function pinBox(point: Case3V2ImagePoint): { left: number; top: number } {
   return {
     left: point.imageX - CASE4_PIN_ANCHOR.x,

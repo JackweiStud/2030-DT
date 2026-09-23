@@ -122,20 +122,29 @@ describe("PointBeamReplay without", () => {
     );
   });
 
-  it("超过 20 点时窗口跟随最近 20 个真实 no", () => {
+  it("超过 19 点时窗口跟随最近 19 个真实 no", () => {
     const points = Array.from({ length: 22 }, (_, i) => point(i + 1, 100 + i));
     const { container } = renderReplay(points);
     const headers = [...container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")].map(
       (el) => el.textContent,
     );
-    expect(headers).toHaveLength(20);
-    expect(headers[0]).toBe("P3");
-    expect(headers[19]).toBe("P22");
+    expect(headers).toHaveLength(19);
+    expect(headers[0]).toBe("P4");
+    expect(headers[18]).toBe("P22");
     const values = [...container.querySelectorAll("[data-replay-wo-value]")].map(
       (el) => el.textContent,
     );
-    expect(values[0]).toBe("102");
-    expect(values[19]).toBe("121");
+    expect(values[0]).toBe("103");
+    expect(values[18]).toBe("121");
+  });
+
+  it("点位列与两行说明位于控制区和 P 列之间", () => {
+    const { container } = renderReplay([]);
+    const replay = container.querySelector("[data-region='PointBeamReplay']");
+    const children = [...(replay?.children ?? [])];
+    const axis = container.querySelector("[data-replay-axis]");
+    expect(children.indexOf(axis as Element)).toBe(1);
+    expect(axis?.textContent).toBe("点位最优波束ID预测波束ID");
   });
 
   it("重置中使用同一套动态省略号，不走错误样式", () => {
@@ -302,7 +311,7 @@ describe("PointBeamReplay with", () => {
     expect(container.querySelectorAll("[data-replay-wo-value]")[0]?.textContent).toBe("10");
   });
 
-  it("With 进度驱动窗口：route31 + With2 显示 P1..P20，前 2 列完成，Without 历史仍在", () => {
+  it("With 进度驱动窗口：route31 + With2 显示 P1..P19，前 2 列完成，Without 历史仍在", () => {
     const routeNos = Array.from({ length: 31 }, (_, i) => i + 1);
     const without = routeNos.map((no) => point(no, no * 10));
     const withPts = [point(1, 10), point(2, 21)];
@@ -313,8 +322,8 @@ describe("PointBeamReplay with", () => {
       progressSide: "with",
     });
     const headers = [...container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")];
-    expect(headers.map((el) => el.textContent).slice(0, 20)).toEqual(
-      Array.from({ length: 20 }, (_, i) => `P${i + 1}`),
+    expect(headers.map((el) => el.textContent)).toEqual(
+      Array.from({ length: 19 }, (_, i) => `P${i + 1}`),
     );
     expect(headers.filter((el) => el.classList.contains("is-done"))).toHaveLength(2);
     expect(container.querySelector("[data-replay-done]")?.getAttribute("data-replay-done")).toBe(
@@ -335,7 +344,7 @@ describe("PointBeamReplay with", () => {
     expect((checks[1] as HTMLElement).style.left).toBe("119px");
   });
 
-  it("With>20 时窗口跟随最新 20 个 With 点，Without 同行仍按 no 填历史", () => {
+  it("With>19 时窗口跟随最新 19 个 With 点，Without 同行仍按 no 填历史", () => {
     const routeNos = Array.from({ length: 31 }, (_, i) => i + 1);
     const without = routeNos.map((no) => point(no, no * 10));
     const withPts = Array.from({ length: 22 }, (_, i) =>
@@ -350,25 +359,25 @@ describe("PointBeamReplay with", () => {
     const headers = [...container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")].map(
       (el) => el.textContent,
     );
-    expect(headers[0]).toBe("P3");
-    expect(headers[19]).toBe("P22");
+    expect(headers[0]).toBe("P4");
+    expect(headers[18]).toBe("P22");
     expect(container.querySelector("[data-replay-done]")?.getAttribute("data-replay-done")).toBe(
-      "20",
+      "19",
     );
     const wo = [...container.querySelectorAll("[data-replay-wo-value]")].map((el) => el.textContent);
-    expect(wo[0]).toBe("30");
-    expect(wo[19]).toBe("220");
+    expect(wo[0]).toBe("40");
+    expect(wo[18]).toBe("220");
     const w = [...container.querySelectorAll("[data-replay-w-value]")].map((el) => el.textContent);
-    expect(w[0]).toBe("30");
-    expect(w[19]).toBe("220");
+    expect(w[0]).toBe("40");
+    expect(w[18]).toBe("220");
     const checks = [...container.querySelectorAll("[data-replay-check]")];
-    expect(checks).toHaveLength(20);
-    expect(checks[0]?.getAttribute("data-replay-check-no")).toBe("3");
+    expect(checks).toHaveLength(19);
+    expect(checks[0]?.getAttribute("data-replay-check-no")).toBe("4");
     expect(checks[0]?.getAttribute("data-replay-check-slot")).toBe("0");
     expect((checks[0] as HTMLElement).style.left).toBe("34px");
-    expect(checks[19]?.getAttribute("data-replay-check-no")).toBe("22");
-    expect(checks[19]?.getAttribute("data-replay-check-slot")).toBe("19");
-    expect((checks[19] as HTMLElement).style.left).toBe(`${34 + 19 * 85}px`);
+    expect(checks[18]?.getAttribute("data-replay-check-no")).toBe("22");
+    expect(checks[18]?.getAttribute("data-replay-check-slot")).toBe("18");
+    expect((checks[18] as HTMLElement).style.left).toBe(`${34 + 18 * 85}px`);
     expect(container.querySelector('[data-replay-check-no="2"]')).toBeNull();
   });
 });
@@ -379,7 +388,7 @@ function headersOf(container: HTMLElement): string[] {
   );
 }
 
-function mockSurfaceSize(el: HTMLElement, width = 1702) {
+function mockSurfaceSize(el: HTMLElement, width = 1612) {
   Object.defineProperty(el, "offsetWidth", { configurable: true, value: width });
   el.getBoundingClientRect = () =>
     ({
@@ -420,13 +429,13 @@ function dragSurface(container: HTMLElement, dx: number) {
 }
 
 describe("PointBeamReplay window size", () => {
-  it("N<20 补空槽且不可拖", () => {
+  it("N<19 补空槽且不可拖", () => {
     const routeNos = [1, 2, 3, 4, 5];
     const { container } = renderReplay([point(1, 10), point(2, 20), point(3, 30)], {
       routeNos,
     });
     const headers = headersOf(container);
-    expect(headers).toHaveLength(20);
+    expect(headers).toHaveLength(19);
     expect(headers.slice(0, 5)).toEqual(["P1", "P2", "P3", "P4", "P5"]);
     expect(headers.slice(5).every((text) => text === "\u00A0" || text.trim() === "")).toBe(
       true,
@@ -444,32 +453,32 @@ describe("PointBeamReplay window size", () => {
     );
   });
 
-  it("N=20 显示 P1–P20 且不可拖", () => {
-    const routeNos = Array.from({ length: 20 }, (_, i) => i + 1);
+  it("N=19 显示 P1–P19 且不可拖", () => {
+    const routeNos = Array.from({ length: 19 }, (_, i) => i + 1);
     const points = routeNos.map((no) => point(no, no * 10));
     const { container } = renderReplay(points, { routeNos });
     const headers = headersOf(container);
-    expect(headers).toEqual(Array.from({ length: 20 }, (_, i) => `P${i + 1}`));
+    expect(headers).toEqual(Array.from({ length: 19 }, (_, i) => `P${i + 1}`));
     expect(container.querySelector("[data-replay-can-drag]")?.getAttribute("data-replay-can-drag")).toBe(
       "0",
     );
     dragSurface(container, CASE3V2_REPLAY_SLOT_PITCH * 3);
     expect(headersOf(container)[0]).toBe("P1");
-    expect(headersOf(container)[19]).toBe("P20");
+    expect(headersOf(container)[18]).toBe("P19");
   });
 
-  it("N=31 默认最新窗口 P12–P31，可拖到 P1–P20，两行与勾叉同步", () => {
+  it("N=31 默认最新窗口 P13–P31，可拖到 P1–P19，两行与勾叉同步", () => {
     const routeNos = Array.from({ length: 31 }, (_, i) => i + 1);
     const without = routeNos.map((no) => point(no, no * 10));
-    const withPts = routeNos.map((no) => point(no, no === 12 ? 121 : no * 10));
+    const withPts = routeNos.map((no) => point(no, no === 13 ? 131 : no * 10));
     const { container } = renderReplay(without, {
       routeNos,
       withPoints: withPts,
       withPeerPoints: without,
       progressSide: "with",
     });
-    expect(headersOf(container)[0]).toBe("P12");
-    expect(headersOf(container)[19]).toBe("P31");
+    expect(headersOf(container)[0]).toBe("P13");
+    expect(headersOf(container)[18]).toBe("P31");
     expect(container.querySelector("[data-replay-can-drag]")?.getAttribute("data-replay-can-drag")).toBe(
       "1",
     );
@@ -477,28 +486,28 @@ describe("PointBeamReplay window size", () => {
       "1",
     );
     expect(container.querySelector("[data-replay-window-start]")?.getAttribute("data-replay-window-start")).toBe(
-      "11",
+      "12",
     );
     expect(container.querySelector("[data-replay-surface]")?.classList.contains("is-scrollable")).toBe(
       true,
     );
     const wo = [...container.querySelectorAll("[data-replay-wo-value]")].map((el) => el.textContent);
     const w = [...container.querySelectorAll("[data-replay-w-value]")].map((el) => el.textContent);
-    expect(wo[0]).toBe("120");
-    expect(w[0]).toBe("121");
-    expect(wo[19]).toBe("310");
-    expect(w[19]).toBe("310");
-    expect(container.querySelector("[data-replay-check-no='12']")?.getAttribute("data-replay-check")).toBe(
+    expect(wo[0]).toBe("130");
+    expect(w[0]).toBe("131");
+    expect(wo[18]).toBe("310");
+    expect(w[18]).toBe("310");
+    expect(container.querySelector("[data-replay-check-no='13']")?.getAttribute("data-replay-check")).toBe(
       "fail",
     );
-    expect((container.querySelector("[data-replay-check-no='12']") as HTMLElement).style.left).toBe(
+    expect((container.querySelector("[data-replay-check-no='13']") as HTMLElement).style.left).toBe(
       "34px",
     );
     expect(container.querySelector("[data-replay-headers] button")).toBeNull();
 
-    dragSurface(container, CASE3V2_REPLAY_SLOT_PITCH * 11);
+    dragSurface(container, CASE3V2_REPLAY_SLOT_PITCH * 12);
     expect(headersOf(container)[0]).toBe("P1");
-    expect(headersOf(container)[19]).toBe("P20");
+    expect(headersOf(container)[18]).toBe("P19");
     expect(container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
       "0",
     );
@@ -513,22 +522,22 @@ describe("PointBeamReplay window size", () => {
     );
     expect(woEarly[0]).toBe("10");
     expect(wEarly[0]).toBe("10");
-    expect(woEarly[19]).toBe("200");
-    expect(wEarly[19]).toBe("200");
+    expect(woEarly[18]).toBe("190");
+    expect(wEarly[18]).toBe("190");
     expect(container.querySelector("[data-replay-check-no='1']")?.getAttribute("data-replay-check-slot")).toBe(
       "0",
     );
-    expect(container.querySelector("[data-replay-check-no='12']")?.getAttribute("data-replay-check-slot")).toBe(
-      "11",
+    expect(container.querySelector("[data-replay-check-no='13']")?.getAttribute("data-replay-check-slot")).toBe(
+      "12",
     );
-    expect((container.querySelector("[data-replay-check-no='12']") as HTMLElement).style.left).toBe(
-      `${34 + 11 * 85}px`,
+    expect((container.querySelector("[data-replay-check-no='13']") as HTMLElement).style.left).toBe(
+      `${34 + 12 * 85}px`,
     );
     expect(container.querySelector("[data-replay-check-no='31']")).toBeNull();
 
-    dragSurface(container, -CASE3V2_REPLAY_SLOT_PITCH * 11);
-    expect(headersOf(container)[0]).toBe("P12");
-    expect(headersOf(container)[19]).toBe("P31");
+    dragSurface(container, -CASE3V2_REPLAY_SLOT_PITCH * 12);
+    expect(headersOf(container)[0]).toBe("P13");
+    expect(headersOf(container)[18]).toBe("P31");
     expect(container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
       "1",
     );
@@ -567,13 +576,13 @@ describe("PointBeamReplay window size", () => {
       />,
     );
     expect(headersOf(first.container)[0]).toBe("P1");
-    expect(headersOf(first.container)[19]).toBe("P20");
+    expect(headersOf(first.container)[18]).toBe("P19");
     expect(first.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
       "0",
     );
 
-    dragSurface(first.container, -CASE3V2_REPLAY_SLOT_PITCH * 4);
-    expect(headersOf(first.container)[0]).toBe("P5");
+    dragSurface(first.container, -CASE3V2_REPLAY_SLOT_PITCH * 5);
+    expect(headersOf(first.container)[0]).toBe("P6");
     expect(first.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
       "1",
     );
@@ -596,15 +605,15 @@ describe("PointBeamReplay window size", () => {
         onReinitWith={noop}
       />,
     );
-    expect(headersOf(first.container)[0]).toBe("P6");
-    expect(headersOf(first.container)[19]).toBe("P25");
+    expect(headersOf(first.container)[0]).toBe("P7");
+    expect(headersOf(first.container)[18]).toBe("P25");
   });
 
   it("进度侧切换或同侧完整点数回到 0 时恢复 follow-latest", () => {
     const routeNos = Array.from({ length: 31 }, (_, i) => i + 1);
     const without = routeNos.map((no) => point(no, no * 10));
     const view = renderReplay(without, { routeNos, progressSide: "without" });
-    dragSurface(view.container, CASE3V2_REPLAY_SLOT_PITCH * 11);
+    dragSurface(view.container, CASE3V2_REPLAY_SLOT_PITCH * 12);
     expect(headersOf(view.container)[0]).toBe("P1");
     expect(view.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
       "0",
@@ -631,12 +640,12 @@ describe("PointBeamReplay window size", () => {
         onReinitWith={noop}
       />,
     );
-    expect(headersOf(view.container)[0]).toBe("P12");
+    expect(headersOf(view.container)[0]).toBe("P13");
     expect(view.container.querySelector("[data-replay-follow-latest]")?.getAttribute("data-replay-follow-latest")).toBe(
       "1",
     );
 
-    dragSurface(view.container, CASE3V2_REPLAY_SLOT_PITCH * 11);
+    dragSurface(view.container, CASE3V2_REPLAY_SLOT_PITCH * 12);
     expect(headersOf(view.container)[0]).toBe("P1");
     view.rerender(
       <PointBeamReplay

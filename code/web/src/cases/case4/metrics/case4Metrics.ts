@@ -18,6 +18,12 @@ import type {
 } from "../types";
 import { SCHEMES } from "../types";
 import { CASE4_POINT_WINDOW } from "../config/case4RuntimeConfig";
+import {
+  THRP_Y_IDLE,
+  resolveThroughputYMax,
+  throughputYTicks as sharedThroughputYTicks,
+} from "../../shared/throughputAxis";
+import { throughputXDomain } from "../../shared/throughputX";
 
 const EPS = 1e-9;
 
@@ -364,85 +370,24 @@ export type ThroughputWindow = {
   with: ThroughputSample[];
 };
 
-export const CASE4_THRP_Y_IDLE = 10;
+export const CASE4_THRP_Y_IDLE = THRP_Y_IDLE;
 
-/** 1–2–5 太粗：刚过 10 会直接跳到 20。空闲锁 10，溢出走更细 nice。 */
-const THRP_NICE_STEPS = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10] as const;
-
-export function niceCeilThroughput(
-  max: number,
-  emptyDefault = CASE4_THRP_Y_IDLE,
-): number {
-  if (!(Number.isFinite(max) && max > 0)) return emptyDefault;
-  if (max <= emptyDefault) return emptyDefault;
-  const padded = max * 1.1;
-  const mag = 10 ** Math.floor(Math.log10(padded));
-  const norm = padded / mag;
-  let nice: (typeof THRP_NICE_STEPS)[number] = 10;
-  for (const step of THRP_NICE_STEPS) {
-    if (norm <= step) {
-      nice = step;
-      break;
-    }
-  }
-  return Math.max(emptyDefault, nice * mag);
-}
-
-/**
- * Y1：未过空闲档 → 10…0。
- * Y2：抬轴后整数等分（12 → 12…0；20 → 20,18…0）。
- */
-export function throughputYTicks(yMax: number): number[] {
-  if (!(Number.isFinite(yMax)) || yMax <= CASE4_THRP_Y_IDLE) {
-    return Array.from(
-      { length: CASE4_THRP_Y_IDLE + 1 },
-      (_, i) => CASE4_THRP_Y_IDLE - i,
-    );
-  }
-  const integerTop = Number.isInteger(yMax);
-  const step =
-    integerTop && yMax > 15 && yMax % 10 === 0
-      ? yMax / 10
-      : integerTop
-        ? 1
-        : yMax / 10;
-  const n = Math.round(yMax / step);
-  const ticks: number[] = [];
-  for (let i = n; i >= 0; i -= 1) {
-    const v = i * step;
-    ticks.push(v === 0 ? 0 : v);
-  }
-  return ticks;
-}
+export const niceCeilThroughput = resolveThroughputYMax;
+export const throughputYTicks = sharedThroughputYTicks;
 
 /**
  * 两路全量保留，不等长不补 0。
- * N≤windowSize：横轴固定 1..windowSize，新点靠右追加、不拉伸。
- * N>windowSize：滑最近 windowSize。
+ * X 域与 case3-v2 一致：路线 + 样点并集；不滑窗裁切样点。
  */
 export function throughputWindow(
   without: ThroughputSample[],
   withSamples: ThroughputSample[],
-  windowSize = CASE4_POINT_WINDOW,
+  routeNos: ReadonlyArray<number> = [],
 ): ThroughputWindow {
-  const lastWithout = without.at(-1)?.no ?? 0;
-  const lastWith = withSamples.at(-1)?.no ?? 0;
-  const maxNo = Math.max(lastWithout, lastWith);
-  if (maxNo < 1) {
-    return {
-      windowStart: 1,
-      windowEnd: windowSize,
-      yMax: 10,
-      without: [],
-      with: [],
-    };
-  }
-  const windowStart = Math.max(1, maxNo - (windowSize - 1));
-  const windowEnd = maxNo <= windowSize ? windowSize : maxNo;
-  const inWin = (s: ThroughputSample) =>
-    s.no >= windowStart && s.no <= windowEnd;
-  const wOut = without.filter(inWin);
-  const wWith = withSamples.filter(inWin);
+  const sampleNos = [...without, ...withSamples].map((s) => s.no);
+  const [windowStart, windowEnd] = throughputXDomain(routeNos, sampleNos);
+  const wOut = [...without].sort((a, b) => a.no - b.no);
+  const wWith = [...withSamples].sort((a, b) => a.no - b.no);
   let dataMax = 0;
   for (const s of [...wOut, ...wWith]) {
     if (Number.isFinite(s.gbps)) dataMax = Math.max(dataMax, s.gbps);

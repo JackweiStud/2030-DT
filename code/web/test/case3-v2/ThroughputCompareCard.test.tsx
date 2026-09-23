@@ -2,9 +2,12 @@
  * Case3 V2 吞吐折线分段：连续吞吐样点才连线。
  */
 
+import { act, fireEvent, render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
-import { ThroughputCompareCard } from "../../src/cases/case3-v2/components/ThroughputCompareCard";
+import {
+  ThroughputCompareCard,
+  thrHoverNoFromLocalX,
+} from "../../src/cases/case3-v2/components/ThroughputCompareCard";
 import { segmentedThroughputPath } from "../../src/cases/case3-v2/v2ThroughputPath";
 import type { ThroughputSnapshot } from "../../src/cases/case3/types";
 
@@ -26,6 +29,37 @@ describe("segmentedThroughputPath", () => {
     ]);
     expect(skipped).toBe("M1 1 M3 3");
     expect(skipped).not.toContain("L");
+  });
+});
+
+function mockThrSurface(container: HTMLElement): HTMLElement {
+  const surface = container.querySelector("[data-thr-surface]") as HTMLElement;
+  Object.defineProperty(surface, "offsetWidth", {
+    configurable: true,
+    value: 602,
+  });
+  surface.getBoundingClientRect = () =>
+    ({
+      width: 602,
+      height: 171,
+      top: 0,
+      left: 0,
+      right: 602,
+      bottom: 171,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+  return surface;
+}
+
+describe("thrHoverNoFromLocalX", () => {
+  it("绘图区 X 映射到最近样点号，轴外为空", () => {
+    expect(thrHoverNoFromLocalX(15, 1, 20)).toBeNull();
+    expect(thrHoverNoFromLocalX(29.264, 1, 20)).toBe(1);
+    expect(thrHoverNoFromLocalX(29.264 + 564.375, 1, 20)).toBe(20);
+    expect(thrHoverNoFromLocalX(29.264, 6, 25)).toBe(6);
+    expect(thrHoverNoFromLocalX(700, 1, 20)).toBeNull();
   });
 });
 
@@ -77,8 +111,19 @@ describe("ThroughputCompareCard without", () => {
     const yTicks = [...container.querySelectorAll("[data-thr-y-tick]")].map(
       (el) => el.textContent,
     );
-    expect(yTicks[0]).toBe("0");
-    expect(Number(yTicks[yTicks.length - 1])).toBeGreaterThan(12);
+    expect(yTicks[0]).toBe("24.8");
+    expect(yTicks[yTicks.length - 1]).toBe("0.0");
+    expect(yTicks).toEqual([
+      "24.8",
+      "21.7",
+      "18.6",
+      "15.5",
+      "12.4",
+      "9.3",
+      "6.2",
+      "3.1",
+      "0.0",
+    ]);
     const xTicks = [...container.querySelectorAll("[data-thr-x-tick]")].map(
       (el) => el.textContent,
     );
@@ -102,5 +147,57 @@ describe("ThroughputCompareCard without", () => {
     expect(xTicks.at(-1)).toBe("23");
     expect(container.querySelectorAll("[data-thr-dot-wo]")).toHaveLength(2);
     expect(container.querySelector("[data-thr-wo]")?.getAttribute("d")).toContain("L");
+  });
+
+  it("悬停有样点弹出双路读数，空槽与 leave 收起", () => {
+    const { container } = render(
+      <ThroughputCompareCard
+        routeNos={Array.from({ length: 20 }, (_, i) => i + 1)}
+        without={thrp([
+          { no: 1, gbps: 8 },
+          { no: 2, gbps: 8.1 },
+          { no: 3, gbps: 8.2 },
+          { no: 4, gbps: 8.3 },
+          { no: 5, gbps: 8.4 },
+        ])}
+        withSamples={thrp([{ no: 2, gbps: 7.25 }])}
+        showWithSeries
+      />,
+    );
+    const surface = mockThrSurface(container);
+
+    act(() => {
+      fireEvent.mouseMove(surface, { clientX: 30, clientY: 40 });
+    });
+    const tip = container.querySelector("[data-thr-tip]");
+    expect(surface.getAttribute("data-hover-no")).toBe("1");
+    expect(tip?.getAttribute("data-thr-tip-no")).toBe("1");
+    expect(tip?.textContent).toContain("有DT辅助");
+    expect(tip?.textContent).toContain("无DT辅助");
+    expect(tip?.textContent).toContain("8.00Gbps");
+    expect(tip?.textContent).toContain("--");
+
+    act(() => {
+      fireEvent.mouseMove(surface, { clientX: 148, clientY: 40 });
+    });
+    expect(surface.getAttribute("data-hover-no")).toBe("5");
+    expect(
+      container.querySelector("[data-thr-tip]")?.getAttribute("data-thr-tip-no"),
+    ).toBe("5");
+
+    act(() => {
+      fireEvent.mouseMove(surface, { clientX: 445, clientY: 40 });
+    });
+    expect(container.querySelector("[data-thr-tip]")).toBeNull();
+    expect(surface.getAttribute("data-hover-no")).toBe("");
+
+    act(() => {
+      fireEvent.mouseMove(surface, { clientX: 30, clientY: 40 });
+    });
+    expect(container.querySelector("[data-thr-tip]")).not.toBeNull();
+    act(() => {
+      fireEvent.mouseLeave(surface);
+    });
+    expect(container.querySelector("[data-thr-tip]")).toBeNull();
   });
 });

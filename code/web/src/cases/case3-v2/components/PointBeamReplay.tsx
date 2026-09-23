@@ -1,10 +1,9 @@
 /**
- * 点位波束回溯：20 槽壳 + 两侧控制。Without 按真实 no 填 BeamID。
- * N>20 时整表 Pointer Events 拖动，槽距 85px，不复用旧皮肤 29px。
+ * 点位波束回溯：19 槽壳 + 行说明列 + 两侧控制。Without 按真实 no 填 BeamID。
+ * N>19 时整表 Pointer Events 拖动，槽距 85px，不复用旧皮肤 29px。
  */
 
 import { useEffect, useRef, useState } from "react";
-import { CASE3_POINT_WINDOW } from "../../case3/config/case3RuntimeConfig";
 import {
   pointProgressRouteNos,
   pointProgressWindowRange,
@@ -25,6 +24,8 @@ import {
 
 /** V2 槽距：82px 格 + 3px gap。不得使用旧皮肤 CASE3_POINT_SLOT_PITCH=29。 */
 export const CASE3V2_REPLAY_SLOT_PITCH = 85;
+/** V2 回溯窗口：让出行说明列宽度，比旧皮肤 CASE3_POINT_WINDOW 少 1 槽。 */
+export const CASE3V2_REPLAY_WINDOW = 19;
 const CURSOR_SIZE = 28;
 /** 勾/叉相对回溯对表左缘，与静态 `fillChecks` 一致：34 + i * 85。 */
 const CHECK_LEFT0 = 34;
@@ -120,7 +121,7 @@ export function PointBeamReplay(props: Props) {
   const range = pointProgressWindowRange(
     props.routeNos.length,
     completeCount,
-    CASE3_POINT_WINDOW,
+    CASE3V2_REPLAY_WINDOW,
   );
   const [followLatest, setFollowLatest] = useState(true);
   const [userStart, setUserStart] = useState(0);
@@ -158,11 +159,11 @@ export function PointBeamReplay(props: Props) {
   const windowNos = pointProgressRouteNos(
     props.routeNos,
     completeCount,
-    CASE3_POINT_WINDOW,
+    CASE3V2_REPLAY_WINDOW,
     windowStart,
   );
   const slots: Array<number | null> = [...windowNos];
-  while (slots.length < CASE3_POINT_WINDOW) slots.push(null);
+  while (slots.length < CASE3V2_REPLAY_WINDOW) slots.push(null);
   const canDrag = range.maxStart > 0;
 
   const withoutByNo = new Map(
@@ -251,13 +252,14 @@ export function PointBeamReplay(props: Props) {
       data-replay-can-drag={canDrag ? "1" : "0"}
     >
       <div className="case3v2-replay-controls">
-        <div className="case3v2-replay-title">点位波束回溯</div>
+        <div className="case3v2-replay-title">点位波束</div>
+        <div className="case3v2-side-stack">
         <div className="case3v2-side-bar" data-side="without">
           <span className="case3v2-side-num" data-side-num="without">
             1
           </span>
           <div className="case3v2-side-copy">
-            <span className="case3v2-side-name">无DT</span>
+            <span className="case3v2-side-name">无DT辅助</span>
             <StatusLabel
               status={withoutStatus}
               side="without"
@@ -292,7 +294,7 @@ export function PointBeamReplay(props: Props) {
             2
           </span>
           <div className="case3v2-side-copy">
-            <span className="case3v2-side-name">有DT</span>
+            <span className="case3v2-side-name">有DT辅助</span>
             <StatusLabel
               status={withStatus}
               side="with"
@@ -322,14 +324,14 @@ export function PointBeamReplay(props: Props) {
             />
           </div>
         </div>
-        <div className="case3v2-side-link" aria-hidden>
-          <i />
-          <i />
-          <i />
-          <i />
-          <i />
-          <i />
+        <div className="case3v2-side-link" aria-hidden />
         </div>
+      </div>
+
+      <div className="case3v2-replay-axis" data-replay-axis>
+        <span className="case3v2-replay-axis__head">点位</span>
+        <span className="case3v2-replay-axis__row">最优波束ID</span>
+        <span className="case3v2-replay-axis__row">预测波束ID</span>
       </div>
 
       <div
@@ -388,7 +390,6 @@ export function PointBeamReplay(props: Props) {
                   }`}
                   key={`wo-${i}`}
                 >
-                  <span className="case3v2-replay-cell__label">最优波</span>
                   <span
                     className="case3v2-replay-cell__value"
                     data-replay-wo-value
@@ -415,7 +416,6 @@ export function PointBeamReplay(props: Props) {
                   <span className="case3v2-replay-cell__value" data-replay-w-value>
                     {withPoint ? String(withPoint.selectedBeamId) : "--"}
                   </span>
-                  <span className="case3v2-replay-cell__label">预测波</span>
                 </div>
               );
             })}

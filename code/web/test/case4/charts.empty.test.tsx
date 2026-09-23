@@ -45,6 +45,8 @@ import {
   trajPoint,
 } from "./fixtures";
 
+const ROUTE_20 = Array.from({ length: 20 }, (_, i) => i + 1);
+
 describe("ThroughputChart", () => {
   it("绘图区 X 映射到最近样点号，轴外为空", () => {
     expect(thrpHoverNoFromLocalX(15, 1, 20)).toBeNull();
@@ -54,8 +56,10 @@ describe("ThroughputChart", () => {
     expect(thrpHoverNoFromLocalX(700, 1, 20)).toBeNull();
   });
 
-  it("空态 Y0–10 与 X1–20 带 left/top，不堆在原点", () => {
-    const view = render(<ThroughputChart without={[]} withSamples={[]} />);
+  it("空态 Y0–3.2 与 X1–20 带 left/top，不堆在原点", () => {
+    const view = render(
+      <ThroughputChart routeNos={ROUTE_20} without={[]} withSamples={[]} />,
+    );
     const ys = [
       ...view.container.querySelectorAll(".c4-thrp-y span"),
     ] as HTMLSpanElement[];
@@ -63,17 +67,15 @@ describe("ThroughputChart", () => {
       ...view.container.querySelectorAll(".c4-thrp-x span"),
     ] as HTMLSpanElement[];
     expect(ys.map((el) => el.textContent)).toEqual([
-      "10",
-      "9",
-      "8",
-      "7",
-      "6",
-      "5",
-      "4",
-      "3",
-      "2",
-      "1",
-      "0",
+      "3.2",
+      "2.8",
+      "2.4",
+      "2.0",
+      "1.6",
+      "1.2",
+      "0.8",
+      "0.4",
+      "0.0",
     ]);
     expect(xs).toHaveLength(20);
     expect(xs[0]?.textContent).toBe("1");
@@ -81,16 +83,22 @@ describe("ThroughputChart", () => {
     const x0 = Number.parseFloat(xs[0]?.style.left ?? "");
     const xLast = Number.parseFloat(xs[19]?.style.left ?? "");
     const yTop = Number.parseFloat(ys[0]?.style.top ?? "");
-    const yBot = Number.parseFloat(ys[10]?.style.top ?? "");
+    const yBot = Number.parseFloat(ys[8]?.style.top ?? "");
     expect(x0).toBeGreaterThan(20);
     expect(xLast).toBeGreaterThan(x0 + 400);
     expect(yBot).toBeGreaterThan(yTop + 100);
   });
 
   it("N≤20 横轴仍是 1–20，不按样点数拉伸", () => {
-    const empty = render(<ThroughputChart without={[]} withSamples={[]} />);
+    const empty = render(
+      <ThroughputChart routeNos={ROUTE_20} without={[]} withSamples={[]} />,
+    );
     const live = render(
-      <ThroughputChart without={thrpSamples(5)} withSamples={[]} />,
+      <ThroughputChart
+        routeNos={ROUTE_20}
+        without={thrpSamples(5)}
+        withSamples={[]}
+      />,
     );
     const emptyXs = [
       ...empty.container.querySelectorAll(".c4-thrp-x span"),
@@ -106,65 +114,71 @@ describe("ThroughputChart", () => {
     expect(live.container.querySelectorAll(".c4-thrp-dot")).toHaveLength(5);
   });
 
-  it("峰值≤10 时 Y 锁 0–10 整数", () => {
+  it("峰值未超 85% 时 Y 锁 0–3.2", () => {
     const view = render(
-      <ThroughputChart without={[{ no: 1, gbps: 9.5 }]} withSamples={[]} />,
+      <ThroughputChart
+        routeNos={ROUTE_20}
+        without={[{ no: 1, gbps: 2.5 }]}
+        withSamples={[]}
+      />,
     );
     const ys = [
       ...view.container.querySelectorAll(".c4-thrp-y span"),
     ].map((el) => el.textContent);
     expect(ys).toEqual([
-      "10",
-      "9",
-      "8",
-      "7",
-      "6",
-      "5",
-      "4",
-      "3",
-      "2",
-      "1",
-      "0",
+      "3.2",
+      "2.8",
+      "2.4",
+      "2.0",
+      "1.6",
+      "1.2",
+      "0.8",
+      "0.4",
+      "0.0",
     ]);
   });
 
-  it("峰值刚过 10 时 Y 为 12…0 整数，横网格条数跟刻度走", () => {
+  it("峰值超 85% 时阶梯抬轴，横网格条数跟刻度走", () => {
     const view = render(
-      <ThroughputChart without={[{ no: 1, gbps: 10.5 }]} withSamples={[]} />,
+      <ThroughputChart
+        routeNos={ROUTE_20}
+        without={[{ no: 1, gbps: 10.5 }]}
+        withSamples={[]}
+      />,
     );
     const ys = [
       ...view.container.querySelectorAll(".c4-thrp-y span"),
     ].map((el) => el.textContent);
     expect(ys).toEqual([
-      "12",
-      "11",
-      "10",
-      "9",
-      "8",
-      "7",
-      "6",
-      "5",
-      "4",
-      "3",
-      "2",
-      "1",
-      "0",
+      "13.6",
+      "11.9",
+      "10.2",
+      "8.5",
+      "6.8",
+      "5.1",
+      "3.4",
+      "1.7",
+      "0.0",
     ]);
-    expect(ys).not.toContain("10.8");
     expect(
       view.container.querySelectorAll(".c4-thrp-grid-svg rect[data-thrp-yline]"),
-    ).toHaveLength(13);
+    ).toHaveLength(9);
   });
 
-  it("有数据时横轴序号与折线同一窗口", () => {
+  it("有数据时横轴覆盖路线与样点并集，折线保留全量样点", () => {
     const view = render(
-      <ThroughputChart without={thrpSamples(25)} withSamples={thrpSamples(22)} />,
+      <ThroughputChart
+        routeNos={ROUTE_20}
+        without={thrpSamples(25)}
+        withSamples={thrpSamples(22)}
+      />,
     );
     const xs = [
       ...view.container.querySelectorAll(".c4-thrp-x span"),
     ] as HTMLSpanElement[];
-    expect(xs[0]?.textContent).toBe("6");
+    expect(xs[0]?.textContent).toBe("1");
     expect(xs.at(-1)?.textContent).toBe("25");
+    expect(view.container.querySelectorAll(".c4-thrp-dot")).toHaveLength(47);
     const path = view.container.querySelector(".c4-thrp-svg path");
     expect(path?.getAttribute("d")?.startsWith("M ")).toBe(true);
   });
@@ -172,6 +186,7 @@ describe("ThroughputChart", () => {
   it("悬停有样点弹出双路读数，空槽与 leave 收起", () => {
     const view = render(
       <ThroughputChart
+        routeNos={ROUTE_20}
         without={thrpSamples(5)}
         withSamples={[{ no: 2, gbps: 7.25 }]}
       />,
@@ -208,6 +223,7 @@ describe("ThroughputChart", () => {
   it("两路同序号都显示 2 位 Gbps", () => {
     const view = render(
       <ThroughputChart
+        routeNos={ROUTE_20}
         without={[{ no: 1, gbps: 4.2 }]}
         withSamples={[{ no: 1, gbps: 3.8 }]}
       />,
@@ -219,16 +235,20 @@ describe("ThroughputChart", () => {
     expect(text).toContain("3.80Gbps");
   });
 
-  it("N>20 悬停跟当前窗口样点号", () => {
+  it("样点超出路线时悬停仍跟全量样点号", () => {
     const view = render(
-      <ThroughputChart without={thrpSamples(25)} withSamples={thrpSamples(22)} />,
+      <ThroughputChart
+        routeNos={ROUTE_20}
+        without={thrpSamples(25)}
+        withSamples={thrpSamples(22)}
+      />,
     );
     const surface = mockThrpSurface(view.container);
     fireEvent.pointerMove(surface, { clientX: 30, clientY: 40 });
-    expect(surface.getAttribute("data-hover-no")).toBe("6");
+    expect(surface.getAttribute("data-hover-no")).toBe("1");
     expect(
       view.container.querySelector("[data-thrp-tip]")?.getAttribute("data-thrp-tip-no"),
-    ).toBe("6");
+    ).toBe("1");
   });
 });
 

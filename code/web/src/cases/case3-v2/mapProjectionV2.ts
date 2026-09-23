@@ -17,7 +17,17 @@ export const CASE3V2_MAP_STAGE = {
 
 export const CASE3V2_PIN_SIZE = {
   width: 35,
-  height: 42,
+  height: 30,
+} as const;
+
+/**
+ * 图钉白点锚点（相对 35×30 外框左上，单位 px）。
+ * 与 case4 同源 70×83 PNG；在 `background-size: contain` 下由白点质心映射。
+ * 路径/投影点应对准该白点，而非外框底边中心。
+ */
+export const CASE3V2_PIN_ANCHOR = {
+  x: 17.33132530120482,
+  y: 26.897590361445785,
 } as const;
 
 export const CASE3V2_UE_SIZE = {
@@ -223,12 +233,15 @@ function groundBoxFromImagePoint(
   };
 }
 
-/** 点位图标以投影点为地面锚点（底边中心）。 */
+/** 点位图标以投影点为白点锚点（非外框底边中心；对齐 case4）。 */
 export function pinBoxFromImagePoint(point: Case3V2ImagePoint): {
   left: number;
   top: number;
 } {
-  return groundBoxFromImagePoint(point, CASE3V2_PIN_SIZE);
+  return {
+    left: point.imageX - CASE3V2_PIN_ANCHOR.x,
+    top: point.imageY - CASE3V2_PIN_ANCHOR.y,
+  };
 }
 
 /** UE 图标以投影点为地面锚点（底边中心）。 */

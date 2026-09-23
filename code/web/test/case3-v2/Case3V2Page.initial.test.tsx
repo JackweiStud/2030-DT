@@ -126,7 +126,7 @@ describe("Case3V2Page initial", () => {
       view.container.querySelector("[data-thr-w]")?.getAttribute("d"),
     ).toBeNull();
 
-    expect(view.container.querySelectorAll("[data-replay-without] .case3v2-replay-cell")).toHaveLength(20);
+    expect(view.container.querySelectorAll("[data-replay-without] .case3v2-replay-cell")).toHaveLength(19);
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P--");
     expect(view.container.querySelector("[data-beam-id-value]")?.textContent).toBe("--");
     expect(view.container.querySelectorAll(".case3v2-beam-cell")).toHaveLength(256);
@@ -163,8 +163,19 @@ describe("Case3V2Page initial", () => {
     const yTicks = [...view.container.querySelectorAll("[data-thr-y-tick]")].map(
       (el) => el.textContent,
     );
-    expect(yTicks[0]).toBe("0");
-    expect(yTicks[yTicks.length - 1]).toBe("12");
+    expect(yTicks[0]).toBe("3.2");
+    expect(yTicks[yTicks.length - 1]).toBe("0.0");
+    expect(yTicks).toEqual([
+      "3.2",
+      "2.8",
+      "2.4",
+      "2.0",
+      "1.6",
+      "1.2",
+      "0.8",
+      "0.4",
+      "0.0",
+    ]);
 
     expect(view.container.querySelectorAll("[data-thr-yline]").length).toBe(
       yTicks.length,

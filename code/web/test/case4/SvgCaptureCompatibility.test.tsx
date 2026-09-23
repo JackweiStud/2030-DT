@@ -69,6 +69,7 @@ describe("Case4 SVG screenshot compatibility", () => {
   it("吞吐折线克隆后仍带 stroke", () => {
     const view = render(
       <ThroughputChart
+        routeNos={Array.from({ length: 20 }, (_, i) => i + 1)}
         without={thrpSamples(3)}
         withSamples={thrpSamples(2)}
       />,

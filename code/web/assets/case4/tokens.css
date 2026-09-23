@@ -34,10 +34,10 @@
   --c4-radius-dock: 14px;
   --c4-gap-row: 12px;
 
-  /* Pencil c0EO9c / 实例 nkOCa「路线点位」 */
+  /* 与 case3-v2 气泡一致：35×30，编号 Regular 11 */
   --c4-pin-w: 35px;
-  --c4-pin-h: 42px;
-  --c4-pin-no-h: 31px;
-  --c4-pin-label-size: 12px;
-  --c4-pin-label-weight: 700;
+  --c4-pin-h: 30px;
+  --c4-pin-no-h: 22px;
+  --c4-pin-label-size: 11px;
+  --c4-pin-label-weight: 400;
 }

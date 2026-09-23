@@ -92,7 +92,9 @@ describe("Case4Page", () => {
     const thrpX = [
       ...view.container.querySelectorAll(".c4-thrp-x span"),
     ] as HTMLSpanElement[];
-    expect(thrpX).toHaveLength(20);
+    expect(thrpX).toHaveLength(5);
+    expect(thrpX[0]?.textContent).toBe("1");
+    expect(thrpX[4]?.textContent).toBe("5");
     expect(Number.parseFloat(thrpX[0]?.style.left ?? "0")).toBeGreaterThan(20);
     fireEvent.click(view.getByRole("button", { name: "现场环境 >" }));
     expect(open).toHaveBeenCalled();

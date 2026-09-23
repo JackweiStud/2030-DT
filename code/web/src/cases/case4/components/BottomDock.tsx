@@ -39,6 +39,7 @@ export function BottomDock(props: Props) {
         <PositionStatistics statistics={props.statistics} />
         <NlosGauge nlosRatio={props.statistics?.nlosRatio ?? null} />
         <ThroughputChart
+          routeNos={props.baseRoute.map((point) => point.no)}
           without={props.without}
           withSamples={props.withSamples}
         />

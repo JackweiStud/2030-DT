@@ -222,19 +222,19 @@ export const CASE4_STAGE_HEIGHT = 1080;
 export const CASE4_SCREENSHOT_PIXEL_RATIO = 2;
 export const CASE4_MAP_STAGE = { width: 1920, height: 766, top: 60 } as const;
 export const CASE4_UE_SIZE = { width: 36, height: 48 } as const;
-/** Pencil c0EO9c（实例 nkOCa）：路线点位外框 35×42。 */
-export const CASE4_PIN_SIZE = { width: 35, height: 42 } as const;
-/** Pencil Is2Ak「编号槽」：35×31。 */
-export const CASE4_PIN_NO_SLOT_SIZE = { width: 35, height: 31 } as const;
-/** Pencil W0NB1「点位编号」。 */
-export const CASE4_PIN_LABEL_STYLE = { fontSize: 12, fontWeight: 700 } as const;
+/** 与 case3-v2 一致：路线点位外框 35×30。 */
+export const CASE4_PIN_SIZE = { width: 35, height: 30 } as const;
+/** 编号槽高度；与 case3-v2 `.case3v2-pin__no` 一致。 */
+export const CASE4_PIN_NO_SLOT_SIZE = { width: 35, height: 22 } as const;
+/** 点位编号；与 case3-v2 一致：11 / Regular。 */
+export const CASE4_PIN_LABEL_STYLE = { fontSize: 11, fontWeight: 400 } as const;
 /**
- * 图钉白点锚点（相对 35×42 外框左上，单位 px）。
- * `object-fit: contain`（Pencil E7BWF mode:fit）下由 70×83 白点质心映射。
+ * 图钉白点锚点（相对 35×30 外框左上，单位 px）。
+ * 同源 70×83 PNG + `object-fit: contain`；与 case3-v2 `CASE3V2_PIN_ANCHOR` 同值。
  */
 export const CASE4_PIN_ANCHOR = {
-  x: 17.26595744680851,
-  y: 37.462765957446805,
+  x: 17.33132530120482,
+  y: 26.897590361445785,
 } as const;
-export const CASE4_THRP_Y_MAX_EMPTY = 10;
+export const CASE4_THRP_Y_MAX_EMPTY = 3.2;
 export const CASE4_ERROR_EPS = 1e-9;

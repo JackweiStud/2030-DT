@@ -12,9 +12,6 @@ function assertMainOnOverlay(container: HTMLElement, pct: string) {
   expect(num?.closest("[data-ba-overlay]")).not.toBeNull();
   expect(num?.closest(".case3v2-ba-fill--ok")).toBeNull();
   expect(num?.closest(".case3v2-ba-fill--bad")).toBeNull();
-  expect(container.querySelector("[data-ba-overlay]")?.textContent).toContain(
-    "预测准确率",
-  );
 }
 
 function fillWidth(container: HTMLElement, cls: string): string {

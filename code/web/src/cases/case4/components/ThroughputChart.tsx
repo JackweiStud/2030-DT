@@ -4,7 +4,9 @@
  * 悬停按样点号对齐两条曲线读数；窗口滑动时跟 no，不跟像素。
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { formatThroughputYTick } from "../../shared/throughputAxis";
+import { throughputXTicks } from "../../shared/throughputX";
 import {
   formatFixed,
   throughputWindow,
@@ -13,6 +15,7 @@ import {
 import type { ThroughputSample } from "../types";
 
 type Props = {
+  routeNos: ReadonlyArray<number>;
   without: ThroughputSample[];
   withSamples: ThroughputSample[];
 };
@@ -26,18 +29,14 @@ const PLOT = {
   width: 564.375,
   height: 154.57391304347829,
   xLabelY: 162.22608695652175,
-  xLabel0: 26.12847222222222,
-  xStep: 29.703947368421052,
   yLabelX: 15,
 } as const;
 
-const GRID_X = [
-  29.264, 58.968, 88.672, 118.376, 148.08, 177.784, 207.488, 237.192, 266.895,
-  296.599, 326.303, 356.007, 385.711, 415.415, 445.119, 474.823, 504.527,
-  534.231, 563.935, 593.639,
-];
-
+/** 案侧文案较长（传统/数字孪生），宽于 case3-v2 的 148。 */
 const TIP_W = 200;
+/** 约两行 tip 高度（含 padding），用于锚在数据点上方。 */
+const TIP_H = 48;
+const TIP_GAP = 8;
 const WITHOUT_COLOR = "#97AAC4";
 const WITH_COLOR = "#7A6BFF";
 
@@ -73,20 +72,7 @@ function pathOf(
   return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 }
 
-function formatYTick(v: number): string {
-  if (Number.isInteger(v)) return String(v);
-  const t = v.toFixed(1);
-  return t.endsWith(".0") ? String(Math.round(v)) : t;
-}
-
-function xLabelLeft(no: number, start: number, end: number): number {
-  const slots = end - start + 1;
-  if (slots <= 1) {
-    return PLOT.xLabel0 + ((20 - 1) / 2) * PLOT.xStep;
-  }
-  const i = no - start;
-  return PLOT.xLabel0 + (i / (slots - 1)) * ((20 - 1) * PLOT.xStep);
-}
+const formatYTick = formatThroughputYTick;
 
 function sampleAt(
   samples: ThroughputSample[],
@@ -129,12 +115,18 @@ function gbpsLabel(sample: ThroughputSample | undefined): string {
 
 /** 与 Pencil 空闲帧同构：空闲 Y 11 档 0–10；抬轴后横网格跟整数刻度走。 */
 export function ThroughputChart(props: Props) {
-  const win = throughputWindow(props.without, props.withSamples);
+  const win = throughputWindow(
+    props.without,
+    props.withSamples,
+    props.routeNos,
+  );
   const [hoverNo, setHoverNo] = useState<number | null>(null);
   const dWithout = pathOf(win.without, win.windowStart, win.windowEnd, win.yMax);
   const dWith = pathOf(win.with, win.windowStart, win.windowEnd, win.yMax);
-  const labels: number[] = [];
-  for (let n = win.windowStart; n <= win.windowEnd; n += 1) labels.push(n);
+  const xLabels = useMemo(
+    () => throughputXTicks(win.windowStart, win.windowEnd),
+    [win.windowStart, win.windowEnd],
+  );
   const yLabels = throughputYTicks(win.yMax);
   const hoveredWithout = hoverNo == null ? undefined : sampleAt(win.without, hoverNo);
   const hoveredWith = hoverNo == null ? undefined : sampleAt(win.with, hoverNo);
@@ -173,8 +165,14 @@ export function ThroughputChart(props: Props) {
       ? (() => {
           const center = xOf(hovered, win.windowStart, win.windowEnd);
           const left = Math.max(0, Math.min(PLOT.artW - TIP_W, center - TIP_W / 2));
+          const pointYs: number[] = [];
+          if (hoveredWithout != null) pointYs.push(yOf(hoveredWithout.gbps, win.yMax));
+          if (hoveredWith != null) pointYs.push(yOf(hoveredWith.gbps, win.yMax));
+          const pointTop = pointYs.length > 0 ? Math.min(...pointYs) : PLOT.top;
+          const top = pointTop - TIP_H - TIP_GAP;
           return {
             left: `${left}px`,
+            top: `${top}px`,
             ["--c4-tip-arrow-left" as string]: `${center - left}px`,
           };
         })()
@@ -216,10 +214,10 @@ export function ThroughputChart(props: Props) {
                     data-thrp-yline
                   />
                 ))}
-                {GRID_X.map((x) => (
+                {xLabels.map((n) => (
                   <rect
-                    key={`vx-${x}`}
-                    x={x}
+                    key={`vx-${n}`}
+                    x={xOf(n, win.windowStart, win.windowEnd)}
                     y={PLOT.top}
                     width="1"
                     height={PLOT.height}
@@ -283,11 +281,11 @@ export function ThroughputChart(props: Props) {
               ))}
             </div>
             <div className="c4-thrp-x">
-              {labels.map((n) => (
+              {xLabels.map((n) => (
                 <span
                   key={n}
                   style={{
-                    left: `${xLabelLeft(n, win.windowStart, win.windowEnd)}px`,
+                    left: `${xOf(n, win.windowStart, win.windowEnd)}px`,
                     top: `${PLOT.xLabelY}px`,
                   }}
                 >

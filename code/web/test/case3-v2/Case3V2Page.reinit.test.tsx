@@ -385,7 +385,7 @@ describe("Case3V2Page reinit map vs dock history", () => {
     let state = bothClosed(31, route);
     const { view, update } = renderPage(state);
     expect(view.container.querySelector("[data-replay-headers] .case3v2-replay-col")?.textContent).toBe(
-      "P12",
+      "P13",
     );
     expect(view.container.querySelector("[data-cost-delta]")?.textContent).not.toBe("--");
 
@@ -404,10 +404,10 @@ describe("Case3V2Page reinit map vs dock history", () => {
     const headers = [...view.container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")].map(
       (el) => el.textContent,
     );
-    expect(headers[0]).toBe("P12");
-    expect(headers[19]).toBe("P31");
+    expect(headers[0]).toBe("P13");
+    expect(headers[18]).toBe("P31");
     expect(view.container.querySelectorAll("[data-replay-w-value]")[0]?.textContent).toBe(
-      "120",
+      "130",
     );
     expect(view.container.querySelectorAll("[data-replay-w-tone]")[0]?.getAttribute("data-replay-w-tone")).toBe(
       "idle",
@@ -427,28 +427,28 @@ describe("Case3V2Page reinit map vs dock history", () => {
     const headersAfter = [...view.container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")].map(
       (el) => el.textContent,
     );
-    expect(headersAfter[0]).toBe("P12");
-    expect(headersAfter[19]).toBe("P31");
+    expect(headersAfter[0]).toBe("P13");
+    expect(headersAfter[18]).toBe("P31");
     expect(view.container.querySelector("[data-replay-check]")).toBeNull();
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P--");
   });
 
-  it("Reset With 对称保留 Without 最新 20 槽，列头点击不改当前点", () => {
+  it("Reset With 对称保留 Without 最新 19 槽，列头点击不改当前点", () => {
     const route = nRoute(31);
     let state = bothClosed(31, route);
     const { view, update } = renderPage(state);
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P31");
     const surface = view.container.querySelector("[data-replay-surface]") as HTMLElement;
-    Object.defineProperty(surface, "offsetWidth", { configurable: true, value: 1702 });
+    Object.defineProperty(surface, "offsetWidth", { configurable: true, value: 1612 });
     surface.getBoundingClientRect = () =>
       ({
         x: 0,
         y: 0,
         top: 0,
         left: 0,
-        width: 1702,
+        width: 1612,
         height: 140,
-        right: 1702,
+        right: 1612,
         bottom: 140,
         toJSON: () => ({}),
       }) as DOMRect;
@@ -462,13 +462,13 @@ describe("Case3V2Page reinit map vs dock history", () => {
     fireEvent.pointerMove(surface, {
       pointerId: 1,
       buttons: 1,
-      clientX: 800 + 85 * 11,
+      clientX: 800 + 85 * 12,
       clientY: 20,
     });
     fireEvent.pointerUp(surface, {
       pointerId: 1,
       button: 0,
-      clientX: 800 + 85 * 11,
+      clientX: 800 + 85 * 12,
       clientY: 20,
     });
     expect(view.container.querySelector("[data-replay-headers] .case3v2-replay-col")?.textContent).toBe(
@@ -491,10 +491,10 @@ describe("Case3V2Page reinit map vs dock history", () => {
     const headers = [...view.container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")].map(
       (el) => el.textContent,
     );
-    expect(headers[0]).toBe("P12");
-    expect(headers[19]).toBe("P31");
+    expect(headers[0]).toBe("P13");
+    expect(headers[18]).toBe("P31");
     expect(view.container.querySelectorAll("[data-replay-wo-value]")[0]?.textContent).toBe(
-      "120",
+      "130",
     );
     expect(view.container.querySelectorAll("[data-replay-w-value]")[0]?.textContent).toBe(
       "--",

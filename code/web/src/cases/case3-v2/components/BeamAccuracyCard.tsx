@@ -75,7 +75,6 @@ export function BeamAccuracyCard(props: Props) {
                 <span className="case3v2-ba-main__unit">%</span>
               </span>
             </div>
-            <span className="case3v2-ba-main__desc">预测准确率</span>
           </div>
         </div>
         <div className="case3v2-ba-bottom">

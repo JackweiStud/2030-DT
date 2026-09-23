@@ -261,55 +261,55 @@ describe("nlosPercentLabel", () => {
 });
 
 describe("niceCeilThroughput", () => {
-  it("峰值≤10 锁 10；刚过 10 抬到 12 而不是 20", () => {
-    expect(niceCeilThroughput(0)).toBe(10);
-    expect(niceCeilThroughput(8)).toBe(10);
-    expect(niceCeilThroughput(9.5)).toBe(10);
-    expect(niceCeilThroughput(10)).toBe(10);
-    expect(niceCeilThroughput(10.5)).toBe(12);
-    expect(niceCeilThroughput(11)).toBe(15);
-    expect(niceCeilThroughput(18)).toBe(20);
+  it("空 / 常态峰值锁 3.2；超 85% 阶梯抬轴并对齐", () => {
+    expect(niceCeilThroughput(0)).toBe(3.2);
+    expect(niceCeilThroughput(2.5)).toBe(3.2);
+    expect(niceCeilThroughput(2.8)).toBe(4);
+    expect(niceCeilThroughput(8.4)).toBe(11.2);
+    expect(niceCeilThroughput(19)).toBe(24.8);
   });
 });
 
 describe("throughputYTicks", () => {
-  it("空闲 10…0；12 为整数 12…0；20 为隔 2", () => {
-    expect(throughputYTicks(10)).toEqual([
-      10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+  it("空闲 3.2…0；抬轴后固定 8 格", () => {
+    expect(throughputYTicks(3.2)).toEqual([
+      3.2, 2.8, 2.4, 2.0, 1.6, 1.2, 0.8, 0.4, 0,
     ]);
-    expect(throughputYTicks(12)).toEqual([
-      12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+    expect(throughputYTicks(4)).toEqual([
+      4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0,
     ]);
-    expect(throughputYTicks(20)).toEqual([
-      20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0,
+    expect(throughputYTicks(24.8)).toEqual([
+      24.8, 21.7, 18.6, 15.5, 12.4, 9.3, 6.2, 3.1, 0,
     ]);
   });
 });
 
 describe("throughputWindow", () => {
-  it("不等长不补 0；N≤20 横轴仍 1–20；>20 只切显示窗口", () => {
+  it("不等长不补 0；X 域为路线与样点并集；不滑窗裁切", () => {
+    const route = Array.from({ length: 20 }, (_, i) => i + 1);
     const without = thrpSamples(3);
     const withDt = thrpSamples(5);
-    const win = throughputWindow(without, withDt);
+    const win = throughputWindow(without, withDt, route);
     expect(win.without.map((s) => s.no)).toEqual([1, 2, 3]);
     expect(win.with.map((s) => s.no)).toEqual([1, 2, 3, 4, 5]);
     expect(win.windowStart).toBe(1);
     expect(win.windowEnd).toBe(20);
-    expect(win.yMax).toBe(10);
+    expect(win.yMax).toBe(11.2);
     expect(win.without.some((s) => s.gbps === 0 && s.no === 4)).toBe(false);
 
-    const empty = throughputWindow([], []);
+    const empty = throughputWindow([], [], route);
     expect(empty.without).toEqual([]);
     expect(empty.with).toEqual([]);
     expect(empty.windowEnd).toBe(20);
-    expect(empty.yMax).toBe(10);
+    expect(empty.yMax).toBe(3.2);
 
     const long = thrpSamples(25);
-    const cut = throughputWindow(long, []);
-    expect(cut.windowStart).toBe(6);
-    expect(cut.windowEnd).toBe(25);
-    expect(cut.without[0]?.no).toBe(6);
-    expect(cut.yMax).toBe(12);
+    const wide = throughputWindow(long, [], route);
+    expect(wide.windowStart).toBe(1);
+    expect(wide.windowEnd).toBe(25);
+    expect(wide.without[0]?.no).toBe(1);
+    expect(wide.without).toHaveLength(25);
+    expect(wide.yMax).toBe(13.6);
   });
 });
 

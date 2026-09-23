@@ -352,7 +352,7 @@ describe("Case3V2Page with flow", () => {
     expect(closed.view.container.querySelector("[data-ba-ok]")?.textContent).toBe("224");
   });
 
-  it("With 前窗显示 P1..P20，矩阵仍跟最新 With 点", () => {
+  it("With 前窗显示 P1..P19，矩阵仍跟最新 With 点", () => {
     const route = Array.from({ length: 22 }, (_, i) => ({
       no: i + 1,
       x: i + 1,
@@ -374,8 +374,8 @@ describe("Case3V2Page with flow", () => {
     });
     const { view } = renderPage(state);
     const headers = [...view.container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")];
-    expect(headers.map((el) => el.textContent).slice(0, 20)).toEqual(
-      Array.from({ length: 20 }, (_, i) => `P${i + 1}`),
+    expect(headers.map((el) => el.textContent)).toEqual(
+      Array.from({ length: 19 }, (_, i) => `P${i + 1}`),
     );
     expect(headers.filter((el) => el.classList.contains("is-done"))).toHaveLength(2);
     expect(view.container.querySelector("[data-replay-done]")?.getAttribute("data-replay-done")).toBe(
@@ -393,7 +393,7 @@ describe("Case3V2Page with flow", () => {
     expect(view.container.querySelector("[data-beam-id-value]")?.textContent).toBe("21");
   });
 
-  it("With>20 时回溯窗口跟随最新 20 点，矩阵跟最后点", () => {
+  it("With>19 时回溯窗口跟随最新 19 点，矩阵跟最后点", () => {
     const route = Array.from({ length: 31 }, (_, i) => ({
       no: i + 1,
       x: i + 1,
@@ -417,12 +417,12 @@ describe("Case3V2Page with flow", () => {
     const headers = [...view.container.querySelectorAll("[data-replay-headers] .case3v2-replay-col")].map(
       (el) => el.textContent,
     );
-    expect(headers[0]).toBe("P3");
-    expect(headers[19]).toBe("P22");
+    expect(headers[0]).toBe("P4");
+    expect(headers[18]).toBe("P22");
     expect(view.container.querySelector("[data-replay-done]")?.getAttribute("data-replay-done")).toBe(
-      "20",
+      "19",
     );
-    expect(view.container.querySelector("[data-replay-wo-value]")?.textContent).toBe("30");
+    expect(view.container.querySelector("[data-replay-wo-value]")?.textContent).toBe("40");
     expect(view.container.querySelector("[data-point-value]")?.textContent).toBe("P22");
     expect(view.container.querySelector("[data-beam-id-value]")?.textContent).toBe("220");
   });

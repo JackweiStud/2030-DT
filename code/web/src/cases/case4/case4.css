@@ -299,7 +299,7 @@
   pointer-events: none;
 }
 
-/* Pencil E7BWF：35×42 矩形内 image mode fit */
+/* 与 case3-v2 一致：35×30 外框内 image contain */
 .case4-page .c4-pin__icon {
   position: absolute;
   inset: 0;
@@ -323,7 +323,7 @@
   color: #fff;
   font-size: var(--c4-pin-label-size);
   font-weight: var(--c4-pin-label-weight);
-  line-height: normal;
+  line-height: 1;
   pointer-events: none;
 }
 
@@ -468,8 +468,12 @@
   border: 0;
   background: transparent;
   color: #f4f7fb;
-  font-size: 26px;
-  font-weight: 600;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 18px;
+  font-style: medium;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: normal;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -1819,6 +1823,7 @@
 
 .case4-page .c4-thrp-x span {
   position: absolute;
+  transform: translateX(-50%);
 }
 
 .case4-page .c4-thrp-dot.is-hover {
@@ -1841,15 +1846,14 @@
 
 .case4-page .c4-thrp-tip {
   position: absolute;
-  bottom: calc(100% + 8px);
   z-index: 6;
   box-sizing: border-box;
   width: 200px;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
   background: #1c1f27f5;
-  box-shadow: 0 10px 28px #00000073;
-  color: var(--c4-primary-text);
+  box-shadow: 0 8px 20px #00000073;
+  color: #f4f7fb;
   pointer-events: none;
 }
 
@@ -1857,26 +1861,26 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
-  height: 22px;
+  gap: 6px;
+  height: 18px;
   color: #c5c9d3;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
-  line-height: 22px;
+  line-height: 18px;
   white-space: nowrap;
 }
 
 .case4-page .c4-thrp-tip__row b {
   margin-left: auto;
-  color: var(--c4-primary-text);
-  font-family: var(--c4-font-data);
-  font-size: 12px;
+  padding-left: 8px;
+  color: #f4f7fb;
+  font-size: 11px;
   font-weight: 600;
 }
 
 .case4-page .c4-thrp-tip__dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -1884,9 +1888,9 @@
 .case4-page .c4-thrp-tip__arrow {
   position: absolute;
   left: var(--c4-tip-arrow-left, 50%);
-  bottom: -5px;
-  width: 10px;
-  height: 10px;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
   background: #1c1f27f5;
   transform: translateX(-50%) rotate(45deg);
 }
