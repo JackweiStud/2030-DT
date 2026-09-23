@@ -69,8 +69,42 @@ function playClass(enabled: boolean, busy: boolean): string {
   return enabled ? "is-ready" : "is-off";
 }
 
-function resetClass(enabled: boolean): string {
+function resetClass(enabled: boolean, busy: boolean): string {
+  if (busy) return "is-busy";
   return enabled ? "is-ready" : "is-off";
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden>
+      <path
+        d="M5.5 3.6v8.8a.6.6 0 0 0 .9.5l7-4.4a.6.6 0 0 0 0-1l-7-4.4a.6.6 0 0 0-.9.5z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function ResetIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden>
+      <path
+        d="M12.6 9.4A4.8 4.8 0 1 1 11.4 4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12.4 2.2v3h-3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 function StatusLabel(props: {
@@ -283,16 +317,21 @@ export function PointBeamReplay(props: Props) {
               title="启动无 DT"
               disabled={!props.startWithoutEnabled}
               onClick={props.onStartWithout}
-            />
+            >
+              <PlayIcon />
+            </button>
             <button
               type="button"
               className={`case3v2-icon-btn case3v2-icon-btn--reset ${resetClass(
                 props.reinitWithoutEnabled,
+                props.withoutStatus === "重置中",
               )}`}
               title="重置无 DT"
               disabled={!props.reinitWithoutEnabled}
               onClick={props.onReinitWithout}
-            />
+            >
+              <ResetIcon />
+            </button>
           </div>
         </div>
         <div className="case3v2-side-bar" data-side="with">
@@ -318,16 +357,21 @@ export function PointBeamReplay(props: Props) {
               title="启动有 DT"
               disabled={!props.startWithEnabled}
               onClick={props.onStartWith}
-            />
+            >
+              <PlayIcon />
+            </button>
             <button
               type="button"
               className={`case3v2-icon-btn case3v2-icon-btn--reset ${resetClass(
                 props.reinitWithEnabled,
+                props.withStatus === "重置中",
               )}`}
               title="重置有 DT"
               disabled={!props.reinitWithEnabled}
               onClick={props.onReinitWith}
-            />
+            >
+              <ResetIcon />
+            </button>
           </div>
         </div>
         <div className="case3v2-side-link" aria-hidden />

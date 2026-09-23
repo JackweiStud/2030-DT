@@ -115,7 +115,10 @@ describe("PointBeamReplay without", () => {
     expect(container.querySelector("[data-status-ellipsis]")).not.toBeNull();
     expect(container.querySelector("[data-replay-check]")).toBeNull();
     const css = readFileSync("src/cases/case3-v2/case3v2.css", "utf8") as string;
-    expect(css).toContain("1.6s ease-in-out infinite");
+    const runningBlock = css.match(
+      /\.case3v2-side-status\.is-running \{[^}]+\}/,
+    )?.[0];
+    expect(runningBlock).not.toMatch(/animation/);
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toMatch(
       /prefers-reduced-motion: reduce[\s\S]*case3v2-status-ellipsis__track[\s\S]*width: 1\.15em/,
@@ -286,7 +289,16 @@ describe("PointBeamReplay with", () => {
     const css = readFileSync("src/cases/case3-v2/case3v2.css", "utf8") as string;
     expect(css).toContain("cell-with-ok.png");
     expect(css).toContain("cell-with-fail.png");
-    expect(css).toContain("cell-with-idle.png");
+    const idleBlock = css.match(
+      /\.case3v2-replay-cell--with:not\(\.is-ok\):not\(\.is-fail\) \{[^}]+\}/,
+    )?.[0];
+    expect(idleBlock).toMatch(/background:\s*rgba\(0, 0, 0, 0\.4\)/);
+    expect(css).toMatch(
+      /\.case3v2-replay-cell--without:not\(\.is-done\) \{\s*border-radius:\s*4px 4px 0 0;/,
+    );
+    expect(css).toMatch(
+      /\.case3v2-replay-cell--with:not\(\.is-ok\):not\(\.is-fail\) \{\s*border-radius:\s*0 0 4px 4px;/,
+    );
     expect(css).toContain("cell-icon-ok.png");
     expect(css).toContain("cell-icon-fail.png");
     const checkBlock = css.match(/\.case3v2-page \.case3v2-check \{[^}]+\}/)?.[0];
