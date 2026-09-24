@@ -1,7 +1,7 @@
 import { parseRangePair } from "../case2/value-ranges.mjs";
 
 export const DEFAULT_CASE1_RANGE_HEATMAP_RSS = Object.freeze({
-  min: -500,
+  min: -1,
   max: 500,
 });
 

@@ -1,9 +1,11 @@
 /**
  * 热力图纯算法：双线性插值 → 伪彩 → 马赛克，再叠到底图 Canvas。
  * 不读 env；配置由调用方传入。
+ * 无效格：round(value,2)===-1；不参与 min/max；色块按矩阵格硬切写 INVALID；
+ * 有效格内双线性仅有效角重归一，W===0 亦写 INVALID。
  */
 
-import type { HeatmapConfig } from "./heatmapConfig";
+import type { HeatmapConfig, HeatmapInvalidRgba } from "./heatmapConfig";
 
 export type Rgb = readonly [number, number, number];
 
@@ -17,7 +19,7 @@ export const HEATMAP_COLOR_STOPS: ReadonlyArray<{ t: number; rgb: Rgb }> = [
 
 export type MatrixStats = { eMin: number; eMax: number };
 
-/** 防御校验：非空矩形、每行至少一个有限数。 */
+/** 语法校验：非空矩形、每行至少一个有限数。 */
 export function assertHeatmapMatrix(matrix: number[][]): {
   rows: number;
   cols: number;
@@ -46,29 +48,54 @@ export function assertHeatmapMatrix(matrix: number[][]): {
   return { rows, cols };
 }
 
-/** 热力无效哨兵：矩阵中只要出现就不画该张热力图。 */
+/** 热力无效哨兵字面值（判定须先 round 到 2 位）。 */
 export const HEATMAP_INVALID_SENTINEL = -1;
 
-/** 任一格为 -1 则整张不画。 */
+/** 热力语义精度：四舍五入到 2 位小数。 */
+export function roundHeatmapSemantic(value: number): number {
+  // Keep parity with the adapter: round the absolute magnitude, then restore
+  // the sign so negative half values round away from zero.
+  const rounded =
+    Math.sign(value) *
+    (Math.round((Math.abs(value) + Number.EPSILON) * 100) / 100);
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
+/** 无效格：round(value, 2) === -1。 */
+export function isHeatmapInvalidCell(value: number): boolean {
+  return roundHeatmapSemantic(value) === HEATMAP_INVALID_SENTINEL;
+}
+
+/**
+ * @deprecated 整张短路已废弃；保留仅作「是否含无效格」探测。
+ * 含无效格时仍应绘制，按格透明/重归一。
+ */
 export function heatmapContainsInvalid(matrix: number[][]): boolean {
   for (const row of matrix) {
     for (const value of row) {
-      if (value === HEATMAP_INVALID_SENTINEL) return true;
+      if (isHeatmapInvalidCell(value)) return true;
     }
   }
   return false;
 }
 
-/** 本张矩阵独立 min/max，不与其它图共享。 */
-export function matrixMinMax(matrix: number[][]): MatrixStats {
+/**
+ * 本张有效格独立 min/max（排除无效格）。
+ * 无有效格时返回 null。
+ */
+export function matrixMinMax(matrix: number[][]): MatrixStats | null {
   let eMin = Infinity;
   let eMax = -Infinity;
+  let found = false;
   for (const row of matrix) {
     for (const v of row) {
+      if (isHeatmapInvalidCell(v)) continue;
+      found = true;
       if (v < eMin) eMin = v;
       if (v > eMax) eMax = v;
     }
   }
+  if (!found) return null;
   return { eMin, eMax };
 }
 
@@ -97,8 +124,12 @@ export function colorAt(t: number): Rgb {
   return HEATMAP_COLOR_STOPS[0]!.rgb;
 }
 
+export type BilinearSample =
+  | { ok: true; value: number }
+  | { ok: false };
+
 /**
- * 双线性采样矩阵到离屏像素 (x,y)。
+ * 双线性采样：无效角丢弃，有效角权重重归一；W===0 → ok:false。
  * 第一行在上、第一列在左；不转置、不翻转。
  */
 export function sampleBilinear(
@@ -107,7 +138,7 @@ export function sampleBilinear(
   y: number,
   rangeW: number,
   rangeH: number,
-): number {
+): BilinearSample {
   const R = matrix.length;
   const C = matrix[0]!.length;
   const gx = C === 1 ? 0 : (x * (C - 1)) / (rangeW - 1);
@@ -118,16 +149,41 @@ export function sampleBilinear(
   const y1 = Math.min(y0 + 1, R - 1);
   const fx = gx - x0;
   const fy = gy - y0;
-  const v00 = matrix[y0]![x0]!;
-  const v10 = matrix[y0]![x1]!;
-  const v01 = matrix[y1]![x0]!;
-  const v11 = matrix[y1]![x1]!;
-  return (
-    v00 * (1 - fx) * (1 - fy) +
-    v10 * fx * (1 - fy) +
-    v01 * (1 - fx) * fy +
-    v11 * fx * fy
-  );
+
+  const corners: Array<{ v: number; w: number }> = [
+    { v: matrix[y0]![x0]!, w: (1 - fx) * (1 - fy) },
+    { v: matrix[y0]![x1]!, w: fx * (1 - fy) },
+    { v: matrix[y1]![x0]!, w: (1 - fx) * fy },
+    { v: matrix[y1]![x1]!, w: fx * fy },
+  ];
+
+  let W = 0;
+  let sum = 0;
+  for (const corner of corners) {
+    if (isHeatmapInvalidCell(corner.v)) continue;
+    if (corner.w <= 0) continue;
+    W += corner.w;
+    sum += corner.v * corner.w;
+  }
+  if (W === 0) return { ok: false };
+  return { ok: true, value: sum / W };
+}
+
+/**
+ * 离屏像素 → 所属矩阵格（等分矩形硬切，第一行在上、第一列在左）。
+ * 用于无效格整格挖空，避免双线性把有效色渗进无效行/列。
+ */
+export function matrixCellAtPixel(
+  x: number,
+  y: number,
+  rangeW: number,
+  rangeH: number,
+  rows: number,
+  cols: number,
+): { row: number; col: number } {
+  const col = Math.min(cols - 1, Math.max(0, Math.floor((x * cols) / rangeW)));
+  const row = Math.min(rows - 1, Math.max(0, Math.floor((y * rows) / rangeH)));
+  return { row, col };
 }
 
 /** 离屏 RGBA 缓冲（便于在无 ImageData 的环境里单测）。 */
@@ -137,14 +193,24 @@ export type RgbaBuffer = {
   height: number;
 };
 
-/** 生成离屏 RGBA：色块 alpha=255，缝 alpha=0。 */
+const DEFAULT_INVALID_RGBA: HeatmapInvalidRgba = {
+  r: 255,
+  g: 255,
+  b: 255,
+  a: 0,
+};
+
+/** 生成离屏 RGBA：色块按采样着色；缝 alpha=0；所属矩阵格无效或采样无贡献写 INVALID。 */
 export function buildMosaicRgba(
   matrix: number[][],
   config: HeatmapConfig,
 ): RgbaBuffer {
   assertHeatmapMatrix(matrix);
   const { rangeWidth: W, rangeHeight: H, cell, period } = config;
-  const { eMin, eMax } = matrixMinMax(matrix);
+  const rows = matrix.length;
+  const cols = matrix[0]!.length;
+  const invalid = config.invalidRgba ?? DEFAULT_INVALID_RGBA;
+  const stats = matrixMinMax(matrix);
   const data = new Uint8ClampedArray(W * H * 4);
 
   for (let y = 0; y < H; y += 1) {
@@ -158,8 +224,34 @@ export function buildMosaicRgba(
         data[idx + 3] = 0;
         continue;
       }
-      const value = sampleBilinear(matrix, x, y, W, H);
-      const t = normalizeScalar(value, eMin, eMax);
+
+      const { row, col } = matrixCellAtPixel(x, y, W, H, rows, cols);
+      if (isHeatmapInvalidCell(matrix[row]![col]!)) {
+        data[idx] = invalid.r;
+        data[idx + 1] = invalid.g;
+        data[idx + 2] = invalid.b;
+        data[idx + 3] = invalid.a;
+        continue;
+      }
+
+      if (!stats) {
+        data[idx] = invalid.r;
+        data[idx + 1] = invalid.g;
+        data[idx + 2] = invalid.b;
+        data[idx + 3] = invalid.a;
+        continue;
+      }
+
+      const sample = sampleBilinear(matrix, x, y, W, H);
+      if (!sample.ok) {
+        data[idx] = invalid.r;
+        data[idx + 1] = invalid.g;
+        data[idx + 2] = invalid.b;
+        data[idx + 3] = invalid.a;
+        continue;
+      }
+
+      const t = normalizeScalar(sample.value, stats.eMin, stats.eMax);
       const [r, g, b] = colorAt(t);
       data[idx] = r;
       data[idx + 1] = g;
@@ -176,7 +268,6 @@ export function buildMosaicImageData(
   config: HeatmapConfig,
 ): ImageData {
   const buf = buildMosaicRgba(matrix, config);
-  // 拷贝到独立 ArrayBuffer，满足 DOM ImageData 构造签名
   const copy = new Uint8ClampedArray(buf.data);
   return new ImageData(copy, buf.width, buf.height);
 }

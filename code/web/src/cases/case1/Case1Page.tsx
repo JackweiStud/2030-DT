@@ -7,7 +7,14 @@ import { KpiChart } from "./KpiChart";
 import { RfView } from "./RfView";
 import { loadConfig } from "./config";
 import type { Layer, View } from "./data";
+import { matrixMinMax } from "../case2/metrics/heatmap";
 import "./case1.css";
+
+function formatLegendBound(value: number | null): string {
+  if (value === null) return "—";
+  const text = value.toFixed(1);
+  return text === "-0.0" ? "0.0" : text;
+}
 
 export function Case1Page() {
   const [result] = useState(() => {
@@ -31,6 +38,9 @@ function Case1Content({ config }: { config: ReturnType<typeof loadConfig> }) {
     setView((current) => (current === layer ? "home" : layer));
   const { data, errors } = useLayerData(view);
   const { models, errors: modelErrors } = useModels();
+  const rfHeatRange = data.rf?.matrix ? matrixMinMax(data.rf.matrix) : null;
+  const rfLegendMin = formatLegendBound(rfHeatRange?.eMin ?? null);
+  const rfLegendMax = formatLegendBound(rfHeatRange?.eMax ?? null);
   return (
     <main className="case1-page" id="case1-page" data-view={view}>
       <aside className="c1-nav" aria-label="无线数字孪生架构">
@@ -449,36 +459,17 @@ function Case1Content({ config }: { config: ReturnType<typeof loadConfig> }) {
               error={errors.rf}
               config={config}
             />
-            <div className="c1-legend">
-              <span className="c1-legend-icon" aria-hidden="true">
-                <svg viewBox="0 0 16 16" width="16" height="16">
-                  <path
-                    d="M2 11.5a6 6 0 0 1 12 0"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                  />
-                  <path
-                    d="M4.2 11.5a3.8 3.8 0 0 1 7.6 0"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                  />
-                  <circle cx="8" cy="12" r="1.2" fill="currentColor" />
-                </svg>
-              </span>
-              <span className="c1-legend-title">信号强度</span>
-              <span className="c1-legend-end">强</span>
+            <div
+              className="c1-legend"
+              aria-label={`接收信号强度色标 ${rfLegendMin} 到 ${rfLegendMax}`}
+            >
+              <span className="c1-legend-title">接收信号强度</span>
+              <span className="c1-legend-end">{rfLegendMin}</span>
               <span
                 className="c1-legend-bar c1-legend-live"
                 aria-hidden="true"
-              >
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-              </span>
-              <span className="c1-legend-end">弱</span>
+              />
+              <span className="c1-legend-end">{rfLegendMax}</span>
             </div>
           </div>
         </div>

@@ -1,11 +1,12 @@
 /**
  * 单张热力卡。
  * 有矩阵：Canvas 一次画「底图 + 热力」（object-fit:cover）。
- * 无矩阵或矩阵含哨兵 -1：只显示 CSS cover 底图空槽，不画热力。
+ * 无矩阵：只显示 CSS cover 底图空槽。
+ * 无效格 round2===-1：按格 INVALID 色（默认透明），不整张取消热力；色标 min/max 排除无效格。
  * 该窗图像全屏：滚轮缩放（0.5×～5×，缩向指针）、左键拖旋转（±90°）、
  * 右键拖平移；右上角 ↺ 恢复初始变换；关闭后小窗保留变换（cover 可裁切）；六窗独立。
  * 全屏底部常驻操作提示。
- * 卡底常驻色标：指标名 + 本张矩阵 min/max（1 位小数）+ 5 实色块。
+ * 卡底常驻色标：指标名 + 有效格 min/max（1 位小数）+ 5 实色块。
  */
 
 import {
@@ -20,11 +21,7 @@ import {
 import { createPortal } from "react-dom";
 import type { HeatmapConfig } from "../metrics/heatmapConfig";
 import { assertHeatmapAnchor } from "../metrics/heatmapConfig";
-import {
-  heatmapContainsInvalid,
-  matrixMinMax,
-  paintHeatmapOnCanvas,
-} from "../metrics/heatmap";
+import { matrixMinMax, paintHeatmapOnCanvas } from "../metrics/heatmap";
 import mapBaseUrl from "../../../../assets/case2/maps/heatmap-map-base.png";
 
 type Props = {
@@ -201,11 +198,7 @@ export function HeatmapCard(props: Props) {
   const [expanded, setExpanded] = useState(false);
   const [view, setView] = useState<ViewTransform>(IDENTITY_TRANSFORM);
   const titleId = useId();
-  const showHeat =
-    !empty &&
-    matrix !== null &&
-    matrix.length > 0 &&
-    !heatmapContainsInvalid(matrix);
+  const showHeat = !empty && matrix !== null && matrix.length > 0;
   const heatRange = showHeat && matrix ? matrixMinMax(matrix) : null;
   const legendMin = heatRange?.eMin ?? null;
   const legendMax = heatRange?.eMax ?? null;

@@ -44,6 +44,7 @@ const config: Case2RuntimeConfig = {
   period: 8,
   alpha: 0.8,
   cdfPointCap: 64,
+  invalidRgba: { r: 255, g: 255, b: 255, a: 0 },
 };
 
 function stageRef() {

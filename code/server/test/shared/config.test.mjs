@@ -15,9 +15,9 @@ test("DT_SHARED_DIR 必填且必须为绝对目录", async (t) => {
   assert.equal(config.sharedDir, sharedDir);
   assert.equal(config.host, "127.0.0.1");
   assert.equal(config.port, 3102);
-  assert.equal(config.case1Ranges.heatmapRss.min, -500);
+  assert.equal(config.case1Ranges.heatmapRss.min, -1);
   assert.equal(config.case1Ranges.heatmapRss.max, 500);
-  assert.equal(config.case2Ranges.rss.heatmap.min, -500);
+  assert.equal(config.case2Ranges.rss.heatmap.min, -1);
   assert.equal(config.case2Ranges.first_path_delay.kpi.max, 10000);
 });
 

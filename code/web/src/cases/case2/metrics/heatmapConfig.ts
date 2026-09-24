@@ -3,6 +3,13 @@
  * 所有 `import.meta.env.VITE_*` 只允许在本文件读取；组件与算法只消费已校验配置。
  */
 
+export type HeatmapInvalidRgba = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+
 export type HeatmapConfig = {
   x0: number;
   y0: number;
@@ -15,6 +22,8 @@ export type HeatmapConfig = {
   period: number;
   alpha: number;
   cdfPointCap: number;
+  /** 无效格（round2===-1 / 采样 W===0）离屏 RGBA，通道 0～255。 */
+  invalidRgba: HeatmapInvalidRgba;
 };
 
 export type Case2RuntimeConfig = HeatmapConfig & {
@@ -31,6 +40,10 @@ const DEFAULTS = {
   gap: 1,
   alpha: 0.38,
   cdfPointCap: 256,
+  invalidR: 255,
+  invalidG: 255,
+  invalidB: 255,
+  invalidA: 0,
 } as const;
 
 export class HeatmapConfigError extends Error {
@@ -78,6 +91,25 @@ function readAlpha(env: EnvLike, key: string, fallback: number): number {
   return value;
 }
 
+/** RGBA 通道：缺失用默认；已提供须为 0～255 整数。 */
+function readChannel255(
+  env: EnvLike,
+  key: string,
+  fallback: number,
+): number {
+  const raw = env[key];
+  if (raw === undefined) return fallback;
+  const trimmed = raw.trim();
+  if (!/^\d+$/.test(trimmed)) {
+    throw new HeatmapConfigError(key, `${key} must be digits 0-255`);
+  }
+  const value = Number(trimmed);
+  if (!Number.isSafeInteger(value) || value < 0 || value > 255) {
+    throw new HeatmapConfigError(key, `${key} must be integer in 0..255`);
+  }
+  return value;
+}
+
 /**
  * 解析构建时 env，产出热力锚区与轮询配置。
  * API 前缀写死为同源 `/api/case2`，不进 env。
@@ -97,6 +129,12 @@ export function loadCase2RuntimeConfig(env: EnvLike = import.meta.env): Case2Run
   );
   const pollMs = readOptionalDigits(env, "VITE_CASE2_POLL_MS", DEFAULTS.pollMs);
   const alpha = readAlpha(env, "VITE_CASE2_HEATMAP_ALPHA", DEFAULTS.alpha);
+  const invalidRgba: HeatmapInvalidRgba = {
+    r: readChannel255(env, "VITE_CASE2_HEATMAP_INVALID_R", DEFAULTS.invalidR),
+    g: readChannel255(env, "VITE_CASE2_HEATMAP_INVALID_G", DEFAULTS.invalidG),
+    b: readChannel255(env, "VITE_CASE2_HEATMAP_INVALID_B", DEFAULTS.invalidB),
+    a: readChannel255(env, "VITE_CASE2_HEATMAP_INVALID_A", DEFAULTS.invalidA),
+  };
 
   if (x0 < 0 || y0 < 0 || gap < 0) {
     throw new HeatmapConfigError("anchor", "X0/Y0/GAP must be >= 0");
@@ -127,6 +165,7 @@ export function loadCase2RuntimeConfig(env: EnvLike = import.meta.env): Case2Run
     period: cell + gap,
     alpha,
     cdfPointCap,
+    invalidRgba,
   };
 }
 

@@ -30,6 +30,8 @@ describe("case1 runtime", () => {
       { VITE_CASE1_MATERIAL_MODEL_SCALE: "0" },
       { VITE_CASE1_HEATMAP_ALPHA: "1.2" },
       { VITE_CASE1_HEATMAP_X1: "1" },
+      { VITE_CASE1_HEATMAP_INVALID_A: "" },
+      { VITE_CASE1_HEATMAP_INVALID_R: "256" },
     ])
       expect(() => loadConfig(env)).toThrow();
   });

@@ -67,6 +67,14 @@ export function loadConfig(env: Record<string, unknown>) {
   const y1 = digits("VITE_CASE1_HEATMAP_Y1", 2);
   const cell = digits("VITE_CASE1_HEATMAP_CELL", 4);
   const gap = digits("VITE_CASE1_HEATMAP_GAP", 0);
+  const channel = (key: string, fallback: number) => {
+    const raw = env[key];
+    if (raw === undefined) return fallback;
+    if (!/^\d+$/.test(String(raw).trim())) throw new Error(key);
+    const n = Number(raw);
+    if (!Number.isSafeInteger(n) || n < 0 || n > 255) throw new Error(key);
+    return n;
+  };
   if (
     !(alpha > 0 && alpha <= 1) ||
     cell < 1 ||
@@ -90,6 +98,12 @@ export function loadConfig(env: Record<string, unknown>) {
     period: cell + gap,
     alpha,
     cdfPointCap: 256,
+    invalidRgba: {
+      r: channel("VITE_CASE1_HEATMAP_INVALID_R", 255),
+      g: channel("VITE_CASE1_HEATMAP_INVALID_G", 255),
+      b: channel("VITE_CASE1_HEATMAP_INVALID_B", 255),
+      a: channel("VITE_CASE1_HEATMAP_INVALID_A", 0),
+    },
   };
   return {
     geometry: model("GEOMETRY"),
