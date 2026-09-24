@@ -241,8 +241,8 @@ export function meanChangeMarker(
 }
 
 /**
- * 气泡在 Calibrated 均值之上，避免 311.5 与 6130% 叠成乱码。
- * 顶部空间不够时气泡贴顶，均值下移到气泡下方。
+ * 气泡在 Calibrated 均值之上。均值始终贴在校正柱顶上方，避免虚线穿过数字。
+ * 顶部空间不够时只把气泡上移（可为负），不把均值压进柱顶。
  */
 export function meanChangeStackTops(
   caliBarTop: number,
@@ -250,13 +250,7 @@ export function meanChangeStackTops(
 ): { badgeTop: number; caliMeanTop: number } {
   const caliMeanTop = Math.max(STACK_MIN_TOP, caliBarTop - meanOffsetAbove);
   const badgeTop = caliMeanTop - REDUCTION_BADGE_HEIGHT - REDUCTION_BADGE_STACK_GAP;
-  if (badgeTop >= STACK_MIN_TOP) {
-    return { badgeTop, caliMeanTop };
-  }
-  return {
-    badgeTop: STACK_MIN_TOP,
-    caliMeanTop: STACK_MIN_TOP + REDUCTION_BADGE_HEIGHT + REDUCTION_BADGE_STACK_GAP,
-  };
+  return { badgeTop, caliMeanTop };
 }
 
 /** 四舍五入为整数文案（不保留小数）。 */

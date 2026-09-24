@@ -73,9 +73,16 @@ describe("statistics", () => {
     expect(stacked.badgeTop).toBe(83 - 47 - 4);
     expect(stacked.badgeTop + 47).toBeLessThanOrEqual(stacked.caliMeanTop);
 
-    const cramped = meanChangeStackTops(20, 26);
-    expect(cramped.badgeTop).toBe(4);
-    expect(cramped.caliMeanTop).toBe(4 + 47 + 4);
+    const cramped = meanChangeStackTops(56, 26);
+    expect(cramped.caliMeanTop).toBe(30);
+    expect(cramped.badgeTop).toBe(30 - 47 - 4);
+    expect(cramped.badgeTop + 47).toBeLessThanOrEqual(cramped.caliMeanTop);
+    expect(cramped.caliMeanTop).toBeLessThan(56);
+
+    const barNearTop = meanChangeStackTops(20, 26);
+    expect(barNearTop.caliMeanTop).toBe(4);
+    expect(barNearTop.badgeTop).toBe(4 - 47 - 4);
+    expect(barNearTop.caliMeanTop).toBeLessThan(20);
   });
 
   it("允许 Initial/Calibrated 不等长", () => {

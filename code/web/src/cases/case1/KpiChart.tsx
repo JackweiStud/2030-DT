@@ -5,6 +5,9 @@ const BUBBLE_BODY = 48;
 const ARROW_LEFT = 18;
 const ARROW_WIDTH = 15;
 const LABEL_GAP = 8;
+const DELTA_NUMBER_SIZE = 22;
+const DELTA_PERCENT_SIZE = 12;
+const DELTA_PERCENT_GAP = 1;
 const DIGIT_WIDTH: Record<string, number> = {
   "0": 14.1,
   "1": 9.77,
@@ -19,10 +22,14 @@ const DIGIT_WIDTH: Record<string, number> = {
   ".": 6.47,
 };
 
-function bubbleLabelWidth(label: string) {
-  let width = 12.25;
+function labelDigitsWidth(label: string) {
+  let width = 0;
   for (const char of label) width += DIGIT_WIDTH[char] ?? 14.1;
   return width;
+}
+
+function bubbleLabelWidth(label: string) {
+  return 12.25 + labelDigitsWidth(label);
 }
 const BASELINE = 216;
 const SCALE = 203;
@@ -98,8 +105,10 @@ export function KpiChart({
   const bubbleTail = 14;
   const dashY = Math.max(offTop, onTop);
   const label = delta === null ? "" : Math.abs(delta).toFixed(1);
+  const digitsW = labelDigitsWidth(label);
   const contentW = ARROW_WIDTH + LABEL_GAP + bubbleLabelWidth(label);
   const contentX = (bubbleW - contentW) / 2;
+  const labelX = contentX + ARROW_WIDTH + LABEL_GAP;
   const bubbleX = onX - bubbleW / 2;
   const bubbleY = Math.max(0, onTop - 2 - 29 - 4 - (bubbleBody + bubbleTail));
   const numY = (topY: number) => topY - 2 - 14.5;
@@ -179,18 +188,25 @@ export function KpiChart({
               <path d="M25.5 13 L33 25 H28.3 V35 H22.7 V25 H18 Z" />
             </g>
           </g>
-          <text
-            x={contentX + ARROW_WIDTH + LABEL_GAP}
-            y="24"
-            dominantBaseline="central"
-            fontSize="22"
-            fontWeight="700"
-          >
-            {label}
-            <tspan fontSize="12" fontWeight="600" dominantBaseline="central">
+          <g transform={`translate(${labelX}, 24)`}>
+            <text
+              y="0"
+              dominantBaseline="central"
+              fontSize={DELTA_NUMBER_SIZE}
+              fontWeight="700"
+            >
+              {label}
+            </text>
+            <text
+              x={digitsW + DELTA_PERCENT_GAP}
+              y={DELTA_NUMBER_SIZE / 2}
+              dominantBaseline="alphabetic"
+              fontSize={DELTA_PERCENT_SIZE}
+              fontWeight="600"
+            >
               %
-            </tspan>
-          </text>
+            </text>
+          </g>
         </g>
       )}
       <text
