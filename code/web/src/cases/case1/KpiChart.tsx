@@ -91,10 +91,6 @@ export function KpiChart({
   const onX = plotLeft + (plotW * 3) / 4;
   const offTop = BASELINE - offH;
   const onTop = BASELINE - onH;
-  const gain = Math.max(0, onH - offH);
-  const orangeH = onH > offH ? offH : onH;
-  const orangeTop = BASELINE - orangeH;
-  const gainId = `c1-gain-${layer}-${item.id}`;
   const bubbleFill = improved ? "#09aa7126" : "#f59e0b26";
   const ink = improved ? "#36c18d" : "#f59e0b";
   const bubbleW = BUBBLE_W;
@@ -115,13 +111,6 @@ export function KpiChart({
       role="img"
       aria-label={`RF off ${item.off.toFixed(2)}，RF on ${item.on.toFixed(2)}${delta === null ? "" : `，变化 ${delta.toFixed(1)}%`}`}
     >
-      <defs>
-        <linearGradient id={gainId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4ade80" />
-          <stop offset="55%" stopColor="#22c55e" />
-          <stop offset="100%" stopColor="#15803d" />
-        </linearGradient>
-      </defs>
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <text
           key={i}
@@ -156,24 +145,9 @@ export function KpiChart({
         fill="#6b7280"
       />
       <path
-        d={barPath(
-          onX - BAR_W / 2,
-          orangeTop,
-          BAR_W,
-          orangeH,
-          gain > 0 ? 0 : 8,
-          gain > 0 ? 0 : 8,
-          10,
-          10,
-        )}
+        d={barPath(onX - BAR_W / 2, onTop, BAR_W, onH, 8, 8, 10, 10)}
         fill="#f59e0b"
       />
-      {gain > 0 && (
-        <path
-          d={barPath(onX - BAR_W / 2, onTop, BAR_W, gain, 8, 8, 0, 0)}
-          fill={`url(#${gainId})`}
-        />
-      )}
       <text
         x={offX}
         y={numY(offTop)}

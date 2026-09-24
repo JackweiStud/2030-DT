@@ -2,8 +2,14 @@
 code/.tmp/
 
 # 共享目录运行产物（保留 Initial / Case3 基线；打桩或真实后端写出）
-
+# case2 工作区六个 Calibrated 纳入版本库（进页/重置可由 backCali 覆盖；启动不再写空）
 code/comdatafiles/case2/heatmap_cali_*
+!code/comdatafiles/case2/heatmap_cali_rss.txt
+!code/comdatafiles/case2/heatmap_cali_kpi_rss.txt
+!code/comdatafiles/case2/heatmap_cali_effective_path_num.txt
+!code/comdatafiles/case2/heatmap_cali_kpi_effective_path_num.txt
+!code/comdatafiles/case2/heatmap_cali_first_path_delay.txt
+!code/comdatafiles/case2/heatmap_cali_kpi_first_path_delay.txt
 code/comdatafiles/case3/ue_comm_without_dt_*
 code/comdatafiles/case3/ue_comm_with_dt_*
 !code/comdatafiles/case3/ue_comm_with_dt_beam_accuracy_rate.txt
