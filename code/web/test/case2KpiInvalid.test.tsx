@@ -1,5 +1,5 @@
 /**
- * case2 KPI 哨兵 -1：不进 CDF/均值；全无效不画图。
+ * case2 KPI 哨兵 -1：不进 CDF/均值；全无效时保留坐标轴，不画曲线和柱。
  */
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -8,7 +8,7 @@ import { KpiComparisonRow } from "../src/cases/case2/components/KpiComparisonRow
 import { MeanBarChart } from "../src/cases/case2/components/MeanBarChart";
 
 describe("case2 KPI invalid sentinel", () => {
-  it("全为 -1 时不渲染 CDF 与平均误差图", () => {
+  it("全为 -1 时保留 CDF 网格与刻度，不画曲线、柱和均值", () => {
     const { container } = render(
       <KpiComparisonRow
         metric="rss"
@@ -18,11 +18,13 @@ describe("case2 KPI invalid sentinel", () => {
         showComparison
       />,
     );
-    expect(container.querySelector(".chart-row")).toBeNull();
-    expect(container.querySelector(".cdf-svg")).toBeNull();
-    expect(container.querySelector(".kpi-row")?.classList.contains("is-charts-hidden")).toBe(
-      true,
-    );
+    expect(container.querySelector(".chart-row")).not.toBeNull();
+    expect(container.querySelector(".cdf-svg")).not.toBeNull();
+    expect(container.querySelector(".cdf-grid")).not.toBeNull();
+    expect(container.querySelector(".cdf-axis-label")).not.toBeNull();
+    expect(container.querySelector(".cdf-svg path")).toBeNull();
+    expect(container.querySelector(".bar-initial")).toBeNull();
+    expect(container.querySelector(".mean-value")).toBeNull();
   });
 
   it("仅校正侧有效时仍画图", () => {

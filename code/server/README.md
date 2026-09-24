@@ -25,12 +25,12 @@ DT_SHARED_DIR=/absolute/path/to/shared npm start
 | `CASE2_RANGE_HEATMAP_RSS` | `-1,500` |
 | `CASE2_RANGE_HEATMAP_EFFECTIVE_PATH_NUM` | `-1,500` |
 | `CASE2_RANGE_HEATMAP_FIRST_PATH_DELAY` | `-1,1000` |
-| `CASE2_RANGE_KPI_RSS` | `-1000,1000` |
-| `CASE2_RANGE_KPI_EFFECTIVE_PATH_NUM` | `0,50000` |
-| `CASE2_RANGE_KPI_FIRST_PATH_DELAY` | `0,10000` |
+| `CASE2_RANGE_KPI_RSS` | `-1,1000` |
+| `CASE2_RANGE_KPI_EFFECTIVE_PATH_NUM` | `-1,50000` |
+| `CASE2_RANGE_KPI_FIRST_PATH_DELAY` | `-1,10000` |
 | `CASE1_RANGE_HEATMAP_RSS` | `-1,500` |
 
-热力越界双边掐位（格子保留）；KPI 越界丢弃该样本。两种情况都打 `case2 data values out of range` 日志，带该文件 `invalidCount`。Case1 RF 热力使用 `CASE1_RANGE_HEATMAP_RSS`（默认与 `CASE2_RANGE_HEATMAP_RSS` 相同）。Case3/Case4 范围键目前只在 `.env.example` 占位，未改变 Case3 现有拒绝逻辑。
+热力越界双边掐位（格子保留）。KPI：低于下限钳到 `min`（默认 `-1`，下发后由 Web 丢弃、不进统计）；高于上限丢弃该样本。两种情况都打 `case2 data values out of range` 日志，带该文件 `invalidCount`。Case1 RF 热力使用 `CASE1_RANGE_HEATMAP_RSS`（默认与 `CASE2_RANGE_HEATMAP_RSS` 相同）。Case3/Case4 范围键目前只在 `.env.example` 占位，未改变 Case3 现有拒绝逻辑。
 
 ## 测试
 

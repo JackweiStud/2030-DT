@@ -3,7 +3,6 @@
  */
 
 import type { MetricKey } from "../types";
-import { kpiHasChartData } from "../metrics/statistics";
 import { CdfChart } from "./CdfChart";
 import { MeanBarChart } from "./MeanBarChart";
 import rssIcon from "../../../../assets/case2/icons/metric-rss-icon.png";
@@ -34,9 +33,8 @@ export function KpiComparisonRow(props: Props) {
   const { metric, initialKpi, calibratedKpi, cdfPointCap, showComparison } =
     props;
   const comparisonKpi = showComparison ? calibratedKpi : null;
-  const showCharts = kpiHasChartData(initialKpi, comparisonKpi);
   return (
-    <div className={showCharts ? "kpi-row" : "kpi-row is-charts-hidden"}>
+    <div className="kpi-row">
       <div className="metric-header">
         <img
           className="metric-icon"
@@ -46,33 +44,29 @@ export function KpiComparisonRow(props: Props) {
           alt=""
         />
         <h3>{KPI_TITLES[metric]}</h3>
-        {showCharts ? (
-          <div className="legend">
-            <span className="leg-initial">
-              <i className="leg-dot" />
-              初始 DT
-            </span>
-            <span className="leg-calibrated">
-              <i className="leg-dot" />
-              校正 DT
-            </span>
-          </div>
-        ) : null}
-      </div>
-      {showCharts ? (
-        <div className="chart-row">
-          <CdfChart
-            initialKpi={initialKpi}
-            calibratedKpi={comparisonKpi}
-            cdfPointCap={cdfPointCap}
-          />
-          <MeanBarChart
-            initialKpi={initialKpi}
-            calibratedKpi={comparisonKpi}
-            showReduction={showComparison}
-          />
+        <div className="legend">
+          <span className="leg-initial">
+            <i className="leg-dot" />
+            初始 DT
+          </span>
+          <span className="leg-calibrated">
+            <i className="leg-dot" />
+            校正 DT
+          </span>
         </div>
-      ) : null}
+      </div>
+      <div className="chart-row">
+        <CdfChart
+          initialKpi={initialKpi}
+          calibratedKpi={comparisonKpi}
+          cdfPointCap={cdfPointCap}
+        />
+        <MeanBarChart
+          initialKpi={initialKpi}
+          calibratedKpi={comparisonKpi}
+          showReduction={showComparison}
+        />
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@
 > - **case2**：三张热力矩阵（Initial / Calibrated；RSS / 有效径数 / 时延）
 > - **case1**：RF 层热力矩阵（`heatmap_rss.txt` → RF map），显示机制与 case2 **相同**
 >
-> KPI 样本语义本次不改（case2 KPI `-1` 仍为丢样本）
+> KPI `-1` 仍不进入 CDF、均值或降幅。本 Spec 的热力图改造不定义 KPI 的 Node 范围处理；后续已确认当前三个 KPI 下限均为 `-1`，Node 将低于下限的值钳为 `-1` 并保留给 Web，Web 再排除该哨兵。细则见 `doc/case2/SERVER-SPEC.md` 与 `WEB-SPEC.md`。
 > 配置：Web 根 `code/web/.env`；Node `code/server/.env`
 > 说明：本文优先于旧文档中「矩阵出现 `-1` 则整张不画热力」的口径。实现后回写 `doc/case1/*`、`doc/case2/WEB-SPEC.md` / `SERVER-SPEC.md` 等。
 
@@ -71,7 +71,7 @@ CASE1_RANGE_HEATMAP_RSS=-1,500
 | `CASE1_RANGE_HEATMAP_RSS` | `-1`～`500` |
 
 - 代码默认值（无 env 时）同步改为上述区间（当前 case1 代码默认仍为 `-500,500` 时需改掉）。
-- case2 KPI 的 `CASE2_RANGE_KPI_*` **本次不动**。
+- 本文热力图改造不调整 case2 KPI 范围；后续已单独确认当前三个 KPI 范围下限为 `-1`，低于下限由 Node 钳为 `-1` 并保留，Web 从统计中排除 `-1`。
 
 ### 2.2 掐位规则（沿用现有双边掐位）
 
@@ -262,7 +262,7 @@ VITE_CASE1_HEATMAP_INVALID_A=0
 - 不做「仅靠双线性 `W===0` 软边」作为无效区唯一覆盖（已改为 §3.2.2.3 矩阵格硬切；有效格内部仍双线性）。
 - 不用容差带判定 `-1`。
 - 不把钳位 `-1` 与字面 `-1` 分成两个协议字段。
-- 不改 case2 KPI `-1` 丢样本语义。
+- case2 KPI 的 `-1` 仍不进入统计；Node 当前低于 KPI 下限时钳为 `-1` 并保留，Web 排除该哨兵。
 - 不保留 case1「强/弱」图例（已判定为错误，须改成与 case2 一致的数值色标）。
 - 不改色标色序相对 case2 热力卡的既有约定（除非另开需求）；case1 与 case2 **同序同语义**。
 - 不把联调输出默认提交。
@@ -296,4 +296,4 @@ VITE_CASE1_HEATMAP_INVALID_A=0
 | case1 RF | **与 case2 同一机制**（本次纳入） |
 | case1 RF 图例 | **废弃「强/弱」**，拉齐 case2：标题 + 有效 min + 色条 + 有效 max（1 位小数；不含 `-1`） |
 | Node 门限 | case2 三热力 + case1 RF 下限均为 `-1`；只按普通范围掐位，不做哨兵专用分支；归一后低于 `-1` 的值钳为 `-1` 并由 Web 显示为无效格 |
-| case2 KPI `-1` | 本次不动 |
+| case2 KPI `-1` | 不进入 CDF / 均值 / 降幅；当前默认下限为 `-1`，Node 低侧钳位后保留，Web 按哨兵排除 |

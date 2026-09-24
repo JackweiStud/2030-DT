@@ -202,7 +202,7 @@ test("热力越界掐位、KPI 越界丢弃并记无效个数", async (t) => {
   }).dataFiles.readPhase("initial");
 
   assert.deepEqual(result.metrics.first_path_delay.heatmap, [
-    [0, 10],
+    [-1, 10],
     [20, 1000],
   ]);
   assert.deepEqual(result.metrics.first_path_delay.kpi, [157, 308]);

@@ -16,7 +16,7 @@
 - [ ] 浏览器不直接访问共享目录；所有控制、数据和截图文件 I/O 都由适配服务完成。
 - [ ] 控制文件写入：请求体只含允许字段；`start`/`reinit` 合并时强制 `status=""`；进页、启动轮收尾和重置轮收尾的 `init` 写回强制 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；截图清零保留后端 `status` 及未知字段。
 - [ ] 控制文件 GET：结构/类型失败才 `CONTROL_READ_FAILED`；未知 `status` 字面值 200 透传（与契约 / WEB-SPEC 一致，由 Web 保持等待态）。
-- [ ] 动态 `Nx × Ny` 热力矩阵、动态 `N` KPI 样本、超过 2 位小数四舍五入到 2 位，以及按指标可配范围（热力越界掐位 / KPI 越界丢弃）有自动测试。
+- [ ] 动态 `Nx × Ny` 热力矩阵、动态 `N` KPI 样本、超过 2 位小数四舍五入到 2 位，以及按指标可配范围（热力越界掐位 / KPI 低于下限钳位、高于上限丢弃）有自动测试。
 - [ ] Calibrated 任一文件缺失、变化或非法时整批拒绝：HTTP **不**返回部分业务数据；适配服务**必须**打诊断日志（失败文件名、原因），响应体仍为 `{ok:false,error:{code,message}}`。
 - [ ] 截图请求进程内串行、临时文件原子落盘、递增命名且不覆盖，完整成功后按 Case2 ownership 清零；不能消费 Case3 flag；不实现持久事务、SHA-256 去重或进程重启恢复；Web 累计 3 次失败后的放弃清零有自动测试。
 - [ ] `npm test` 通过；启动命令可独立运行并可用 `Ctrl+C` 正常退出。
@@ -298,7 +298,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 
 - 词法：与热力相同，允许正负号；再 `Number.isFinite`，再按上款归一到 2 位小数。
 - 形状：忽略行列分组并按文件顺序展平成一维；`N` 不固定，Initial 与 Calibrated 的 `N` 允许不同。
-- 数值范围（归一后）：按该指标 KPI `[min,max]`。越界样本**丢弃**，不进入响应；将该文件丢弃个数记为 `invalidCount` 打同一条 `warn` 日志。滤完后至少保留 1 个样本，否则 `DATA_FILE_INVALID`。空文件仍 `DATA_FILE_INVALID`。
+- 数值范围（归一后）：按该指标 KPI `[min,max]`。低于 `min` 的样本钳为 `min` 并保留在响应；高于 `max` 的样本丢弃。当前三个 KPI 默认下限均为 `-1`，因此低于下限的值会变成 Web 可识别的 `-1` 哨兵；Web 不将该哨兵计入 CDF、均值或降幅。越界日志记录总数 `invalidCount`（含 `clampedCount` 与 `droppedCount`）并打同一条 `warn` 日志。低侧钳位保证样本保留；若高侧丢弃后响应仍为空则返回 `DATA_FILE_INVALID`。空文件仍 `DATA_FILE_INVALID`。RSS KPI 可为负值，但默认范围内有效负值为 `[-1,0)`；小于 `-1` 的值钳为哨兵 `-1`。
 
 
 
@@ -362,7 +362,7 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 
 - 控制文件：四种 payload、请求体禁止带 `status`、进页 `init` 写回空闲态、`start`/`reinit` 写后强制 `status=""`、相同 command 在 `execute fail` 后重试仍产生合法命令元组 + 空 status 门沿、截图清零不改 `status`、保留未知字段、并发 POST 串行、临时文件清理；GET 对未知 `status` 字面值 200 透传（不 `CONTROL_READ_FAILED`）；`save_picture_flag` 非 `0`/`1` 才拒读；Case2/Case3 活动、未消费终态、其他 Case fail 和未知活动 status 返回 `CONTROL_BUSY`，POST init 永远允许。
 - 热力图：动态 `2×3`、`1×1`、CRLF、逗号/空白；空矩阵、行宽不一、科学计数、非有限数拒绝；归一后越界双边掐位并记 `invalidCount`，不删格；超过 2 位小数四舍五入（如 `1.235→1.24`、`-1.235→-1.24`），不因小数位过多拒绝。
-- KPI：动态 `N`、不同换行分组展平；空样本、非法 token 拒绝；归一后越界丢弃样本并记 `invalidCount`，滤完为空才 `DATA_FILE_INVALID`；超过 2 位小数同样四舍五入后接受。RSS KPI 允许负值。
+- KPI：动态 `N`、不同换行分组展平；空样本、非法 token 拒绝；低于下限钳为 `min` 并记 `clampedCount`，高于上限丢弃并记 `droppedCount`，日志 `invalidCount` 为两者之和；高侧样本滤完为空才 `DATA_FILE_INVALID`；超过 2 位小数同样四舍五入后接受。RSS KPI 允许当前配置范围内的负值；默认小于 `-1` 的值钳成哨兵 `-1`。
 - 批次：六文件齐全；任一缺失、解析失败、读取期间变化、控制四元组非 Case2 start with dt complete 均整批拒绝；失败响应无部分 `metrics`；日志含失败文件名。
 - 截图：非法 Base64/PNG；从 `000` 起；已有 `009` 后写 `010`；超过 `999` 自然扩展；并发请求不覆盖；Case2 guard 拒绝 Case3 flag，flag0 清零幂等，高电平清零 ownership 不匹配时拒绝。
 - 截图失败边界：临时写/rename 失败不清零并清理临时文件；最终 PNG 已落盘但清零失败时保留 PNG、返回错误；进程重启只清残留临时 PNG，不删除完成文件、不恢复旧截图任务。

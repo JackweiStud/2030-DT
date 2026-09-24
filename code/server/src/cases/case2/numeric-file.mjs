@@ -131,22 +131,31 @@ export function parseKpi(text, filename, range, options = {}) {
   }
 
   const samples = [];
-  let invalidCount = 0;
+  let clampedCount = 0;
+  let droppedCount = 0;
   for (const token of tokens) {
     const normalized = parseFiniteNumber(token, "kpi", filename);
-    if (normalized < range.min || normalized > range.max) {
-      invalidCount += 1;
+    if (normalized < range.min) {
+      clampedCount += 1;
+      samples.push(range.min);
+      continue;
+    }
+    if (normalized > range.max) {
+      droppedCount += 1;
       continue;
     }
     samples.push(normalized);
   }
 
+  const invalidCount = clampedCount + droppedCount;
   if (invalidCount > 0) {
     emitOutOfRange(options, {
       filename,
       kind: "kpi",
-      action: "dropped",
+      action: clampedCount > 0 && droppedCount === 0 ? "clamped" : "dropped",
       invalidCount,
+      clampedCount,
+      droppedCount,
       remaining: samples.length,
       min: range.min,
       max: range.max,

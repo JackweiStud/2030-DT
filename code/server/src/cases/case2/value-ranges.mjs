@@ -4,15 +4,15 @@ const RANGE_PAIR =
 export const DEFAULT_CASE2_RANGES = Object.freeze({
   rss: Object.freeze({
     heatmap: Object.freeze({ min: -1, max: 500 }),
-    kpi: Object.freeze({ min: -1000, max: 1000 }),
+    kpi: Object.freeze({ min: -1, max: 1000 }),
   }),
   effective_path_num: Object.freeze({
     heatmap: Object.freeze({ min: -1, max: 500 }),
-    kpi: Object.freeze({ min: 0, max: 50000 }),
+    kpi: Object.freeze({ min: -1, max: 50000 }),
   }),
   first_path_delay: Object.freeze({
     heatmap: Object.freeze({ min: -1, max: 1000 }),
-    kpi: Object.freeze({ min: 0, max: 10000 }),
+    kpi: Object.freeze({ min: -1, max: 10000 }),
   }),
 });
 

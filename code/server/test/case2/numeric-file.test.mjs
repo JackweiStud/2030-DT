@@ -83,6 +83,18 @@ test("KPI 越界样本丢弃并计数；滤完为空则 422", () => {
   assert.deepEqual(parseKpi("-12.3, 20", "kpi.txt", RSS_KPI), [-12.3, 20]);
   assert.deepEqual(parseKpi("45796", "kpi.txt", PATH_KPI), [45796]);
 
+  const floor = { min: -1, max: 1000 };
+  const clamped = [];
+  assert.deepEqual(
+    parseKpi("-1.2, -1, -1.004, 3", "kpi.txt", floor, {
+      onOutOfRange: (info) => clamped.push(info),
+    }),
+    [-1, -1, -1, 3],
+  );
+  assert.equal(clamped[0].action, "clamped");
+  assert.equal(clamped[0].invalidCount, 1);
+  assert.deepEqual(parseKpi("-2\n-3\n", "kpi.txt", floor), [-1, -1]);
+
   assert.throws(() => parseKpi("1e2", "kpi.txt", RSS_KPI), {
     code: "DATA_FILE_INVALID",
   });
