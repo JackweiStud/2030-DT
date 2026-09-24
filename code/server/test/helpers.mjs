@@ -28,11 +28,22 @@ export const PNG_BASE64 = PNG_BYTES.toString("base64");
 export async function createSharedDir(testContext, control = {}) {
   const sharedDir = await fs.mkdtemp(path.join(os.tmpdir(), "case2-adapter-"));
   await fs.mkdir(path.join(sharedDir, "case2"), { recursive: true });
+  await fs.mkdir(path.join(sharedDir, "case2", "backCali"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "case3"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "case4"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "out", "case2"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "out", "case3"), { recursive: true });
   await fs.mkdir(path.join(sharedDir, "out", "case4"), { recursive: true });
+  for (const phases of Object.values(METRIC_FILES)) {
+    await fs.writeFile(
+      path.join(sharedDir, "case2", "backCali", phases.calibrated.heatmap),
+      "0,0\n0,0\n",
+    );
+    await fs.writeFile(
+      path.join(sharedDir, "case2", "backCali", phases.calibrated.kpi),
+      "0\n",
+    );
+  }
   await writeControl(sharedDir, { ...DEFAULT_CONTROL, ...control });
   testContext.after(() => fs.rm(sharedDir, { recursive: true, force: true }));
   return sharedDir;

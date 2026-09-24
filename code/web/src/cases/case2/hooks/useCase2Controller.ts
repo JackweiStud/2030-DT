@@ -208,6 +208,16 @@ export function useCase2Controller(options: Options): Case2Controller {
     [],
   );
 
+  const postIdleInit = useCallback(
+    async (api: Case2Api, signal?: AbortSignal): Promise<ControlSnapshot> => {
+      return api.postControl(
+        { command: "init", restore_calibrated: false },
+        signal,
+      );
+    },
+    [],
+  );
+
   const runAdapterRecoveryProbe = useCallback(async () => {
     const snap = stateRef.current;
     if (!snap.adapterError || snap.case2UiState !== "initial") {
@@ -258,9 +268,7 @@ export function useCase2Controller(options: Options): Case2Controller {
       stopAdapterProbe();
     } catch (err) {
       if (isAbortError(err)) return;
-      case2Log("adapter_probe.fail", {
-        reason: err instanceof Error ? err.message : String(err),
-      });
+      case2Error("adapter_probe.fail", apiErrorFields(err));
     } finally {
       if (adapterProbeAbortRef.current === ac) {
         adapterProbeAbortRef.current = null;
@@ -514,7 +522,7 @@ export function useCase2Controller(options: Options): Case2Controller {
             calibratedFailAttemptsRef.current = 0;
             screenshotBusyRef.current = false;
             try {
-              const resetControl = await postEntryInit(api, controller.signal);
+              const resetControl = await postIdleInit(api, controller.signal);
               if (!controller.signal.aborted) {
                 dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control: resetControl });
                 case2Log("completion.init_reset_ok", {
@@ -565,7 +573,7 @@ export function useCase2Controller(options: Options): Case2Controller {
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [dispatch, postEntryInit, runScreenshotTask, stopPolling]);
+  }, [dispatch, postIdleInit, runScreenshotTask, stopPolling]);
 
   const schedulePollLoop = useCallback(() => {
     if (pollingRef.current) return;
@@ -628,7 +636,7 @@ export function useCase2Controller(options: Options): Case2Controller {
           case2Log("entry.control_aborted_or_stale", { generation });
           return;
         }
-        console.warn("[case2] diagnostic control/init reset failed", err);
+        case2Error("entry.control_init_failed", apiErrorFields(err));
         dispatch({ type: "DIAGNOSTIC_CONTROL_FAIL" });
         case2Log("entry.control_fail", {
           generation,
@@ -722,13 +730,13 @@ export function useCase2Controller(options: Options): Case2Controller {
 
     void (async () => {
       try {
-        const control = await postEntryInit(apiRef.current, ac.signal);
+        const control = await postIdleInit(apiRef.current, ac.signal);
         if (ac.signal.aborted) return;
         dispatch({ type: "DIAGNOSTIC_CONTROL_OK", control });
         case2Log("completion.init_reset_ok", controlSummary(control));
       } catch (err) {
         if (isAbortError(err)) return;
-        console.warn("[case2] completion init reset failed", err);
+        case2Error("completion.init_reset_fail", apiErrorFields(err));
         dispatch({ type: "CONTROL_POLL_FAIL" });
         case2Log("completion.init_reset_fail", {
           reason: err instanceof Error ? err.message : String(err),
@@ -743,7 +751,7 @@ export function useCase2Controller(options: Options): Case2Controller {
     return undefined;
   }, [
     dispatch,
-    postEntryInit,
+    postIdleInit,
     state.calibratedData,
     state.case2UiState,
     state.lastControl,
@@ -778,7 +786,7 @@ export function useCase2Controller(options: Options): Case2Controller {
           dispatch({ type: "COMMAND_CONTROL_BUSY" });
           return;
         }
-        console.warn("[case2] start POST failed", err);
+        case2Error("command.start_post_failed", apiErrorFields(err));
         dispatch({ type: "START_POST_FAIL" });
         case2Log("command.start_fail", {
           ...apiErrorFields(err),
@@ -822,7 +830,7 @@ export function useCase2Controller(options: Options): Case2Controller {
           dispatch({ type: "COMMAND_CONTROL_BUSY" });
           return;
         }
-        console.warn("[case2] reset POST failed", err);
+        case2Error("command.reset_post_failed", apiErrorFields(err));
         dispatch({ type: "RESET_POST_FAIL" });
         case2Log("command.reset_fail", {
           screenshotBusy: screenshotBusyRef.current,

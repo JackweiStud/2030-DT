@@ -3,6 +3,8 @@
 本文面向后端团队，描述 `DT Calibration`（case2）需要遵守的共享文件、状态、数据文件、前端侧 REST 适配语义、WebSocket 边界、主线时序、错误格式和检查清单。
 
 > **2026-08-03 接口增量：** 前端侧适配服务在 `start` / `reinit` 写入时会**强制把 `status` 清为 `""`**（开一轮清盘）。后端须接受新一轮开始后短暂出现空 `status`；`execute success` / `execute fail` / `case complete` / `reinit complete` 等业务终态字面值仍**只由后端写出**。本文后续章节已展开控制字段、时序和检查项。
+>
+> **2026-09-24 接口增量：** 前端侧适配服务在 `start` 时**不再**清空六个 Calibrated 文件。进页/切回的 `POST {command:"init"}` 和用户 `POST {command:"reinit"}` 写控制前会逐个把 `case2/backCali/` 基线复制到工作区六个 Calibrated 文件；任一失败即从头重试整批，最多 3 次，不回滚部分覆盖，也不保证六文件整体原子切换。轮次完成后的 `POST {command:"init",restore_calibrated:false}` 只复位控制状态，保留工作区结果文件。最终恢复失败时不写控制命令。后端/打桩仍须在本轮 `case complete` 前完整覆盖发布六个文件；**不**要求启动瞬间文件为空，也**不**依赖磁盘上旧内容。`restore_calibrated` 是适配服务传输字段，不会写入控制 JSON，后端无需处理。
 
 ## 1. 系统边界
 
@@ -513,7 +515,8 @@ sequenceDiagram
 - [ ] 重置成功链路为 `execute success -> reinit complete`。
 - [ ] 失败链路只写 `execute fail`，本轮不再写完成状态。
 - [ ] 写 `case complete` 前，六个 Calibrated 文件已经完整写完并关闭。
-- [ ] 接受前端侧适配服务在新一轮 `start`/`reinit` 时先清空六个 Calibrated 文件（可为空）；后端须在本轮重新完整发布，不得依赖磁盘上旧内容。
+- [ ] 接受前端侧适配服务在 `start` 时**不再**清空六个 Calibrated 文件；启动瞬间磁盘上可暂留旧内容或 `backCali` 基线。后端须在本轮 `case complete` 前重新完整发布六个文件，不得依赖磁盘上旧内容。
+- [ ] 知晓前端侧适配服务在 `init`/`reinit` 写控制前会从 `case2/backCali/` 覆盖工作区六个 Calibrated 文件；后端重置路径仍只推进控制状态，不要求后端删除/写空 Calibrated。
 - [ ] 热力图文件为动态 `Nx × Ny` 非空矩形矩阵，不固定 20×20。
 - [ ] KPI 文件为动态 `N` 个有限样本，不固定 20 条。
 - [ ] 热力图数值宜最多 2 位小数；当前默认范围按指标（RSS -1～500、有效路径数 -1～500、首径时延 -1～1000）；超过 2 位由适配四舍五入，越界由适配掐位。

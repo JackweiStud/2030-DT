@@ -73,3 +73,17 @@
 
 - 若目标是内部演示测试：可以进入用户/领导试跑。
 - 若目标是真实环境交付：必须接入真实后端和真实挂载路径，并在本文追加真实环境 QA 记录。
+
+## 2026-09-24 backCali 恢复改动自动验证
+
+- Node：`cd code/server && npm test`，PASS 123/123。新增覆盖六文件恢复、`start` 保留工作区文件、失败后整批重试、源缺失三次失败且控制文件不推进。
+- Web：`cd code/web && npx vitest run test/useCase2Controller.entry.test.ts`，PASS 15/15；覆盖进页恢复失败的 `console.error`/`adapterError` 和重置失败回滚并保留内存对比。
+- Web：`cd code/web && npm run build`，PASS；构建输出有大 chunk 提示，本次未评估其是否由本改动引起。
+- 范围：自动化与构建验证；**未**执行浏览器人工联调、真实后端或真实挂载验收。
+
+## 2026-09-24 完成态保留 Calibrated 文件自动验证
+
+- Node：`cd code/server && npm test`，PASS 124/124。直接验证 `init` 收尾只写控制并保留工作区六文件、普通进页 `init` 仍恢复基线；REST 验证传输字段不落入控制 JSON；包括整批重试/失败不推进控制的既有回归。
+- Web：`cd code/web && npx vitest run test/useCase2Controller.entry.test.ts test/case2Api.test.ts`，PASS 22/22。验证启动完成后的空闲收尾发送 `restore_calibrated:false`、重置完成后也发送该收尾请求，进页仍发送普通 `init`；API payload 类型及调用覆盖。
+- Web：`cd code/web && npm run build`，PASS（TypeScript 检查及 Vite 生产构建通过）；存在既有的大 chunk 体积提示，本次未评估其成因。
+- 范围：以上是当前代码的 Node/Web 自动化证据；**未**在浏览器手工点操作、未连接真实后端或真实挂载。用户仍需在本机演示链路验证“启动完成后文件保留结果、点击重置恢复基线、重置完成后仍保留基线文件、切离再进入时恢复基线”。

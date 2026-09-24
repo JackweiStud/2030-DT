@@ -19,7 +19,7 @@ npm run start:case2
 - 共享根：`../../comdatafiles`（`/Users/jackwl/Code/2030-DT/code/comdatafiles`）
 - 外部配置源：只读取 `code/back/.env`，缺省值由代码提供
 - **`CASE2_STUB_REQUEST_PICTURE=1`（演示默认开截图）**
-- **`CASE2_STUB_DATA_MODE=random`（相对 Initial 可控改善随机生成 Calibrated）**
+- **`CASE2_STUB_DATA_MODE=random`（相对 Initial 改善生成 Calibrated；默认噪声与 ratio 区间偏大，指标间独立抽 ratio）**
 - start 终态同拍写 `status=case complete` + `save_picture_flag=1`
 - reinit 路径仍不置 flag
 
@@ -34,13 +34,19 @@ CASE2_STUB_DATA_MODE=random
 
 # 固定 seed，便于复现同一套 synthetic 结果
 CASE2_STUB_SEED=demo-1
+
+# 可选：加大/收窄随机幅度（代码默认已偏大）
+# CASE2_STUB_IMPROVE_MIN=0.1
+# CASE2_STUB_IMPROVE_MAX=0.95
+# CASE2_STUB_NOISE=0.45
 ```
 
 random 模式说明：
 
 - 只随机/合成 **Calibrated** 六文件；Initial 不改
 - 形状继承 Initial 的 `Nx/Ny/N`
-- 默认 improve ratio ∈ [0.45, 0.65]，使误差整体下降（演示 CDF/降幅好看）
+- 默认 improve ratio ∈ [0.1, 0.95]；三项指标的热力/KPI **各自独立**抽 ratio
+- 默认噪声 `CASE2_STUB_NOISE=0.45`（相对幅值）；越大格点抖动越明显
 - 日志标注 `synthetic ... not real backend acquisition`
 
 关闭截图 / 调试日志也写在 `code/back/.env`：

@@ -367,9 +367,9 @@ export function createPublisher(options) {
   const logger = options.logger ?? createLogger("info");
   const dataMode = parseDataMode(options.dataMode);
   const seed = options.seed;
-  const improveMin = options.improveMin ?? 0.45;
-  const improveMax = options.improveMax ?? 0.65;
-  const noise = options.noise ?? 0.05;
+  const improveMin = options.improveMin ?? 0.1;
+  const improveMax = options.improveMax ?? 0.95;
+  const noise = options.noise ?? 0.45;
   const targetDir = path.join(sharedDir, "case2");
 
   async function publishByReplay() {
@@ -419,15 +419,22 @@ export function createPublisher(options) {
         ? `t${Date.now()}-r${Math.floor(Math.random() * 1e9)}`
         : String(seed);
     const nextRandom = createSeededRng(resolvedSeed);
-    // 三指标共用 improve ratio，演示观感更一致
-    const ratio = improveMin + (improveMax - improveMin) * nextRandom();
     const published = [];
     const shapes = [];
 
     for (const spec of METRIC_SPECS) {
       const initial = await readInitialMetric(spec);
-      const caliHeatmap = improveHeatmap(initial.heatmap, ratio, noise, nextRandom);
-      const caliKpi = improveKpi(initial.kpi, ratio, noise, nextRandom);
+      // 每项指标、热力/KPI 各自抽 ratio，加大轮次间与指标间差异
+      const heatmapRatio =
+        improveMin + (improveMax - improveMin) * nextRandom();
+      const kpiRatio = improveMin + (improveMax - improveMin) * nextRandom();
+      const caliHeatmap = improveHeatmap(
+        initial.heatmap,
+        heatmapRatio,
+        noise,
+        nextRandom,
+      );
+      const caliKpi = improveKpi(initial.kpi, kpiRatio, noise, nextRandom);
       const heatmapPath = path.join(targetDir, spec.caliHeatmap);
       const kpiPath = path.join(targetDir, spec.caliKpi);
       await atomicReplaceFile(heatmapPath, formatHeatmapMatrix(caliHeatmap), fsOps);
@@ -440,6 +447,8 @@ export function createPublisher(options) {
         nx: caliHeatmap[0]?.length ?? 0,
         ny: caliHeatmap.length,
         kpiN: caliKpi.length,
+        heatmapRatio: roundSemanticNumber(heatmapRatio),
+        kpiRatio: roundSemanticNumber(kpiRatio),
         initMean: roundSemanticNumber(mean(initial.kpi)),
         caliMean: roundSemanticNumber(mean(caliKpi)),
       });
@@ -448,7 +457,8 @@ export function createPublisher(options) {
     logger.info("published calibrated synthetic files", {
       mode: "random",
       seed: resolvedSeed,
-      improveRatio: roundSemanticNumber(ratio),
+      improveMin,
+      improveMax,
       noise,
       targetDir,
       count: published.length,
@@ -756,12 +766,12 @@ export function loadConfig(env = process.env) {
   const dataMode = parseDataMode(env.CASE2_STUB_DATA_MODE);
   const improveMin = parseUnitInterval(
     env.CASE2_STUB_IMPROVE_MIN,
-    0.45,
+    0.1,
     "CASE2_STUB_IMPROVE_MIN",
   );
   const improveMax = parseUnitInterval(
     env.CASE2_STUB_IMPROVE_MAX,
-    0.65,
+    0.95,
     "CASE2_STUB_IMPROVE_MAX",
   );
   if (improveMin > improveMax) {
@@ -770,7 +780,7 @@ export function loadConfig(env = process.env) {
       "CASE2_STUB_IMPROVE_MIN must be <= CASE2_STUB_IMPROVE_MAX",
     );
   }
-  const noise = parseUnitInterval(env.CASE2_STUB_NOISE, 0.05, "CASE2_STUB_NOISE");
+  const noise = parseUnitInterval(env.CASE2_STUB_NOISE, 0.45, "CASE2_STUB_NOISE");
   return {
     sharedDir: path.resolve(sharedDir),
     sourceDir: path.resolve(env.CASE2_STUB_SOURCE_DIR ?? DEFAULT_SOURCE_DIR),

@@ -202,6 +202,7 @@ export function createCase2Api(options: ApiClientOptions = {}) {
         | { case: "case2"; command: "start"; dt_type: "with dt" }
         | { command: "reinit" }
         | { command: "init" }
+        | { command: "init"; restore_calibrated: false }
         | { save_picture_flag: 0 },
       signal?: AbortSignal,
     ): Promise<ControlSnapshot> {

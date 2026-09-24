@@ -15,6 +15,7 @@
 - [ ] 四个 REST 接口的路径、输入、输出和错误 shape 与契约一致。
 - [ ] 浏览器不直接访问共享目录；所有控制、数据和截图文件 I/O 都由适配服务完成。
 - [ ] 控制文件写入：请求体只含允许字段；`start`/`reinit` 合并时强制 `status=""`；进页、启动轮收尾和重置轮收尾的 `init` 写回强制 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；截图清零保留后端 `status` 及未知字段。
+- [ ] Calibrated 磁盘恢复：进页/切回的 `POST {command:"init"}`、用户 `POST {command:"reinit"}` 写控制**前**，将 `{DT_SHARED_DIR}/case2/backCali/` 下六个同名文件整批覆盖到 `{DT_SHARED_DIR}/case2/`；整批最多 3 次，失败返回 `CALIBRATED_RESTORE_FAILED` 且不写控制。轮次结束的 `POST {command:"init",restore_calibrated:false}` 只复位控制、保留结果文件；`POST start` 也不清空、不覆盖六个文件。
 - [ ] 控制文件 GET：结构/类型失败才 `CONTROL_READ_FAILED`；未知 `status` 字面值 200 透传（与契约 / WEB-SPEC 一致，由 Web 保持等待态）。
 - [ ] 动态 `Nx × Ny` 热力矩阵、动态 `N` KPI 样本、超过 2 位小数四舍五入到 2 位，以及按指标可配范围（热力越界掐位 / KPI 低于下限钳位、高于上限丢弃）有自动测试。
 - [ ] Calibrated 任一文件缺失、变化或非法时整批拒绝：HTTP **不**返回部分业务数据；适配服务**必须**打诊断日志（失败文件名、原因），响应体仍为 `{ok:false,error:{code,message}}`。
@@ -115,13 +116,14 @@ code/
 ```text
 {DT_SHARED_DIR}/
 ├── case_control.json
-├── case2/              # Initial + Calibrated 十二个固定文件名
-└── out/case2/          # calibrated-{seq}.png
+├── case2/                 # Initial 六文件 + 工作区 Calibrated 六文件
+│   └── backCali/          # Calibrated 只读基线六文件（init/reinit 写控制前整批覆盖到 case2/）
+└── out/case2/             # calibrated-{seq}.png
 ```
 
 Web 与本适配服务**同机**部署在前端 PC（Chrome 只访问本机 `127.0.0.1:3102`），不存在「前端 PC ↔ 适配服务」分机。正式部署时 `DT_SHARED_DIR` 指向该前端 PC 上已挂载的共享根（与后端侧交换文件），**目录结构**不变。文件名映射见契约 / [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)；HTTP 不接受任意路径。
 
-Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{DT_SHARED_DIR}/out/case2/`。与真实后端或本地打桩**共用同一目录结构**（flat），本服务不设第二套数据模式。
+Initial 与工作区 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；`backCali/` 仅作恢复源；截图写入 `{DT_SHARED_DIR}/out/case2/`。与真实后端或本地打桩**共用同一目录结构**（flat），本服务不设第二套数据模式。
 
 ### 2.2 npm 命令
 
@@ -168,7 +170,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 | 任一 POST | 请求体超过 `20 MiB` | 413 | `PAYLOAD_TOO_LARGE` |
 | `GET /api/case2/control-file` | 控制文件缺失、不可读、非 UTF-8、JSON/结构/必填字段类型非法 | 500 | `CONTROL_READ_FAILED` |
 | `POST /api/case2/control-file` | 合并前读取最新控制快照失败 | 500 | `CONTROL_READ_FAILED` |
-| `POST /api/case2/control-file` | `start`/`reinit` 写前清空六个 Calibrated 文件失败 | 500 | `CALIBRATED_CLEAR_FAILED` |
+| `POST /api/case2/control-file` | entry `init` / `reinit` 写前从 `backCali` 恢复六个 Calibrated 文件失败（含源缺失；整批已重试 3 次） | 500 | `CALIBRATED_RESTORE_FAILED` |
 | `POST /api/case2/control-file` | 临时文件写入、`fsync`、关闭、原子替换或写后复读失败 | 500 | `CONTROL_WRITE_FAILED` |
 | `GET ...data-files?phase=initial` | 任一必需 Initial 文件不存在 | 404 | `DATA_FILE_MISSING` |
 | data-files，`phase=initial` 或 `phase=calibrated` | 文件存在，但数值词法、范围、矩阵形状或样本形状非法 | 422 | `DATA_FILE_INVALID` |
@@ -212,7 +214,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 
 
 
-### 4.2 POST 允许的四种 payload
+### 4.2 POST 允许的五种 payload
 
 ```json
 { "case": "case2", "command": "start", "dt_type": "with dt" }
@@ -227,13 +229,24 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 ```
 
 ```json
+{ "command": "init", "restore_calibrated": false }
+```
+
+```json
 { "save_picture_flag": 0 }
 ```
 
-- 只接受以上四种完整 shape；请求体混入 `status`、未知字段、`save_picture_flag=1` 或其他枚举一律 `400 INVALID_REQUEST`。
+- 只接受以上五种完整 shape；`restore_calibrated:false` 是仅供 Web 标记空闲收尾的传输字段，不写入控制 JSON。请求体混入 `status`、其它未知字段、`restore_calibrated:true`、`save_picture_flag=1` 或其他枚举一律 `400 INVALID_REQUEST`。
 - **Gate 3 演示向放宽（开一轮清盘）**：处理 `start` / `reinit` 时，适配服务在字段合并步骤**额外强制写入** `status=""`（请求体仍禁止带 `status`）。用于去掉上轮残留终态，供 Web 用「时刻 A 见 `execute success`、之后时刻 B 见完成终态」的规则（见 WEB-SPEC）；同时使合法 `start|reinit` 命令元组 + 空 status 成为后端/打桩唯一的新轮命令门沿，从而覆盖相同 command 的失败后重试。真实后端须接受开一轮时出现空 `status`；业务终态字面值仍只由后端写出。交接口径见 [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)。
-- **Calibrated 文件清空（与 Case3 对齐）**：处理合法 `start` / `reinit` 时，适配服务在写控制文件**之前**将 `case2/` 下六个 `heatmap_cali_*.txt` / `heatmap_cali_kpi_*.txt` 写为空文件（可创建目录）。**不清** Initial 六文件、不删 `out/case2/` 截图。清空失败返回 `500 CALIBRATED_CLEAR_FAILED`，控制文件保持原值（不写命令）。
-- **空闲写回**：Web 进入 / 刷新 / 切回 case2 时，先 `GET control-file` 诊断可读；成功后再 `POST {command:"init"}`。启动轮已读取 Calibrated 六文件并完成截图保存/放弃收尾后、重置轮已消费 `reinit complete` 并回到 Initial 后，也可 `POST {command:"init"}`。适配服务合并为 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`，保留未知字段，用于满足后端侧“控制文件回空闲”的握手诉求。该写回不是业务 start/reinit 门沿，后端不得把 `init,status=""` 当成一次测试命令。
+- **Calibrated 磁盘恢复（2026-09-24）**：处理合法 `POST init` / `POST reinit` 时，适配服务在写控制文件**之前**，将 `{DT_SHARED_DIR}/case2/backCali/` 下六个同名文件**整批覆盖**到 `{DT_SHARED_DIR}/case2/`（目标目录可创建；源目录与六个源文件必须已存在）。六个文件名为：
+  - `heatmap_cali_rss.txt` / `heatmap_cali_kpi_rss.txt`
+  - `heatmap_cali_effective_path_num.txt` / `heatmap_cali_kpi_effective_path_num.txt`
+  - `heatmap_cali_first_path_delay.txt` / `heatmap_cali_kpi_first_path_delay.txt`
+  **语义：** 覆盖 ≠ 写空；`backCali` 是只读基线源，适配服务不得改写 `backCali/` 内文件。**不清** Initial 六文件、不删 `out/case2/` 截图。
+  **`POST start`：不覆盖、不写空** 上述六个 Calibrated 文件（启动期间磁盘上可暂留上一轮或 `backCali` 内容；Web 仍只在本轮 `execute success → case complete` 后读批；后端/打桩须在本轮完整覆盖发布，不要求启动瞬间文件为空）。
+  **逐文件覆盖与整批重试（非六文件原子切换）：** 每次尝试按顺序逐个覆盖六个文件；任一源缺失、读失败或写失败即视为该次失败，并从第一个文件重新覆盖整批。最多尝试 **3** 次（首次 + 2 次重试）。不保证六个文件整体原子切换；失败后可能暂留新旧混合内容，且**不回滚**已覆盖的文件。3 次仍失败 → `500 CALIBRATED_RESTORE_FAILED`，控制文件保持原值（**不写**本次 `init`/`reinit` 命令）。错误 `message` 须含失败文件名与原因摘要，供 Web `console.error` 展示。
+  **恢复触发范围：** 默认 `POST {command:"init"}` 用于进页/刷新/切回及进页探活恢复，会在写控制前从 backCali 恢复；`POST {command:"init",restore_calibrated:false}` 用于启动/重置/失败收尾，只做控制空闲写回，保留工作区 Calibrated 文件。
+- **空闲写回**：Web 进入 / 刷新 / 切回 case2 时，先 `GET control-file` 诊断可读；成功后再 `POST {command:"init"}`，该请求会先做 Calibrated 磁盘恢复。启动轮读取 Calibrated 并完成截图收尾后、重置轮消费 `reinit complete` 回到 Initial 后，以及启动结果不完整而撤权时，使用 `POST {command:"init",restore_calibrated:false}`，保留本轮磁盘数据。两种写回都合并为 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`，保留未知字段；传输字段 `restore_calibrated` 不落入控制文件。该写回不是业务 start/reinit 门沿，后端不得把 `init,status=""` 当成一次测试命令。
 - `save_picture_flag: 0` 路径可由截图成功落盘流程内部调用，或由 Web 在同一截图任务累计 3 次生成/上传失败后调用；两种路径都**不得**改写 `status`。后者必须记录“本张截图已放弃”日志，且不生成 PNG、不占用新序号。
 - 启动与重置是否可点击由 Web 状态机负责；适配服务仍必须防止非法字段写入。
 - 截图接口内部清零必须复用同一控制文件写服务，不另写一套文件算法。
@@ -247,7 +260,7 @@ Initial 与 Calibrated 均从 `{DT_SHARED_DIR}/case2/` 读取；截图写入 `{D
 所有控制文件写入进入适配服务进程内同一串行队列：
 
 1. 读取最新完整 JSON。
-2. 若本次为合法 `start` / `reinit`：先清空六个 Calibrated 结果文件；失败则中止，不写控制。
+2. 若本次为合法 entry `init` / `reinit`：先从 `{DT_SHARED_DIR}/case2/backCali/` 逐个覆盖六个 Calibrated 结果文件到 `{DT_SHARED_DIR}/case2/`；任一失败即从头重试整批，最多 3 次；最终失败则中止，不写控制，且不回滚部分覆盖。若本次为带 `restore_calibrated:false` 的 completion/idle `init` 或 `start`：跳过本步（不覆盖、不写空）。
 3. 只合并本次 payload 的允许字段；若本次为 `start` 或 `reinit`，再强制 `status=""`；若本次为 `init`，再强制 `case=case2,dt_type="",status="",save_picture_flag=0`。
 4. 将完整合并结果写入共享目录中的唯一临时文件。
 5. `fsync` 并关闭临时文件。
@@ -360,7 +373,8 @@ Initial 六文件只做单批完整校验。Calibrated 额外执行：
 
 ### 7.1 单元测试
 
-- 控制文件：四种 payload、请求体禁止带 `status`、进页 `init` 写回空闲态、`start`/`reinit` 写后强制 `status=""`、相同 command 在 `execute fail` 后重试仍产生合法命令元组 + 空 status 门沿、截图清零不改 `status`、保留未知字段、并发 POST 串行、临时文件清理；GET 对未知 `status` 字面值 200 透传（不 `CONTROL_READ_FAILED`）；`save_picture_flag` 非 `0`/`1` 才拒读；Case2/Case3 活动、未消费终态、其他 Case fail 和未知活动 status 返回 `CONTROL_BUSY`，POST init 永远允许。
+- 控制文件：五种 payload、请求体禁止带 `status`、entry `init` 写回空闲态并恢复基线、idle `init` 明确跳过恢复、`start`/`reinit` 写后强制 `status=""`、相同 command 在 `execute fail` 后重试仍产生合法命令元组 + 空 status 门沿、截图清零不改 `status`、保留未知字段、并发 POST 串行、临时文件清理；GET 对未知 `status` 字面值 200 透传（不 `CONTROL_READ_FAILED`）；`save_picture_flag` 非 `0`/`1` 才拒读；Case2/Case3 活动、未消费终态、其他 Case fail 和未知活动 status 返回 `CONTROL_BUSY`，POST init 永远允许。
+- Calibrated 磁盘恢复：`init`/`reinit` 写前从 `case2/backCali/` 覆盖六个同名文件；`start` 不覆盖不写空；源缺失或写失败整批重试至 3 次后 `CALIBRATED_RESTORE_FAILED` 且控制未推进；不清 Initial、不删截图。
 - 热力图：动态 `2×3`、`1×1`、CRLF、逗号/空白；空矩阵、行宽不一、科学计数、非有限数拒绝；归一后越界双边掐位并记 `invalidCount`，不删格；超过 2 位小数四舍五入（如 `1.235→1.24`、`-1.235→-1.24`），不因小数位过多拒绝。
 - KPI：动态 `N`、不同换行分组展平；空样本、非法 token 拒绝；低于下限钳为 `min` 并记 `clampedCount`，高于上限丢弃并记 `droppedCount`，日志 `invalidCount` 为两者之和；高侧样本滤完为空才 `DATA_FILE_INVALID`；超过 2 位小数同样四舍五入后接受。RSS KPI 允许当前配置范围内的负值；默认小于 `-1` 的值钳成哨兵 `-1`。
 - 批次：六文件齐全；任一缺失、解析失败、读取期间变化、控制四元组非 Case2 start with dt complete 均整批拒绝；失败响应无部分 `metrics`；日志含失败文件名。

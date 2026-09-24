@@ -2,7 +2,7 @@
 
 > 范围：只约束 `DT Calibration`（case2）的文件控制、结果发布、浏览器与前端 PC Node 适配服务之间的**语义**。本文是 Gate 2 的唯一接口真相源；端口、部署目录、挂载路径和控制文件写入算法由 Gate 3 SPEC 具体化。
 >
-> 状态：`APPROVED`（Gate 2，2026-07-31）。P0-1 至 P0-4 已按用户确认口径回填。**2026-08-03 Gate 3 增量回填**：`start`/`reinit` 开一轮清 `status=""`；Web 可见态施工细节以 [WEB-SPEC.md](WEB-SPEC.md) 为准（无独立 result-error/unknown-control UI）；截图 flag 仅启动路径、`execute success` 之后至 `case complete`（含同拍 complete）窗口。**2026-08-10 跨 Case 安全增量**：Case2/Case3 共用 store 后，非法并发命令返回 `CONTROL_BUSY`，Case2 截图路由对称校验 ownership。Node 与 Web 施工见 [SERVER-SPEC.md](SERVER-SPEC.md) / [WEB-SPEC.md](WEB-SPEC.md)。
+> 状态：`APPROVED`（Gate 2，2026-07-31）。P0-1 至 P0-4 已按用户确认口径回填。**2026-08-03 Gate 3 增量回填**：`start`/`reinit` 开一轮清 `status=""`；Web 可见态施工细节以 [WEB-SPEC.md](WEB-SPEC.md) 为准（无独立 result-error/unknown-control UI）；截图 flag 仅启动路径、`execute success` 之后至 `case complete`（含同拍 complete）窗口。**2026-08-10 跨 Case 安全增量**：Case2/Case3 共用 store 后，非法并发命令返回 `CONTROL_BUSY`，Case2 截图路由对称校验 ownership。**2026-09-24 增量**：entry `init` / `reinit` 写控制前从 `case2/backCali/` 逐个覆盖六个 Calibrated 文件；任一失败即从头重试整批，最多三次，不回滚部分覆盖，也不保证六文件整体原子切换；最终失败拦截控制写入。校准/重置轮结束的 `init` 使用 `restore_calibrated:false` 仅回写空闲控制状态、保留 Calibrated 文件。`start` 不再清空 Calibrated 磁盘文件。Node 与 Web 施工见 [SERVER-SPEC.md](SERVER-SPEC.md) / [WEB-SPEC.md](WEB-SPEC.md)。
 
 ## 0. 契约边界与术语
 
@@ -39,7 +39,7 @@ Gate 2 冻结最小 REST 语义：不用 WebSocket，不做命令队列，不做
 | 逻辑操作          | 最小 REST 语义                         | 方向                         | 触发                                  | 输入/输出语义                                           | 约束                                  |
 | ------------- | ---------------------------------- | -------------------------- | ----------------------------------- | ------------------------------------------------- | ----------------------------------- |
 | GET 控制文件      | `GET /api/case2/control-file`      | Web → 适配服务 → 控制文件          | 页面进入、运行期间、截图请求检测                    | 返回当前 `case_control` 字段及可用性                        | Web 不直接读文件。                         |
-| POST 控制文件     | `POST /api/case2/control-file`     | Web → 适配服务 → 控制文件          | 进入/刷新/切回 case2 的 GET 诊断成功后；启动轮 Calibrated 与截图收尾完成后；重置完成并回 Initial 后；用户点击“启动”或“重置”；截图成功或累计 3 次失败后清零           | 空闲写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；启动写 `case=case2,command=start,dt_type=with dt`；重置写 `command=reinit`；截图成功或放弃本张截图写 `save_picture_flag=0`；**Gate 3：`start`/`reinit` 额外强制 `status=""`** | 请求体不含 `status`；业务终态字面值仍只由后端写出；保留未知字段。                   |
+| POST 控制文件     | `POST /api/case2/control-file`     | Web → 适配服务 → 控制文件          | 进入/刷新/切回 case2 的 GET 诊断成功后；启动轮 Calibrated 与截图收尾完成后；重置完成并回 Initial 后；用户点击“启动”或“重置”；截图成功或累计 3 次失败后清零           | 进页/切回写 `command=init`（恢复基线）；启动/重置结束写 `command=init,restore_calibrated=false`（保留结果）；启动写 `case=case2,command=start,dt_type=with dt`；重置写 `command=reinit`；截图成功或放弃本张截图写 `save_picture_flag=0`；**Gate 3：`start`/`reinit` 额外强制 `status=""`** | `restore_calibrated` 是请求控制的传输字段，不写进共享控制快照；请求体不含 `status`；业务终态字面值仍只由后端写出；保留其他未知字段。 |
 | 读取数据文件        | `GET /api/case2/data-files`        | Web → 适配服务 → Initial/Calibrated 文件 | Initial 首屏；本轮启动观察到 `execute success -> case complete` | 返回三项热力矩阵与 KPI 样本；Calibrated 必须为完整六文件批次             | 文件存在、`execute success` 或旧缓存均不能替代完成门槛。 |
 | 提交截图          | `POST /api/case2/screenshot`       | Web → 适配服务 → 输出目录          | Web 发现 `save_picture_flag` 从 `0` 变为 `1` | Web 对同一任务最多尝试 3 次；Node 以临时文件 + 原子 rename 落盘，成功后清零 | 浏览器不得写共享目录；前两次失败不得清零；第三次仍失败允许清零并丢失本张截图；不得覆盖旧截图。                |
 
@@ -160,8 +160,8 @@ sequenceDiagram
 2. **业务终态字面值**（`execute success` / `execute fail` / `case complete` / `reinit complete`）仅后端写出；Web 或适配服务不得伪造这些终态。
 3. **Gate 3 演示向放宽（开一轮清盘）**：处理 `start` / `reinit` 时，适配服务在合并命令字段后**额外强制写入 `status=""`**（HTTP 请求体仍禁止带 `status`）。用于去掉上轮残留终态，供 Web 用「时刻 A 见 `execute success`、之后时刻 B 见完成终态」的简单规则。合法 `start|reinit` 命令元组与 `status=""` 的组合同时构成后端/打桩唯一的新轮命令门沿；不得仅凭 `command` 值变化、文件 mtime 或一次文件事件判断新命令。真实后端须接受开一轮时出现空 `status`。截图清零路径**不得**改写 `status`。细节见 [SERVER-SPEC.md](SERVER-SPEC.md) / [BACKEND-API-HANDOFF.md](BACKEND-API-HANDOFF.md)。
 4. 进页空闲写回：Web 在进入/刷新/切回 case2 时先 `GET control-file`；GET 成功后再 `POST {command:"init"}`，由适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`。该写回只表示页面进入后的空闲握手，不是一次业务 start/reinit 门沿。
-5. 启动轮收尾写回：Web 已按 `execute success -> case complete` 读取 Calibrated 六文件并进入 `completed` 后，若本轮截图请求已保存并清零、已累计 3 次失败后放弃清零，或本轮无截图请求，再 `POST {command:"init"}` 写回空闲态。不得在读取 Calibrated 或截图收尾前提前清 `status` / `save_picture_flag`。
-6. 重置轮收尾写回：Web 已按 `execute success -> reinit complete` 清空 Calibrated 并回到 `initial` 后，再 `POST {command:"init"}` 写回空闲态。不得在 UI 消费 `reinit complete` 前提前清 `status`。
+5. 启动轮收尾写回：Web 已按 `execute success -> case complete` 读取 Calibrated 六文件并进入 `completed` 后，若本轮截图请求已保存并清零、已累计 3 次失败后放弃清零，或本轮无截图请求，再 `POST {command:"init",restore_calibrated:false}` 写回空闲态并保留本轮文件。不得在读取 Calibrated 或截图收尾前提前清 `status` / `save_picture_flag`。
+6. 重置轮收尾写回：Web 已按 `execute success -> reinit complete` 清空 UI 内存中的 Calibrated 并回到 `initial` 后，再 `POST {command:"init",restore_calibrated:false}` 写回空闲态；重置基线已在 reinit POST 前恢复，收尾不得重复覆盖。不得在 UI 消费 `reinit complete` 前提前清 `status`。
 7. `GET /api/case2/control-file` 与 `POST /api/case2/control-file` 是控制文件唯一 REST 口径；进页空闲写回、启动/重置轮收尾写回、启动、重置和截图清零都通过 POST 控制文件表达，不再拆成多个命令专用接口。
 8. 具体原子写、串行化与字段保留算法见 [SERVER-SPEC.md](SERVER-SPEC.md)，其结果必须满足本节全部条款。
 9. Case2/Case3 共用 Node 控制 store 后，Start/ReInit 使用同一 `CONTROL_BUSY` guard：空闲允许；同 Case 同动作 `execute fail` 允许手动重试；活动、未消费完成终态、其他 Case fail 或未知活动 status 拒绝覆盖。POST init 永远允许。Case2 合法主线和成功 shape 不变，非法直接请求收紧为 409。
@@ -342,7 +342,7 @@ Gate 3 本地无真实后端时，模拟后端打桩按 [realback_no.md](realbac
 - P0-3 已确认：Node 适配服务采用最小 REST，控制文件读写归一为 `GET /api/case2/control-file` 与 `POST /api/case2/control-file`。
 - P0-4 已确认：启动路径中，后端在 `execute success` 之后至 `case complete`（允许同拍）将 `save_picture_flag` 0→1；重置路径不置 1。Web 仅在 `calibrating` 观察；同拍 `case complete` 仍截一次。同一截图任务最多尝试 3 次；Node 以临时文件 + 原子 rename 落盘并在成功后清零，不做持久事务、SHA-256 去重或进程重启恢复；3 次仍失败允许经适配服务清零并丢失本张截图。
 - Gate 3 增量（2026-08-03）：`start`/`reinit` 时适配服务强制 `status=""`；业务终态字面值仍只由后端写出；Web 可见态施工见 [WEB-SPEC.md](WEB-SPEC.md)（无独立 result-error/unknown-control UI；进页不续接历史 status）；截图观察窗与后端置位窗见 §6。
-- 后续增量：合法 `start`/`reinit` 写控制前，适配服务清空六个 Calibrated 结果文件（与 Case3 单侧清文件对齐）；不清 Initial；清空失败不写命令（`CALIBRATED_CLEAR_FAILED`）。
+- 2026-09-24 增量：进页 `POST {command:"init"}` / `POST {command:"reinit"}` 写控制前，适配服务将 `{DT_SHARED_DIR}/case2/backCali/` 六个同名文件逐个覆盖到 `{DT_SHARED_DIR}/case2/`；任一失败即从头重试整批，最多 3 次，不回滚部分覆盖，也不保证六文件整体原子切换；最终失败返回 `CALIBRATED_RESTORE_FAILED` 且不写命令。轮次结束的 `POST {command:"init",restore_calibrated:false}` 只回写空闲控制字段并保留磁盘结果；`POST start` 不清空或覆盖文件。磁盘恢复不导致 Web 展示 Calibrated；失败时 Web `console.error` + 进页 `adapterError`（方案甲）。细则见 [SERVER-SPEC.md](SERVER-SPEC.md) / [WEB-SPEC.md](WEB-SPEC.md)。
 - 当前 UI 只消费 RSS、有效路径数、首径时延三项；每项包括动态解析得到的热力矩阵与 KPI 样本集合，不能硬编码为 20×20 或 20 个样本。
 - CDF、均值、降幅都是前端派生，降幅按当前样本计算；浏览器不能直接读写共享目录或截图文件。
 

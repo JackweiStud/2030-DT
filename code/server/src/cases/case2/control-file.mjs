@@ -1,12 +1,12 @@
 /**
  * Case2 控制 HTTP 语义适配。
  * 实际读写统一委托进程级 ControlFileStore，Case2 只拥有 payload 分类、route guard、
- * 以及 start/reinit 前清空六个 Calibrated 文件（与 Case3 单侧清文件对齐）。
+ * 以及 init/reinit 前从 backCali 恢复六个 Calibrated 文件。
  */
 
 import { promises as defaultFs } from "node:fs";
 import path from "node:path";
-import { AppError, isAppError } from "../../shared/errors.mjs";
+import { AppError } from "../../shared/errors.mjs";
 import {
   FLAG_CLEAR_CONFLICT_ATTEMPTS,
   assertCommandAvailable,
@@ -44,7 +44,6 @@ function classifyPayload(payload) {
   ) {
     return {
       kind: "start",
-      clearCalibrated: true,
       descriptor: {
         caseId: "case2",
         command: "start",
@@ -63,7 +62,7 @@ function classifyPayload(payload) {
   if (exactKeys(payload, ["command"]) && payload.command === "reinit") {
     return {
       kind: "reinit",
-      clearCalibrated: true,
+      restoreCalibrated: true,
       descriptor: {
         caseId: "case2",
         command: "reinit",
@@ -78,9 +77,27 @@ function classifyPayload(payload) {
     };
   }
 
+  if (
+    exactKeys(payload, ["command", "restore_calibrated"]) &&
+    payload.command === "init" &&
+    payload.restore_calibrated === false
+  ) {
+    return {
+      kind: "completion-init",
+      patch: {
+        case: "case2",
+        command: "init",
+        dt_type: "",
+        status: "",
+        save_picture_flag: 0,
+      },
+    };
+  }
+
   if (exactKeys(payload, ["command"]) && payload.command === "init") {
     return {
       kind: "entry-init",
+      restoreCalibrated: true,
       patch: {
         case: "case2",
         command: "init",
@@ -104,7 +121,7 @@ function classifyPayload(payload) {
   throw new AppError(
     400,
     "INVALID_REQUEST",
-    "control payload must be exactly start, reinit, init, or save_picture_flag=0",
+    "control payload must be exactly start, reinit, entry init, completion init, or save_picture_flag=0",
   );
 }
 
@@ -125,28 +142,50 @@ export function createControlFileService(options) {
     });
   const dataDir = path.join(sharedDir, "case2");
 
-  /** start/reinit 写控制前：清空六个 Calibrated 结果文件；不清 Initial。 */
-  async function clearCalibrated(kind) {
+  /** init/reinit 写控制前逐个恢复六个 Calibrated 文件；失败时重试整批，不回滚部分写入。 */
+  async function restoreCalibratedFromBackCali(kind) {
     const files = calibratedFilenames();
-    try {
-      await fsOps.mkdir(dataDir, { recursive: true });
-      for (const filename of files) {
-        await fsOps.writeFile(path.join(dataDir, filename), "");
+    const backCaliDir = path.join(dataDir, "backCali");
+    let lastFailure;
+
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      let currentFile = files[0] ?? "case2";
+      try {
+        await fsOps.mkdir(dataDir, { recursive: true });
+        for (const filename of files) {
+          currentFile = filename;
+          const source = path.join(backCaliDir, filename);
+          const destination = path.join(dataDir, filename);
+          await fsOps.copyFile(source, destination);
+        }
+        logger.info("case2 calibrated files restored from backCali", {
+          caseId: "case2",
+          kind,
+          files: files.length,
+          attempts: attempt,
+        });
+        return;
+      } catch (error) {
+        lastFailure = new Error(
+          `${currentFile}: ${error instanceof Error ? error.message : String(error)}`,
+          { cause: error },
+        );
+        logger.warn("case2 calibrated restore batch failed", {
+          caseId: "case2",
+          kind,
+          attempt,
+          maxAttempts: 3,
+          reason: lastFailure.message,
+        });
       }
-      logger.info("case2 calibrated files cleared", {
-        caseId: "case2",
-        kind,
-        files: files.length,
-      });
-    } catch (error) {
-      if (isAppError(error)) throw error;
-      throw new AppError(
-        500,
-        "CALIBRATED_CLEAR_FAILED",
-        "failed to clear calibrated result files",
-        { cause: error },
-      );
     }
+
+    throw new AppError(
+      500,
+      "CALIBRATED_RESTORE_FAILED",
+      `failed to restore calibrated files from backCali after 3 attempts: ${lastFailure?.message ?? "unknown error"}`,
+      { cause: lastFailure },
+    );
   }
 
   async function clearPictureFlag(kind) {
@@ -179,9 +218,9 @@ export function createControlFileService(options) {
       guard: operation.descriptor
         ? (current) => assertCommandAvailable(current, operation.descriptor)
         : undefined,
-      beforeWrite: operation.clearCalibrated
+      beforeWrite: operation.restoreCalibrated
         ? async () => {
-            await clearCalibrated(operation.kind);
+            await restoreCalibratedFromBackCali(operation.kind);
           }
         : undefined,
     });
@@ -194,7 +233,7 @@ export function createControlFileService(options) {
     clearPictureFlag: () => clearPictureFlag("screenshot-saved"),
     assertScreenshotOwnership: (control) =>
       assertScreenshotOwnership(control, "case2"),
-    clearCalibrated,
+    restoreCalibratedFromBackCali,
     optionalFields: OPTIONAL_CONTROL_FIELDS,
     store,
   };

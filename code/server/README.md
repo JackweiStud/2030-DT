@@ -97,12 +97,14 @@ case == "case3"
 2. **Network**：`GET /api/case2/data-files?phase=calibrated` → `200` 为齐批；`409 RESULT_BATCH_INCOMPLETE` 为未齐/读中变化。
 3. **Web 侧**（与 Case3 对齐）：连续失败会 warn「最终 Calibrated 批次未就绪，继续等待」；满 10 次后 error「启动测试结果不完整…」并徽标「结果不完整已自动回退」，随后 POST `init` 撤权。
 
-### start / reinit 清空 Calibrated（与 Case3 对齐）
+### init / reinit 从 backCali 恢复 Calibrated（2026-09-24）
 
-合法 `POST` start 或 reinit 时，Node 在写控制前将下列六个文件写空（不清 Initial）：
+进页/切回 `POST {command:"init"}` 或用户 `POST {command:"reinit"}` 时，Node 在写控制前逐个将 `{DT_SHARED_DIR}/case2/backCali/` 下六个同名文件覆盖到 `{DT_SHARED_DIR}/case2/`（不清 Initial、不删截图）。任一文件失败就从头重试整批，最多 3 次；不保证六个文件整体原子切换，失败后不回滚部分覆盖。最终失败码为 `500 CALIBRATED_RESTORE_FAILED`，控制文件不应已推进到新命令。
+
+完成轮次写回空闲态使用 `{command:"init",restore_calibrated:false}`，只回写控制字段并保留工作区 Calibrated 文件。`restore_calibrated` 是适配 API 的传输字段，不写进 `case_control.json`。
 
 - `heatmap_cali_rss.txt` / `heatmap_cali_kpi_rss.txt`
 - `heatmap_cali_effective_path_num.txt` / `heatmap_cali_kpi_effective_path_num.txt`
 - `heatmap_cali_first_path_delay.txt` / `heatmap_cali_kpi_first_path_delay.txt`
 
-观察：点启动或重置后，上述文件应为空；失败码 `500 CALIBRATED_CLEAR_FAILED` 时控制文件不应已推进到新命令。
+`POST start` **不再**清空或覆盖上述文件。观察：进页/切回（init）或点重置（reinit）后，工作区六个文件内容应与 `backCali` 一致；点启动后文件不应被写空。

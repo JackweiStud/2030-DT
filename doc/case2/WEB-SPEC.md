@@ -8,8 +8,9 @@
 - [ ] case2 离开 Tab 即卸载，停止轮询并清空业务态、Calibrated 和截图状态。
 - [ ] Initial、calibrating、completed、failed-start/failed-reinit、resetting 与适配错误行为符合**本文施工写死点**（相对契约的 Gate 3 放宽以本文为准；无 result-error/unknown-control UI）。
 - [ ] 新进入 / 刷新 / 切回 case2 一律 `initial`（可启动、不读 Calibrated），不续接控制文件历史 `status`；诊断 GET 成功后触发一次 `POST {command:"init"}` 空闲写回；无自动业务超时、业务命令自动重试、取消或队列；截图有限重试按 P0-4 单独执行。
+- [ ] Calibrated 磁盘恢复：进页/切回的 `POST {command:"init"}` 与点重置的 `POST {command:"reinit"}` 由适配服务在写控制前从 `case2/backCali/` 整批覆盖工作区六个 Calibrated 文件；失败（`CALIBRATED_RESTORE_FAILED`）拦命令、`console.error`、进页置 `adapterError`；**不**因恢复展示 Calibrated。完成轮次后的 `POST {command:"init",restore_calibrated:false}` 只重置控制状态并保留本轮磁盘结果。`POST start` 不清空/不覆盖磁盘 Calibrated（仅清内存 `calibratedData`）。
 - [ ] 启动和重置互斥；`failed-start` / `failed-reinit` 仅本挂载内本轮命令失败后出现。
-- [ ] 启动/重置 POST 由适配服务清 `status=""`；仅在 `calibrating` 内本轮已见 `execute success` 后再见 `case complete`，才读取 Calibrated 六文件；启动轮 Calibrated 成功且截图保存/放弃收尾后、重置轮 UI 消费 `reinit complete` 回 Initial 后，再 POST `init` 写回空闲态。
+- [ ] 启动/重置 POST 由适配服务清 `status=""`；仅在 `calibrating` 内本轮已见 `execute success` 后再见 `case complete`，才读取 Calibrated 六文件；启动轮 Calibrated 成功且截图保存/放弃收尾后、重置轮 UI 消费 `reinit complete` 回 Initial 后，用 `restore_calibrated:false` POST 写回空闲态并保留工作区结果。
 - [ ] 动态 `Nx × Ny` 热力图、动态 `N` CDF/均值/降幅均由当前响应计算，无固定 20 或固定百分比。
 - [ ] `save_picture_flag`：仅 `calibrating` 观察 0→1；同拍 `case complete` 仍截一次；同一任务最多尝试 3 次，3 次仍失败则经 Node 自动清零并接受丢失本张截图；重置路径无截图。
 - [ ] 正式 Web 的全部静态资源位于 `web/` 内（如 `web/assets/`）；构建与运行不引用仓库其他目录；`web/` 可单独迁走或独立建库。
@@ -19,10 +20,10 @@
 
 > 先看图是否符合预期，再下钻后文。字段与后端时序语义以 [API-CONTRACT.md](API-CONTRACT.md) §1.1–1.3 为准；**Web 可见态、按钮互斥、旁路失败处理以本文为准**（含相对契约的 Gate 3 施工写死点）。下列为相对契约的写死点（其余不重复罗列「符合」项）：
 
-1. **新进入 / 刷新 / 切回 case2：一律** `initial`（可启动、不读 Calibrated），**不续接**控制文件里任何历史 `status`。`failed-start` / `failed-reinit` 只在**本挂载内**本轮命令失败后出现。进页诊断 GET 成功后，Web 再触发一次 `POST {command:"init"}`，由适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`。
+1. **新进入 / 刷新 / 切回 case2：一律** `initial`（可启动、不读 Calibrated），**不续接**控制文件里任何历史 `status`。`failed-start` / `failed-reinit` 只在**本挂载内**本轮命令失败后出现。进页诊断 GET 成功后，Web 再触发一次 `POST {command:"init"}`；适配服务在写控制前先从 `case2/backCali/` 整批覆盖工作区六个 Calibrated 文件，再写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`。磁盘恢复**不**导致 UI 展示 Calibrated。覆盖失败（`CALIBRATED_RESTORE_FAILED`）→ 不写控制 → Web `console.error` + `adapterError=true`，不继续拉 Initial（方案甲）。
 2. **本轮开盘（Gate 3 演示向，相对契约放宽）**：启动/重置的 `POST control-file` 由适配服务在写命令字段时**同时清** `status=""`，去掉上轮残留。等待态内：**先见** `execute success`**，再认** `case complete` / `reinit complete`；`execute fail` 可直接认（清盘后即为本轮失败）。不设 `baselineStatus` / `pendingAction`。
-3. **启动轮收尾**：`case complete` 边沿只用于读取 Calibrated 和触发同拍截图；不得立即清控制文件。只有 Calibrated 六文件读取成功并进入 `completed`，且截图请求已保存清零、已 3 次失败后放弃清零，或本轮无截图请求时，Web 才 `POST {command:"init"}` 写回空闲态。
-4. **重置轮收尾**：`reinit complete` 边沿先由 UI 消费，清空 Calibrated 并回到 `initial`；随后 Web 再 `POST {command:"init"}` 写回空闲态。不得在 UI 回 Initial 前提前清控制文件。
+3. **启动轮收尾**：`case complete` 边沿只用于读取 Calibrated 和触发同拍截图；不得立即清控制文件。只有 Calibrated 六文件读取成功并进入 `completed`，且截图请求已保存清零、已 3 次失败后放弃清零，或本轮无截图请求时，Web 才 `POST {command:"init",restore_calibrated:false}` 写回空闲态，保留本轮六个磁盘文件。
+4. **重置轮收尾**：`reinit complete` 边沿先由 UI 消费，清空内存中的 Calibrated 并回到 `initial`；随后 Web 再 `POST {command:"init",restore_calibrated:false}` 写回空闲态。不得在 UI 回 Initial 前提前清控制文件或重复恢复磁盘基线。
 5. 连接异常用 `adapterError` 叠加，不另切 phase。
 6. `completed`：启动禁、只可重置。`failed-start`：只可再启动；`failed-reinit`：只可再重置。不设 `result-error` / `unknown-control` UI：六文件失败或未知 status 只打诊断日志并保持等待态（演示主路径假定可读）。
 7. 不设 Initial 独立 error phase；不单独设计命令 POST 写失败 UI 机。业务命令不自动重试；截图生成/上传按同一任务最多 3 次处理，3 次仍失败则经 Node 清零并记丢图日志。命令 POST 主路径假定成功；若失败：回退点击前相 + `adapterError` + 打日志（不启轮询、不留双禁死锁）。`409 CONTROL_BUSY` 例外：只回退、不置 `adapterError`（见 §6.1 / §6.2）。
@@ -48,7 +49,7 @@
 
 不设 `result-error` / `unknown-control`。未知 `status`：只打诊断日志，不另开 UI 态，**保持当前等待态**（`calibrating` / `resetting`），无自动超时；脱身只能刷新或切 Tab。
 
-`case complete` 后 Calibrated 六文件连续失败达到 `CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS`（默认 10）时：进入 `failed-start`，徽标「结果不完整已自动回退」，busy 解除，并 best-effort POST `init` 撤权（与 Case3 对齐）；不提交残缺 Calibrated。单次失败仍保持 `calibrating` 并继续轮询。
+`case complete` 后 Calibrated 六文件连续失败达到 `CASE2_CALIBRATED_NOT_READY_MAX_ATTEMPTS`（默认 10）时：进入 `failed-start`，徽标「结果不完整已自动回退」，busy 解除，并 best-effort POST `{command:"init",restore_calibrated:false}` 撤权（与 Case3 对齐）；不提交残缺 Calibrated。单次失败仍保持 `calibrating` 并继续轮询。
 
 
 | 其他层    | 状态                                       | 含义                                  |
@@ -106,7 +107,7 @@ flowchart TD
 2. `adapterError` 叠加当前态（双禁），不单独占相。
 3. 命令 POST 主路径假定成功；失败时必须回退点击前相，禁止停在「已切等待态但未启表」的双禁死锁。
 4. **同拍截图**：本拍同时见 flag 0→1 与可认的 `case complete` 时，须先开本次截图，再进 `completed` 停表。
-5. **完成后空闲写回**：启动轮 `completed` 已有 Calibrated 且截图状态为 `idle` 后，才 POST `init`；重置轮 UI 已回 `initial` 后才 POST `init`；这些写回不得参与完成态判断。
+5. **完成后空闲写回**：启动轮 `completed` 已有 Calibrated 且截图状态为 `idle` 后，或重置轮 UI 已回 `initial` 后，POST `{command:"init",restore_calibrated:false}`；只回写控制空闲态，保留工作区 Calibrated 文件。
 
 ### 可见态切换（主路径时序）
 
@@ -129,7 +130,7 @@ flowchart TD
 **不**启业务控制轮询定时器。进页采用**串行门闩**（非并行）：
 
 1. **必发**一次性 `GET control-file`：只诊断 **Node 适配服务 + 控制文件是否可读**；**不是**探真实后端/打桩是否在线。失败 → 置 `adapterError`，**不**改相，**不**继续拉 Initial，并进入下方探活。
-2. 仅当 control 诊断成功后，再 `POST control-file {command:"init"}`，由适配服务写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`。写回失败 → 置 `adapterError`，不继续拉 Initial。
+2. 仅当 control 诊断成功后，再 `POST control-file {command:"init"}`（适配服务写控制前先做 `backCali` → 工作区 Calibrated 整批覆盖；见 SERVER-SPEC）。写回失败（含 `CALIBRATED_RESTORE_FAILED`）→ `console.error` 记录错误码/message → 置 `adapterError`，不继续拉 Initial。成功覆盖也**不**读、**不**展示 Calibrated。
 3. 仅当 init 写回成功后，再 `GET data-files?phase=initial` 拉基线。
 4. control 成功时的历史 `status` / `command` **不**改相；开发态 StrictMode 重挂载须丢弃陈旧进页结果（`entryLoadGeneration`），避免 Initial 双发。
 5. **探活（仅 `adapterError=true` 且仍为 `initial`）**：每 **5s** 再发 `GET control-file`（不封顶，直到恢复或离开 case2）。GET 成功后先 POST `init`；POST 成功 → 清 `adapterError`；若尚无 Initial 再拉 `data-files?phase=initial`。探活**不**因历史 `status` 改相；切离 case2 / 进入等待态 / 卸载时停探。
@@ -178,7 +179,7 @@ sequenceDiagram
 
 #### ② 点击启动
 
-POST 时适配服务写命令字段并**清** `status=""`；成功后启动**业务**控制轮询定时器（`VITE_CASE2_POLL_MS`，默认 1000ms）。本轮须在轮询时刻 A 见 `execute success`，再在**之后**的时刻 B 见 `case complete` 并读 Calibrated（`status` 单值，两拍推进；截图 flag 可与时刻 B **同拍**，须先截再停表）。`completed` / `failed-start` 后停表；进入 `completed` 且截图状态收尾后，再 POST `init` 写回空闲态。主路径假定 POST 成功；若 POST 失败见 §6.1。
+POST 时适配服务写命令字段并**清** `status=""`；成功后启动**业务**控制轮询定时器（`VITE_CASE2_POLL_MS`，默认 1000ms）。本轮须在轮询时刻 A 见 `execute success`，再在**之后**的时刻 B 见 `case complete` 并读 Calibrated（`status` 单值，两拍推进；截图 flag 可与时刻 B **同拍**，须先截再停表）。`completed` / `failed-start` 后停表；进入 `completed` 且截图状态收尾后，用 `restore_calibrated:false` POST 写回空闲态，保留本轮数据。主路径假定 POST 成功；若 POST 失败见 §6.1。
 
 ```mermaid
 sequenceDiagram
@@ -505,7 +506,7 @@ case-local state 至少包含：
 1. reducer 初始化为 `initial`、`adapterError=false`、`seenExecuteSuccess=false`、无 Calibrated。
 2. **串行门闩（必按此顺序）**：
    1. **必发**一次性 `GET control-file`（诊断 **适配服务 + 控制文件可读性**，不是探真实后端/打桩）。
-   2. 仅当 control 诊断成功后，再 `POST {command:"init"}` 空闲写回；写回失败与 control 失败一样置 `adapterError=true` 并停止进页数据加载。
+   2. 仅当 control 诊断成功后，再 `POST {command:"init"}` 空闲写回（服务端先做 `backCali` 磁盘恢复）；写回失败（含 `CALIBRATED_RESTORE_FAILED`）与 control 失败一样 `console.error` + 置 `adapterError=true` 并停止进页数据加载；恢复成功也不读/不展示 Calibrated。
    3. 仅当 init 写回成功后，再 `GET data-files?phase=initial`。
    4. control 或 init 写回失败：置 `adapterError=true`，**停止进页数据加载**（不得再发 Initial），可见态仍为 `initial`。
 3. Initial 六文件整体成功后渲染三项基线；失败则 Initial 区报错且启动禁用，不进入独立 error phase。Initial 失败与 control 失败语义分离：前者 `initialError`（基线不可用），后者 `adapterError`（适配连接异常）。
@@ -572,21 +573,21 @@ case-local state 至少包含：
 ### 6.1 启动
 
 1. 防重复：仅启动按钮可用（含从 `failed-start` 重试）、非 `calibrating`/`resetting`、`adapterError=false`；从 `initial` 进入时还需 Initial 已就绪。
-2. 记录点击前相；清空旧 Calibrated，进入 `calibrating`，`seenExecuteSuccess=false`。
+2. 记录点击前相；清空内存中的旧 `calibratedData`，进入 `calibrating`，`seenExecuteSuccess=false`。**不**要求适配服务清空或覆盖磁盘六个 Calibrated 文件（`POST start` 不再动磁盘 Calibrated）。
 3. POST `{case:"case2",command:"start",dt_type:"with dt"}`（请求体仍不含 `status`；适配服务合并时强制 `status=""`）。
 4. **主路径假定 POST 成功**（演示/联调环境适配可达）。不单独设计 POST 写失败 UI 机。**若 POST 确实失败**：回退到点击前相，置 `adapterError=true`，打诊断日志，**不**启轮询、不自动重发；不得停在「已是 `calibrating` 但未启表」的双禁死锁。例外：收到 `409 CONTROL_BUSY` 时只回退点击前相、打 `command.control_busy` 日志，**不**置 `adapterError`、**不**开探活、不新增可见错误徽标（共享控制互斥，不是连接异常）。
 5. POST 成功后启表。轮询：时刻 A 见 `execute success` → `seenExecuteSuccess=true`，仍 `calibrating`；**之后**时刻 B 见 `case complete`（且已 seen）→ 请求一次 Calibrated；`execute fail` → `failed-start`。
-6. 六文件成功 → `completed`。若截图状态已收尾或本轮无截图请求，随后 `POST {command:"init"}` 写回空闲态；若截图仍在保存/等待清零，等待截图成功或放弃清零后再写回。
+6. 六文件成功 → `completed`。若截图状态已收尾或本轮无截图请求，随后 `POST {command:"init",restore_calibrated:false}` 写回空闲态并保留六文件；若截图仍在保存/等待清零，等待截图成功或放弃清零后再写回。
 7. 六文件单次失败：保持 `calibrating`，打诊断日志，继续轮询，不写回 init。
-8. 六文件连续失败满 10 次：进入 `failed-start`，文案「结果不完整已自动回退」，POST `init` 撤权，解除 busy；可再启动。
+8. 六文件连续失败满 10 次：进入 `failed-start`，文案「结果不完整已自动回退」，POST `{command:"init",restore_calibrated:false}` 撤权，解除 busy；可再启动。
 
 ### 6.2 重置
 
 1. 仅重置按钮可用时进入（含从 `failed-reinit` / `completed`）；记录点击前相；进入 `resetting`，`seenExecuteSuccess=false`，两按钮禁用。
 2. **必须暂留**旧对比画面（热力 + KPI）；仅 StatusFeedback 文案改为「重置中」。
-3. POST `{command:"reinit"}`（适配服务强制 `status=""`）。
-4. **主路径假定 POST 成功**。若 POST 失败：回退点击前相 + `adapterError=true` + 打日志，不启轮询（与 §6.1 同口径）。例外：`409 CONTROL_BUSY` 同 §6.1——回退点击前相、不置 `adapterError`、不清掉暂留的 Calibrated。
-5. POST 成功后启表。时刻 A 见 `execute success` → `seenExecuteSuccess=true`；**之后**时刻 B 见 `reinit complete`（且已 seen）→ **清空** Calibrated，回 `initial`，随后 `POST {command:"init"}` 写回空闲态。
+3. POST `{command:"reinit"}`（适配服务写控制前先从 `backCali` 整批覆盖工作区六个 Calibrated 文件，再强制 `status=""`）。磁盘恢复**不**改变本相的 Calibrated 可见性：`resetting` 仍暂留内存旧对比，直至终态再清空 UI。
+4. **主路径假定 POST 成功**。若 POST 失败（含 `CALIBRATED_RESTORE_FAILED`）：回退点击前相 + `adapterError=true` + `console.error` 记录错误码/message，不启轮询（与 §6.1 同口径；方案甲拦命令）。例外：`409 CONTROL_BUSY` 同 §6.1——回退点击前相、不置 `adapterError`、不清掉暂留的 Calibrated。
+5. POST 成功后启表。时刻 A 见 `execute success` → `seenExecuteSuccess=true`；**之后**时刻 B 见 `reinit complete`（且已 seen）→ **清空 UI 内存中的** Calibrated，回 `initial`，随后 `POST {command:"init",restore_calibrated:false}` 写回空闲态；磁盘基线已在 `reinit` 命令前恢复，收尾不得再次覆盖。
 6. `execute fail` → `failed-reinit`，并**清空** Calibrated。
 7. 不等待后端再把 `command` 改回 `init`；Web 在 UI 完成重置后主动写回。
 
@@ -618,9 +619,10 @@ case-local state 至少包含：
 | 接口                                | 调用点                                                     | 成功更新                                   |
 | --------------------------------- | ------------------------------------------------------- | -------------------------------------- |
 | `GET control-file`                | 进页一次性（诊断，**必发**）；`calibrating`/`resetting` 内 1000ms 串行轮询 | 等待态推进终态；**仅 calibrating** 消费截图 flag；非等待态不启定时器。 |
-| `POST control-file` init          | 进页/刷新/切回的诊断 GET 成功后；adapterError 探活 GET 成功后；启动轮 Calibrated 成功且截图状态收尾后；重置轮 UI 回 Initial 后 | 写回 `case=case2,command=init,dt_type="",status="",save_picture_flag=0`；只表示空闲握手或命令轮收尾，不是业务轮询。 |
-| `POST control-file` start         | 启动按钮                                                    | 进入 `calibrating`；适配服务强制写后 `status=""`。 |
-| `POST control-file` reinit        | 重置按钮                                                    | 进入 `resetting`；适配服务强制写后 `status=""`。   |
+| `POST control-file` init          | 进页/刷新/切回的诊断 GET 成功后；adapterError 探活 GET 成功后 | 默认先从 `backCali` 恢复，再写回空闲控制字段；恢复失败 → `adapterError` + `console.error`，不展示 Calibrated。 |
+| `POST control-file` idle init     | 启动轮截图状态收尾后；重置轮 UI 回 Initial 后；结果不完整撤权 | 请求带 `restore_calibrated:false`，只写回空闲控制字段，保留工作区 Calibrated 文件。 |
+| `POST control-file` start         | 启动按钮                                                    | 进入 `calibrating`；适配服务强制写后 `status=""`；**不**清空/覆盖磁盘 Calibrated。 |
+| `POST control-file` reinit        | 重置按钮                                                    | 进入 `resetting`；适配服务先 `backCali` 覆盖再强制写后 `status=""`；恢复失败拦命令 + `console.error`。   |
 | `GET data-files?phase=initial`    | 进页串行门闩第 3 步：仅 init 写回成功后，每次 case2 挂载一次 | Initial 三项。                            |
 | `GET data-files?phase=calibrated` | `calibrating` 且 `seenExecuteSuccess` 后见 `case complete` | Calibrated 三项。                         |
 | `POST screenshot`                 | 截图机生成 Base64 后（含同拍 complete 触发）                         | 保存回执；仍 calibrating → `waitClear`；已 completed → `idle`。 |
@@ -632,8 +634,8 @@ case-local state 至少包含：
 - GET 轮询只重试读取本身，不重放用户动作。
 - HTTP/`ok:false` 错误码解释见 SERVER-SPEC；控制/连接类映射 `adapterError`；`CONTROL_BUSY` 不映射 `adapterError`；Calibrated 批次失败只打日志。
 - 每次控制快照只含**一个** `status` 字面值；按该值更新 `seenExecuteSuccess` 或认终态。`calibrating` 内顺带看 `save_picture_flag`：**先**处理 0→1 开截图，**再**认 `case complete`（同拍 complete 也截一次）。
-- 启动轮 `POST init` 收尾只在 Calibrated 读取成功且截图状态回 `idle` 后发生；若 Calibrated 读取失败仍保持 `calibrating`，不得清空 `status=case complete`。
-- 重置轮 `POST init` 收尾只在 UI 已消费 `reinit complete`、清空 Calibrated 并回到 `initial` 后发生。
+- 启动轮 idle `POST init` 收尾只在 Calibrated 读取成功且截图状态回 `idle` 后发生，必须带 `restore_calibrated:false`；若 Calibrated 读取失败仍保持 `calibrating`，不得清空 `status=case complete`。
+- 重置轮 idle `POST init` 收尾只在 UI 已消费 `reinit complete`、清空内存 Calibrated 并回到 `initial` 后发生，必须带 `restore_calibrated:false`；不能重复恢复磁盘基线。
 
 ## 8. 热力图实现
 

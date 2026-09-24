@@ -241,6 +241,7 @@ describe("useCase2Controller entry gate", () => {
   });
 
   it("control 成功但 init 写回失败时不拉 initial，并置 adapterError", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const order: string[] = [];
     const api: Case2Api = {
       async getControl() {
@@ -253,7 +254,11 @@ describe("useCase2Controller entry gate", () => {
       },
       async postControl(payload) {
         order.push(`post:${"command" in payload ? payload.command : "flag"}`);
-        throw new Error("control write denied");
+        throw new Case2ApiError(
+          "CALIBRATED_RESTORE_FAILED",
+          "failed to restore heatmap_cali_rss.txt: source missing",
+          500,
+        );
       },
       async postScreenshot() {
         throw new Error("not used");
@@ -280,6 +285,13 @@ describe("useCase2Controller entry gate", () => {
     expect(result.current.state.initialData).toBeNull();
     expect(result.current.startEnabled).toBe(false);
     expect(result.current.state.case2UiState).toBe("initial");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[case2] entry.control_init_failed",
+      expect.objectContaining({
+        code: "CALIBRATED_RESTORE_FAILED",
+        reason: expect.stringContaining("heatmap_cali_rss.txt"),
+      }),
+    );
   });
 
   it("启动轮 Calibrated 成功且截图空闲后，再写回 init", async () => {
@@ -578,6 +590,7 @@ describe("useCase2Controller entry gate", () => {
 
   it("success 左边界截图成功后立刻 idle，complete 再 0→1 截完成态再 init", async () => {
     const order: string[] = [];
+    const initPayloads: Array<{ command: "init"; restore_calibrated?: false }> = [];
     let started = false;
     let phase: "success" | "complete" = "success";
     let screenshots = 0;
@@ -604,6 +617,9 @@ describe("useCase2Controller entry gate", () => {
       },
       async postControl(payload) {
         order.push(`post:${"command" in payload ? payload.command : "flag"}`);
+        if ("command" in payload && payload.command === "init") {
+          initPayloads.push(payload);
+        }
         if ("command" in payload && payload.command === "start") {
           started = true;
           return control({ command: "start", status: "" });
@@ -651,6 +667,10 @@ describe("useCase2Controller entry gate", () => {
     });
     expect(order.filter((x) => x === "screenshot")).toHaveLength(2);
     expect(order.filter((x) => x === "post:init")).toHaveLength(2);
+    expect(initPayloads).toEqual([
+      { command: "init" },
+      { command: "init", restore_calibrated: false },
+    ]);
     expect(order.indexOf("data:calibrated")).toBeGreaterThan(-1);
     const secondShot = order.lastIndexOf("screenshot");
     expect(order.indexOf("data:calibrated")).toBeLessThan(secondShot);
@@ -822,6 +842,141 @@ describe("useCase2Controller entry gate", () => {
     expect(result.current.statusText).not.toBe("case2文件服务器连接异常");
     expect(result.current.state.calibratedData).not.toBeNull();
     expect(result.current.resetEnabled).toBe(true);
+  });
+
+  it("重置完成后的 init 收尾跳过二次磁盘恢复", async () => {
+    let started = false;
+    let resetting = false;
+    let startPoll = 0;
+    let resetPoll = 0;
+    const initPayloads: Array<{ command: "init"; restore_calibrated?: false }> = [];
+    const api: Case2Api = {
+      async getControl() {
+        if (!started) return control({ command: "init", status: "", dt_type: "" });
+        if (resetting) {
+          resetPoll += 1;
+          return control({
+            command: "reinit",
+            status: resetPoll === 1 ? "execute success" : "reinit complete",
+            dt_type: "",
+          });
+        }
+        startPoll += 1;
+        return control({
+          command: "start",
+          status: startPoll === 1 ? "execute success" : "case complete",
+        });
+      },
+      async getDataFiles() {
+        return metrics();
+      },
+      async postControl(payload) {
+        if ("command" in payload && payload.command === "init") {
+          initPayloads.push(payload);
+          return control({ command: "init", status: "", dt_type: "" });
+        }
+        if ("command" in payload && payload.command === "start") {
+          started = true;
+          return control({ command: "start", status: "" });
+        }
+        if ("command" in payload && payload.command === "reinit") {
+          resetting = true;
+          resetPoll = 0;
+          return control({ command: "reinit", status: "", dt_type: "" });
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config: { ...config, pollMs: 1 },
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.startEnabled).toBe(true));
+    act(() => result.current.onStart());
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("completed");
+      expect(result.current.state.lastControl?.command).toBe("init");
+    });
+
+    act(() => result.current.onReset());
+    await waitFor(() => {
+      expect(result.current.state.case2UiState).toBe("initial");
+      expect(result.current.state.lastControl?.command).toBe("init");
+    });
+    expect(initPayloads).toEqual([
+      { command: "init" },
+      { command: "init", restore_calibrated: false },
+      { command: "init", restore_calibrated: false },
+    ]);
+  });
+
+  it("Reset 恢复基线失败时回滚到点击前相、保留对比并记录 console.error", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    let started = false;
+    let pollCount = 0;
+    const api: Case2Api = {
+      async getControl() {
+        if (!started) return control({ command: "init", status: "", dt_type: "" });
+        pollCount += 1;
+        return control({
+          command: "start",
+          status: pollCount === 1 ? "execute success" : "case complete",
+        });
+      },
+      async getDataFiles() {
+        return metrics();
+      },
+      async postControl(payload) {
+        if ("command" in payload && payload.command === "start") {
+          started = true;
+          return control({ command: "start", status: "" });
+        }
+        if ("command" in payload && payload.command === "reinit") {
+          throw new Case2ApiError(
+            "CALIBRATED_RESTORE_FAILED",
+            "failed to restore heatmap_cali_rss.txt: source missing",
+            500,
+          );
+        }
+        return control({ command: "init", status: "", dt_type: "" });
+      },
+      async postScreenshot() {
+        throw new Error("not used");
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useCase2Controller({
+        config: { ...config, pollMs: 1 },
+        stageElementRef: stageRef(),
+        api,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.startEnabled).toBe(true));
+    act(() => result.current.onStart());
+    await waitFor(() => expect(result.current.state.case2UiState).toBe("completed"));
+    const calibratedBeforeReset = result.current.state.calibratedData;
+
+    act(() => result.current.onReset());
+    await waitFor(() => expect(result.current.state.adapterError).toBe(true));
+    expect(result.current.state.case2UiState).toBe("completed");
+    expect(result.current.state.calibratedData).toBe(calibratedBeforeReset);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[case2] command.reset_post_failed",
+      expect.objectContaining({
+        code: "CALIBRATED_RESTORE_FAILED",
+        reason: expect.stringContaining("heatmap_cali_rss.txt"),
+      }),
+    );
   });
 
   it("Start POST 真连接失败仍进 adapterError", async () => {

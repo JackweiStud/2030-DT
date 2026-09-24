@@ -37,6 +37,29 @@ test("四个 case2 REST 成功路径可联通", async (t) => {
   assert.equal(entryInitPost.body.control.command, "init");
   assert.equal(entryInitPost.body.control.status, "");
 
+  await writePhaseFiles(sharedDir, "calibrated", {
+    heatmap: "5,6\n7,8\n",
+    kpi: "9\n10\n",
+  });
+  const completionInitPost = await jsonRequest(
+    baseUrl,
+    "/api/case2/control-file",
+    {
+      method: "POST",
+      body: { command: "init", restore_calibrated: false },
+    },
+  );
+  assert.equal(completionInitPost.status, 200);
+  assert.equal(completionInitPost.body.control.command, "init");
+  assert.equal(
+    Object.hasOwn(completionInitPost.body.control, "restore_calibrated"),
+    false,
+  );
+  assert.equal(
+    await fs.readFile(`${sharedDir}/case2/heatmap_cali_rss.txt`, "utf8"),
+    "5,6\n7,8\n",
+  );
+
   const dataGet = await jsonRequest(
     baseUrl,
     "/api/case2/data-files?phase=initial",

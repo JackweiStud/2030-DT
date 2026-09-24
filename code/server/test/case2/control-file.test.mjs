@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createControlFileService } from "../../src/cases/case2/control-file.mjs";
+import { METRIC_FILES } from "../../src/cases/case2/constants.mjs";
 import { FLAG_CLEAR_CONFLICT_ATTEMPTS } from "../../src/shared/control-file-store.mjs";
 import { createSilentLogger } from "../../src/shared/logger.mjs";
 import {
@@ -124,7 +125,7 @@ test("Case2 Start 遇 Windows 瞬时 rename 锁会重试并成功写入控制文
   assert.equal(renameCalls, 3);
 });
 
-test("start 与 reinit 写控制前清空六个 Calibrated 文件，不清 Initial", async (t) => {
+test("init/reinit 从 backCali 恢复六个 Calibrated；start 保留磁盘文件", async (t) => {
   const sharedDir = await createSharedDir(t);
   await writePhaseFiles(sharedDir, "initial");
   await writePhaseFiles(sharedDir, "calibrated", {
@@ -139,17 +140,14 @@ test("start 与 reinit 写控制前清空六个 Calibrated 文件，不清 Initi
     command: "start",
     dt_type: "with dt",
   });
-  assert.equal(
-    await fs.readFile(path.join(case2Dir, "heatmap_cali_rss.txt"), "utf8"),
-    "",
-  );
-  assert.equal(
-    await fs.readFile(
-      path.join(case2Dir, "heatmap_cali_kpi_first_path_delay.txt"),
-      "utf8",
-    ),
-    "",
-  );
+  for (const phases of Object.values(METRIC_FILES)) {
+    for (const filename of [phases.calibrated.heatmap, phases.calibrated.kpi]) {
+      assert.equal(
+        await fs.readFile(path.join(case2Dir, filename), "utf8"),
+        filename.includes("kpi") ? "9\n8\n" : "9,9\n9,9\n",
+      );
+    }
+  }
   assert.match(
     await fs.readFile(path.join(case2Dir, "heatmap_init_rss.txt"), "utf8"),
     /1\.235/,
@@ -160,27 +158,138 @@ test("start 与 reinit 写控制前清空六个 Calibrated 文件，不清 Initi
     kpi: "7\n",
   });
   await controlFile.updateFromHttp({ command: "init" });
+  for (const phases of Object.values(METRIC_FILES)) {
+    for (const filename of [phases.calibrated.heatmap, phases.calibrated.kpi]) {
+      assert.equal(
+        await fs.readFile(path.join(case2Dir, filename), "utf8"),
+        await fs.readFile(path.join(case2Dir, "backCali", filename), "utf8"),
+      );
+    }
+  }
   await controlFile.updateFromHttp({ command: "reinit" });
-  assert.equal(
-    await fs.readFile(
-      path.join(case2Dir, "heatmap_cali_effective_path_num.txt"),
-      "utf8",
-    ),
-    "",
-  );
-  assert.equal(
-    await fs.readFile(
-      path.join(case2Dir, "heatmap_cali_kpi_rss.txt"),
-      "utf8",
-    ),
-    "",
-  );
+  for (const phases of Object.values(METRIC_FILES)) {
+    for (const filename of [phases.calibrated.heatmap, phases.calibrated.kpi]) {
+      assert.equal(
+        await fs.readFile(path.join(case2Dir, filename), "utf8"),
+        await fs.readFile(path.join(case2Dir, "backCali", filename), "utf8"),
+      );
+    }
+  }
   assert.match(
     await fs.readFile(
       path.join(case2Dir, "heatmap_init_kpi_rss.txt"),
       "utf8",
     ),
     /1\.235/,
+  );
+});
+
+test("完成态 init 只回写控制并保留 Calibrated；进页 init 仍恢复基线", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
+  await writePhaseFiles(sharedDir, "calibrated", {
+    heatmap: "6,7\n8,9\n",
+    kpi: "10\n11\n",
+  });
+  const controlFile = service(sharedDir);
+  const case2Dir = path.join(sharedDir, "case2");
+
+  const idle = await controlFile.updateFromHttp({
+    command: "init",
+    restore_calibrated: false,
+  });
+  assert.equal(idle.command, "init");
+  assert.equal(idle.status, "");
+  for (const phases of Object.values(METRIC_FILES)) {
+    for (const filename of [phases.calibrated.heatmap, phases.calibrated.kpi]) {
+      assert.equal(
+        await fs.readFile(path.join(case2Dir, filename), "utf8"),
+        filename.includes("kpi") ? "10\n11\n" : "6,7\n8,9\n",
+      );
+    }
+  }
+
+  await controlFile.updateFromHttp({ command: "init" });
+  for (const phases of Object.values(METRIC_FILES)) {
+    for (const filename of [phases.calibrated.heatmap, phases.calibrated.kpi]) {
+      assert.equal(
+        await fs.readFile(path.join(case2Dir, filename), "utf8"),
+        await fs.readFile(path.join(case2Dir, "backCali", filename), "utf8"),
+      );
+    }
+  }
+});
+
+test("restore failure retries the entire six-file batch and does not advance control", async (t) => {
+  const sharedDir = await createSharedDir(t, {
+    case: "case2",
+    command: "start",
+    dt_type: "with dt",
+    status: "case complete",
+  });
+  const controlBefore = await readControl(sharedDir);
+  const target = path.join(sharedDir, "case2", "heatmap_cali_effective_path_num.txt");
+  const realCopyFile = fs.copyFile;
+  let copyCalls = 0;
+  let failedOnce = false;
+  const fsOps = {
+    ...fs,
+    copyFile: async (source, filePath, ...args) => {
+      if (String(filePath).startsWith(path.join(sharedDir, "case2"))) {
+        copyCalls += 1;
+      }
+      if (filePath === target && !failedOnce) {
+        failedOnce = true;
+        throw new Error("simulated destination write failure");
+      }
+      return realCopyFile(source, filePath, ...args);
+    },
+  };
+
+  await service(sharedDir, { fsOps }).updateFromHttp({ command: "init" });
+  assert.equal(copyCalls, 9); // Includes the failed third copy, then all 6 on retry.
+  assert.deepEqual(await readControl(sharedDir), {
+    ...controlBefore,
+    command: "init",
+    dt_type: "",
+    status: "",
+    save_picture_flag: 0,
+  });
+  assert.equal(await fs.readFile(target, "utf8"), "0,0\n0,0\n");
+});
+
+test("missing backCali source fails after three batches without writing control", async (t) => {
+  const sharedDir = await createSharedDir(t, { future_field: "unchanged" });
+  const controlBefore = await readControl(sharedDir);
+  const missing = path.join(
+    sharedDir,
+    "case2",
+    "backCali",
+    "heatmap_cali_kpi_rss.txt",
+  );
+  await fs.rm(missing);
+  const { logger, entries } = createLogCollector();
+
+  await assert.rejects(
+    createControlFileService({ sharedDir, logger }).updateFromHttp({
+      command: "reinit",
+    }),
+    (error) => {
+      assert.equal(error.code, "CALIBRATED_RESTORE_FAILED");
+      assert.equal(error.status, 500);
+      assert.match(error.message, /heatmap_cali_kpi_rss\.txt/);
+      assert.match(error.message, /ENOENT/);
+      return true;
+    },
+  );
+  assert.deepEqual(await readControl(sharedDir), controlBefore);
+  assert.equal(
+    entries.filter((item) => item.message === "case2 calibrated restore batch failed").length,
+    3,
   );
 });
 
@@ -368,7 +477,7 @@ test("清 flag 在 flag 已是 0 时幂等且不写文件", async (t) => {
   assert.equal(getCounts().controlRenames, 0);
 });
 
-test("POST 控制 payload 必须严格匹配四种 shape", async (t) => {
+test("POST 控制 payload 必须严格匹配五种 shape", async (t) => {
   const sharedDir = await createSharedDir(t);
   const controlFile = service(sharedDir);
   await assert.rejects(
@@ -377,6 +486,13 @@ test("POST 控制 payload 必须严格匹配四种 shape", async (t) => {
       command: "start",
       dt_type: "with dt",
       status: "",
+    }),
+    { code: "INVALID_REQUEST", status: 400 },
+  );
+  await assert.rejects(
+    controlFile.updateFromHttp({
+      command: "init",
+      restore_calibrated: true,
     }),
     { code: "INVALID_REQUEST", status: 400 },
   );

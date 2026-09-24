@@ -168,9 +168,9 @@ test("loadConfig 要求 DT_SHARED_DIR，并锁定默认枚举", () => {
   assert.equal(config.stepMs, 5000);
   assert.equal(config.requestPicture, true);
   assert.equal(config.dataMode, "random");
-  assert.equal(config.improveMin, 0.45);
-  assert.equal(config.improveMax, 0.65);
-  assert.equal(config.noise, 0.05);
+  assert.equal(config.improveMin, 0.1);
+  assert.equal(config.improveMax, 0.95);
+  assert.equal(config.noise, 0.45);
   assert.equal(config.sourceDir, path.join(CASE2_STUB_DIR, "back"));
   assert.equal(
     loadConfig({
