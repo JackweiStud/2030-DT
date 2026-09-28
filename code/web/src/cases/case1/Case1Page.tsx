@@ -331,13 +331,14 @@ function Case1Content({ config }: { config: ReturnType<typeof loadConfig> }) {
               </article>
             </div>
           </div>
-          <div className="c1-view">
+          <div className="c1-view" style={{ background: config.background }}>
             <ModelViewport
               layer="geometry"
               model={models.geometry}
               error={modelErrors.geometry}
               active={view === "geometry"}
               config={config.geometry}
+              background={config.background}
               debug={config.debug}
             />
           </div>
@@ -410,13 +411,14 @@ function Case1Content({ config }: { config: ReturnType<typeof loadConfig> }) {
               </article>
             </div>
           </div>
-          <div className="c1-view">
+          <div className="c1-view" style={{ background: config.background }}>
             <ModelViewport
               layer="material"
               model={models.material}
               error={modelErrors.material}
               active={view === "material"}
               config={config.material}
+              background={config.background}
               debug={config.debug}
             />
           </div>

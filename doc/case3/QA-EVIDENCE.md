@@ -79,3 +79,20 @@
 - typecheck、生产 build 通过；case3 / case3-v2 / case4 共 44 个测试文件、342 项通过。
 - Chrome 构建产物预览配合模拟接口验证：1920×1080 与 1280×720，展开、按钮收起、Esc 返回、KPI 边界、带数据曲线悬停；case4 另验证 CDF 50% 悬停。正式模式浏览器脚本退出码 0、无 pageerror。未复验真实后端。
 - 截图（模拟数据，仅用于布局核对）：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/outputs/case3-fullscreen.png`；复核脚本：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/work/verify.cjs`。截图未纳入 Git。
+
+## 2026-09-28 Case3 3D 本地验证
+
+- Web：`npm run build` 通过；`npm test -- test/case3 test/case3-v2 --silent` 27 文件、213 项通过。
+- Node：`node --test test/case3/*.test.mjs` 26 项通过，包括独立模型 GET 字节 SHA-256 一致性、拒绝写入和非法 query。
+- Chrome：`scripts/check-case3-3d.mjs` 使用真实 case3 GLB、模拟业务接口，1920×1080 和 1280×720 下验证加载、旋转、缩放、复位、切换保留视角、单次停留仅一次模型请求、Without/With 两轮实际 WebGL PNG 截图、退出销毁、404 提示与显式重试。最终 case3 隔离流程 pageerror 为零。
+- 调试浏览器通过临时环境变量 `VITE_CASE3_3D_DEBUG_INFO=true` 开启面板；正式 `.env` 默认 false。代码级配置往返测试覆盖 position/target/zoom 复制格式；业务截图已目视确认包含 GLB/HUD/指标且不含 debug。
+- 本地截图生成时间：2026-09-28；路径：`code/web/test-results/case3-3d/initial.png`（初始+debug）、`completed.png`（With完成+debug）、`business-0.png` 与 `business-1.png`（实际 Without/With 业务截图）。用途为本次前端隔离验证，位于忽略输出目录，不默认提交。
+- 使用现有 21 点预置路线检查可渲染；路线地物精确落位、真实 BS 高度、最终初始视角及目标 PC 性能仍需用户现场审阅。本次不宣称真实后端、真实挂载、真实采集或精确标定验收。
+- 跨入 case4 后立即切回的探索流程曾出现 `signal is aborted without reason` pageerror；切离到 case1 的 case3 隔离验收未出现。本次未修改 case4，也未将该跨 case4 取消行为判定为已解决。
+- 最终补验：1280×720 下右键平移、滚轮缩放与实际剪贴板复制通过；Windows 剪贴板 CRLF 归一后与七行 env 文本一致。相机手势按 Shell 可见/逻辑高度比例修正。最终生产构建通过，`git diff --check` 无空白错误。
+
+## 2026-09-28 3D 标识/路线/反射视觉修订验证
+
+- 改为 2D 同款图钉及 UE 图片、固定逻辑像素尺寸、14/9 双层路线、紫青/绿色波纹及白色移动亮段。新增三维叠加模块，不改变业务坐标与 2D 页面。
+- Chrome 使用真实模型和模拟业务通过两轮业务截图、视角复位、切换保留、剪贴板、缩放/平移、失败重试；pageerror 为零。近景截图：`code/web/test-results/case3-3d/completed-closeup.png`，生成于 2026-09-28，用于确认数字无拉伸和图钉/路线风格；业务 PNG 仍验证过滤 debug。输出不默认提交。
+- 新增几何测试覆盖图钉屏幕尺寸在不同距离下不变、反射端点保留、近裁剪面外坐标不产生 NaN，以及运行态亮段与静态区分。最终视觉由用户审阅；本地模拟结果不代表真实数据验收。

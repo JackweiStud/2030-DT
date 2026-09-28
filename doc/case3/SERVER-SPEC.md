@@ -546,3 +546,7 @@ code/web: npm run test:e2e
 - [x] 用户于 2026-08-10 批准同一 Node 进程共享一个控制 store 和串行队列。
 - [x] 用户于 2026-08-10 批准 `DT_ADAPTER_HOST/PORT` 为主变量、旧 `CASE2_*` 为 fallback。
 - [x] 用户于 2026-08-13 批准 Without scan 行至少 1 个 `[0,255]` 整数、允许重复、不要求 16 列；组装时仍必须包含该行 selected。
+
+## 2026-09-28 独立模型只读资源
+
+新增 `GET /api/case3/models/geometry`，返回 `model/gltf-binary` 与 Content-Length，固定读取 `code/web/assets/case3-v2/3D/Beijing_Geometry.glb`。拒绝 query，非 GET 返回 405/Allow: GET，文件缺失返回 404/FILE_NOT_FOUND。不读取 case1 路径，不接受任意路径，不读写共享控制或业务文件。部署包须包含 case3 自有模型副本。

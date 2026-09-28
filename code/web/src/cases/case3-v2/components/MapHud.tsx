@@ -7,6 +7,9 @@ import { BeamMatrixCard } from "./BeamMatrixCard";
 import { ViewModeToggle } from "./ViewModeToggle";
 
 type Props = {
+  viewMode?: "2d" | "3d";
+  viewLocked?: boolean;
+  onViewModeChange?: (mode: "2d" | "3d") => void;
   currentPoint?: Case3Point | null;
   peerPoint?: Case3Point | null;
   beamMode?: "without" | "with";
@@ -31,7 +34,7 @@ export function MapHud(props: Props) {
       >
         {"现场环境 >"}
       </button>
-      <ViewModeToggle />
+      <ViewModeToggle value={props.viewMode} disabled={props.viewLocked} onChange={props.onViewModeChange} />
       <BeamMatrixCard
         mode={props.beamMode ?? "without"}
         point={props.currentPoint ?? null}

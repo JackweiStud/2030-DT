@@ -4,7 +4,9 @@
  * API 前缀不进 env，写死在 case3Api.ts。
  */
 
+import { loadCase3ThreeConfig, type Case3ThreeConfig } from "./case3ThreeConfig";
 export type Case3RuntimeConfig = {
+  three?: Case3ThreeConfig;
   pollMs: number;
   mapOriginX: number;
   mapOriginY: number;
@@ -167,6 +169,7 @@ export function loadCase3RuntimeConfig(
 ): Case3RuntimeConfig {
   const reflectionEnable = readReflectionEnable(env);
   return {
+    three: loadCase3ThreeConfig(env),
     pollMs: readPositiveSafeInt(env, "VITE_CASE3_POLL_MS", DEFAULTS.pollMs),
     mapOriginX: readFiniteNumber(
       env,

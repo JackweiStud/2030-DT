@@ -8,6 +8,7 @@ export function ModelViewport({
   error,
   active,
   config,
+  background,
   debug,
   layer,
 }: {
@@ -15,6 +16,7 @@ export function ModelViewport({
   error?: string;
   active: boolean;
   config: ModelConfig;
+  background: string;
   debug: boolean;
   layer: ModelLayer;
 }) {
@@ -46,7 +48,7 @@ export function ModelViewport({
         renderer.domElement.remove();
       };
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-      renderer.setClearColor(0x1f2123, 1);
+      renderer.setClearColor(background, 1);
       element.appendChild(renderer.domElement);
       renderer.domElement.setAttribute("aria-label", `${layer} 3D 模型`);
       const scene = new T.Scene();
@@ -133,10 +135,10 @@ export function ModelViewport({
       cancelled = true;
       cleanup();
     };
-  }, [model, config, debug, layer]);
+  }, [model, config, background, debug, layer]);
   return (
     <>
-      <div className="c1-model" ref={host} />
+      <div className="c1-model" ref={host} style={{ background }} />
       {(error || runtimeError || !model) && (
         <p
           className="c1-model-status"

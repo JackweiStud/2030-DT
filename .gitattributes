@@ -4,3 +4,4 @@
 *.tsx text eol=lf
 *.js text eol=lf
 *.html text eol=lf
+code/web/assets/case3-v2/3D/*.glb filter=lfs diff=lfs merge=lfs -text

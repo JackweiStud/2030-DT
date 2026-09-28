@@ -194,10 +194,10 @@ describe("Case3V2Page initial", () => {
     );
   });
 
-  it("2D 选中、3D 禁用；现场环境只回调 Shell", () => {
+  it("2D 选中、3D 可用；现场环境只回调 Shell", () => {
     const { view, open } = renderPage(controllerFromState(readyState()));
-    expect(view.getByText("2D视图").getAttribute("aria-current")).toBe("true");
-    expect(view.getByText("3D视图").getAttribute("aria-disabled")).toBe("true");
+    expect(view.getByText("2D视图").getAttribute("aria-pressed")).toBe("true");
+    expect(view.getByText("3D视图").hasAttribute("disabled")).toBe(false);
     fireEvent.click(view.getByRole("button", { name: "现场环境 >" }));
     expect(open).toHaveBeenCalledTimes(1);
     expect(view.container.querySelector(".case3v2-overlay")).toBeNull();

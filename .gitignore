@@ -18,3 +18,5 @@ code/comdatafiles/out/
 # case1 参考资料：3D 模型体积过大，仅本地保留
 01-参考资料/case1/3d--case1/
 
+# 运行时状态文件（各 case 运行时会改写）。注意：该文件已被 git 跟踪，此规则对它不生效，仅用于标明不应提交其运行时改动。
+code/comdatafiles/case_control.json

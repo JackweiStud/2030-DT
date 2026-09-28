@@ -1,3 +1,5 @@
+import { readCase3ThreeBackground } from "../case3/config/case3ThreeConfig";
+
 export type Triple = [number, number, number];
 export interface ModelConfig {
   position: Triple;
@@ -105,9 +107,15 @@ export function loadConfig(env: Record<string, unknown>) {
       a: channel("VITE_CASE1_HEATMAP_INVALID_A", 0),
     },
   };
+  const rawBackground = env.VITE_CASE3_3D_BACKGROUND_COLOR;
   return {
     geometry: model("GEOMETRY"),
     material: model("MATERIAL"),
+    background: readCase3ThreeBackground(
+      rawBackground === undefined || rawBackground === null
+        ? undefined
+        : String(rawBackground),
+    ),
     debug: bool("VITE_CASE1_DEBUG"),
     rfViewDebug: bool("VITE_CASE1_RF_VIEW_DEBUG"),
     rfView: {

@@ -12,6 +12,13 @@ afterEach(() => {
 });
 describe("case1 runtime", () => {
   it("validates camera coordinates and reset-free default config", () => {
+    expect(loadConfig({}).background).toBe("#202832");
+    expect(
+      loadConfig({ VITE_CASE3_3D_BACKGROUND_COLOR: '"#87CEEB"' }).background,
+    ).toBe("#87ceeb");
+    expect(loadConfig({ VITE_CASE3_3D_BACKGROUND_COLOR: "white" }).background).toBe(
+      "#202832",
+    );
     expect(loadConfig({}).debug).toBe(false);
     expect(loadConfig({}).rfViewDebug).toBe(false);
     expect(loadConfig({}).rfView).toEqual({

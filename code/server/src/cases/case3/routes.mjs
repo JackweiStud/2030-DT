@@ -3,6 +3,9 @@
 import { AppError } from "../../shared/errors.mjs";
 import { readJsonBody, sendJson } from "../../shared/http.mjs";
 import { CASE3_API_PREFIX } from "./constants.mjs";
+import { createReadStream, promises as fs } from "node:fs";
+import { pipeline } from "node:stream/promises";
+const geometryFile = new URL("../../../../web/assets/case3-v2/3D/Beijing_Geometry.glb", import.meta.url);
 
 function rejectQuery(url, endpoint) {
   if ([...url.searchParams].length > 0) {
@@ -12,6 +15,19 @@ function rejectQuery(url, endpoint) {
 
 export function createCase3Router(services) {
   return async function routeCase3(request, response, url) {
+    if (url.pathname === `${CASE3_API_PREFIX}/models/geometry`) {
+      rejectQuery(url, "models/geometry");
+      if (request.method !== "GET") {
+        response.setHeader("Allow", "GET");
+        throw new AppError(405, "METHOD_NOT_ALLOWED", "只支持 GET");
+      }
+      let stat;
+      try { stat = await fs.stat(geometryFile); }
+      catch { throw new AppError(404, "FILE_NOT_FOUND", "Case3 模型不存在"); }
+      response.writeHead(200, { "Content-Type": "model/gltf-binary", "Content-Length": stat.size, "Cache-Control": "no-cache" });
+      await pipeline(createReadStream(geometryFile), response);
+      return { handled: true, access: { caseId: "case3" } };
+    }
     if (
       request.method === "GET" &&
       url.pathname === `${CASE3_API_PREFIX}/control-file`

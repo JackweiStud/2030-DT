@@ -3,7 +3,7 @@
  * 复用现有 useCase3Controller / selectCase3Presentation，不新增 Case5 状态链。
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useSiteEnvWindow } from "../../shell/siteEnvWindowContext";
 import type { Case3RuntimeConfig } from "../case3/config/case3RuntimeConfig";
 import {
@@ -17,6 +17,7 @@ import { MapRenderer2D } from "./components/map/MapRenderer2D";
 import { completePointsOf, latestCompletePoint } from "./v2CompletePoints";
 import { peerPointByNo, v2DisplayMapSide, v2LiveMapSide } from "./v2WithCompare";
 import "./case3v2.css";
+const MapRenderer3D = lazy(() => import("./components/map/MapRenderer3D").then(m => ({ default: m.MapRenderer3D })));
 
 type Props = {
   config: Case3RuntimeConfig;
@@ -42,6 +43,24 @@ export function Case3V2Page(props: Props) {
   }, [dockExpanded]);
 
   const mapRef = useRef<MapRendererHandle | null>(null);
+  const map2d = useRef<MapRendererHandle | null>(null);
+  const map3d = useRef<MapRendererHandle | null>(null);
+  const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
+  // 进入 Case3 即挂载 3D 并在后台加载模型；隐藏时不渲染，切到 3D 后直接显示。
+  const [threeVisited, setThreeVisited] = useState(true);
+  const [captureLocked, setCaptureLocked] = useState(false);
+  const captureHandle = useRef<MapRendererHandle | null>(null);
+  useImperativeHandle(mapRef, () => ({
+    resetView() { (viewMode === "3d" ? map3d : map2d).current?.resetView(); },
+    async prepareCapture() {
+      setCaptureLocked(true);
+      const handle = (viewMode === "3d" ? map3d : map2d).current;
+      captureHandle.current = handle;
+      if (!handle) throw new Error("地图尚未就绪");
+      await handle.prepareCapture();
+    },
+    finishCapture() { captureHandle.current?.finishCapture?.(); captureHandle.current = null; setCaptureLocked(false); },
+  }), [viewMode]);
   const mapRendererRefs = useMemo(
     () => ({ without: mapRef, with: mapRef }),
     [],
@@ -127,8 +146,9 @@ export function Case3V2Page(props: Props) {
       data-map-cleared={mapCleared ? "1" : "0"}
     >
       <section className="case3v2-map-stage" data-region="MapStage">
+        <div className="case3v2-map-view" hidden={viewMode !== "2d"}>
         <MapRenderer2D
-          ref={mapRef}
+          ref={map2d}
           config={config}
           baseRoute={view.baseRoute}
           points={mapPoints}
@@ -137,12 +157,21 @@ export function Case3V2Page(props: Props) {
           reflectionPlayback={reflectionPlayback}
           stageElementRef={stageElementRef}
         />
+        </div>
+        {threeVisited && <div className="case3v2-map-view" hidden={viewMode !== "3d"}>
+          <Suspense fallback={<p role="status">正在准备 3D…</p>}>
+            <MapRenderer3D ref={map3d} active={viewMode === "3d"} config={config} baseRoute={view.baseRoute} points={mapPoints} currentPoint={currentPoint} reflectionVisible={reflectionVisible} reflectionPlayback={reflectionPlayback} />
+          </Suspense>
+        </div>}
       </section>
       <MapHud
         beamMode={displayMapSide}
         currentPoint={currentPoint}
         peerPoint={peerPoint}
         onOpenSiteEnv={openSiteEnv}
+        viewMode={viewMode}
+        viewLocked={captureLocked}
+        onViewModeChange={mode => { if (captureLocked) return; if (mode === "3d") setThreeVisited(true); setViewMode(mode); }}
       />
       <BottomDock
         expanded={dockExpanded}

@@ -40,6 +40,7 @@ export type Case3BusyChange = (busy: boolean) => void;
 export type MapRendererHandle = {
   resetView(): void;
   prepareCapture(): Promise<void>;
+  finishCapture?(): void;
 };
 
 type ScreenshotPhase = "idle" | "pending" | "saving" | "waitClear";
@@ -462,23 +463,27 @@ export function useCase3Controller(options: Options) {
               height: CASE3_STAGE_HEIGHT,
               pixelRatio: CASE3_SCREENSHOT_PIXEL_RATIO,
             });
-            await mapRendererRefs?.without.current?.prepareCapture();
-            await mapRendererRefs?.with.current?.prepareCapture();
-            if (isStale()) return;
-            const toPngStartedAt = performance.now();
-            const png = await toPng(stage, {
-              width: CASE3_STAGE_WIDTH,
-              height: CASE3_STAGE_HEIGHT,
-              pixelRatio: CASE3_SCREENSHOT_PIXEL_RATIO,
-              style: { transform: "none" },
-              filter: (node) => {
-                if (!(node instanceof HTMLElement)) return true;
-                return !node.classList.contains("review-dock");
-              },
-            });
-            toPngMs = Math.round(performance.now() - toPngStartedAt);
-            if (isStale()) return;
-            base64 = stripDataUrl(png);
+            const captureHandles = [...new Set([mapRendererRefs?.without.current, mapRendererRefs?.with.current].filter((h): h is MapRendererHandle => !!h))];
+            try {
+              for (const handle of captureHandles) await handle.prepareCapture();
+              if (isStale()) return;
+              const toPngStartedAt = performance.now();
+              const png = await toPng(stage, {
+                width: CASE3_STAGE_WIDTH,
+                height: CASE3_STAGE_HEIGHT,
+                pixelRatio: CASE3_SCREENSHOT_PIXEL_RATIO,
+                style: { transform: "none" },
+                filter: (node) => {
+                  if (!(node instanceof HTMLElement)) return true;
+                  return !node.classList.contains("review-dock") && !node.hasAttribute("data-case3-capture-exclude");
+                },
+              });
+              toPngMs = Math.round(performance.now() - toPngStartedAt);
+              if (isStale()) return;
+              base64 = stripDataUrl(png);
+            } finally {
+              for (const handle of captureHandles) handle.finishCapture?.();
+            }
             case3Log("screenshot.capture_ok", {
               side,
               generation,
