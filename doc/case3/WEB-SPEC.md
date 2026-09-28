@@ -1008,7 +1008,7 @@ saving
 
 ## 2026-09-28 Case3 独立 3D 增量
 
-详见 `../新增功能/case3-3d-view-spec.md`。正式 case3-v2 支持 2D/3D 切换，3D 使用 case3 自有 GLB 与 `/api/case3/models/geometry`，不依赖 case1 代码、配置或接口。业务坐标统一 `(x,y,z) -> (x,z,-y)`，原生模型单位不归一化。切换保留本次视角，离开 case 后释放资源；控制轮询和业务状态不因视图切换重启。
+详见 `../新增功能/case3-3d-view-spec.md`。正式 case3-v2 支持 2D/3D 切换，3D 通过 `/api/case3/models/geometry` 加载与 case1 几何层同源的 `Beijing_Geometry.glb`，不依赖 case1 前端代码、配置或 `/api/case1/*`。业务坐标统一 `(x,y,z) -> (x,z,-y)`，原生模型单位不归一化。切换保留本次视角，离开 case 后释放资源；控制轮询和业务状态不因视图切换重启。
 
 `VITE_CASE3_3D_DEBUG_INFO` 默认为 false；开启后，界面可旋转/平移/缩放并复制 POSITION、TARGET、ZOOM 及速度参数到 `code/web/.env`，重启 dev 或重新构建生效。POSITION/TARGET 均为空时自动适配模型；非法 3D 配置仅阻止 3D，不阻断 2D。截图过滤 debug 面板，采集时固定视图及相机、保留 WebGL framebuffer。
 

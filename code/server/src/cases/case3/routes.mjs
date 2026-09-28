@@ -5,7 +5,7 @@ import { readJsonBody, sendJson } from "../../shared/http.mjs";
 import { CASE3_API_PREFIX } from "./constants.mjs";
 import { createReadStream, promises as fs } from "node:fs";
 import { pipeline } from "node:stream/promises";
-const geometryFile = new URL("../../../../web/assets/case3-v2/3D/Beijing_Geometry.glb", import.meta.url);
+const geometryFile = new URL("../../../../web/assets/case1/3D/Beijing_Geometry.glb", import.meta.url);
 
 function rejectQuery(url, endpoint) {
   if ([...url.searchParams].length > 0) {
@@ -24,7 +24,22 @@ export function createCase3Router(services) {
       let stat;
       try { stat = await fs.stat(geometryFile); }
       catch { throw new AppError(404, "FILE_NOT_FOUND", "Case3 模型不存在"); }
-      response.writeHead(200, { "Content-Type": "model/gltf-binary", "Content-Length": stat.size, "Cache-Control": "no-cache" });
+      // 允许浏览器缓存 75 MB 模型：每次进入仍向服务端确认（no-cache），
+      // 文件未变时只回 304，不再重复传输；文件替换后 size/mtime 变化，ETag 随之失效。
+      const etag = `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+      const lastModified = new Date(Math.floor(stat.mtimeMs / 1000) * 1000).toUTCString();
+      const cacheHeaders = { "Cache-Control": "no-cache", ETag: etag, "Last-Modified": lastModified };
+      const ifNoneMatch = request.headers["if-none-match"];
+      const ifModifiedSince = request.headers["if-modified-since"];
+      const notModified = ifNoneMatch
+        ? ifNoneMatch.split(",").some((tag) => tag.trim() === etag || tag.trim() === "*")
+        : Boolean(ifModifiedSince) && Date.parse(ifModifiedSince) >= Date.parse(lastModified);
+      if (notModified) {
+        response.writeHead(304, cacheHeaders);
+        response.end();
+        return { handled: true, access: { caseId: "case3" } };
+      }
+      response.writeHead(200, { "Content-Type": "model/gltf-binary", "Content-Length": stat.size, ...cacheHeaders });
       await pipeline(createReadStream(geometryFile), response);
       return { handled: true, access: { caseId: "case3" } };
     }

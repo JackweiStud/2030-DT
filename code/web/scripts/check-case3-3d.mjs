@@ -4,7 +4,7 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 const output = new URL("../test-results/case3-3d/", import.meta.url);
 await mkdir(output, { recursive: true });
-const model = await readFile(new URL("../assets/case3-v2/3D/Beijing_Geometry.glb", import.meta.url));
+const model = await readFile(new URL("../assets/case1/3D/Beijing_Geometry.glb", import.meta.url));
 const baseRoute = (await readFile(new URL("../../comdatafiles/case3/ue_comm_coordinates_base.txt", import.meta.url), "utf8")).trim().split(/\r?\n/).filter(s => s.trim()).map((s, i) => { const [x,y,z] = s.split(",").map(Number); return { no:i+1,x,y,z }; });
 const browser = await chromium.launch({ channel:"chrome", headless:true, args:["--enable-unsafe-swiftshader"] });
 try {

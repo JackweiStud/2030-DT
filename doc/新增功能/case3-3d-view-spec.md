@@ -14,9 +14,9 @@
 - case3 不导入 `src/cases/case1/` 中的组件、hook、配置、类型或加载器；不调用 `/api/case1/*`，不读取 `VITE_CASE1_*`。
 - 3D 组件、生命周期和辅助函数归属 `src/cases/case3-v2/`；配置统一进入现有 `case3RuntimeConfig`，样式以 `.case3v2-page` 根作用域隔离。
 - 可以使用项目已有 Three.js 依赖和既有项目通用基础设施；不引入 case1 业务依赖，不把 3D 业务交给 Shell。
-- 用户指定模型源：`code/web/assets/case1/3D/Beijing_Geometry.glb`。实现时将该文件按字节复制为 case3 自有资源 `code/web/assets/case3-v2/3D/Beijing_Geometry.glb`，并登记来源；源文件不修改。运行时只访问 case3 自有副本，不使用跨 case 路径、软链接或 case1 服务。
-- Node 增加固定只读入口 `GET /api/case3/models/geometry`，由 case3 路由读取上述副本，返回 `model/gltf-binary`；不接收任意文件路径，不操作共享控制文件。部署应包含该副本。
-- 模型内容后续更新时显式同步 case3 副本，不自动跟随 case1 改动。接受独立副本增加的磁盘占用。
+- 3D 几何模型直接使用 `code/web/assets/case1/3D/Beijing_Geometry.glb`（与 case1 几何层同源，不另存 case3-v2 副本）；源文件由 case1 资产维护，case3 不修改该 GLB。
+- Node 增加固定只读入口 `GET /api/case3/models/geometry`，由 case3 路由固定读取上述路径，返回 `model/gltf-binary`；不接收任意文件路径，不操作共享控制文件，不调用 `/api/case1/*`。
+- 模型内容随 case1 几何 GLB 更新而更新；case3 与 case1 共用同一磁盘文件，部署须包含 case1 几何 GLB。
 
 ## 3. 坐标契约
 
@@ -89,7 +89,7 @@ GLB/Three.js 坐标 G = (x, z, -y)
 
 ## 7. 模型加载与生命周期
 
-- 首次进入 3D 时按需加载 case3 自有模型，呈现加载提示。模型约 71.5 MiB、263 万三角形，以目标 PC 实测为准，不承诺未测试的帧率。
+- 首次进入 3D 时按需加载上述共享几何 GLB，呈现加载提示。模型约 71.5 MiB、263 万三角形，以目标 PC 实测为准，不承诺未测试的帧率。
 - 同次停留复用已解析模型；隐藏 3D 时停止渲染动画和交互监听响应，不新增共享文件读取；恢复时绘制最新业务快照。
 - 模型加载失败、解析失败或 WebGL 不可用时显示明确错误，允许返回 2D 和显式重试，不中断业务 controller，不自动重试业务命令。
 - 切离 case3 取消尚未完成的请求，忽略迟到结果，释放模型几何/材质/纹理、renderer、controls、监听器、观察器及动画帧。GPU 资源不得依赖 case1 清理。
@@ -104,7 +104,7 @@ GLB/Three.js 坐标 G = (x, z, -y)
 
 ## 9. 验收要求
 
-1. 独立性：case3 源码无 case1 导入、配置和接口请求；case1 未挂载时 3D 正常，部署仅提供 case3 自有模型也可运行。
+1. 独立性：case3 源码无 case1 导入、配置和 `/api/case1/*` 请求；case1 前端未挂载时 3D 仍可通过 `/api/case3/models/geometry` 正常，部署须包含 case1 几何 GLB 文件。
 2. 坐标：原点与三轴方向符合用户标注；`(10,20,1.5)` 转换正确；整条预置路线与地物关系检查通过；高度零值不被自动抬升。
 3. 业务：Without/With、首点等待、运行、完成、失败、ReInit 的 2D/3D 点号、进度与反射显隐一致；切换不新增控制写或轮询。
 4. 交互：Chrome 1920×1080 及 Shell 缩放窗口下，旋转、平移、缩放、复位和 HUD/Dock 操作正常；全屏数据栏与 Esc 行为保持。
@@ -115,4 +115,4 @@ GLB/Three.js 坐标 G = (x, z, -y)
 
 ## 10. 实现交接
 
-实现涉及 case3-v2 地图与切换/HUD、case3 runtime config、case3 Node 模型 GET、截图接入及 case3 自有资源。完成时同步 `doc/case3/WEB-SPEC.md`、`REFLECTION-SPEC.md`、`SERVER-SPEC.md`、相关接口文档及 QA 证据；项目进度只更新 `state.md`。
+实现涉及 case3-v2 地图与切换/HUD、case3 runtime config、case3 Node 模型 GET、截图接入及 case1 几何 GLB 共享路径。完成时同步 `doc/case3/WEB-SPEC.md`、`REFLECTION-SPEC.md`、`SERVER-SPEC.md`、相关接口文档及 QA 证据；项目进度只更新 `state.md`。

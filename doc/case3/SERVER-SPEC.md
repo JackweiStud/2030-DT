@@ -549,4 +549,4 @@ code/web: npm run test:e2e
 
 ## 2026-09-28 独立模型只读资源
 
-新增 `GET /api/case3/models/geometry`，返回 `model/gltf-binary` 与 Content-Length，固定读取 `code/web/assets/case3-v2/3D/Beijing_Geometry.glb`。拒绝 query，非 GET 返回 405/Allow: GET，文件缺失返回 404/FILE_NOT_FOUND。不读取 case1 路径，不接受任意路径，不读写共享控制或业务文件。部署包须包含 case3 自有模型副本。
+新增 `GET /api/case3/models/geometry`，返回 `model/gltf-binary` 与 Content-Length，固定读取 `code/web/assets/case1/3D/Beijing_Geometry.glb`（与 case1 几何层同源文件，不另存 case3-v2 副本）。拒绝 query，非 GET 返回 405/Allow: GET，文件缺失返回 404/FILE_NOT_FOUND。不接受任意路径，不读写共享控制或业务文件。部署包须包含 case1 几何 GLB。
