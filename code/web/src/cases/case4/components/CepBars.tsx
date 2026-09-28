@@ -29,7 +29,7 @@ const SCHEME_ORDER: Scheme[] = ["traditional", "commercial", "dt"];
 const DELTA_SCHEMES: Scheme[] = ["commercial", "dt"];
 
 /** 与 `.c4-cep-grid` 高度一致；柱区 136 高，顶部只留半行给最高刻度文字。 */
-const PLOT_MAX = 130;
+
 /** 与 `.c4-cep-x` 高度 + margin-top 一致；Y=0 基线距柱槽底边的距离。 */
 const CEP_X_AXIS_H = 22;
 /** 与 ticks 顺序一一对应（顶 → 底）。 */
@@ -48,6 +48,7 @@ const EMPTY_TICKS = {
 } as const;
 
 type Props = {
+  expanded?: boolean;
   cep: Record<Scheme, CepPoint> | null;
   kind: "p50M" | "p90M";
 };
@@ -89,6 +90,7 @@ function CepDeltaArrow(props: { direction: "up" | "down" }) {
  * 一组 CEP 柱。
  */
 export function CepBars(props: Props) {
+  const PLOT_MAX = props.expanded ? 660 : 130;
   const title = props.kind === "p50M" ? "CEP,50%" : "CEP,90%";
   const geom = props.cep
     ? cepGroupGeometry(cepFromStatistics(props.cep, props.kind))

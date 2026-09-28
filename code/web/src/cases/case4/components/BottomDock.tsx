@@ -9,6 +9,8 @@ import { PositionStatistics } from "./PositionStatistics";
 import { ThroughputChart } from "./ThroughputChart";
 
 type Props = {
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
   baseRoute: BasePoint[];
   points: TrajectoryPoint[];
   statistics: Statistics | null;
@@ -26,6 +28,8 @@ export function BottomDock(props: Props) {
   return (
     <section className="c4-dock" data-region="BottomDock">
       <ErrorReplay
+        expanded={props.expanded}
+        onToggleExpanded={props.onToggleExpanded}
         baseRoute={props.baseRoute}
         points={props.points}
         statusText={props.statusText}
@@ -36,9 +40,9 @@ export function BottomDock(props: Props) {
         onReset={props.onReset}
       />
       <div className="c4-kpi-row" data-region="KpiRow">
-        <PositionStatistics statistics={props.statistics} />
+        <PositionStatistics expanded={props.expanded} statistics={props.statistics} />
         <NlosGauge nlosRatio={props.statistics?.nlosRatio ?? null} />
-        <ThroughputChart
+        <ThroughputChart expanded={props.expanded}
           routeNos={props.baseRoute.map((point) => point.no)}
           without={props.without}
           withSamples={props.withSamples}

@@ -41,6 +41,8 @@ function clampStart(value: number, maxStart: number): number {
 }
 
 type Props = {
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
   routeNos: number[];
   withoutPoints: Case3Point[];
   withPoints?: Case3Point[];
@@ -292,7 +294,16 @@ export function PointBeamReplay(props: Props) {
       data-replay-can-drag={canDrag ? "1" : "0"}
     >
       <div className="case3v2-replay-controls">
-        <div className="case3v2-replay-title">点位波束</div>
+        <div className="case3v2-replay-title">点位波束
+          <button type="button" className="case3v2-dock-toggle"
+            aria-label={props.expanded ? "收起数据栏" : "全屏数据栏"}
+            title={props.expanded ? "收起数据栏（Esc）" : "全屏数据栏"}
+            aria-expanded={props.expanded ?? false} onClick={props.onToggleExpanded}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <path d={props.expanded ? "M4 10h6V4m10 10h-6v6M10 10 3 3m11 11 7 7" : "M9 3H3v6m12 12h6v-6M3 3l7 7m11 11-7-7"} />
+            </svg>
+          </button>
+        </div>
         <div className="case3v2-side-stack">
         <div className="case3v2-side-bar" data-side="without">
           <span className="case3v2-side-num" data-side-num="without">

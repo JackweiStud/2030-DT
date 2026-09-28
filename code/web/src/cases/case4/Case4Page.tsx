@@ -3,7 +3,7 @@
  * DOM 分区对齐静态 data-region。
  */
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSiteEnvWindow } from "../../shell/siteEnvWindowContext";
 import type { Case4RuntimeConfig } from "./config/case4RuntimeConfig";
 import { useCase4Controller, type MapRendererHandle } from "./hooks/useCase4Controller";
@@ -26,6 +26,17 @@ type Props = {
 export function Case4Page(props: Props) {
   const { config, stageElementRef, onBusyChange } = props;
   const { open: openSiteEnv } = useSiteEnvWindow();
+
+  const [dockExpanded, setDockExpanded] = useState(false);
+  useEffect(() => {
+    if (!dockExpanded) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDockExpanded(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [dockExpanded]);
+
   const mapRef = useRef<MapRendererHandle | null>(null);
   const ctrl = useCase4Controller({
     config,
@@ -39,7 +50,7 @@ export function Case4Page(props: Props) {
     (ctrl.ui === "running" && ctrl.liveHint ? ctrl.liveHint : null);
 
   return (
-    <main className="case4-page" data-testid="case4-page" data-state={ctrl.dataState}>
+    <main className="case4-page" data-dock-expanded={dockExpanded ? "true" : "false"} data-testid="case4-page" data-state={ctrl.dataState}>
       <MapStage
         config={config}
         stageElementRef={stageElementRef}
@@ -51,6 +62,8 @@ export function Case4Page(props: Props) {
       <MapHud onOpenSiteEnv={openSiteEnv} />
       <Banner text={liveHintBanner} />
       <BottomDock
+        expanded={dockExpanded}
+        onToggleExpanded={() => setDockExpanded(value => !value)}
         baseRoute={ctrl.baseRoute}
         points={ctrl.trajectory?.points ?? []}
         statistics={ctrl.statistics}

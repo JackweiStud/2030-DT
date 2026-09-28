@@ -2000,3 +2000,51 @@
   z-index: 7;
   cursor: crosshair;
 }
+
+/* Expanded data view uses the existing Shell scale, retaining navigation. */
+.case4-page .c4-ctrl-title { display: flex; align-items: center; gap: 8px; }
+.case4-page .c4-dock-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; padding: 0; border: 0; border-radius: 4px;
+  background: transparent; color: #c9c9c9; cursor: pointer;
+}
+.case4-page .c4-dock-toggle:hover { background: #ffffff22; color: white; }
+.case4-page .c4-dock-toggle:focus-visible { outline: 2px solid #5abffb; }
+.case4-page[data-dock-expanded="true"] .c4-map-hud { visibility: hidden; }
+.case4-page[data-dock-expanded="true"] .c4-dock {
+  top: 70px; height: 1010px; padding-top: 32px; border-radius: 0;
+  background: linear-gradient(45deg, #494743ed, #797979ed);
+}
+.case4-page[data-dock-expanded="true"] .c4-banner { top: 274px; left: 220px; max-width: 1400px; }
+.case4-page[data-dock-expanded="true"] .c4-kpi-row { width: 1888px; height: 778px; margin-top: 10px; }
+.case4-page[data-dock-expanded="true"] .c4-kpi--pos { width: 1084px; height: 778px; gap: 16px; padding-top: 16px; }
+.case4-page[data-dock-expanded="true"] .c4-pos-body { width: 1060px; }
+.case4-page[data-dock-expanded="true"] .c4-cdf { width: 350px; }
+.case4-page[data-dock-expanded="true"] .c4-cep { width: 345px; }
+.case4-page[data-dock-expanded="true"] .c4-cdf-plot { width: 350px; height: 690px; flex: none; }
+.case4-page[data-dock-expanded="true"] .c4-cdf-grid { width: 310px; height: 661px; background-size: 100% 132px; background-image: linear-gradient(#ffffff33 1px, transparent 1px); }
+.case4-page[data-dock-expanded="true"] .c4-cdf-svg,
+.case4-page[data-dock-expanded="true"] .c4-cdf-hit { width: 310px; height: 660px; }
+.case4-page[data-dock-expanded="true"] .c4-cdf-cursor { width: 310px; }
+.case4-page[data-dock-expanded="true"] .c4-cdf-x { top: 676px; width: 310px; }
+.case4-page[data-dock-expanded="true"] .c4-cep-slot { height: 690px; flex: none; }
+.case4-page[data-dock-expanded="true"] .c4-cep-grid { height: 660px; }
+.case4-page[data-dock-expanded="true"] .c4-kpi--nlos { width: 350px; height: 778px; padding: 16px; }
+.case4-page[data-dock-expanded="true"] .c4-nlos-gauge { flex: none; height: 320px; margin: auto 0; }
+.case4-page[data-dock-expanded="true"] .c4-nlos-value { font-size: 60px; }
+.case4-page[data-dock-expanded="true"] .c4-nlos-caption { font-size: 17px; }
+.case4-page[data-dock-expanded="true"] .c4-nlos-ticks { font-size: 14px; }
+.case4-page[data-dock-expanded="true"] .c4-thrp-shell,
+.case4-page[data-dock-expanded="true"] .c4-kpi--thrp { width: 430px; height: 778px; }
+.case4-page[data-dock-expanded="true"] .c4-kpi--thrp { justify-content: flex-start; padding-top: 16px; gap: 12px; }
+.case4-page[data-dock-expanded="true"] .c4-kpi__legend--thrp { gap: 8px; font-size: 10px; }
+.case4-page[data-dock-expanded="true"] .c4-thrp-plot,
+.case4-page[data-dock-expanded="true"] .c4-thrp-art,
+.case4-page[data-dock-expanded="true"] .c4-thrp-grid-svg,
+.case4-page[data-dock-expanded="true"] .c4-thrp-svg,
+.case4-page[data-dock-expanded="true"] .c4-thrp-dots { width: 410px; height: 728px; }
+/* At the top of the canvas, replay tooltips open downwards. */
+.case4-page[data-dock-expanded="true"] .c4-error-tip { bottom: auto; top: 100%; }
+.case4-page[data-dock-expanded="true"] .c4-error-tip__arrow { bottom: auto; top: -5px; }
+
+.case4-page[data-dock-expanded="true"] .c4-nlos-gauge-art { inset: auto; left: 50%; top: 50%; width: 448px; height: 302.75px; transform: translate(-50%, -50%); }

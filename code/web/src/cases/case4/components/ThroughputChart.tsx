@@ -15,6 +15,7 @@ import {
 import type { ThroughputSample } from "../types";
 
 type Props = {
+  expanded?: boolean;
   routeNos: ReadonlyArray<number>;
   without: ThroughputSample[];
   withSamples: ThroughputSample[];
@@ -24,7 +25,7 @@ type Props = {
  * Pencil AFTrn：602×176 内的网格与曲线坐标系（槽高 171 裁切）。
  * 12px 刻度：顶留半行给最高 Y 刻度，底留一行给 X 刻度，二者都不得越出 171。
  */
-const PLOT = {
+const DEFAULT_PLOT = {
   artW: 602,
   artH: 176,
   left: 29.263888888888886,
@@ -48,33 +49,6 @@ const TIP_ROWS = [
   { key: "without" as const, name: "有DT辅助", color: WITHOUT_COLOR },
   { key: "with" as const, name: "无DT辅助", color: WITH_COLOR },
 ];
-
-function xOf(no: number, start: number, end: number): number {
-  const slots = end - start + 1;
-  if (slots <= 1) return PLOT.left + PLOT.width / 2;
-  return PLOT.left + ((no - start) / (slots - 1)) * PLOT.width;
-}
-
-function yOf(gbps: number, yMax: number): number {
-  return PLOT.top + PLOT.height - (gbps / yMax) * PLOT.height;
-}
-
-function pathOf(
-  samples: ThroughputSample[],
-  start: number,
-  end: number,
-  yMax: number,
-): string {
-  if (samples.length === 0) return "";
-  const pts = samples.map((s) => ({
-    x: xOf(s.no, start, end),
-    y: yOf(s.gbps, yMax),
-  }));
-  const first = pts[0];
-  if (!first) return "";
-  if (pts.length === 1) return `M ${first.x} ${first.y}`;
-  return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-}
 
 const formatYTick = formatThroughputYTick;
 
@@ -102,11 +76,12 @@ export function thrpHoverNoFromLocalX(
   localX: number,
   windowStart: number,
   windowEnd: number,
+  plot: { left: number; width: number } = DEFAULT_PLOT,
 ): number | null {
-  if (localX < PLOT.left || localX > PLOT.left + PLOT.width) return null;
+  if (localX < plot.left || localX > plot.left + plot.width) return null;
   const slots = windowEnd - windowStart + 1;
   if (slots <= 1) return windowStart;
-  const t = (localX - PLOT.left) / PLOT.width;
+  const t = (localX - plot.left) / plot.width;
   const no = Math.round(windowStart + t * (slots - 1));
   if (no < windowStart || no > windowEnd) return null;
   return no;
@@ -119,6 +94,36 @@ function gbpsLabel(sample: ThroughputSample | undefined): string {
 
 /** 与 Pencil 空闲帧同构：空闲 Y 11 档 0–10；抬轴后横网格跟整数刻度走。 */
 export function ThroughputChart(props: Props) {
+  const PLOT = props.expanded
+    ? { artW: 410, artH: 728, left: 30, top: 8, width: 368, height: 698, xLabelY: 714, yLabelRight: 22 }
+    : DEFAULT_PLOT;
+  function xOf(no: number, start: number, end: number): number {
+    const slots = end - start + 1;
+    if (slots <= 1) return PLOT.left + PLOT.width / 2;
+    return PLOT.left + ((no - start) / (slots - 1)) * PLOT.width;
+  }
+
+  function yOf(gbps: number, yMax: number): number {
+    return PLOT.top + PLOT.height - (gbps / yMax) * PLOT.height;
+  }
+
+  function pathOf(
+    samples: ThroughputSample[],
+    start: number,
+    end: number,
+    yMax: number,
+  ): string {
+    if (samples.length === 0) return "";
+    const pts = samples.map((s) => ({
+      x: xOf(s.no, start, end),
+      y: yOf(s.gbps, yMax),
+    }));
+    const first = pts[0];
+    if (!first) return "";
+    if (pts.length === 1) return `M ${first.x} ${first.y}`;
+    return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+  }
+
   const win = throughputWindow(
     props.without,
     props.withSamples,
@@ -147,6 +152,7 @@ export function ThroughputChart(props: Props) {
       localXFromClient(event.currentTarget, event.clientX),
       win.windowStart,
       win.windowEnd,
+      PLOT,
     );
     if (
       no == null ||

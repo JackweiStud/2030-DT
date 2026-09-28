@@ -41,7 +41,7 @@ const EMPTY_X_TICKS = [
   "4.5",
 ] as const;
 
-const PLOT_W = 280;
+
 /** 底部留白与 CEP 同构：Y=0 下 8px 间距 + 14px X 刻度行，贴 `.c4-cdf-plot` 底。 */
 const PLOT_H = 126;
 const PLOT_LEFT = 28;
@@ -50,14 +50,15 @@ const TIP_W = 200;
 const TIP_GAP = 20;
 
 type Props = {
+  expanded?: boolean;
   cdf: Record<Scheme, CdfPoint[]> | null;
 };
 
-function yOfProb(probability: number): number {
+function yOfProb(probability: number, PLOT_H: number): number {
   return PLOT_H - Math.min(1, Math.max(0, probability)) * PLOT_H;
 }
 
-function xOfError(errorM: number, xMax: number): number {
+function xOfError(errorM: number, xMax: number, PLOT_W: number): number {
   if (!(Number.isFinite(xMax) && xMax > 0)) return 0;
   return (Math.max(0, errorM) / xMax) * PLOT_W;
 }
@@ -75,9 +76,9 @@ function localYFromClient(el: HTMLElement, clientY: number): number {
 }
 
 /** 绘图区 Y → 一位小数概率；轴外返回 null。 */
-export function cdfHoverProbFromLocalY(localY: number): number | null {
-  if (localY < 0 || localY > PLOT_H) return null;
-  const raw = 1 - localY / PLOT_H;
+export function cdfHoverProbFromLocalY(localY: number, plotHeight = PLOT_H): number | null {
+  if (localY < 0 || localY > plotHeight) return null;
+  const raw = 1 - localY / plotHeight;
   const p = Math.round(raw * 10) / 10;
   if (p < 0 || p > 1) return null;
   return p;
@@ -92,6 +93,8 @@ function metersLabel(errorM: number | null): string {
  * CDF 卡内图。
  */
 export function CdfChart(props: Props) {
+  const PLOT_H = props.expanded ? 660 : 126;
+  const PLOT_W = props.expanded ? 310 : 280;
   const geom = props.cdf ? cdfGeometry(props.cdf, PLOT_W, PLOT_H) : null;
   const empty = !geom || geom.series.every((s) => !s.d);
   const [hoverP, setHoverP] = useState<number | null>(null);
@@ -112,7 +115,7 @@ export function CdfChart(props: Props) {
       return;
     }
     const p = cdfHoverProbFromLocalY(
-      localYFromClient(event.currentTarget, event.clientY),
+      localYFromClient(event.currentTarget, event.clientY), PLOT_H,
     );
     if (p == null) {
       setHoverP(null);
@@ -131,7 +134,7 @@ export function CdfChart(props: Props) {
   }
 
   const lineTop =
-    hovered != null ? PLOT_TOP + yOfProb(hovered) : null;
+    hovered != null ? PLOT_TOP + yOfProb(hovered, PLOT_H) : null;
   const tipStyle =
     hovered != null && lineTop != null
       ? {
@@ -159,7 +162,7 @@ export function CdfChart(props: Props) {
                     d={s.d}
                     fill="none"
                     stroke={COLORS[s.scheme]}
-                    strokeWidth="2"
+                    strokeWidth="2" vectorEffect="non-scaling-stroke"
                     strokeLinejoin="round"
                   />
                 ) : null,
@@ -199,7 +202,7 @@ export function CdfChart(props: Props) {
                   key={`q-${q.scheme}`}
                   className="c4-cdf-hover-dot"
                   style={{
-                    left: `${PLOT_LEFT + xOfError(q.errorM, geom.xMax)}px`,
+                    left: `${PLOT_LEFT + xOfError(q.errorM, geom.xMax, PLOT_W)}px`,
                     top: `${lineTop}px`,
                     background: COLORS[q.scheme],
                   }}

@@ -24,6 +24,7 @@ import {
 import { segmentedThroughputPath } from "../v2ThroughputPath";
 
 type Props = {
+  expanded?: boolean;
   /** init baseRoute 点号；提供结构路线的基础 X 域。 */
   routeNos: ReadonlyArray<number>;
   without?: ThroughputSnapshot | null;
@@ -36,12 +37,12 @@ type ThrPoint = { no: number; value: number };
 const PLOT_LEFT = CASE3V2_THR_PLOT.left;
 const PLOT_RIGHT = CASE3V2_THR_PLOT.right;
 const PLOT_TOP = CASE3V2_THR_PLOT.top;
-const PLOT_BOTTOM = CASE3V2_THR_PLOT.bottom;
+
 const PLOT_WIDTH = CASE3V2_THR_PLOT.artW;
-const PLOT_HEIGHT = CASE3V2_THR_PLOT.artH;
+
 const Y_LINE_WIDTH = PLOT_RIGHT - PLOT_LEFT;
-const X_LINE_HEIGHT = PLOT_BOTTOM - PLOT_TOP;
-const X_LABEL_TOP = 162.226;
+
+
 const Y_LABEL_SHIFT = 5;
 const DOT = 4;
 const TIP_W = 148;
@@ -73,6 +74,10 @@ function gbpsLabel(point: ThrPoint | undefined): string {
  * 吞吐对比图。
  */
 export function ThroughputCompareCard(props: Props) {
+  const PLOT_BOTTOM = props.expanded ? 706 : CASE3V2_THR_PLOT.bottom;
+  const PLOT_HEIGHT = props.expanded ? 730 : CASE3V2_THR_PLOT.artH;
+  const X_LINE_HEIGHT = PLOT_BOTTOM - PLOT_TOP;
+  const X_LABEL_TOP = props.expanded ? 714 : 162.226;
   const [hoverNo, setHoverNo] = useState<number | null>(null);
   const series = useMemo(
     () =>

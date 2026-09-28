@@ -97,3 +97,12 @@ CEP 增减百分比、2D Reflection、误差/吞吐/CDF 悬停均已纳入本地
 - `npx vitest run test/case4/reflectionGeometry.test.ts`：9/9通过；包含空路径、单点、全重合点、重复顶点以及原端点/拐角/相位测试。日志 `/tmp/case4-types-tests.log`。
 - `npm run build`：TypeScript检查与Vite正式打包全部通过。日志 `/tmp/case4-types-build.log`。仅保留Three.js包体积提示，不是构建错误。
 - 本轮未启动浏览器、不看图、不修改视觉规格；未提交/推送。
+
+
+## 2026-09-28 数据栏全屏
+
+- 参考：`01-参考资料/更新/case4/case4 全屏 (1).png`。回溯标题旁增加全屏/收起按钮，Esc 返回，保留 Shell 顶部导航与固定画布缩放。全屏状态仅属于当前页面，切换不重置业务数据或触发业务命令。
+- typecheck、生产 build 通过；case3 / case3-v2 / case4 共 44 个测试文件、342 项通过。
+- Chrome 构建产物预览配合模拟接口验证：1920×1080 与 1280×720，展开、按钮收起、Esc 返回、KPI 边界、带数据曲线悬停；case4 另验证 CDF 50% 悬停。正式模式浏览器脚本退出码 0、无 pageerror。未复验真实后端。
+- 截图（模拟数据，仅用于布局核对）：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/outputs/case4-fullscreen.png`；复核脚本：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/work/verify.cjs`。截图未纳入 Git。
+- 开发模式额外观察到已有控制器 StrictMode 清理的 AbortError（useCase4Controller 的 abort），不属于本次布局变更；生产模式未复现。

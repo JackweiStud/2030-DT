@@ -30,6 +30,17 @@ type Props = {
 export function Case3V2Page(props: Props) {
   const { config, stageElementRef, onBusyChange } = props;
   const { open: openSiteEnv } = useSiteEnvWindow();
+
+  const [dockExpanded, setDockExpanded] = useState(false);
+  useEffect(() => {
+    if (!dockExpanded) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDockExpanded(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [dockExpanded]);
+
   const mapRef = useRef<MapRendererHandle | null>(null);
   const mapRendererRefs = useMemo(
     () => ({ without: mapRef, with: mapRef }),
@@ -109,7 +120,7 @@ export function Case3V2Page(props: Props) {
   return (
     <main
       className="case3v2-page"
-      data-testid="case3-v2-page"
+      data-dock-expanded={dockExpanded ? "true" : "false"} data-testid="case3-v2-page"
       data-state={view.dataState}
       data-map-side={displayMapSide}
       data-map-source-side={sourceMapSide}
@@ -134,6 +145,8 @@ export function Case3V2Page(props: Props) {
         onOpenSiteEnv={openSiteEnv}
       />
       <BottomDock
+        expanded={dockExpanded}
+        onToggleExpanded={() => setDockExpanded(value => !value)}
         view={view}
         onStartWithout={holdMapThen(ctrl.onStartWithout)}
         onStartWith={holdMapThen(ctrl.onStartWith)}

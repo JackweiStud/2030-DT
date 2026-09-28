@@ -71,3 +71,11 @@
 
 - 若目标是内部演示测试：可以进入用户/领导试跑。
 - 若目标是真实环境交付：必须停止本地 Case3 stub，接入真实后端和真实挂载路径，并在本文追加真实环境 QA 记录。
+
+
+## 2026-09-28 数据栏全屏
+
+- 参考：`01-参考资料/更新/case3/case3全屏 (1).png`。回溯标题旁增加全屏/收起按钮，Esc 返回，保留 Shell 顶部导航与固定画布缩放。全屏状态仅属于当前页面，切换不重置业务数据或触发业务命令。
+- typecheck、生产 build 通过；case3 / case3-v2 / case4 共 44 个测试文件、342 项通过。
+- Chrome 构建产物预览配合模拟接口验证：1920×1080 与 1280×720，展开、按钮收起、Esc 返回、KPI 边界、带数据曲线悬停；case4 另验证 CDF 50% 悬停。正式模式浏览器脚本退出码 0、无 pageerror。未复验真实后端。
+- 截图（模拟数据，仅用于布局核对）：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/outputs/case3-fullscreen.png`；复核脚本：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/work/verify.cjs`。截图未纳入 Git。

@@ -7,6 +7,7 @@ import { CdfChart } from "./CdfChart";
 import { CepBars } from "./CepBars";
 
 type Props = {
+  expanded?: boolean;
   statistics: Statistics | null;
 };
 
@@ -32,9 +33,9 @@ export function PositionStatistics(props: Props) {
         </div>
       </div>
       <div className="c4-pos-body">
-        <CdfChart cdf={stats?.cdf ?? null} />
-        <CepBars cep={stats?.cep ?? null} kind="p50M" />
-        <CepBars cep={stats?.cep ?? null} kind="p90M" />
+        <CdfChart expanded={props.expanded} cdf={stats?.cdf ?? null} />
+        <CepBars expanded={props.expanded} cep={stats?.cep ?? null} kind="p50M" />
+        <CepBars expanded={props.expanded} cep={stats?.cep ?? null} kind="p90M" />
       </div>
     </article>
   );
