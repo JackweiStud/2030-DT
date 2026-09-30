@@ -1991,8 +1991,22 @@
 .case3v2-page[data-dock-expanded="true"] .case3v2-cost-caption--left,
 .case3v2-page[data-dock-expanded="true"] .case3v2-cost-caption--right { top: auto; bottom: 0; left: 0; width: 100%; text-align: center; }
 .case3v2-page[data-dock-expanded="true"] .case3v2-cost-axis { height: 570px; margin-bottom: 27px; justify-content: space-between; }
-.case3v2-page[data-dock-expanded="true"] .case3v2-cost-delta { top: 0; left: auto; right: 12px; }
-.case3v2-page[data-dock-expanded="true"] .case3v2-cost-delta__num { font-size: 42px; }
+.case3v2-page[data-dock-expanded="true"] .case3v2-cost-delta {
+  top: 8px;
+  left: auto;
+  right: 28px;
+}
+.case3v2-page[data-dock-expanded="true"] .case3v2-cost-delta__num {
+  width: 160px;
+  min-width: 160px;
+  font-size: 42px;
+}
+.case3v2-page[data-dock-expanded="true"] .case3v2-cost-delta__unit {
+  font-size: 18px;
+}
+.case3v2-page[data-dock-expanded="true"] .case3v2-cost-delta__label {
+  font-size: 16px;
+}
 .case3v2-page[data-dock-expanded="true"] .case3v2-ba-main { top: 12px; bottom: auto; }
 .case3v2-page[data-dock-expanded="true"] .case3v2-ba-main__num { width: auto; }
 .case3v2-page[data-dock-expanded="true"] .case3v2-ba-main__unit { font-size: 26px; }
