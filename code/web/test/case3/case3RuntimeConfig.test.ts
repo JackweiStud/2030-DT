@@ -40,6 +40,15 @@ describe("case3RuntimeConfig", () => {
     });
     expect(on.reflectionEnable).toBe(true);
     expect(on.bsXyz).toEqual({ x: 1.5, y: -2.25, z: 0 });
+    expect(on.bsXyz3d).toBeUndefined();
+
+    const with3d = loadCase3RuntimeConfig({
+      CASE3_REFLECTION_ENABLE: "true",
+      CASE3_BS_XYZ: "(1.5,-2.25,0)",
+      VITE_CASE3_3D_BS_XYZ: "(-2,-29,25)",
+    });
+    expect(with3d.bsXyz).toEqual({ x: 1.5, y: -2.25, z: 0 });
+    expect(with3d.bsXyz3d).toEqual({ x: -2, y: -29, z: 25 });
 
     expect(() =>
       loadCase3RuntimeConfig({
@@ -51,6 +60,13 @@ describe("case3RuntimeConfig", () => {
       loadCase3RuntimeConfig({
         CASE3_REFLECTION_ENABLE: "true",
         CASE3_BS_XYZ: "(1,2,65535)",
+      }),
+    ).toThrow(Case3ConfigError);
+    expect(() =>
+      loadCase3RuntimeConfig({
+        CASE3_REFLECTION_ENABLE: "true",
+        CASE3_BS_XYZ: "(1,2,3)",
+        VITE_CASE3_3D_BS_XYZ: "(1,2,65535)",
       }),
     ).toThrow(Case3ConfigError);
   });

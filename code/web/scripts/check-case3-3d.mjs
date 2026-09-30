@@ -40,7 +40,7 @@ try {
   await expect(debug).not.toHaveValue(initial); const rotated=await debug.inputValue();
   await page.getByRole("button",{name:"2D视图",exact:true}).click(); await page.getByRole("button",{name:"3D视图",exact:true}).click();
   assert.equal(await debug.inputValue(),rotated); assert.equal(modelRequests,1);
-  await page.getByRole("button",{name:"复位3D视角"}).click(); await expect(debug).toHaveValue(initial);
+  await page.getByRole("button",{name:"复位地图"}).click(); await expect(debug).toHaveValue(initial);
   await page.screenshot({path:new URL("initial.png",output).pathname.replace(/^\/([A-Za-z]:)/,"$1")});
   await page.getByTitle("启动无 DT").click(); await expect.poll(()=>shots,{timeout:60000}).toBe(1);
   await expect(page.getByTitle("启动有 DT")).toBeEnabled({timeout:10000});

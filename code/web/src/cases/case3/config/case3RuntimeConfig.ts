@@ -21,6 +21,8 @@ export type Case3RuntimeConfig = {
   v2DebugShow: boolean;
   reflectionEnable?: boolean;
   bsXyz?: { x: number; y: number; z: number };
+  /** 3D Reflection BS；未配时回退 bsXyz。与 2D 同为业务坐标，经 (x,z,-y) 进模型。 */
+  bsXyz3d?: { x: number; y: number; z: number };
 };
 
 const DEFAULTS: Case3RuntimeConfig = {
@@ -142,19 +144,33 @@ function readBsXyz(env: EnvLike): {
       "CASE3_BS_XYZ is required when CASE3_REFLECTION_ENABLE is on",
     );
   }
+  return parseBsXyzTriple(raw, "CASE3_BS_XYZ");
+}
+
+/** 可选：3D 专用 BS；空则 undefined，由调用方回退 CASE3_BS_XYZ。 */
+function readBsXyz3d(env: EnvLike): { x: number; y: number; z: number } | undefined {
+  const raw = env.VITE_CASE3_3D_BS_XYZ;
+  if (raw === undefined || raw.trim() === "") return undefined;
+  return parseBsXyzTriple(raw, "VITE_CASE3_3D_BS_XYZ");
+}
+
+function parseBsXyzTriple(
+  raw: string,
+  key: string,
+): { x: number; y: number; z: number } {
   const trimmed = raw.trim().replace(/^[([]/, "").replace(/[)\]]$/, "");
   const tokens = trimmed.split(",").map((token) => token.trim());
   if (tokens.length !== 3 || tokens.some((token) => token === "")) {
     throw new Case3ConfigError(
-      "CASE3_BS_XYZ",
-      "CASE3_BS_XYZ must be 3 finite numbers, e.g. (1.0,5.0,7.0)",
+      key,
+      `${key} must be 3 finite numbers, e.g. (1.0,5.0,7.0)`,
     );
   }
   const values = tokens.map(Number);
   if (values.some((value) => !Number.isFinite(value) || value === 65535)) {
     throw new Case3ConfigError(
-      "CASE3_BS_XYZ",
-      "CASE3_BS_XYZ must be 3 finite non-sentinel numbers",
+      key,
+      `${key} must be 3 finite non-sentinel numbers`,
     );
   }
   return { x: values[0]!, y: values[1]!, z: values[2]! };
@@ -228,6 +244,7 @@ export function loadCase3RuntimeConfig(
     ),
     reflectionEnable,
     bsXyz: reflectionEnable ? readBsXyz(env) : undefined,
+    bsXyz3d: reflectionEnable ? readBsXyz3d(env) : undefined,
   };
 }
 

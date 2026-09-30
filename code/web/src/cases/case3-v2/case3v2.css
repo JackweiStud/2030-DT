@@ -10,7 +10,7 @@
   overflow: hidden;
   background: #4a4e56;
   color: #f4f7fb;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 .case3v2-page[data-state="site-env"] {
@@ -422,14 +422,19 @@
 }
 
 .case3v2-page .case3v2-view-toggle__item {
+  box-sizing: border-box;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   width: 59px;
+  min-width: 59px;
   height: 26px;
   border-radius: 5px;
   color: #f4f7fb;
   font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -439,8 +444,7 @@
 }
 
 .case3v2-page .case3v2-view-toggle__item.is-disabled {
-  font-weight: 600;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 /* ---- 波束卡 ---- */
@@ -1999,11 +2003,15 @@
 .case3v2-page .case3v2-three, .case3v2-page .case3v2-three-canvas { position:absolute; inset:0; }
 .case3v2-page .case3v2-three-canvas canvas { display:block; width:100%; height:100%; }
 .case3v2-page .case3v2-three-status { position:absolute; top:45%; left:35%; padding:24px; background:#152333; color:#e2e8f0; }
-.case3v2-page .case3v2-three-reset { position:absolute; top:64px; right:28px; padding:10px; background:#203449; color:#e2e8f0; border:1px solid #64748b; cursor:pointer; }
 .case3v2-page .case3v2-three-debug { position:absolute; right:24px; top:105px; width:480px; padding:16px; color:#e2e8f0; background:rgba(15,23,42,.95); z-index:5; }
 .case3v2-page .case3v2-three-debug textarea { width:100%; height:175px; resize:vertical; font:12px monospace; color:#bae6fd; background:#0f172a; }
 .case3v2-page .case3v2-three-debug p, .case3v2-page .case3v2-three-debug span { font-size:12px; }
-.case3v2-page button.case3v2-view-toggle__item { border:0; background:transparent; font:inherit; cursor:pointer; }
+.case3v2-page button.case3v2-view-toggle__item {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
 .case3v2-page button.case3v2-view-toggle__item:disabled { cursor:wait; opacity:.6; }
 .case3v2-page button.case3v2-view-toggle__item.is-active { background:#4c8dff; font-weight:700; }
 

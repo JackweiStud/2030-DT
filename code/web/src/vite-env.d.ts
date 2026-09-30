@@ -24,6 +24,15 @@ interface ImportMetaEnv {
   readonly VITE_CASE3_V2_DEBUG_SHOW?: string;
   readonly CASE3_REFLECTION_ENABLE?: string;
   readonly CASE3_BS_XYZ?: string;
+  readonly VITE_CASE3_3D_BS_XYZ?: string;
+  readonly VITE_CASE3_3D_DEBUG_INFO?: string;
+  readonly VITE_CASE3_3D_CAMERA_POSITION?: string;
+  readonly VITE_CASE3_3D_CAMERA_TARGET?: string;
+  readonly VITE_CASE3_3D_CAMERA_ZOOM?: string;
+  readonly VITE_CASE3_3D_PAN_SPEED?: string;
+  readonly VITE_CASE3_3D_ROTATE_SPEED?: string;
+  readonly VITE_CASE3_3D_ZOOM_SPEED?: string;
+  readonly VITE_CASE3_3D_BACKGROUND_COLOR?: string;
   readonly VITE_CASE4_POLL_MS?: string;
   readonly VITE_CASE4_MAP_ORIGIN_X?: string;
   readonly VITE_CASE4_MAP_ORIGIN_Y?: string;

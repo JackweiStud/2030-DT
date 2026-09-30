@@ -38,11 +38,11 @@ export function ReflectionOverlay({ config, point, viewBox, playback }: Props) {
   const ue = projectBusinessToImage(point.ue.x, point.ue.y, projection);
   const bs = projectBusinessToImage(config.bsXyz.x, config.bsXyz.y, projection);
   const path = reflection.los
-    ? [ue, bs]
+    ? [bs, ue]
     : [
-        ue,
-        projectBusinessToImage(reflection.x, reflection.y, projection),
         bs,
+        projectBusinessToImage(reflection.x, reflection.y, projection),
+        ue,
       ];
   const wave = pointsAttr(offsetPolylineSine(path));
   const label = reflection.los

@@ -67,13 +67,26 @@ export function createThreeOverlay(input: OverlayInput, images: Awaited<ReturnTy
   let path: T.Vector3[] = [];
   const current = input.currentPoint;
   const reflection = current?.reflection;
-  if (input.reflectionVisible && input.config.reflectionEnable && input.config.bsXyz && current && reflection && !isAbnormalBeamPoint(current)) {
-    const ue = vec(current.ue), bs = vec(input.config.bsXyz);
-    path = reflection.los ? [ue, bs] : [ue, vec(reflection), bs];
+  const bsBusiness = input.config.bsXyz3d ?? input.config.bsXyz;
+  if (input.reflectionVisible && input.config.reflectionEnable && bsBusiness && current && reflection && !isAbnormalBeamPoint(current)) {
+    const ue = vec(current.ue), bs = vec(bsBusiness);
+    path = reflection.los ? [bs, ue] : [bs, vec(reflection), ue];
     wave = line(path, reflection.los ? 0x22c55e : 0xffffff, 2.2, 1, 9);
     wave.material.vertexColors = !reflection.los;
-    artwork(bs, 16, 16, ctx => { ctx.beginPath(); ctx.moveTo(8,1); ctx.lineTo(15,8); ctx.lineTo(8,15); ctx.lineTo(1,8); ctx.closePath(); ctx.fillStyle="#38bdf8";ctx.fill();ctx.strokeStyle="#e0f2fe";ctx.lineWidth=1.2;ctx.stroke(); });
-    text(bs, "BS");
+    // 气泡尖端保持在真实 BS 坐标，文字与气泡共同面向相机。
+    artwork(bs, 52, 36, ctx => {
+      ctx.beginPath(); ctx.moveTo(9, 1); ctx.lineTo(43, 1);
+      ctx.quadraticCurveTo(51, 1, 51, 9); ctx.lineTo(51, 19);
+      ctx.quadraticCurveTo(51, 27, 43, 27); ctx.lineTo(32, 27);
+      ctx.lineTo(26, 35); ctx.lineTo(20, 27); ctx.lineTo(9, 27);
+      ctx.quadraticCurveTo(1, 27, 1, 19); ctx.lineTo(1, 9);
+      ctx.quadraticCurveTo(1, 1, 9, 1); ctx.closePath();
+      ctx.fillStyle = "#0284c7"; ctx.fill();
+      ctx.strokeStyle = "#bae6fd"; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.font = "700 14px sans-serif"; ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("基站", 26, 14);
+    }, [0.5, 1 - 35 / 36], 7);
     if (reflection.los) text(ue.clone().lerp(bs, 0.5), "LOS", 0, 18);
     else {
       const r = path[1]!;

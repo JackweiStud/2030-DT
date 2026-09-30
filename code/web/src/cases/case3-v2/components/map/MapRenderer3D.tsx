@@ -2,10 +2,12 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import * as T from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { Case3RuntimeConfig } from "../../../case3/config/case3RuntimeConfig";
 import { formatThreeEnv, loadCase3ThreeConfig } from "../../../case3/config/case3ThreeConfig";
 import type { BaseRoutePoint, Case3Point } from "../../../case3/types";
 import type { MapRendererHandle } from "../../../case3/hooks/useCase3Controller";
+import iconReset from "../../../../../assets/case3-v2/icon-rotate-ccw.svg";
 import { createThreeOverlay, loadOverlayImages } from "./threeOverlay";
 
 type Props = {
@@ -35,11 +37,15 @@ export const MapRenderer3D = forwardRef<MapRendererHandle, Props>(function MapRe
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [viewDirty, setViewDirty] = useState(false);
   const [debugText, setDebugText] = useState("");
   const [copied, setCopied] = useState("");
   const config = props.config.three ?? loadCase3ThreeConfig({});
   useImperativeHandle(ref, () => ({
-    resetView() { runtime.current?.reset(); },
+    resetView() {
+      runtime.current?.reset();
+      setViewDirty(false);
+    },
     async prepareCapture() {
       if (!runtime.current || failure.current) throw new Error(failure.current || "Case3 3D 模型尚未就绪");
       capture.current = true;
@@ -63,7 +69,7 @@ export const MapRenderer3D = forwardRef<MapRendererHandle, Props>(function MapRe
     const abort = new AbortController();
     let destroyed = false, frame = 0;
     let cleanup = () => {};
-    failure.current = ""; setError(""); setReady(false);
+    failure.current = ""; setError(""); setReady(false); setViewDirty(false);
     const fail = (message: string) => { failure.current = message; setError(message); };
     async function start() {
       // StrictMode's disposable first mount must not start a second large download.
@@ -83,12 +89,28 @@ export const MapRenderer3D = forwardRef<MapRendererHandle, Props>(function MapRe
       const renderer = new T.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
       cleanup = () => { disposeTree(model); renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove(); };
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.outputColorSpace = T.SRGBColorSpace;
+      renderer.toneMapping = T.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1;
       renderer.setClearColor(config.background);
       renderer.domElement.setAttribute("aria-label", "Case3 3D 场景");
       element!.appendChild(renderer.domElement);
       const scene = new T.Scene(); scene.add(model);
-      scene.add(new T.HemisphereLight(0xffffff, 0x637586, 2.5));
-      const light = new T.DirectionalLight(0xffffff, 3); light.position.set(60, 120, 50); scene.add(light);
+      // Blender「材质预览」靠内置 HDRI；Web 侧用 RoomEnvironment IBL 近似，再加弱补光。
+      const pmrem = new T.PMREMGenerator(renderer);
+      const envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environment = envTexture;
+      scene.add(new T.HemisphereLight(0xffffff, 0x8a93a0, 0.45));
+      const light = new T.DirectionalLight(0xfff2e0, 1.1); light.position.set(60, 120, 50); scene.add(light);
+      cleanup = () => {
+        scene.environment = null;
+        envTexture.dispose();
+        pmrem.dispose();
+        disposeTree(model);
+        renderer.dispose();
+        renderer.forceContextLoss();
+        renderer.domElement.remove();
+      };
       const bounds = new T.Box3().setFromObject(model);
       const radius = bounds.getSize(new T.Vector3()).length() / 2;
       if (!Number.isFinite(radius) || radius <= 0) throw new Error("Case3 模型边界为空");
@@ -148,14 +170,36 @@ export const MapRenderer3D = forwardRef<MapRendererHandle, Props>(function MapRe
         frame = requestAnimationFrame(() => { draw(); schedule(); });
       }
       const change = () => { draw(); };
+      const onUserStart = () => {
+        if (destroyed || capture.current) return;
+        setViewDirty(true);
+      };
       controls.addEventListener("change", change);
+      controls.addEventListener("start", onUserStart);
       const observer = new ResizeObserver(() => { draw(); schedule(); }); observer.observe(element!);
       const lost = (event: Event) => { event.preventDefault(); cancelAnimationFrame(frame); fail("3D 显示上下文丢失，请重试或返回 2D"); };
       renderer.domElement.addEventListener("webglcontextlost", lost);
-      runtime.current = { controls, draw: () => { draw(); schedule(); }, rebuild, reset: () => { if (capture.current) return; camera.position.copy(initialCamera); camera.zoom = config.zoom; controls.target.copy(initialTarget); controls.update(); draw(); } };
+      runtime.current = {
+        controls,
+        draw: () => { draw(); schedule(); },
+        rebuild,
+        reset: () => {
+          if (capture.current) return;
+          camera.position.copy(initialCamera);
+          camera.zoom = config.zoom;
+          controls.target.copy(initialTarget);
+          controls.update();
+          draw();
+          if (!destroyed) setViewDirty(false);
+        },
+      };
       cleanup = () => {
-        cancelAnimationFrame(frame); observer.disconnect(); renderer.domElement.removeEventListener("pointerdown", syncGestureScale, true); controls.removeEventListener("change", change); controls.dispose();
-        renderer.domElement.removeEventListener("webglcontextlost", lost); disposeTree(overlay.group); disposeTree(model); renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
+        cancelAnimationFrame(frame); observer.disconnect(); renderer.domElement.removeEventListener("pointerdown", syncGestureScale, true);
+        controls.removeEventListener("change", change); controls.removeEventListener("start", onUserStart); controls.dispose();
+        renderer.domElement.removeEventListener("webglcontextlost", lost);
+        disposeTree(overlay.group); scene.remove(overlay.group);
+        scene.environment = null; envTexture.dispose(); pmrem.dispose();
+        disposeTree(model); renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
       };
       rebuild(); setReady(true);
     }
@@ -165,7 +209,24 @@ export const MapRenderer3D = forwardRef<MapRendererHandle, Props>(function MapRe
   return <div className="case3v2-three" data-testid="case3-3d" data-ready={ready && !error ? "true" : "false"}>
     <div className="case3v2-three-canvas" ref={host} />
     {(!ready || error) && <div className="case3v2-three-status" role={error ? "alert" : "status"}>{error || "正在加载 Case3 3D 模型…"}{error && <button onClick={() => setRetry(n => n + 1)}>重试</button>}</div>}
-    {ready && !error && <button className="case3v2-three-reset" data-case3-capture-exclude onClick={() => runtime.current?.reset()}>复位3D视角</button>}
+    {ready && !error && viewDirty ? (
+      <button
+        type="button"
+        className="case3v2-map-reset"
+        aria-label="复位地图"
+        data-case3-capture-exclude
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          runtime.current?.reset();
+        }}
+      >
+        <img src={iconReset} alt="" width={16} height={16} draggable={false} />
+      </button>
+    ) : null}
     {config.debug && ready && !error && <aside className="case3v2-three-debug" data-case3-capture-exclude>
       <strong>Case3 3D debug info</strong><p>业务 (x,y,z) → 模型 (x,z,-y)，单位：米</p>
       <textarea aria-label="Case3 3D 视角参数" readOnly value={debugText} />

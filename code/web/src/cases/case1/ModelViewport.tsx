@@ -40,6 +40,9 @@ export function ModelViewport({
       const { OrbitControls } = await import(
         "three/addons/controls/OrbitControls.js"
       );
+      const { RoomEnvironment } = await import(
+        "three/addons/environments/RoomEnvironment.js"
+      );
       if (cancelled) return;
       const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
       cleanup = () => {
@@ -48,6 +51,9 @@ export function ModelViewport({
         renderer.domElement.remove();
       };
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.outputColorSpace = T.SRGBColorSpace;
+      renderer.toneMapping = T.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1;
       renderer.setClearColor(background, 1);
       element.appendChild(renderer.domElement);
       renderer.domElement.setAttribute("aria-label", `${layer} 3D 模型`);
@@ -69,8 +75,12 @@ export function ModelViewport({
       root.rotation.set(...config.rotation);
       root.scale.setScalar(config.scale);
       scene.add(root);
-      scene.add(new T.HemisphereLight(0xffffff, 0x687382, 2.5));
-      const light = new T.DirectionalLight(0xffffff, 3);
+      // 与 case3 一致：RoomEnvironment IBL 近似 Blender 材质预览，再加弱补光。
+      const pmrem = new T.PMREMGenerator(renderer);
+      const envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environment = envTexture;
+      scene.add(new T.HemisphereLight(0xffffff, 0x8a93a0, 0.45));
+      const light = new T.DirectionalLight(0xfff2e0, 1.1);
       light.position.set(2, 4, 3);
       scene.add(light);
       const camera = new T.PerspectiveCamera(40, 1, 0.001, 1000);
@@ -117,6 +127,9 @@ export function ModelViewport({
         controls.removeEventListener("change", render);
         controls.dispose();
         model.removeFromParent();
+        scene.environment = null;
+        envTexture.dispose();
+        pmrem.dispose();
         renderer.domElement.removeEventListener(
           "webglcontextlost",
           contextLost,

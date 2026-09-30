@@ -62,7 +62,7 @@ describe("Case3V2 ReflectionOverlay", () => {
     expect(empty.container.querySelector("[data-reflection]")).toBeNull();
   });
 
-  it("LOS 画 UE→BS，带 BS/LOS 标签与运行中亮段", () => {
+  it("LOS 画 BS→UE，带 BS/LOS 标签与运行中亮段", () => {
     const view = render(
       <ReflectionOverlay
         config={baseConfig}
@@ -86,7 +86,7 @@ describe("Case3V2 ReflectionOverlay", () => {
     expect(root.classList.contains("case3v2-reflection")).toBe(true);
   });
 
-  it("NLOS 画 UE→R1→BS，完成后无动态亮段", () => {
+  it("NLOS 画 BS→R1→UE，完成后无动态亮段", () => {
     const view = render(
       <ReflectionOverlay
         config={baseConfig}
