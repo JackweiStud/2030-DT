@@ -30,7 +30,7 @@
 | REST 三分、目录 `case4/`、科学计数、统计保精度、超长轨迹报错不截短 | **采纳** | 文首改为已采纳工程选择，仍待用户批准冻结 |
 | 列含义与 JSON 小数位；CDF/汇总空白或逗号均可、同一文件不混用 | **修** | 已写入 §2、§4、§5 |
 | `debug_flag` 整数；舍入复用现网 `Number.EPSILON` | **修** | 契约与 SERVER 对齐现网 store / `roundSemanticNumber` |
-| CEP 百分比、完成态悬停、反射 | **跳（当时）** | 2026-09-15 用户后置；此后均已实现（CEP `c4382a3`，悬停与 2D Reflection 见 WEB-SPEC / REFLECTION-SPEC）。**仅 3D 仍不做** |
+| CEP 百分比、完成态悬停、反射 | **跳（当时）** | 2026-09-15 用户后置；此后均已实现（CEP `c4382a3`，悬停与 2D／3D Reflection 见 WEB-SPEC / REFLECTION-SPEC）。**3D 已于 2026-09-29 落地**（见 QA-EVIDENCE） |
 | 随机扰动幅度数值 | **跳** | 用户已授权实现自定；放到施工规格 |
 | UI「模拟数据」徽标 | **跳** | UX 未要求；§12 落到日志/运行说明 |
 | 现在写 `BACKEND-API-HANDOFF.md` | **跳** | 批准后再出，避免两套未冻结说明 |

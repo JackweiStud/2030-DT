@@ -1,8 +1,14 @@
 # 项目状态
 
+- 2026-09-29：按代码核对并回写文档：`case4-3d-view-spec`／`case3-3d-view-spec`、case3/case4 WEB／SERVER／REFLECTION／QA、`AGENTS.md` 与本文件，统一为「相机／debug 分 case + 公共速度／背景／BS」、共享 `cases/shared/three`、case4 3D 已本地落地；废弃文中仍写「仅规格／3D 禁用／全部 VITE_DT_3D 含相机」的过时表述。
+
+- 2026-09-29：按最新裁决拆分Case3/Case4相机与debug配置，模型／换算／背景／速度／BS保持共用；各自case键优先，旧公共相机键仅兼容回退，当前两套初值保留原值。
+
+- 2026-09-29：case4 3D 已完成本地开发：共用GLB与共享Three模块、`VITE_CASE4_3D_*` 独立相机／debug + `VITE_DT_3D_*` 公共速度／背景／BS、进页预加载、三种XYZ实时轨迹、多反射UE→Ri→BS、基站气泡与截图锁。Web构建及366项定向测试、Node70项、真实GLB＋模拟业务Chrome检查通过；证据见doc/case4/QA-EVIDENCE.md，case3回归同样通过。用户最终视觉、目标PC性能、真实后端／挂载验收仍待完成。
+
 - 2026-09-29：case2 六图统一默认视图与调试复制已实现；配置归属修正为 `code/web/.env` 的 `VITE_CASE2_MAP_*`（模板同步），移除对 back/.env 的读取。默认关闭调试；全屏可复制缩放/旋转/百分比平移参数，六图共用初值、交互独立、恢复回配置值。定向6/6测试、Web build及diff检查通过；未做浏览器视觉验收，未提交/推送。
 
-- 2026-09-29：case4 3D 需求 SPEC 已编写于 `doc/新增功能/case4-3d-view-spec.md`：同 GLB、公共 VITE_DT_3D 配置迁移、独立相机状态、进入即预加载、三种实时 XYZ 轨迹、沿用 case4 UE→Ri→BS 方向及各自 BS 回退。本轮仅规格，未启动代码实现。
+- 2026-09-29：case4 3D 需求 SPEC 原写于 `doc/新增功能/case4-3d-view-spec.md`；同日代码已落地，SPEC 已改为实现契约（见上条）。
 
 - 2026-09-29：按用户确认，case3-v2 2D/3D 波束传播统一为 LOS：BS→UE，NLOS：BS→R1→UE；调整折线顺序以使运行中亮段从基站发向 UE。端点坐标与显隐规则保留；浏览器动画视觉待确认。
 
@@ -233,7 +239,7 @@
 
 case1：按已通过人工验收的当前 Pencil 四帧进入 Gate 1.5，精确读取设计源还原静态页面与局部切换；不补 Reset/保存提示，不替换静态 KPI 示意。正式 3D 调试与数据绑定后续按最新范围实施，不恢复已撤销的视角持久化接口。
 
-case4：除 3D 外功能已完成本地开发（正式 Web + Node + 打桩）。3D 不在本轮范围。真实后端/真实挂载若需由本仓库独立复验，应追加 `doc/case4/QA-EVIDENCE.md`，不覆盖本地打桩记录。
+case4：包括 3D 已完成本地开发；本地自动测试及真实 GLB＋模拟 API 浏览器证据见 QA-EVIDENCE，用户最终3D视觉和目标PC性能待确认。真实后端/真实挂载若需由本仓库独立复验，应追加 `doc/case4/QA-EVIDENCE.md`，不覆盖本地打桩记录。
 
 case2/case3：若目标是继续本地演示，可使用 `code/scripts/dev-web-server.sh` 启动 Web + Node，并另开 `code/back` 的 `start:case2` 或 `start:case3` 打桩；若目标是真实环境交付，必须接真实后端和真实挂载路径，并分别追加 case2/case3 真实环境 QA 记录。
 

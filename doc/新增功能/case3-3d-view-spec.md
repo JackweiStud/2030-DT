@@ -89,29 +89,28 @@ GLB/Three.js 坐标 G = (x, z, -y)
 
 ## 6. 独立 debug info 与 .env 工作流
 
-配置文件为 `D:\CODE\2030-DT\code\web\.env`，新增键如下：
+配置文件为 `code/web/.env`。解析实现：`code/web/src/cases/shared/three/config.ts`。**相机／debug 按 case 独立；速度／背景／BS 与 case4 共用。**
 
 | 配置键 | 含义／默认 |
 | --- | --- |
-| `VITE_CASE3_3D_DEBUG_INFO` | `false`；接受 true/false、1/0 |
-| `VITE_CASE3_3D_CAMERA_POSITION` | 相机 GLB XYZ，三项有限数；与 TARGET 成对配置 |
-| `VITE_CASE3_3D_CAMERA_TARGET` | 观察目标 GLB XYZ，三项有限数 |
+| `VITE_CASE3_3D_DEBUG_INFO` | `false`；接受 true/false、1/0；case4 对应 `VITE_CASE4_3D_DEBUG_INFO` |
+| `VITE_CASE3_3D_CAMERA_POSITION` | 相机 GLB XYZ，三项有限数；与 TARGET 成对；case4 用 `VITE_CASE4_3D_*` |
+| `VITE_CASE3_3D_CAMERA_TARGET` | 观察目标 GLB XYZ |
 | `VITE_CASE3_3D_CAMERA_ZOOM` | 正有限数，默认 1 |
-| `VITE_CASE3_3D_PAN_SPEED` | 正有限数，默认 1 |
-| `VITE_CASE3_3D_ROTATE_SPEED` | 正有限数，默认 1 |
-| `VITE_CASE3_3D_ZOOM_SPEED` | 正有限数，默认 1 |
+| `VITE_DT_3D_PAN_SPEED` | 正有限数，默认 1（case3/case4 共用） |
+| `VITE_DT_3D_ROTATE_SPEED` | 正有限数，默认 1 |
+| `VITE_DT_3D_ZOOM_SPEED` | 正有限数，默认 1 |
+| `VITE_DT_3D_BACKGROUND_COLOR` | 带引号 `#RRGGBB`；缺失／非法回退 `#202832`；case1 几何／电磁亦读此键 |
+| `VITE_DT_3D_BS_XYZ` | 可选 3D 公共 BS 业务坐标；空则回退 `CASE3_BS_XYZ`／`CASE4_BS_XYZ` |
 
-- POSITION/TARGET 均未配置时，根据加载后模型包围盒与地图宽高比计算能容纳模型的初始斜视相机（从 +X、+Y、+Z 一侧观察，目标为包围盒中心）。不挪动、归一化模型。复位使用本次求出的初值。
-- 只配置 POSITION/TARGET 中一项、三元组格式错误、位置与目标重合、非有限数或非正的 zoom/speed，应明确提示 case3 3D 配置错误；不静默使用 case1 参数。2D 与业务主线仍可用。
-- 相机固定 Y 向上，采用固定透视 FOV 40°，用户不调整 roll；near/far 根据场景范围合理设置以覆盖场景。通过 POSITION + TARGET + ZOOM 完整记录旋转、平移、缩放结果。
-- debug 关闭时不显示面板，但全部相机交互仍可用；debug 开启仅在 3D 视图显示 case3 自有调试面板。
-- 面板实时显示相机位置、目标、zoom、交互速度以及“业务 (x,y,z) → 模型 (x,z,-y)”说明，提供只读可选中文本和“复制参数”按钮。
-- 复制内容为七行完整 env 赋值：POSITION、TARGET、ZOOM、PAN_SPEED、ROTATE_SPEED、ZOOM_SPEED，以及当前 DEBUG_INFO 开关。输出无本地化千分位，精度足以在重新加载后复现视角（至少 6 位小数，避免过早截断）。
-- 旋转、平移后实时更新 position/target；滚轮缩放即使改变的是相机距离而非 camera.zoom，也必须正确反映在输出 position 中。
-- 用户操作流程：在 `.env` 开启 DEBUG_INFO → 重启 dev／重新构建 → 进入 case3 3D → 调整视角、缩放与平移 → 复制参数 → 手工替换 `.env` 对应键 → 重启 dev／重新构建 → 核对恢复效果。完成后可将 DEBUG_INFO 设回 false。
-- 浏览器不直接写 `.env`，不新增服务端配置写入接口，不自动持久化到 localStorage。剪贴板不可用时允许选中文本手工复制并显示提示。
-- 面板事件不传播给相机控制；面板有独立标记并从业务截图中过滤。复制内容不包含其他 case 配置或环境变量。
-- 实现时同步 `.env.example` 的新键与说明；本次规格编写不预写未经调试的相机值到 `.env`。
+- 相机／debug：本 case 键优先；键不存在时才兼容旧公共 `VITE_DT_3D_DEBUG_INFO|CAMERA_*`。Case3 不读取 Case4 相机键，反之亦然。
+- POSITION/TARGET 均未配置时，根据模型包围盒自动取景。不挪动、归一化模型。复位使用本次初值。
+- 只配置 POSITION/TARGET 中一项、三元组格式错误、位置与目标重合、非有限数或非正的 zoom/speed，提示当前 case 3D 配置错误；不静默使用 case1 参数。2D 与业务主线仍可用。
+- 相机固定 Y 向上，透视 FOV 40°；通过 POSITION + TARGET + ZOOM 记录视角。
+- debug 关闭时不显示面板，交互仍可用；开启仅在当前 case 3D 视图显示。
+- 复制输出：当前 case 的 DEBUG／POSITION／TARGET／ZOOM 四行 + 公共 `VITE_DT_3D_` 的 PAN／ROTATE／ZOOM／BACKGROUND（不含 BS）。精度足以复现视角。
+- 用户流程：开启 DEBUG → 重启 → 调视角 → 复制 → 手工写回 `.env` → 重启核对。浏览器不写 `.env`、不持久化 localStorage；面板从业务截图过滤。
+- `.env.example` 与正式 `.env` 活跃赋值以上表为准。
 
 ## 7. 模型加载与生命周期
 
@@ -141,9 +140,14 @@ GLB/Three.js 坐标 G = (x, z, -y)
 9. 材质与光照观感（相对 Blender「材质预览」）：
    - **问题**：同一份几何 GLB，Blender 开启材质预览时立体感、接触暗角较符合场地预期；Web Three.js 初版仅用强半球光 + 平行光、无环境贴图、未开色调映射，画面偏平、发白、墙脚发「飘」——易被误判为模型或相机 `.env` 配错。
    - **根因**：材质预览依赖内置 HDRI（IBL）；Web 侧原光照管线不同，不是 GLB 坐标或 `CAMERA_*` 配置错误。
-   - **修改方式**（`MapRenderer3D.tsx`）：`RoomEnvironment` + PMREM 写入 `scene.environment`；`ACESFilmicToneMapping` + `SRGBColorSpace`；减弱半球/平行光强度，避免冲掉 IBL。背景色仍由 `VITE_CASE3_3D_BACKGROUND_COLOR` 控制，与 IBL 分离。
+   - **修改方式**（现位于 `cases/shared/three/ThreeViewport.tsx`）：`RoomEnvironment` + PMREM 写入 `scene.environment`；`ACESFilmicToneMapping` + `SRGBColorSpace`；减弱半球/平行光强度，避免冲掉 IBL。背景色由 `VITE_DT_3D_BACKGROUND_COLOR` 控制（兼容旧 `VITE_CASE3_3D_BACKGROUND_COLOR`），与 IBL 分离。
    - **验收**：视觉上接近材质预览的立体感与材质层次即可，**不要求**与 Blender 像素级一致；截图与交互性能仍须可接受。case1 几何/材质层共用 `ModelViewport` 已按同一管线对齐，便于同场对照，但不改变 case3 独立性验收（第 1 条）。
 
 ## 10. 实现交接
 
-实现涉及 case3-v2 地图与切换/HUD、case3 runtime config、case3 Node 模型 GET、截图接入及 case1 几何 GLB 共享路径。完成时同步 `doc/case3/WEB-SPEC.md`、`REFLECTION-SPEC.md`、`SERVER-SPEC.md`、相关接口文档及 QA 证据；项目进度只更新 `state.md`。
+实现涉及 case3-v2 地图与切换/HUD、共享 `cases/shared/three/`、case3 runtime config、case3 Node 模型 GET、截图接入及 case1 几何 GLB 共享路径。完成时同步 `doc/case3/WEB-SPEC.md`、`REFLECTION-SPEC.md`、`SERVER-SPEC.md`、相关接口文档及 QA 证据；项目进度只更新 `state.md`。
+
+
+## 2026-09-29 共享模块与配置（已按代码落地）
+
+底层 viewport／配置／叠加几何抽到 `code/web/src/cases/shared/three/`；case3-v2 仅保留业务 `MapRenderer3D`／`threeOverlay`。GLB、`(x,z,-y)`、背景、交互速度、公共 BS 与 case4 共用；**相机与 debug 按 case 独立**（见 §6）。旧「全部 `VITE_DT_3D_*` 含相机」过渡方案已废弃。Case3 业务方向仍为 BS→UE／BS→R1→UE，不吸收 case4 的 UE→BS。详细 case4 侧见 `case4-3d-view-spec.md`。

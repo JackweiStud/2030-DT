@@ -6,6 +6,9 @@ import { TrackLegend } from "./TrackLegend";
 import { ViewModeToggle } from "./ViewModeToggle";
 
 type Props = {
+  viewMode: "2d" | "3d";
+  onViewModeChange: (mode: "2d" | "3d") => void;
+  captureLocked: boolean;
   onOpenSiteEnv: () => void;
 };
 
@@ -27,7 +30,7 @@ export function MapHud(props: Props) {
       >
         {"现场环境 >"}
       </button>
-      <ViewModeToggle />
+      <ViewModeToggle value={props.viewMode} onChange={props.onViewModeChange} disabled={props.captureLocked} />
       <TrackLegend />
     </section>
   );

@@ -96,3 +96,8 @@
 - 改为 2D 同款图钉及 UE 图片、固定逻辑像素尺寸、14/9 双层路线、紫青/绿色波纹及白色移动亮段。新增三维叠加模块，不改变业务坐标与 2D 页面。
 - Chrome 使用真实模型和模拟业务通过两轮业务截图、视角复位、切换保留、剪贴板、缩放/平移、失败重试；pageerror 为零。近景截图：`code/web/test-results/case3-3d/completed-closeup.png`，生成于 2026-09-28，用于确认数字无拉伸和图钉/路线风格；业务 PNG 仍验证过滤 debug。输出不默认提交。
 - 新增几何测试覆盖图钉屏幕尺寸在不同距离下不变、反射端点保留、近裁剪面外坐标不产生 NaN，以及运行态亮段与静态区分。最终视觉由用户审阅；本地模拟结果不代表真实数据验收。
+
+
+## 2026-09-29 共享 3D 提取回归
+
+共享 `cases/shared/three` 与配置拆分（case 相机／debug + 公共速度／背景／BS）落地后，case1/case3/case3-v2/case4定向366项、Web构建、case3/case4服务端70项通过。`code/web/scripts/check-case3-3d.mjs` 使用真实共享GLB和模拟业务：相机旋转／缩放／平移／复位、复制本 case 相机键＋公共速度／背景、视图切换保留、两轮业务截图、退出取消及404重试通过，无pageerror。输出 `code/web/test-results/case3-3d/`（两张business、initial及completed截图），不默认提交。Case3继续BS→UE／BS→R1→UE；不代表真实后端验收。

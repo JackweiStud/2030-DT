@@ -40,7 +40,11 @@ export function createCase3Router(services) {
         return { handled: true, access: { caseId: "case3" } };
       }
       response.writeHead(200, { "Content-Type": "model/gltf-binary", "Content-Length": stat.size, ...cacheHeaders });
-      await pipeline(createReadStream(geometryFile), response);
+      try { await pipeline(createReadStream(geometryFile), response); }
+      catch (error) {
+        // 客户端切页或关闭连接后，流已销毁，不能再发送 JSON 错误响应。
+        if (!response.destroyed) throw error;
+      }
       return { handled: true, access: { caseId: "case3" } };
     }
     if (

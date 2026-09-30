@@ -1,3 +1,6 @@
+import { createReadStream, promises as fs } from "node:fs";
+import { pipeline } from "node:stream/promises";
+const geometryFile = new URL("../../../../web/assets/case1/3D/Beijing_Geometry.glb", import.meta.url);
 /** Case4 HTTP 路由：只做请求 shape 与服务方法映射。 */
 
 import { AppError } from "../../shared/errors.mjs";
@@ -17,6 +20,38 @@ function rejectQuery(url, endpoint) {
 
 export function createCase4Router(services) {
   return async function routeCase4(request, response, url) {
+    if (url.pathname === `${CASE4_API_PREFIX}/models/geometry`) {
+      rejectQuery(url, "models/geometry");
+      if (request.method !== "GET") {
+        response.setHeader("Allow", "GET");
+        throw new AppError(405, "METHOD_NOT_ALLOWED", "只支持 GET");
+      }
+      let stat;
+      try { stat = await fs.stat(geometryFile); }
+      catch { throw new AppError(404, "FILE_NOT_FOUND", "Case4 模型不存在"); }
+      // 允许浏览器缓存 75 MB 模型：每次进入仍向服务端确认（no-cache），
+      // 文件未变时只回 304，不再重复传输；文件替换后 size/mtime 变化，ETag 随之失效。
+      const etag = `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+      const lastModified = new Date(Math.floor(stat.mtimeMs / 1000) * 1000).toUTCString();
+      const cacheHeaders = { "Cache-Control": "no-cache", ETag: etag, "Last-Modified": lastModified };
+      const ifNoneMatch = request.headers["if-none-match"];
+      const ifModifiedSince = request.headers["if-modified-since"];
+      const notModified = ifNoneMatch
+        ? ifNoneMatch.split(",").some((tag) => tag.trim() === etag || tag.trim() === "*")
+        : Boolean(ifModifiedSince) && Date.parse(ifModifiedSince) >= Date.parse(lastModified);
+      if (notModified) {
+        response.writeHead(304, cacheHeaders);
+        response.end();
+        return { handled: true, access: { caseId: "case4" } };
+      }
+      response.writeHead(200, { "Content-Type": "model/gltf-binary", "Content-Length": stat.size, ...cacheHeaders });
+      try { await pipeline(createReadStream(geometryFile), response); }
+      catch (error) {
+        // 客户端切页或关闭连接后，流已销毁，不能再发送 JSON 错误响应。
+        if (!response.destroyed) throw error;
+      }
+      return { handled: true, access: { caseId: "case4" } };
+    }
     if (
       request.method === "GET" &&
       url.pathname === `${CASE4_API_PREFIX}/control-file`

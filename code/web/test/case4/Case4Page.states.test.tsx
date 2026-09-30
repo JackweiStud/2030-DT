@@ -98,9 +98,7 @@ describe("Case4Page", () => {
     expect(Number.parseFloat(thrpX[0]?.style.left ?? "0")).toBeGreaterThan(20);
     fireEvent.click(view.getByRole("button", { name: "现场环境 >" }));
     expect(open).toHaveBeenCalled();
-    expect(
-      view.container.querySelector('[aria-disabled="true"]')?.textContent,
-    ).toContain("3D");
+    expect(view.getByRole("button", { name: "3D视图" }).hasAttribute("disabled")).toBe(false);
   });
 
   it("running：双禁、统计仍空", () => {
@@ -181,13 +179,11 @@ describe("Case4Page", () => {
     ).toHaveLength(0);
   });
 
-  it("CSS 选择器落在 .case4-page 下，3D 不可点", () => {
+  it("CSS 选择器落在 .case4-page 下，3D 可切换", () => {
     const { view } = renderPage(fromState(readyState()));
     expect(view.container.querySelector(".metric-card")).toBeNull();
-    const three = view.container.querySelector(
-      ".c4-view-toggle__item.is-disabled",
-    ) as HTMLElement;
+    const three = view.getByRole("button", { name: "3D视图" });
     fireEvent.click(three);
-    expect(three.getAttribute("aria-disabled")).toBe("true");
+    expect(three.getAttribute("aria-pressed")).toBe("true");
   });
 });

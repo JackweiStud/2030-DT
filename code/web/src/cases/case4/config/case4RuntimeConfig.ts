@@ -1,3 +1,4 @@
+import { loadCase3ThreeConfig, normalizeThreeEnv, type Case3ThreeConfig } from "../../shared/three/config";
 /**
  * Case4 构建时 Vite env 的唯一入口。
  * 组件不得直接读 import.meta.env；显式非法配置必须启动失败。
@@ -5,6 +6,8 @@
  */
 
 export type Case4RuntimeConfig = {
+  three?: Case3ThreeConfig;
+  bsXyz3d?: { x: number; y: number; z: number };
   pollMs: number;
   mapOriginX: number;
   mapOriginY: number;
@@ -158,7 +161,15 @@ export function loadCase4RuntimeConfig(
   env: EnvLike = import.meta.env,
 ): Case4RuntimeConfig {
   const reflectionEnable = readReflectionEnable(env);
+  const rawBs = normalizeThreeEnv(env).VITE_CASE3_3D_BS_XYZ;
+  let three = loadCase3ThreeConfig(env, "case4");
+  let bsXyz3d: Case4RuntimeConfig["bsXyz3d"];
+  if (reflectionEnable && rawBs?.trim()) {
+    try { bsXyz3d = readBsXyz({ CASE4_BS_XYZ: rawBs }, true); }
+    catch { three = { ...three, error: "3D 配置错误：VITE_DT_3D_BS_XYZ" }; }
+  }
   return {
+    three, bsXyz3d,
     pollMs: readPositiveSafeInt(env, "VITE_CASE4_POLL_MS", DEFAULTS.pollMs),
     mapOriginX: readFiniteNumber(
       env,

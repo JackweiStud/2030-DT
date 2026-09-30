@@ -107,7 +107,7 @@ export function loadConfig(env: Record<string, unknown>) {
       a: channel("VITE_CASE1_HEATMAP_INVALID_A", 0),
     },
   };
-  const rawBackground = env.VITE_CASE3_3D_BACKGROUND_COLOR;
+  const rawBackground = env.VITE_DT_3D_BACKGROUND_COLOR ?? env.VITE_CASE3_3D_BACKGROUND_COLOR;
   return {
     geometry: model("GEOMETRY"),
     material: model("MATERIAL"),

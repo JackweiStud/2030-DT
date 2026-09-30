@@ -37,6 +37,8 @@ export function Case4Page(props: Props) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [dockExpanded]);
 
+  const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
+  const [captureLocked, setCaptureLocked] = useState(false);
   const mapRef = useRef<MapRendererHandle | null>(null);
   const ctrl = useCase4Controller({
     config,
@@ -52,6 +54,8 @@ export function Case4Page(props: Props) {
   return (
     <main className="case4-page" data-dock-expanded={dockExpanded ? "true" : "false"} data-testid="case4-page" data-state={ctrl.dataState}>
       <MapStage
+        viewMode={viewMode}
+        onCaptureLock={setCaptureLocked}
         config={config}
         stageElementRef={stageElementRef}
         mapRef={mapRef}
@@ -59,7 +63,7 @@ export function Case4Page(props: Props) {
         livePoints={ctrl.trajectory?.points ?? []}
         playback={ctrl.ui === "running" ? "running" : "static"}
       />
-      <MapHud onOpenSiteEnv={openSiteEnv} />
+      <MapHud onOpenSiteEnv={openSiteEnv} viewMode={viewMode} onViewModeChange={setViewMode} captureLocked={captureLocked} />
       <Banner text={liveHintBanner} />
       <BottomDock
         expanded={dockExpanded}

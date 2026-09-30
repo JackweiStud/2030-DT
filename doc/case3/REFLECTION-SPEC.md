@@ -39,3 +39,8 @@ BS 坐标必须是三个有限数值，且不能使用 `65535` 哨兵值。未�
 ## 2026-09-28 3D 展示增量
 
 `../新增功能/case3-3d-view-spec.md` 扩展本文原“仅 2D”限制。With 3D 使用同一当前完整点及显隐规则，LOS 为 BS→UE，NLOS 为 BS→R1→UE；异常波束不绘制。所有端点以业务 XYZ 经 `(x,z,-y)` 转换，保持原始高度，不自动贴墙/贴地或猜测 BS 高度。运行中白色亮点沿空间折线移动，完成后静态显示；不是电磁仿真。2D 表达不变。
+
+
+## 2026-09-29 共享 3D 模块
+
+底层 viewport／叠加几何与 case4 共用（`cases/shared/three`），case3 adapter 决定业务输入。Case3 LOS 为 BS→UE，NLOS 为 BS→R1→UE；case4 的 UE→BS 方向不带入 case3。保留气泡、case3 显隐和单反射语义。配置以 WEB-SPEC／`case3-3d-view-spec` 最新落地为准：相机／debug 分 case，速度／背景／BS 共用。

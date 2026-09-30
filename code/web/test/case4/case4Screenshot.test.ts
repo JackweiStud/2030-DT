@@ -141,3 +141,9 @@ describe("runCase4Screenshot", () => {
     expect(outcome.kind).toBe("clear-fail");
   });
 });
+
+ it("3D prepare failure never captures blank output and always releases the lock", async () => {
+  const api=stubApi(); const finishCapture=vi.fn(); const prepareCapture=vi.fn(async()=>{throw new Error("not ready");});
+  const result=await runCase4Screenshot({api,stage:document.createElement("div"),mapRef:{resetView(){},prepareCapture,finishCapture},signal:new AbortController().signal,generation:1,waitForPaint:async()=>{}});
+  expect(result.kind).toBe("dropped"); expect(toPng).not.toHaveBeenCalled(); expect(prepareCapture).toHaveBeenCalledTimes(3); expect(finishCapture).toHaveBeenCalledTimes(3);
+ });

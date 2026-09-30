@@ -1,6 +1,6 @@
 # Case4 Reflection 三端增量 SPEC
 
-日期：2026-09-17。状态：本地三端已实现并完成隔离共享目录联调；2026-09-18 用户确认 2D Reflection 属已交付功能。真实后端/真实 BS 标定未验收。3D Reflection 不做。本文件是 Reflection 增量合同。
+日期：2026-09-17。状态：本地三端已实现并完成隔离共享目录联调；2026-09-18 用户确认 2D Reflection 属已交付功能；**2026-09-29 3D Reflection 已按本文增量落地**（共享 Three 叠加 + case4 `buildReflectionPaths`）。真实后端/真实 BS 标定未验收。本文件是 Reflection 增量合同。
 
 来源：用户与 Codex 本次逐项确认，以及 GitHub Issue #3：https://github.com/JackweiStud/2030-DT/issues/3 。Issue 中「Web only」是原范围描述；现有架构要求 Node 提供文件读取接口，打桩提供本地数据，因此按本文件拆分三端责任。本文作为 Reflection 增量合同；与既有文档“反射不读取、不清理”冲突的部分以本文为准，其他 API/生命周期保持既有契约。实现 Agent 应同步自己的 SPEC，不复制一套相互漂移的协议。
 
@@ -25,7 +25,7 @@
 | 动画/截图 | 运行中循环流动；完成后停止动画，保留清晰静态路径；截图使用最终画面 |
 | 重置 | 清反射点、路径和动画状态，回到等待首点；现有UE图标仍按原主流程重置 |
 
-不做：3D Reflection、射线追踪、电磁仿真、反射算法、历史路径回放、修改已有定位误差/CEP/控制语义。Start/ReInit继续使用dt_type=all，init为空；旧值非法。
+不做：射线追踪、电磁仿真、反射算法、历史路径回放、修改已有定位误差/CEP/控制语义。Start/ReInit继续使用dt_type=all，init为空；旧值非法。3D Reflection 见文末 2026-09-29 增量（方向与 2D 一致，不另增算法）。
 
 ## 2. 角色分工
 
@@ -187,7 +187,7 @@ replay保持反射样本语义；random阶段可复用同一反射样本（不�
 
 ## 9. 实施顺序与剩余工程事项
 
-本地三端实现与隔离目录联调已完成。剩余不是功能缺口，而是真实环境：实际 BS 标定值、真实反射样本可用性。缺真实样本时应明确使用模拟验证，不能编造真实来源。3D Reflection 不在本文范围。
+本地三端实现与隔离目录联调已完成；3D Reflection 已按文末增量落地。剩余不是功能缺口，而是真实环境：实际 BS 标定值、真实反射样本可用性。缺真实样本时应明确使用模拟验证，不能编造真实来源。
 
 本文中的 REST 形状、默认关闭、复用原轨迹轮询等为当前架构下工程约定，可在三端一致且不改变用户语义的前提下调整并回写。
 
@@ -203,3 +203,8 @@ replay保持反射样本语义；random阶段可复用同一反射样本（不�
 6. **最终读取隔离**：必需九文件与控制窗口同一轮 before/read/after；变化则重试，仍变化则 409。反射不进入该门槛：原快照成功后再尽力读一次；漂移只 warn，附带当前完整行，其余 `missing`，仍 200。缺失/半行/不可读同样不挡完成。尽力附加失败则整批 `missing`。JSONL 写入串行；`/result` 封印后在途 live 不得覆盖。控制归属、轮次与旧响应隔离沿用原 `/result` 规则。运行中 `/trajectory` 仍按反射共同前缀收齐，漂移不推进未收齐点。
 
 Vite 仅白名单注入 `CASE4_REFLECTION_ENABLE` 与 `CASE4_BS_XYZ`。缺省或空字符串视为关闭。Web 对 `/trajectory` 与 `/result` 发送同一 `reflection=true|false`。示例 BS `(1.0,5.0,7.0)` 仅供模拟，不是真实标定。
+
+
+## 2026-09-29 3D 增量
+
+3D 复用 `buildReflectionPaths`（`case4/components/map/threeOverlay.ts` → 共享 `overlay`）：LOS 为 DT 实际 UE→BS，每个 Ri 独立 UE→Ri→BS，可同时 LOS＋多 Ri。invalid/missing 清空当前反射，最终缺尾不挡完成。绿 LOS、紫青 NLOS、正弦波纹与1.2s白色亮段沿用2D参数：幅度4px、波长32px、采样4px、顶点淡化14px、路径相位间隔2π/3；3D按屏幕投影生成波纹并随相机调整。运行时亮段沿路径前进，完成后保留静态波纹。BS为蓝色「基站」气泡、白色加粗字，尖端锚定 BS；Ri 标签保留真实 ID。3D BS 取 `VITE_DT_3D_BS_XYZ`，空则回退 `CASE4_BS_XYZ`。配置细则见 WEB-SPEC／`case4-3d-view-spec.md`。

@@ -1,6 +1,6 @@
 # case4 正式 Web 施工规格
 
-> status: `已实现 — 2026-09-18 用户确认除 3D 外功能全部完成本地开发`
+> status: `已实现 — 含 3D；2026-09-29 本地开发完成，用户最终 3D 视觉／目标 PC／真实后端待确认`
 >
 > 使用者：正式 React Web 实现 agent。
 >
@@ -8,7 +8,7 @@
 
 开工前必读：`state.md`、契约 §0 / §3 / §4 / §7 / §8 / §9 / §11、本文、`doc/case4/STATIC-HTML-ACCEPTANCE.md`（已接受效果、可复用成果、留给 React 的地图/图表问题），以及 `code/web/src/app/App.tsx`、`shell/Shell.tsx`、`cases/case3/hooks/useCase3Controller.ts`、`cases/case3-v2/mapProjectionV2.ts`、`cases/case3-v2/Case3V2Page.tsx`。
 
-正式代码已实现；CEP 增减百分比已实现并由用户接受（c4382a3）；2D Reflection 见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)；误差/吞吐/CDF 悬停已落地。**仅 3D 未实现**（按钮可见禁用）。阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。
+正式代码已实现；CEP 增减百分比已实现并由用户接受（c4382a3）；2D／3D Reflection 见 [REFLECTION-SPEC.md](REFLECTION-SPEC.md)；误差/吞吐/CDF 悬停已落地；**3D 视图已接入**（共享 GLB／`cases/shared/three`、独立相机配置、进页预加载）。阶段证据见 [QA-EVIDENCE.md](QA-EVIDENCE.md)。历史正文中「3D 禁用／未做」表述以文末 2026-09-29 增量为准。
 
 ---
 
@@ -963,8 +963,18 @@ NLOS/CDF/误差/吞吐/地图反射层的 stroke、fill、dash 必须经得起�
 - [x] Codex 续查已收口：控制快照归属校验先于 flag/status；放弃清零失败保留完成结果、禁按钮、停截图与轮询、不 POST init、busy=false；视觉对照证据不能用组件测试代替。
 - [x] 组件树对齐静态 `data-region`；CSS 迁正式 assets；`STATIC-HTML-ACCEPTANCE.md` 为开工必读。
 - [x] App 只加 case4 挂载与 busy；case3-v2 正式挂在 `case3`（临时 `case5` 已合回，旧皮已删）。
-- [x] CEP 百分比已实现并由用户接受（见 §9 增量）；2D Reflection 按 REFLECTION-SPEC 实施；误差/吞吐/CDF 悬停已实现；**3D 保留未做**。
+- [x] CEP 百分比已实现并由用户接受（见 §9 增量）；2D／3D Reflection 按 REFLECTION-SPEC；误差/吞吐/CDF 悬停已实现；**3D 已落地**（见文末 2026-09-29 增量）。
 - [x] Case2/Case3/Case4 API 前缀各自写死同源路径。
 
 2026-09-16 阶段收口：实现已完成，用户确认本地自测完成，下一步为真实后端联调。
 2026-09-18 功能收口：用户确认除 3D 外全部功能已完成本地开发。
+
+
+## 2026-09-29 Case4 3D 与共享 Three（已按代码落地）
+
+契约全文见 `../新增功能/case4-3d-view-spec.md`。实现要点：
+
+- 共享模块：`code/web/src/cases/shared/three/`（`ThreeViewport`／`config`／`overlay`）；case4 业务叠加在 `components/map/MapRenderer3D.tsx`、`threeOverlay.ts`。模型 `GET /api/case4/models/geometry` → `Beijing_Geometry.glb`。
+- 配置：相机／debug 用 `VITE_CASE4_3D_*`（不读 case3 相机键）；速度／背景／BS 用 `VITE_DT_3D_*`；旧公共相机键仅兼容回退。debug 复制输出本 case 四项 + 公共速度／背景。
+- 默认 2D；进页即预加载 3D（隐藏挂载）。`ViewModeToggle` 可切换；仅截图 `captureLocked` 时禁用。3D 画三色实际 XYZ 轨迹、base 进度／UE、UE→Ri→BS 多反射与基站气泡。
+- 截图按当前视图采集；未就绪／失败不保存空白成功图。切离释放资源。证据见 QA-EVIDENCE。

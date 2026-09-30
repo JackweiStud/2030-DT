@@ -691,7 +691,11 @@ export function useCase4Controller(options: Options) {
       };
       scheduleProbe();
     };
-    void run();
+    void run().catch((err) => {
+      if (ac.signal.aborted || lifecycle !== lifecycleRef.current) return;
+      case4Error("entry.unexpected_fail", { reason: String(err) });
+      dispatch({ type: "ADAPTER_ERROR", value: true });
+    });
 
     const onPageHide = () => {
       void apiRef.current.postControl(

@@ -1,3 +1,4 @@
+import { normalizeThreeEnv } from "../../shared/three/config";
 /**
  * Case3 构建时 Vite env 的唯一入口。
  * 组件不得直接读 import.meta.env；显式非法配置必须启动失败。
@@ -149,7 +150,7 @@ function readBsXyz(env: EnvLike): {
 
 /** 可选：3D 专用 BS；空则 undefined，由调用方回退 CASE3_BS_XYZ。 */
 function readBsXyz3d(env: EnvLike): { x: number; y: number; z: number } | undefined {
-  const raw = env.VITE_CASE3_3D_BS_XYZ;
+  const raw = normalizeThreeEnv(env).VITE_CASE3_3D_BS_XYZ;
   if (raw === undefined || raw.trim() === "") return undefined;
   return parseBsXyzTriple(raw, "VITE_CASE3_3D_BS_XYZ");
 }

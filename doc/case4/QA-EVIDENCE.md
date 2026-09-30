@@ -16,7 +16,7 @@
 
 悬停不再后置：当前 `ErrorReplay` 对有数据槽显示点号与三方案 XYZ 误差，精度三位小数、单位米；移出或拖动时收起。当前实现运行中已有数据槽也可悬停，并未限定 completed。这是相对早期“仅完成后”的实现差异，随本次用户整体验收记录保留，后续专项验收应显式覆盖。
 
-CEP 增减百分比、2D Reflection、误差/吞吐/CDF 悬停均已纳入本地交付。**仅 3D 不纳入本阶段。** 真实后端反射样本与实际 BS 标定仍未由本仓库独立验收。设计和静态文档保留历史验收范围，不因正式 Web 增量重写原冻结设计。
+CEP 增减百分比、2D／3D Reflection、误差/吞吐/CDF 悬停、**以及 3D 视图**均已纳入本地交付（见文末 2026-09-29）。真实后端反射样本与实际 BS 标定、用户最终 3D 视觉与目标 PC 性能仍未由本仓库独立验收。设计和静态文档保留历史验收范围，不因正式 Web 增量重写原冻结设计。
 
 ## 真实后端联调最小检查
 
@@ -87,7 +87,7 @@ CEP 增减百分比、2D Reflection、误差/吞吐/CDF 悬停均已纳入本地
 - 误差回溯悬停；吞吐率悬停（两路 Gbps）；CDF 悬停（水平概率线、1 位小数米）
 - `/result` 不以 Reflection 文件漂移返回 409；漂移只 warn 并尽力附加
 
-明确仍不做：3D 视图 / 3D 轨道相机 / 真开 3D 开关。HUD 3D 文案可见且 `aria-disabled`。
+明确仍不做（以当时 09-18 口径）：3D 视图 / 3D 轨道相机 / 真开 3D 开关。HUD 3D 文案可见且 `aria-disabled`。**此后 2026-09-29 已落地 3D，见下文「Case4 3D 本地验证」。**
 
 
 ## 2026-09-22 类型检查修复
@@ -106,3 +106,16 @@ CEP 增减百分比、2D Reflection、误差/吞吐/CDF 悬停均已纳入本地
 - Chrome 构建产物预览配合模拟接口验证：1920×1080 与 1280×720，展开、按钮收起、Esc 返回、KPI 边界、带数据曲线悬停；case4 另验证 CDF 50% 悬停。正式模式浏览器脚本退出码 0、无 pageerror。未复验真实后端。
 - 截图（模拟数据，仅用于布局核对）：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/outputs/case4-fullscreen.png`；复核脚本：`C:/Users/wzq13/Documents/Codex/2026-09-28/case3-case4-d-code-2030-dt/work/verify.cjs`。截图未纳入 Git。
 - 开发模式额外观察到已有控制器 StrictMode 清理的 AbortError（useCase4Controller 的 abort），不属于本次布局变更；生产模式未复现。
+
+
+## 2026-09-29 Case4 3D 本地验证
+
+范围：共享真实 GLB 与 `cases/shared/three`；配置为 case 独立相机／debug（`VITE_CASE4_3D_*`）+ 公共 `VITE_DT_3D_` 速度／背景／BS；进页预加载、三条实际 XYZ 轨迹、UE→Ri→BS 多反射、BS 气泡、截图与离页清理。业务数据由浏览器拦截模拟，不读写真实共享业务文件。
+
+- Web `npm run build` 通过；case1/case3/case3-v2/case4 定向 Vitest：50文件、366项通过。覆盖非零Z、base图标与DT端点不同、多Ri保留ID、invalid/missing清空、case键优先／旧公共相机键兼容／空值回退、未就绪截图不保存并释放锁。
+- Node case3/case4：70项通过，包括模型字节SHA256、拒绝写/query、ETag/Last-Modified条件304；修复客户端取消流后重复错误响应。
+- Chrome：`code/web/scripts/check-case4-3d.mjs`，真实 GLB＋模拟 API；默认2D先请求并解析模型，同次停留2D/3D切换仅一次模型请求，旋转／平移／缩放／复位、完成态、业务PNG、退出后新进、模型404隔离及重试通过。1920×1080及1280×720检查；pageerror为空。StrictMode进页取消握手的未处理拒绝已修复。ViewModeToggle Chrome 默认按钮灰底／`font:inherit` 覆盖字号问题已按 case3 对齐修复。
+- 图片：`code/web/test-results/case4-3d/completed.png`、`business.png`；后者3840×2160，已实际查看确认模型、三色轨迹、编号、LOS＋R1/R3、基站气泡及指标存在，debug未进入PNG。输出仅本地证据，不默认提交。
+- 生产构建仍有既有大包／静态动态重复导入提示，不影响构建。
+
+未独立验收：真实后端／挂载／真实采集，目标PC性能和显存长期稳定性，用户最终视觉与落位；上下文丢失及采集中同时切换的浏览器故障注入尚未完成。自动测试与本地PNG不替代这些验收。

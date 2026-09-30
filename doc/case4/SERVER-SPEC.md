@@ -1,6 +1,6 @@
 # case4 Node 文件适配服务施工规格
 
-> status: `已实现 — 2026-09-18 用户确认除 3D 外功能全部完成本地开发`
+> status: `已实现 — 含 3D 模型只读 GET；2026-09-29 本地开发完成`
 >
 > 使用者：前端 PC Node 适配服务实现 agent。
 >
@@ -447,3 +447,8 @@ cd code/server && npm test
 - 不把参考资料当运行目录，不在测试里改原始样本。
 - 不算 XYZ 误差、不投影地图（Web 的事）。
 - 不把内部 3 次稳定重读计进 Web 的 10 次最终失败。
+
+
+## 2026-09-29 共享 3D 模型读取
+
+`GET /api/case4/models/geometry` 固定读取 `code/web/assets/case1/3D/Beijing_Geometry.glb`；拒绝 query 和非 GET（405 / Allow: GET），不接受客户端路径。返回 glTF 二进制、Content-Length、ETag、Last-Modified、Cache-Control: no-cache，条件命中304。与业务控制／实时文件读取独立，不新增轮询。客户端取消流后不再次发送错误响应。

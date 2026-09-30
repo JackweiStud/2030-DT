@@ -19,6 +19,7 @@ export type ScreenshotPhase = "idle" | "pending" | "saving";
 export type MapCaptureHandle = {
   resetView(): void;
   prepareCapture(): Promise<void>;
+  finishCapture?(): void;
 };
 
 export async function waitForPaintDefault(): Promise<void> {
@@ -67,19 +68,6 @@ export async function runCase4Screenshot(args: {
   const { api, stage, mapRef, signal, generation } = args;
   case4Log("round.completed_rendered", { roundGeneration: generation });
   await args.waitForPaint();
-  try {
-    if (args.prepareCapture) {
-      await args.prepareCapture();
-    } else {
-      await mapRef?.prepareCapture();
-    }
-  } catch (err) {
-    case4Warn("screenshot.prepare_timeout", {
-      roundGeneration: generation,
-      reason: err instanceof Error ? err.message : String(err),
-    });
-  }
-
   let base64: string | null = null;
   const taskStartedAt = performance.now();
 
@@ -95,16 +83,21 @@ export async function runCase4Screenshot(args: {
           roundGeneration: generation,
           attempt,
         });
-        const dataUrl = await toPng(stage, {
+        let dataUrl: string;
+        try {
+          if (args.prepareCapture) await args.prepareCapture();
+          else await mapRef?.prepareCapture();
+          dataUrl = await toPng(stage, {
           width: CASE4_STAGE_WIDTH,
           height: CASE4_STAGE_HEIGHT,
           pixelRatio: CASE4_SCREENSHOT_PIXEL_RATIO,
           style: { transform: "none" },
           filter: (node) => {
             if (!(node instanceof HTMLElement)) return true;
-            return !node.classList.contains("review-dock");
+            return !node.classList.contains("review-dock") && !node.hasAttribute("data-case3-capture-exclude");
           },
         });
+        } finally { mapRef?.finishCapture?.(); }
         toPngMs = Math.round(performance.now() - attemptStartedAt);
         base64 = stripDataUrl(dataUrl);
         case4Log("screenshot.capture_ok", {

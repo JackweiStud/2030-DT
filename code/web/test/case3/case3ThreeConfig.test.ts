@@ -18,7 +18,7 @@ describe("case3 independent 3D coordinates/config", () => {
     expect(result.position).toEqual([10.123456789, 20, -30]);
     expect(result.target).toEqual([4, 5, 6]); expect(result.zoom).toBe(1.2); expect(result.debug).toBe(true);
     expect(result.background).toBe("#202832");
-    expect(text).toContain('VITE_CASE3_3D_BACKGROUND_COLOR="#202832"');
+    expect(text).toContain('VITE_DT_3D_BACKGROUND_COLOR="#202832"');
     expect(text).not.toContain("CASE1");
   });
   it("reads the 3D background colour from env and falls back to #202832", () => {
