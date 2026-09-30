@@ -1244,3 +1244,11 @@ saving
 - 不把 `web-static/` 改成正式实现，不以静态 review 按钮态覆盖契约互斥；不以 `web-static` 为第二套尺寸权威源。
 - 不在运行时依赖仓库根 `04-runtime-assets/` 或其他 `web/` 外路径；`web/` 必须自包含静态资源。
 - 不在 SPEC/代码中重抄一套与 `tokens.css` 冲突的 CDF/柱外框硬编码 px（算法只填框）。
+
+## 六图默认视图与调试配置（2026-09-29 增量）
+
+`code/web/.env` 增加 `VITE_CASE2_MAP_DEBUG_INFO=false`（`true` 或 `1` 开启）。Web 通过 Vite 标准 `VITE_*` 环境变量读取五个配置项。此开关仅控制全屏地图参数面板，不影响视图初值。
+
+统一初值：`VITE_CASE2_MAP_SCALE=1`（0.5～5）、`VITE_CASE2_MAP_ROTATION_DEG=0`（-90～90）、`VITE_CASE2_MAP_OFFSET_X_PERCENT=0`、`VITE_CASE2_MAP_OFFSET_Y_PERCENT=0`。平移为视窗宽/高百分比；空值/非有限数回退默认，缩放/旋转越界钳位。六个 Initial/Calibrated 槽均从同一配置初始化，之后交互各自独立；恢复按钮恢复配置初值。
+
+调试时打开任意地图全屏，滚轮缩放、左键拖旋转、右键拖平移，再点击“复制配置”，把四行替换到 `code/web/.env`。剪贴板不可用时选中只读文本手动复制。配置修改后重启 Web；正式部署需重新 build。切离 case2/刷新后按配置重建，不自动写文件、不做浏览器持久化。

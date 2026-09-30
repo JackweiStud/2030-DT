@@ -22,6 +22,7 @@ import { createPortal } from "react-dom";
 import type { HeatmapConfig } from "../metrics/heatmapConfig";
 import { assertHeatmapAnchor } from "../metrics/heatmapConfig";
 import { matrixMinMax, paintHeatmapOnCanvas } from "../metrics/heatmap";
+import { loadCase2MapView, formatCase2MapView, type ViewTransform } from "./case2MapView";
 import mapBaseUrl from "../../../../assets/case2/maps/heatmap-map-base.png";
 
 type Props = {
@@ -33,23 +34,12 @@ type Props = {
   variant: "initial" | "calibrated";
 };
 
-type ViewTransform = {
-  scale: number;
-  rotation: number;
-  offsetX: number;
-  offsetY: number;
-};
-
 const SCALE_MIN = 0.5;
 const SCALE_MAX = 5;
 const ROTATION_MIN = -90;
 const ROTATION_MAX = 90;
-const IDENTITY_TRANSFORM: ViewTransform = {
-  scale: 1,
-  rotation: 0,
-  offsetX: 0,
-  offsetY: 0,
-};
+
+const mapViewConfig = loadCase2MapView(import.meta.env);
 
 let baseImagePromise: Promise<HTMLImageElement> | null = null;
 let baseImageSizeLogged = false;
@@ -102,7 +92,7 @@ async function paintHeatOnCanvas(
 
 function toTransformStyle(view: ViewTransform): CSSProperties {
   return {
-    transform: `translate(${view.offsetX}px, ${view.offsetY}px) rotate(${view.rotation}deg) scale(${view.scale})`,
+    transform: `translate(${view.offsetX}%, ${view.offsetY}%) rotate(${view.rotation}deg) scale(${view.scale})`,
     transformOrigin: "center center",
   };
 }
@@ -194,9 +184,11 @@ export function HeatmapCard(props: Props) {
     startOffsetX: number;
     startOffsetY: number;
     frameWidth: number;
+    frameHeight: number;
   } | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const [view, setView] = useState<ViewTransform>(IDENTITY_TRANSFORM);
+  const [view, setView] = useState<ViewTransform>(() => ({ ...mapViewConfig.view }));
+  const [copyStatus, setCopyStatus] = useState("");
   const titleId = useId();
   const showHeat = !empty && matrix !== null && matrix.length > 0;
   const heatRange = showHeat && matrix ? matrixMinMax(matrix) : null;
@@ -263,7 +255,7 @@ export function HeatmapCard(props: Props) {
   }, [expanded]);
 
   const resetView = useCallback(() => {
-    setView(IDENTITY_TRANSFORM);
+    setView({ ...mapViewConfig.view });
   }, []);
 
   // React onWheel 默认可能是 passive，preventDefault 会刷控制台警告；改为非 passive 原生监听
@@ -277,8 +269,8 @@ export function HeatmapCard(props: Props) {
       event.stopPropagation();
 
       const rect = frame.getBoundingClientRect();
-      const mx = event.clientX - rect.left - rect.width / 2;
-      const my = event.clientY - rect.top - rect.height / 2;
+      const mx = (event.clientX - rect.left - rect.width / 2) / Math.max(1, rect.width) * 100;
+      const my = (event.clientY - rect.top - rect.height / 2) / Math.max(1, rect.height) * 100;
       const factor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
 
       setView((prev) => {
@@ -323,6 +315,7 @@ export function HeatmapCard(props: Props) {
         startOffsetX: view.offsetX,
         startOffsetY: view.offsetY,
         frameWidth: Math.max(1, frame.getBoundingClientRect().width),
+        frameHeight: Math.max(1, frame.getBoundingClientRect().height),
       };
     },
     [view.offsetX, view.offsetY, view.rotation],
@@ -334,8 +327,8 @@ export function HeatmapCard(props: Props) {
       if (!drag || drag.pointerId !== event.pointerId) return;
 
       if (drag.mode === "pan") {
-        const nextOffsetX = drag.startOffsetX + (event.clientX - drag.startX);
-        const nextOffsetY = drag.startOffsetY + (event.clientY - drag.startY);
+        const nextOffsetX = drag.startOffsetX + (event.clientX - drag.startX) / drag.frameWidth * 100;
+        const nextOffsetY = drag.startOffsetY + (event.clientY - drag.startY) / drag.frameHeight * 100;
         setView((prev) => ({
           ...prev,
           offsetX: nextOffsetX,
@@ -408,6 +401,24 @@ export function HeatmapCard(props: Props) {
               aria-modal="true"
               aria-labelledby={titleId}
             >
+              {mapViewConfig.debugInfo ? (
+                <div className="case2-heatmap-lightbox__debug">
+                  <label>
+                    地图视图配置（粘贴至 code/web/.env，六图共用）
+                    <textarea readOnly aria-label="地图视图配置" value={formatCase2MapView(view)}
+                      onFocus={(event) => event.currentTarget.select()} />
+                  </label>
+                  <button type="button" onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(formatCase2MapView(view));
+                      setCopyStatus("已复制");
+                    } catch {
+                      setCopyStatus("复制失败，请选中上方文本手动复制");
+                    }
+                  }}>复制配置</button>
+                  <span role="status">{copyStatus}</span>
+                </div>
+              ) : null}
               <div className="case2-heatmap-lightbox__toolbar">
                 <button
                   type="button"

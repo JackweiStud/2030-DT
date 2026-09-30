@@ -87,3 +87,7 @@
 - Web：`cd code/web && npx vitest run test/useCase2Controller.entry.test.ts test/case2Api.test.ts`，PASS 22/22。验证启动完成后的空闲收尾发送 `restore_calibrated:false`、重置完成后也发送该收尾请求，进页仍发送普通 `init`；API payload 类型及调用覆盖。
 - Web：`cd code/web && npm run build`，PASS（TypeScript 检查及 Vite 生产构建通过）；存在既有的大 chunk 体积提示，本次未评估其成因。
 - 范围：以上是当前代码的 Node/Web 自动化证据；**未**在浏览器手工点操作、未连接真实后端或真实挂载。用户仍需在本机演示链路验证“启动完成后文件保留结果、点击重置恢复基线、重置完成后仍保留基线文件、切离再进入时恢复基线”。
+
+## 2026-09-29 六图默认视图调试配置
+
+配置位于 `code/web/.env`（`VITE_CASE2_MAP_*`，模板同步）。定向 Vitest 6/6 通过：六图统一初值、全屏缩放/平移/旋转、复制回填、恢复配置值、关闭调试和剪贴板失败回退；Web `npm run build` 通过（既有大包提醒），`git diff --check` 通过。此为组件事件与构建验证，未进行真实浏览器视觉/剪贴板验收，不涉及真实后端。

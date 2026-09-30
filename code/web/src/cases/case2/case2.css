@@ -1083,3 +1083,26 @@
   color: var(--case2-color-error);
   font-size: 14px;
 }
+
+.case2-heatmap-lightbox__debug {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 3;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 80%);
+  color: #fff;
+  font-size: 13px;
+}
+.case2-heatmap-lightbox__debug textarea {
+  display: block;
+  width: 440px;
+  height: 84px;
+  margin: 8px 0;
+  color: #fff;
+  background: #171e28;
+  font: 12px monospace;
+}
+.case2-heatmap-lightbox__debug button { padding: 6px 12px; cursor: pointer; }
+.case2-heatmap-lightbox__debug [role="status"] { margin-left: 10px; }

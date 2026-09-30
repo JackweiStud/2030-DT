@@ -1,6 +1,11 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_CASE2_MAP_DEBUG_INFO?: string;
+  readonly VITE_CASE2_MAP_SCALE?: string;
+  readonly VITE_CASE2_MAP_ROTATION_DEG?: string;
+  readonly VITE_CASE2_MAP_OFFSET_X_PERCENT?: string;
+  readonly VITE_CASE2_MAP_OFFSET_Y_PERCENT?: string;
   readonly VITE_CASE2_POLL_MS?: string;
   readonly VITE_CASE2_HEATMAP_X0?: string;
   readonly VITE_CASE2_HEATMAP_Y0?: string;
