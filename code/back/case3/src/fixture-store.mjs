@@ -86,7 +86,10 @@ function scan(line, filename) {
     if (value < -1 || value > 255) invalid(filename, "scan beam 越界");
     return value;
   });
-  if (new Set(values).size !== 16) invalid(filename, "scan beam 必须互不重复");
+  const effective = values.filter((value) => value !== -1);
+  if (new Set(effective).size !== effective.length) {
+    invalid(filename, "scan beam 必须互不重复");
+  }
   return values;
 }
 

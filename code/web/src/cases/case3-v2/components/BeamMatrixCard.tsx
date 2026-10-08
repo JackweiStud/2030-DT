@@ -153,7 +153,7 @@ export function BeamMatrixCard(props: Props) {
                 aria-hidden
               />
               <span className="case3v2-beam-legend__text" data-legend-pred>
-                预测波
+                预测波束
               </span>
             </span>
           ) : (
@@ -163,7 +163,7 @@ export function BeamMatrixCard(props: Props) {
                 aria-hidden
               />
               <span className="case3v2-beam-legend__text" data-legend-scan>
-                扫描波
+                扫描波束
               </span>
             </span>
           )}
@@ -173,7 +173,7 @@ export function BeamMatrixCard(props: Props) {
               aria-hidden
             />
             <span className="case3v2-beam-legend__text" data-legend-best>
-              最优波
+              最优波束
             </span>
           </span>
         </div>

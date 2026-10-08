@@ -11,10 +11,12 @@ export type Rgb = readonly [number, number, number];
 
 /** 冻结色标断点（sRGB 通道线性插值）。 */
 export const HEATMAP_COLOR_STOPS: ReadonlyArray<{ t: number; rgb: Rgb }> = [
-  { t: 0, rgb: [37, 99, 235] },
-  { t: 0.33, rgb: [34, 211, 238] },
-  { t: 0.66, rgb: [250, 204, 21] },
-  { t: 1, rgb: [239, 68, 68] },
+  { t: 0, rgb: [0, 0, 255] },
+  { t: 0.33, rgb: [0, 255, 0] },
+  { t: 0.5, rgb: [0, 255, 0] },
+  { t: 0.66, rgb: [255, 255, 0] },
+  { t: 0.83, rgb: [255, 0, 0] },
+  { t: 1, rgb: [255, 0, 0] },
 ];
 
 export type MatrixStats = { eMin: number; eMax: number };
