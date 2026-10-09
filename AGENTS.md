@@ -59,3 +59,10 @@
 - case1 只调用只读数据/GLB GET，无控制命令、Start/ReInit、轮询。参考文件不代表本次生成结果。
 - 首页呈现后依次准备几何/电磁 GLB；本次停留内保留视角，切 case/刷新丢弃。初值取 Web `.env`；默认关闭参数调试，可复制后手工写配置，无保存/Reset/持久化。
 - RF 已按页读取离线矩阵并叠加，复用 case2 热力算法，蓝青黄红图例与矩阵一致；支持 RF 视图交互及恢复配置初值（与两层3D无Reset分开）。当前前端效果用户已于2026-09-22确认通过；代码复核发现修复并经非浏览器验证后，case1开发冻结。证据与既有项目级限制见 doc/case1/QA-EVIDENCE.md。
+
+## Cursor Cloud specific instructions
+
+- 默认镜像已有 Node.js 22（满足各包 `engines.node >= 20`）和 Chrome。依赖只装 Web：在仓库根执行 `npm ci --prefix code/web`。`code/server` 与 `code/back` 没有 npm 依赖，也不要在这两个目录执行 `npm install`，以免生成多余 lockfile。
+- 开机脚本在 5173 与 3102 都未监听时执行 `code/scripts/dev-web-server.sh`：Web 为 `http://127.0.0.1:5173`，适配服务为 `http://127.0.0.1:3102`，共享根默认 `code/comdatafiles`。两个端口都已在听则直接退出。
+- 打桩不随开机脚本启动。Case2／3／4 联调另开 `cd code/back && npm run start:case2`（或 `start:case3`、`start:case4`）；同一共享根一次只跑一个。
+- 适配服务与打桩测试不依赖 `node_modules`。Web 检查在 `code/web`：`npm run typecheck`、`npm test`、`npm run build`。命令说明见 `code/README.md`。
