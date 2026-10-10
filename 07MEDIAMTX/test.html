@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>MediaMTX 双路验证</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #111; color: #eee; }
+    .bar { display: flex; gap: 8px; padding: 8px; flex-wrap: wrap; }
+    .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; }
+    video { width: 100%; background: #000; }
+    button { padding: 6px 12px; }
+    .status { padding: 0 8px 8px; font-size: 14px; white-space: pre-wrap; }
+    .hint { color: #f6c344; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <button type="button" onclick="snap('cam01')">截图 cam01</button>
+    <button type="button" onclick="snap('cam02')">截图 cam02</button>
+    <button type="button" onclick="stopAll()">停止全部</button>
+  </div>
+  <div class="status" id="status">正在连接…</div>
+  <div class="wrap">
+    <video id="cam01" controls muted autoplay playsinline></video>
+    <video id="cam02" controls muted autoplay playsinline></video>
+  </div>
+  <script>
+    const MTX = "http://127.0.0.1:8889";
+    const readers = {};
+    const statuses = { cam01: "等待", cam02: "等待" };
+    const statusEl = document.getElementById("status");
+
+    function setStatus() {
+      const lines = [`cam01: ${statuses.cam01}`, `cam02: ${statuses.cam02}`];
+      if (location.protocol === "file:") {
+        lines.push("不要用 file:// 直接打开本页。请在 07MEDIAMTX 目录执行 python3 -m http.server 5500，然后打开 http://127.0.0.1:5500/test.html");
+      }
+      statusEl.textContent = lines.join("\n");
+      console.log(lines.join(" | "));
+    }
+
+    function setCam(id, msg) {
+      statuses[id] = msg;
+      setStatus();
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = () => resolve(src);
+        s.onerror = () => reject(new Error(`无法加载 ${src}`));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function ensureReader() {
+      if (window.MediaMTXWebRTCReader) return;
+      try {
+        await loadScript(`${MTX}/reader.js`);
+      } catch {
+        await loadScript("./reader.js");
+      }
+      if (!window.MediaMTXWebRTCReader) {
+        throw new Error("reader.js 已加载但没有 MediaMTXWebRTCReader");
+      }
+    }
+
+    function play(id) {
+      readers[id] = new MediaMTXWebRTCReader({
+        url: `${MTX}/${id}/whep`,
+        onError: (err) => {
+          const text = String(err);
+          if (/Failed to fetch|NetworkError|Load failed|CORS/i.test(text)) {
+            setCam(id, `连不上 ${MTX}/${id}/whep。请确认 MediaMTX 在跑、不要用 file:// 打开本页，且 webrtcAllowOrigins 含 *。${text}`);
+            return;
+          }
+          setCam(id, `错误: ${text}`);
+        },
+        onTrack: (evt) => {
+          document.getElementById(id).srcObject = evt.streams[0];
+          setCam(id, "已出画");
+        },
+      });
+    }
+
+    function snap(id) {
+      const video = document.getElementById(id);
+      if (!video.videoWidth) {
+        alert(`${id} 画面还没出来`);
+        return;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      const a = document.createElement("a");
+      a.download = `${id}-${Date.now()}.jpg`;
+      a.href = canvas.toDataURL("image/jpeg", 0.92);
+      a.click();
+    }
+
+    function stopAll() {
+      Object.values(readers).forEach((r) => r && r.close());
+      ["cam01", "cam02"].forEach((id) => {
+        const v = document.getElementById(id);
+        v.srcObject = null;
+        statuses[id] = "已停止";
+      });
+      setStatus();
+    }
+
+    window.addEventListener("load", async () => {
+      try {
+        await ensureReader();
+      } catch (err) {
+        statuses.cam01 = String(err.message || err);
+        statuses.cam02 = "未开始（reader.js 失败）";
+        setStatus();
+        return;
+      }
+      play("cam01");
+      play("cam02");
+    });
+
+    window.addEventListener("beforeunload", stopAll);
+  </script>
+</body>
+</html>
